@@ -1,3 +1,0 @@
-* TODO use thicker icons
-* TODO use chrome history too
-* TODO at the moment workflow is: go to options; set the path, reload extensions. do that right.
