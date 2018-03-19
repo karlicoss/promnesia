@@ -1,0 +1,28 @@
+{
+    "name": "Were you here?",
+    "version": "0.1",
+    "description": "Indicates whether and when the page was visited (and more!)",
+    "background": {
+        "scripts": [
+            "background.js"
+        ],
+        "persistent": false
+    },
+"options_ui": {
+    "page": "options.html",
+    "chrome_style": true
+  },
+    "permissions": [
+        "file:///*",
+        "tabs",
+        "storage"
+    ],
+    "icons": {
+        "64": "eye-64-red.png"
+    },
+    "browser_action": {
+        "default_icon": "eye-64-red.png",
+        "default_title": "Was not visited"
+    },
+    "manifest_version": 2
+}
