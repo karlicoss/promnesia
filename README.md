@@ -5,11 +5,12 @@ Or perhaps you even have a habit of annotating and making notes elsewhere? And y
 The Chrome extension consumes a JSON file with history. It may be generated from:
 
 * local sqlite history database backups
-* Google Takeout/Activity backups
-* or anything else with a simple script. It's JSON, duh!
+* TODO Google Takeout/Activity backups
+* TODO or anything else with a simple script. It's JSON, duh!
 
 # Configuring
-TODO blah blah, go to settings, choose the file
+* generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m wereyouhere`
+* extension: TODO go to settings, choose the file
 
 # TODOs
 * commit scripts to process history sources
