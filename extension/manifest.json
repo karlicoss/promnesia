@@ -22,7 +22,9 @@
     },
     "browser_action": {
         "default_icon": "eye-64-red.png",
-        "default_title": "Was not visited"
+        "default_title": "Was not visited",
+        "default_popup": "popup.html"
+
     },
     "manifest_version": 2
 }
