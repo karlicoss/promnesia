@@ -2,6 +2,11 @@ function save_options() {
   var fpath = document.getElementById('fpath').value;
     chrome.storage.local.set({'history_json': fpath}, function() {
         console.log('Value is set to ' + fpath);
+        chrome.runtime.sendMessage({
+            'method':'refreshMap'
+        }, function(response){
+            console.log("reloaded the map");
+        });
     });
 }
 

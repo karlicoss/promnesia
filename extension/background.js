@@ -38,7 +38,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     });
 });
 
-chrome.runtime.onInstalled.addListener(function() {
+function refreshMap () {
     chrome.storage.local.get(['history_json'], function(result) {
         var histfile = result.history_json;
         var xhr = new XMLHttpRequest();
@@ -52,13 +52,16 @@ chrome.runtime.onInstalled.addListener(function() {
             if (len > 0) {
                 console.log("Loaded ", len, " urls");
                 all_urls = map;
+                // TODO remove listener?
             }
         };
         xhr.open("GET", 'file:///' + histfile, true);
         xhr.send();
         // ugh, fetch api doesn't work with local uris
     });
-});
+}
+
+chrome.runtime.onInstalled.addListener(refreshMap);
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.method == 'getVisits') {
@@ -67,5 +70,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             sendResponse(getVisits(url));
         });
         return true; // this is important!! otherwise message will not be sent?
+    } else if (request.method == 'refreshMap') {
+        refreshMap();
+        return true;
     }
 });
