@@ -12,6 +12,7 @@ class State(Enum):
     PARSING_LINK = 2
     PARSING_DATE = 3
 
+# would be easier to use beautiful soup, but ends up in a big memory footprint..
 class TakeoutHTMLParser(HTMLParser):
     state: State
     current: Dict[str, Any]
