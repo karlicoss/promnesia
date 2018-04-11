@@ -8,13 +8,16 @@ def import_config():
 
 config = import_config()
 
-import json
-import os.path
-
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WereYouHere")
 
+from datetime import datetime, timedelta
+import json
+import os.path
+from typing import List, Tuple
+
+from .common import Entry
 
 def main():
     chrome_dir = config.CHROME_HISTORY_DB_DIR
@@ -51,8 +54,39 @@ def main():
     # # TODO filter somehow; sort and remove google queries, etc
     # # TODO filter by length?? or by query length (after ?)
 
+    def format_entry(e: Entry) -> List[str]:
+        visits = e.visits
+
+        delta = timedelta(minutes=20)
+        groups: List[List[datetime]] = []
+        group: List[datetime] = []
+        def dump_group():
+            nonlocal group
+            if len(group) > 0:
+                groups.append(group)
+                group = []
+        for v in visits:
+            last = v if len(group) == 0 else group[-1]
+            if v - last <= delta:
+                group.append(v)
+            else:
+                dump_group()
+        dump_group()
+
+        FORMAT = "%d %b %Y %H:%M"
+        res = []
+        for group in groups:
+            if len(group) == 1:
+                res.append(group[0].strftime(FORMAT))
+            else:
+                # TODO maybe, show minutes?..
+                res.append("{}--{}".format(group[0].strftime(FORMAT), group[-1].strftime("%H:%M")))
+        # we presumably want descending date!
+        return list(reversed(res))
+
+
     json_dict = {
-        e.url: [str(v) for v in e.visits]
+        e.url: format_entry(e)
         for e in entries
     }
     urls_json = os.path.join(output_dir, 'urls.json')
