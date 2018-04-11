@@ -4,6 +4,7 @@ from enum import Enum
 from html.parser import HTMLParser
 from os.path import join
 from typing import List, Dict, Any
+from urllib.parse import unquote
 
 from wereyouhere.common import Entry, History
 
@@ -44,8 +45,14 @@ class TakeoutHTMLParser(HTMLParser):
             self.state = State.PARSING_LINK
             attrs = OrderedDict(attrs)
             hr = attrs['href']
+
+            # sometimes it's starts with this prefix, it's apparently clicks from google search? or visits from chrome address line? who knows...
+            # TODO handle http?
+            prefix = r'https://www.google.com/url?q='
+            if hr.startswith(prefix + "http"):
+                hr = hr[len(prefix):]
+                hr = unquote(hr)
             self._reg('url', hr)
-            return
 
     def handle_endtag(self, tag):
         if tag == 'html':
