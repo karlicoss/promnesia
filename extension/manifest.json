@@ -18,10 +18,10 @@
         "storage"
     ],
     "icons": {
-        "64": "eye-64-red.png"
+        "48": "ic_not_visited_48.png"
     },
     "browser_action": {
-        "default_icon": "eye-64-red.png",
+        "default_icon": "ic_not_visited_48.png",
         "default_title": "Was not visited",
         "default_popup": "popup.html"
 

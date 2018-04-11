@@ -56,7 +56,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         getVisits(url, function (visits) {
             if (visits) {
                 chrome.browserAction.setIcon({
-                    path: "eye-64-green.png",
+                    path: "ic_visited_48.png",
                     tabId: tab.id
                 });
                 chrome.browserAction.setTitle({
@@ -65,7 +65,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
                 });
             } else {
                 chrome.browserAction.setIcon({
-                    path: "eye-64-red.png",
+                    path: "ic_not_visited_48.png",
                     tabId: tab.id
                 });
                 chrome.browserAction.setTitle({
