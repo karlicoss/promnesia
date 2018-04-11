@@ -22,6 +22,7 @@ from .common import Entry
 def main():
     chrome_dir = config.CHROME_HISTORY_DB_DIR
     takeout_dir = config.GOOGLE_TAKEOUT_DIR
+    custom_extractors = config.CUSTOM_EXTRACTORS
     output_dir = config.OUTPUT_DIR
     if output_dir is None or not os.path.lexists(output_dir):
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
@@ -43,6 +44,13 @@ def main():
         logger.info(f"Got {len(takeout_histories)} Histories from Google Takeout")
     else:
         logger.warning("GOOGLE_TAKEOUT_DIR is not set, not using Google Takeout for populating extension DB!")
+
+    for extractor in custom_extractors:
+        import wereyouhere.generator.custom as custom_gen
+        histories = [custom_gen.get_custom_history(extractor)]
+        logger.info(f"Got {len(histories)} Histories via {extractor}")
+        all_histories.extend(histories)
+
 
     from wereyouhere.common import merge_histories
     res = merge_histories(all_histories)

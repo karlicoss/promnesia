@@ -13,6 +13,14 @@ If not set, the script will just skip it.
 GOOGLE_TAKEOUT_DIR: str = None
 
 """
+Specify commands which just output urls line by line
+"""
+CUSTOM_EXTRACTORS = [
+    r"""grep -Eo -r --no-filename '(http|https)://\S+' ~/Documents""",
+    # TODO TAG for extractor?
+]
+
+"""
 This directory contains output which is to be consumed by the plugin.
 """
 OUTPUT_DIR: str = None

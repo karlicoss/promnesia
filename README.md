@@ -6,7 +6,9 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 
 * local sqlite history database backups
 * Google Takeout/Activity backups
-* or anything else with a simple script. It's JSON, duh!
+* custom shell command 
+* [todo] file system link extractors
+* in general, it's super extendable. It's JSON, duh!
 
 # Configuring
 * generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m wereyouhere`
@@ -14,9 +16,8 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 
 # TODOs
 * commit scripts to process history sources
-* collect from filesystem
+* [in progress] collect from filesystem
 * [in progress] use chrome history too
 * [in progress] be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
 ** maybe icons for mobile/desktop?
-* use some sort of smarter matching, e.g. no difference between http and https
-* ignore some schemas/urls
+* use some sort of smarter matching, e.g. no difference between http and https; normalise, remove trailing slash, etc, ignore some schemas/urls
