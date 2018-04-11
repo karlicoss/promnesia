@@ -43,14 +43,20 @@ def main():
 
     from wereyouhere.common import merge_histories
     res = merge_histories(all_histories)
+
+    # sort visits by datetime, sort all items by URL
+    entries = [
+        entry._replace(visits=sorted(entry.visits)) for _, entry in sorted(res.items())
+    ]
     # # TODO filter somehow; sort and remove google queries, etc
     # # TODO filter by length?? or by query length (after ?)
 
-    entries = sorted(res.values())
-
-    dct = {e.url: sorted(e.visits) for e in entries}
+    json_dict = {
+        e.url: [str(v) for v in e.visits]
+        for e in entries
+    }
     urls_json = os.path.join(output_dir, 'urls.json')
     with open(urls_json, 'w') as fo:
-        json.dump(dct, fo, indent=1)
+        json.dump(json_dict, fo, indent=1)
 
 main()

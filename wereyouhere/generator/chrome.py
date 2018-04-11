@@ -5,6 +5,8 @@ from typing import List, Dict, Set, NamedTuple, Iterator
 
 from wereyouhere.common import Entry, History
 
+_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 def iter_chrome_history_files(where: str) -> Iterator[str]:
     """
     Collects all sqlite chrome history files in the directory
@@ -27,10 +29,11 @@ def read_chrome_history(histfile: str) -> History:
     for x in csv.DictReader(out.splitlines(), fieldnames=['time', 'url', 'title']):
         # TODO normalise!
         url = x['url']
-        time = x['time']
+        times = x['time']
         e = urls.get(url, None)
         if e is None:
             e = Entry(url=url, visits=set())
+        time = datetime.strptime(times, _TIME_FORMAT)
         e.visits.add(time) # TODO collapse temporaly close entries??
         urls[url] = e
     return urls

@@ -1,10 +1,14 @@
 from collections import OrderedDict
+from datetime import datetime
 from enum import Enum
 from html.parser import HTMLParser
 from os.path import join
 from typing import List, Dict, Any
 
 from wereyouhere.common import Entry, History
+
+# Mar 8, 2018, 5:14:40 PM
+_TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p"
 
 class State(Enum):
     OUTSIDE = 0
@@ -15,7 +19,7 @@ class State(Enum):
 # would be easier to use beautiful soup, but ends up in a big memory footprint..
 class TakeoutHTMLParser(HTMLParser):
     state: State
-    current: Dict[str, Any]
+    current: Dict[str, str]
     urls: History
 
     def __init__(self):
@@ -67,10 +71,11 @@ class TakeoutHTMLParser(HTMLParser):
                     # coll = from_pdict(Entry, self.current)
 
                     url = self.current['url']
-                    time = self.current['time']
+                    times = self.current['time']
                     e = self.urls.get(url, None)
                     if e is None:
                         e = Entry(url=url, visits=set())
+                    time = datetime.strptime(times, _TIME_FORMAT)
                     e.visits.add(time)
                     self.urls[url] = e
 

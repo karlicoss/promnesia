@@ -1,11 +1,16 @@
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable
 
+from datetime import datetime
+
 Url = str
-Date = str # for now, will be datetime later..
+Date = datetime
 class Entry(NamedTuple):
     url: Url
     visits: Set[Date]
 
+    # TODO compare urls?
+
+# mm, doesn't make much sense to duplicate url...
 History = Dict[Url, Entry]
 
 # f is value merger function
