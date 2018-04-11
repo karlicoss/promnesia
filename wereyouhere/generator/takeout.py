@@ -6,7 +6,7 @@ from os.path import join
 from typing import List, Dict, Any
 from urllib.parse import unquote
 
-from wereyouhere.common import Entry, History
+from wereyouhere.common import Entry, History, Visit
 
 # Mar 8, 2018, 5:14:40 PM
 _TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p"
@@ -83,7 +83,10 @@ class TakeoutHTMLParser(HTMLParser):
                     if e is None:
                         e = Entry(url=url, visits=set())
                     time = datetime.strptime(times, _TIME_FORMAT)
-                    e.visits.add(time)
+                    e.visits.add(Visit(
+                        dt=time,
+                        tag="activity",
+                    ))
                     self.urls[url] = e
 
                     self.current = {}

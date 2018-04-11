@@ -2,12 +2,15 @@ from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable
 
 from datetime import datetime
 
-Url = str
 Date = datetime
+class Visit(NamedTuple):
+    dt: datetime
+    tag: str = ""
+
+Url = str
 class Entry(NamedTuple):
     url: Url
-    visits: Set[Date]
-
+    visits: Set[Visit]
     # TODO compare urls?
 
 # mm, doesn't make much sense to duplicate url...

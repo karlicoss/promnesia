@@ -21,3 +21,4 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 * [in progress] be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
 ** maybe icons for mobile/desktop?
 * use some sort of smarter matching, e.g. no difference between http and https; normalise, remove trailing slash, etc, ignore some schemas/urls
+* handle url-decoding propely

@@ -16,7 +16,10 @@ GOOGLE_TAKEOUT_DIR: str = None
 Specify commands which just output urls line by line
 """
 CUSTOM_EXTRACTORS = [
-    r"""grep -Eo -r --no-filename '(http|https)://\S+' ~/Documents""",
+    (
+        'tag',
+        r"""grep -Eo -r --no-filename '(http|https)://\S+' ~/Documents"""
+    ),
     # TODO TAG for extractor?
 ]
 

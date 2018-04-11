@@ -17,7 +17,7 @@ import json
 import os.path
 from typing import List, Tuple
 
-from .common import Entry
+from .common import Entry, Visit
 
 def main():
     chrome_dir = config.CHROME_HISTORY_DB_DIR
@@ -45,9 +45,9 @@ def main():
     else:
         logger.warning("GOOGLE_TAKEOUT_DIR is not set, not using Google Takeout for populating extension DB!")
 
-    for extractor in custom_extractors:
+    for tag, extractor in custom_extractors:
         import wereyouhere.generator.custom as custom_gen
-        histories = [custom_gen.get_custom_history(extractor)]
+        histories = [custom_gen.get_custom_history(extractor, tag)]
         logger.info(f"Got {len(histories)} Histories via {extractor}")
         all_histories.extend(histories)
 
@@ -66,8 +66,8 @@ def main():
         visits = e.visits
 
         delta = timedelta(minutes=20)
-        groups: List[List[datetime]] = []
-        group: List[datetime] = []
+        groups: List[List[Visit]] = []
+        group: List[Visit] = []
         def dump_group():
             nonlocal group
             if len(group) > 0:
@@ -75,7 +75,7 @@ def main():
                 group = []
         for v in visits:
             last = v if len(group) == 0 else group[-1]
-            if v - last <= delta:
+            if v.dt - last.dt <= delta:
                 group.append(v)
             else:
                 dump_group()
@@ -84,11 +84,14 @@ def main():
         FORMAT = "%d %b %Y %H:%M"
         res = []
         for group in groups:
+            tags = {e.tag for e in group}
+            stags = ':'.join(tags)
+
             if len(group) == 1:
-                res.append(group[0].strftime(FORMAT))
+                res.append("{} ({})".format(group[0].dt.strftime(FORMAT), stags))
             else:
                 # TODO maybe, show minutes?..
-                res.append("{}--{}".format(group[0].strftime(FORMAT), group[-1].strftime("%H:%M")))
+                res.append("{}--{} ({})".format(group[0].dt.strftime(FORMAT), group[-1].dt.strftime("%H:%M"), stags))
         # we presumably want descending date!
         return list(reversed(res))
 
