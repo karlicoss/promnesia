@@ -2,6 +2,9 @@
 This directory keeps backups of chrome history databases (~/.config/google-chrome/Default/History).
 The script is just scanning it based on mime type and populating from the databases it finds, so you are free to store them in any layout you prefer.
 Note that it CAN'T be ~/.config/google-chrome, since SQLITE will refuse connection for an open (by Chrome) database.
+
+You can use the helper script in scripts/backup-chrome-history-db.py, e.g. add it to cron to run every week or something. 
+
 If not set, the script will just skip it.
 """
 CHROME_HISTORY_DB_DIR: str = None
@@ -20,7 +23,6 @@ CUSTOM_EXTRACTORS = [
         'tag',
         r"""grep -Eo -r --no-filename '(http|https)://\S+' ~/Documents"""
     ),
-    # TODO TAG for extractor?
 ]
 
 """

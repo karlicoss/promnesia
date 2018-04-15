@@ -12,13 +12,15 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 
 # Configuring
 * generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m wereyouhere`
+then, see the comments in the `config.py` for more information on using various history sources.
 * extension: choose the generated JSON in the extension settings
 
 # TODOs
-* commit scripts to process history sources
+* [in progress] commit scripts to process history sources
 * [in progress] collect from filesystem
 * [in progress] use chrome history too
 * [in progress] be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
 ** maybe icons for mobile/desktop?
 * use some sort of smarter matching, e.g. no difference between http and https; normalise, remove trailing slash, etc, ignore some schemas/urls
 * handle url-decoding propely
+* merge chrome db backups to avoid duplication
