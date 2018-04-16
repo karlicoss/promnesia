@@ -16,7 +16,11 @@ def render(all_histories: List[History], where: str) -> None:
     # # TODO filter somehow; sort and remove google queries, etc
     # # TODO filter by length?? or by query length (after ?)
 
-    def format_entry(e: Entry) -> List[str]:
+    RVisits = List[str]
+    RContext = List[str]
+    # TODO ugh. any?
+
+    def format_entry(e: Entry) -> List[List[str]]:
         visits = e.visits
 
         delta = timedelta(minutes=20)
@@ -35,6 +39,9 @@ def render(all_histories: List[History], where: str) -> None:
                 dump_group()
         dump_group()
 
+        # TODO handle context here?
+        contexts = [v.context for v in visits if v.context is not None]
+
         FORMAT = "%d %b %Y %H:%M"
         res = []
         for group in groups:
@@ -47,7 +54,7 @@ def render(all_histories: List[History], where: str) -> None:
                 # TODO maybe, show minutes?..
                 res.append("{}--{} ({})".format(group[0].dt.strftime(FORMAT), group[-1].dt.strftime("%H:%M"), stags))
         # we presumably want descending date!
-        return list(reversed(res))
+        return [list(reversed(res)), contexts]
 
 
     json_dict = {
