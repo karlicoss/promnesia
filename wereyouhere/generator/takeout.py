@@ -26,7 +26,7 @@ class TakeoutHTMLParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.state = State.OUTSIDE
-        self.urls = {}
+        self.urls = History()
         self.current = {}
 
     def _reg(self, name, value):
@@ -75,19 +75,15 @@ class TakeoutHTMLParser(HTMLParser):
             for y in years:
                 if y in data:
                     self._reg('time', data)
-                    # coll = from_pdict(Entry, self.current)
 
                     url = self.current['url']
                     times = self.current['time']
-                    e = self.urls.get(url, None)
-                    if e is None:
-                        e = Entry(url=url, visits=set())
                     time = datetime.strptime(times, _TIME_FORMAT)
-                    e.visits.add(Visit(
+                    visit = Visit(
                         dt=time,
                         tag="activity",
-                    ))
-                    self.urls[url] = e
+                    )
+                    self.urls.register(url, visit)
 
                     self.current = {}
                     self.state = State.OUTSIDE

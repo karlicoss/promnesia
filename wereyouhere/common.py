@@ -13,8 +13,28 @@ class Entry(NamedTuple):
     visits: Set[Visit]
     # TODO compare urls?
 
-# mm, doesn't make much sense to duplicate url...
-History = Dict[Url, Entry]
+class History:
+    def __init__(self):
+        self.urls: Dict[Url, Entry] = {}
+
+    @classmethod
+    def from_urls(cls, urls: Dict[Url, Entry]) -> 'History':
+        hist = cls()
+        hist.urls = urls
+        return hist
+
+    def register(self, url: Url, v: Visit) -> None:
+        e = self.urls.get(url, None)
+        if e is None:
+            e = Entry(url=url, visits=set())
+        e.visits.add(v)
+        self.urls[url] = e
+
+    def __len__(self) -> int:
+        return len(self.urls)
+
+    def items(self):
+        return self.urls.items()
 
 # f is value merger function
 _K = TypeVar("_K")
@@ -35,5 +55,5 @@ def entry_merger(a: Entry, b: Entry):
     return a
 
 def merge_histories(hists: Iterable[History]) -> History:
-    return merge_dicts(entry_merger, hists)
+    return History.from_urls(merge_dicts(entry_merger, [h.urls for h in hists]))
 

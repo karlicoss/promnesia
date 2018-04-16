@@ -12,12 +12,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WereYouHere")
 
-from datetime import datetime, timedelta
-import json
 import os.path
 from typing import List, Tuple
 
 from .common import Entry, Visit
+from .render import render
 
 def main():
     chrome_dir = config.CHROME_HISTORY_DB_DIR
@@ -50,58 +49,9 @@ def main():
         histories = [custom_gen.get_custom_history(extractor, tag)]
         logger.info(f"Got {len(histories)} Histories via {extractor}")
         all_histories.extend(histories)
-
-
-    from wereyouhere.common import merge_histories
-    res = merge_histories(all_histories)
-
-    # sort visits by datetime, sort all items by URL
-    entries = [
-        entry._replace(visits=sorted(entry.visits)) for _, entry in sorted(res.items())
-    ]
-    # # TODO filter somehow; sort and remove google queries, etc
-    # # TODO filter by length?? or by query length (after ?)
-
-    def format_entry(e: Entry) -> List[str]:
-        visits = e.visits
-
-        delta = timedelta(minutes=20)
-        groups: List[List[Visit]] = []
-        group: List[Visit] = []
-        def dump_group():
-            nonlocal group
-            if len(group) > 0:
-                groups.append(group)
-                group = []
-        for v in visits:
-            last = v if len(group) == 0 else group[-1]
-            if v.dt - last.dt <= delta:
-                group.append(v)
-            else:
-                dump_group()
-        dump_group()
-
-        FORMAT = "%d %b %Y %H:%M"
-        res = []
-        for group in groups:
-            tags = {e.tag for e in group}
-            stags = ':'.join(tags)
-
-            if len(group) == 1:
-                res.append("{} ({})".format(group[0].dt.strftime(FORMAT), stags))
-            else:
-                # TODO maybe, show minutes?..
-                res.append("{}--{} ({})".format(group[0].dt.strftime(FORMAT), group[-1].dt.strftime("%H:%M"), stags))
-        # we presumably want descending date!
-        return list(reversed(res))
-
-
-    json_dict = {
-        e.url: format_entry(e)
-        for e in entries
-    }
     urls_json = os.path.join(output_dir, 'urls.json')
-    with open(urls_json, 'w') as fo:
-        json.dump(json_dict, fo, indent=1)
+    render(all_histories, urls_json)
+
+
 
 main()

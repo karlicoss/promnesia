@@ -25,19 +25,16 @@ def iter_chrome_history_files(where: str) -> Iterator[str]:
 
 def read_chrome_history(histfile: str) -> History:
     out = check_output(f"""sqlite3 -csv '{histfile}' 'SELECT datetime(((visits.visit_time/1000000)-11644473600), "unixepoch"), urls.url, urls.title FROM urls, visits WHERE urls.id = visits.url;'""", shell=True).decode('utf-8')
-    urls: History = {}
+    urls = History()
     for x in csv.DictReader(out.splitlines(), fieldnames=['time', 'url', 'title']):
         url = x['url']
         times = x['time']
-        e = urls.get(url, None)
-        if e is None:
-            e = Entry(url=url, visits=set())
         time = datetime.strptime(times, _TIME_FORMAT)
-        e.visits.add(Visit(
+        visit = Visit(
             dt=time,
             tag="sqlite",
-        ))
-        urls[url] = e
+        )
+        urls.register(url, visit)
     return urls
 
 def iter_chrome_histories(where: str):

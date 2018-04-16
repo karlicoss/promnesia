@@ -1,0 +1,6 @@
+Right, so this points at http://google.com
+
+
+something something
+
+trailing slash maybe? http://google.com/ ?
