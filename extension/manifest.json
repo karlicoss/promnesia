@@ -4,7 +4,8 @@
     "description": "Indicates whether and when the page was visited (and more!)",
     "background": {
         "scripts": [
-            "background.js"
+            "background.js",
+            "common.js"
         ],
         "persistent": false
     },

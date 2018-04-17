@@ -1,3 +1,5 @@
+// import Visit from 'common.js'; does not work???
+
 // measure slowdown? Although it's async, so it's fine probably
 var all_urls;
 
@@ -17,7 +19,11 @@ function refreshMap (cb /* Map[Url, List[Visit]] -> Void */) {
             var len = Object.keys(map).length;
             console.log("Loaded map of length ", len);
             if (len > 0) {
-                all_urls = map;
+                all_urls = {};
+                Object.keys(map).map(function (key, index) {
+                    var xxx = map[key];
+                    all_urls[key] = new Visit(xxx[0], xxx[1]);
+                });
                 if (cb) {
                     cb(all_urls);
                 }

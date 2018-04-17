@@ -15,6 +15,13 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 then, see the comments in the `config.py` for more information on using various history sources.
 * extension: choose the generated JSON in the extension settings
 
+# Running
+To generate the URL database, run:
+
+    ./generate
+    
+To use chrome extension, just 'load unpacked' on chrome://extensions/
+
 # TODOs
 
 * [in progress] commit scripts to process history sources
