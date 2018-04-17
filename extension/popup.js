@@ -24,7 +24,8 @@ function requestVisits() {
             var context = contexts[i];
             row = contexts_table.insertRow(-1);
             cell = row.insertCell(0);
-            cell.innerHTML = context;
+            // TODO not sure how to jump to a specific line from here...
+            cell.innerHTML = "<a href='file:///" + context + "'>" + context + "</a>";
         }
     });
 };
