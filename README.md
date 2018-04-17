@@ -33,3 +33,4 @@ To use chrome extension, just 'load unpacked' on chrome://extensions/
   * use some python lib to extract normalised urls? there must be something.. however normalisation has to be simple enough, so JS site could use it too.
 * handle url-decoding propely
 * merge chrome db backups to avoid duplication
+* update map daily/hourly?
