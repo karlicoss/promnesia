@@ -10,8 +10,15 @@ def get_custom_history(command: str, tag: str = "") -> History:
     lines = [line.decode('utf-8') for line in output.splitlines()]
     history = History()
     for line in lines:
-        split_by = ':http'
-        parts = line.split(split_by) # TODO handle ftp, file etc here
+        protocols = ['file', 'ftp', 'http', 'https']
+        for p in protocols:
+            split_by = ':' + p + '://'
+            if split_by in line:
+                parts = line.split(split_by)
+                break
+        else:
+            parts = [line]
+
         fname: str
         lineno: str
         url: str
