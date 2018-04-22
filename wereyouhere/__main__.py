@@ -15,7 +15,7 @@ logger = logging.getLogger("WereYouHere")
 import os.path
 from typing import List, Tuple
 
-from .common import Entry, Visit
+from .common import Entry, Visit, History
 from .render import render
 
 def main():
@@ -28,11 +28,15 @@ def main():
 
     all_histories = []
 
+    def log_hists(histories: List[History], from_: str):
+        lengths = [len(h) for h in histories]
+        logger.info(f"Got {len(histories)} Histories from {from_}: {lengths}")
+
     if chrome_dir is not None:
         import wereyouhere.generator.chrome as chrome_gen
         chrome_histories = list(chrome_gen.iter_chrome_histories(chrome_dir))
         all_histories.extend(chrome_histories)
-        logger.info(f"Got {len(chrome_histories)} Histories from Chrome")
+        log_hists(chrome_histories, 'Chrome')
     else:
         logger.warning("CHROME_HISTORY_DB_DIR is not set, not using chrome entries to populate extension DB!")
 
@@ -40,15 +44,15 @@ def main():
         import wereyouhere.generator.takeout as takeout_gen
         takeout_histories = list(takeout_gen.get_takeout_histories(takeout_dir))
         all_histories.extend(takeout_histories)
-        logger.info(f"Got {len(takeout_histories)} Histories from Google Takeout")
+        log_hists(takeout_histories, 'Google Takeout')
     else:
         logger.warning("GOOGLE_TAKEOUT_DIR is not set, not using Google Takeout for populating extension DB!")
 
     for tag, extractor in custom_extractors:
         import wereyouhere.generator.custom as custom_gen
-        histories = [custom_gen.get_custom_history(extractor, tag)]
-        logger.info(f"Got {len(histories)} Histories via {extractor}")
-        all_histories.extend(histories)
+        custom_histories = [custom_gen.get_custom_history(extractor, tag)]
+        log_hists(custom_histories, str(extractor))
+        all_histories.extend(custom_histories)
     urls_json = os.path.join(output_dir, 'urls.json')
     render(all_histories, urls_json)
 

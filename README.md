@@ -10,6 +10,8 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 * [todo] file system link extractors
 * in general, it's super extendable. It's JSON, duh!
 
+See more in [sources.md](sources.md).
+
 # Configuring
 * generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m wereyouhere`
 then, see the comments in the `config.py` for more information on using various history sources.
@@ -34,3 +36,4 @@ To use chrome extension, just 'load unpacked' on chrome://extensions/
 * handle url-decoding propely
 * merge chrome db backups to avoid duplication
 * update map daily/hourly?
+* web service? so you don't have to carry the generated json file around

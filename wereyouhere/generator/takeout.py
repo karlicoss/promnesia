@@ -27,11 +27,12 @@ class TakeoutHTMLParser(HTMLParser):
     current: Dict[str, str]
     urls: History
 
-    def __init__(self):
+    def __init__(self, tag: str) -> None:
         super().__init__()
         self.state = State.OUTSIDE
         self.urls = History()
         self.current = {}
+        self.tag = tag
 
     def _reg(self, name, value):
         assert name not in self.current
@@ -85,7 +86,7 @@ class TakeoutHTMLParser(HTMLParser):
                     time = datetime.strptime(times, _TIME_FORMAT)
                     visit = Visit(
                         dt=time,
-                        tag="activity",
+                        tag=self.tag,
                     )
                     self.urls.register(url, visit)
 
@@ -93,9 +94,7 @@ class TakeoutHTMLParser(HTMLParser):
                     self.state = State.OUTSIDE
                     return
 
-def read_google_activity(takeout_dir: str) -> Optional[History]:
-    myactivity_html = join(takeout_dir, "My Activity", "Chrome", "MyActivity.html")
-
+def _read_google_activity(myactivity_html: str, tag: str):
     if not lexists(myactivity_html):
         logger.warning(f"{myactivity_html} is not present... skipping")
         return None
@@ -103,9 +102,17 @@ def read_google_activity(takeout_dir: str) -> Optional[History]:
     data: str
     with open(myactivity_html, 'r') as fo:
         data = fo.read()
-    parser = TakeoutHTMLParser()
+    parser = TakeoutHTMLParser(tag)
     parser.feed(data)
     return parser.urls
+
+def read_google_activity(takeout_dir: str) -> Optional[History]:
+    myactivity_html = join(takeout_dir, "My Activity", "Chrome", "MyActivity.html")
+    return _read_google_activity(myactivity_html, 'activity-chrome')
+
+def read_search_activity(takeout_dir: str) -> Optional[History]:
+    myactivity_html = join(takeout_dir, "My Activity", "Search", "MyActivity.html")
+    return _read_google_activity(myactivity_html, 'activity-search')
 
 def read_browser_history_json(takeout_dir: str) -> History:
     jfile = join(takeout_dir, "Chrome", "BrowserHistory.json")
@@ -132,8 +139,10 @@ def read_browser_history_json(takeout_dir: str) -> History:
 
 def get_takeout_histories(takeout_dir: str) -> List[History]:
     chrome_myactivity = read_google_activity(takeout_dir)
+    search_myactivity = read_search_activity(takeout_dir)
     browser_history_json = read_browser_history_json(takeout_dir)
     return [h for h in (
         chrome_myactivity,
+        search_myactivity,
         browser_history_json,
         ) if h is not None]
