@@ -1,10 +1,14 @@
+import logging
+logger = logging.getLogger("WereYouHere")
+
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
 from html.parser import HTMLParser
-from os.path import join
-from typing import List, Dict, Any
+from os.path import join, lexists
+from typing import List, Dict, Any, Optional
 from urllib.parse import unquote
+import json
 
 from wereyouhere.common import Entry, History, Visit
 
@@ -60,7 +64,7 @@ class TakeoutHTMLParser(HTMLParser):
 
     def handle_data(self, data):
         if self.state == State.OUTSIDE:
-            if data[:-1] == "Visited":
+            if data[:-1].strip() == "Visited":
                 self.state = State.INSIDE
                 return
 
@@ -74,7 +78,7 @@ class TakeoutHTMLParser(HTMLParser):
             years = [str(i) + "," for i in range(2000, 2030)]
             for y in years:
                 if y in data:
-                    self._reg('time', data)
+                    self._reg('time', data.strip())
 
                     url = self.current['url']
                     times = self.current['time']
@@ -89,8 +93,12 @@ class TakeoutHTMLParser(HTMLParser):
                     self.state = State.OUTSIDE
                     return
 
-def read_google_activity(takeout_dir: str) -> History:
+def read_google_activity(takeout_dir: str) -> Optional[History]:
     myactivity_html = join(takeout_dir, "My Activity", "Chrome", "MyActivity.html")
+
+    if not lexists(myactivity_html):
+        logger.warning(f"{myactivity_html} is not present... skipping")
+        return None
 
     data: str
     with open(myactivity_html, 'r') as fo:
@@ -99,6 +107,33 @@ def read_google_activity(takeout_dir: str) -> History:
     parser.feed(data)
     return parser.urls
 
+def read_browser_history_json(takeout_dir: str) -> History:
+    jfile = join(takeout_dir, "Chrome", "BrowserHistory.json")
+
+    if not lexists(jfile):
+        logger.warning(f"{jfile} is not present... skipping")
+        return None
+
+    j = None
+    with open(jfile, 'r') as fo:
+        j = json.load(fo)
+
+    urls = History()
+    hist = j['Browser History']
+    for item in hist:
+        url = item['url']
+        time = datetime.fromtimestamp(item['time_usec'] / 10**6)
+        visit = Visit(
+            dt=time,
+            tag="history_json",
+        )
+        urls.register(url, visit)
+    return urls
+
 def get_takeout_histories(takeout_dir: str) -> List[History]:
     chrome_myactivity = read_google_activity(takeout_dir)
-    return [chrome_myactivity]
+    browser_history_json = read_browser_history_json(takeout_dir)
+    return [h for h in (
+        chrome_myactivity,
+        browser_history_json,
+        ) if h is not None]
