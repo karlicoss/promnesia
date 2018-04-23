@@ -33,13 +33,11 @@ def render(all_histories: List[History], where: str) -> None:
                 group = []
         for v in visits:
             last = v if len(group) == 0 else group[-1]
-            if v.dt - last.dt <= delta:
-                group.append(v)
-            else:
+            if v.dt - last.dt > delta:
                 dump_group()
+            group.append(v)
         dump_group()
 
-        # TODO handle context here?
         contexts = [v.context for v in visits if v.context is not None]
 
         FORMAT = "%d %b %Y %H:%M"
@@ -48,11 +46,12 @@ def render(all_histories: List[History], where: str) -> None:
             tags = {e.tag for e in group}
             stags = ':'.join(tags)
 
-            if len(group) == 1:
-                res.append("{} ({})".format(group[0].dt.strftime(FORMAT), stags))
+            start_time_s = group[0].dt.strftime(FORMAT)
+            end_time_s = group[-1].dt.strftime(FORMAT)
+            if start_time_s == end_time_s:
+                res.append("{} ({})".format(start_time_s, stags))
             else:
-                # TODO maybe, show minutes?..
-                res.append("{}--{} ({})".format(group[0].dt.strftime(FORMAT), group[-1].dt.strftime("%H:%M"), stags))
+                res.append("{}--{} ({})".format(start_time_s, group[-1].dt.strftime("%H:%M"), stags))
         # we presumably want descending date!
         return [list(reversed(res)), contexts]
 
