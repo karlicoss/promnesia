@@ -61,5 +61,5 @@ def render(all_histories: List[History], where: str) -> None:
         for e in entries
     }
     with open(where, 'w') as fo:
-        json.dump(json_dict, fo, indent=1)
+        json.dump(json_dict, fo, indent=1, ensure_ascii=False)
     pass
