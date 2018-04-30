@@ -1,4 +1,4 @@
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List
 
 from datetime import datetime
 
@@ -46,6 +46,17 @@ class History:
 
     def items(self):
         return self.urls.items()
+
+def simple_history(urls: List[Url], tag: str) -> History:
+    h = History()
+    for u in urls:
+        # TODO date?
+        visit = Visit(
+            datetime.now(), # TODO
+            tag=tag,
+        )
+        h.register(u, visit)
+    return h
 
 # f is value merger function
 _K = TypeVar("_K")

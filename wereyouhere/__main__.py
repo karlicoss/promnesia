@@ -12,10 +12,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WereYouHere")
 
+import inspect
 import os.path
 from typing import List, Tuple
 
-from .common import Entry, Visit, History
+from .common import Entry, Visit, History, simple_history
 from .render import render
 
 def main():
@@ -52,7 +53,17 @@ def main():
 
     for tag, extractor in custom_extractors:
         import wereyouhere.generator.custom as custom_gen
-        custom_histories = [custom_gen.get_custom_history(extractor, tag)]
+        logger.info(f"Running extractor {extractor} (tag {tag})")
+        custom_histories: List[History]
+        if isinstance(extractor, str): # must be shell command
+            custom_histories = [custom_gen.get_custom_history(extractor, tag)]
+        elif inspect.isfunction(extractor):
+            urls = extractor()
+            custom_histories = [simple_history(urls, tag)]
+        else:
+            logger.error(f"Unexpected extractor {extractor}")
+            custom_histories = []
+
         log_hists(custom_histories, str(extractor))
         all_histories.extend(custom_histories)
     urls_json = os.path.join(output_dir, 'urls.json')
