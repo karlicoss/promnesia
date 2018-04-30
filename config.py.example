@@ -1,3 +1,5 @@
+from wereyouhere.generator.plaintext import extract_from_path
+
 """
 This directory keeps backups of chrome history databases (~/.config/google-chrome/Default/History).
 The script is just scanning it based on mime type and populating from the databases it finds, so you are free to store them in any layout you prefer.
@@ -21,8 +23,12 @@ Specify commands which just output urls line by line
 CUSTOM_EXTRACTORS = [
     (
         'tag',
-        r"""grep -Eo -r --no-filename '(http|https)://\S+' ~/Documents"""
+        extract_from_path("/home/user/Documents"),
     ),
+    (
+        'im-history',
+        "some_custom_command_to_extract_from_im",
+    )
 ]
 
 """

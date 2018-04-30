@@ -29,6 +29,17 @@ def test_chrome():
         render([hist], join(tdir, 'res.json'))
 
 
+def test_plaintext_path_extractor():
+    import wereyouhere.generator.custom as custom_gen
+    from wereyouhere.generator.plaintext import extract_from_path
+
+    hist = custom_gen.get_custom_history(
+        extract_from_path('testdata/custom'),
+        tag='test',
+    )
+    assert len(hist) == 4
+
+
 def test_custom():
     import wereyouhere.generator.custom as custom_gen
 
@@ -40,4 +51,4 @@ def test_custom():
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
 
-# TODO test for custom
+# TODO test config 

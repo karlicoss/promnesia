@@ -48,6 +48,8 @@ def main():
     else:
         logger.warning("GOOGLE_TAKEOUT_DIR is not set, not using Google Takeout for populating extension DB!")
 
+    from wereyouhere.generator import plaintext
+
     for tag, extractor in custom_extractors:
         import wereyouhere.generator.custom as custom_gen
         custom_histories = [custom_gen.get_custom_history(extractor, tag)]
