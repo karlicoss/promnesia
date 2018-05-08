@@ -37,3 +37,7 @@ To use chrome extension, just 'load unpacked' on chrome://extensions/
 * merge chrome db backups to avoid duplication
 * update map daily/hourly?
 * web service? so you don't have to carry the generated json file around
+
+* better regex fox url extraction
+eh, urls can have commas...  e.g. http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
+so, for csv need a separate extractor.

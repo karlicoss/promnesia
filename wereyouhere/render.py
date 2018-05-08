@@ -3,7 +3,7 @@ import json
 import os.path
 from typing import List
 
-from .common import History, Entry, Visit
+from .common import History, Entry, Visit, Filter
 
 def render(all_histories: List[History], where: str) -> None:
     from wereyouhere.common import merge_histories

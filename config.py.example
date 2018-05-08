@@ -35,3 +35,15 @@ CUSTOM_EXTRACTORS = [
 This directory contains output which is to be consumed by the plugin.
 """
 OUTPUT_DIR: str = None
+
+"""
+Custom regexes for filtering out URLS. Can be a regex or a predicate returning True if the URL has to be filtered
+
+e.g.
+FILTERS = [
+        'mail.google.com',
+        lambda u: len(u) > 100,
+]
+"""
+FILTERS = [
+]

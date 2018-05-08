@@ -1,3 +1,4 @@
+import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List
 
 from datetime import datetime
@@ -14,25 +15,67 @@ class Entry(NamedTuple):
     visits: Set[Visit]
     # TODO compare urls?
 
+Filter = Callable[[Url], bool]
+
+def make_filter(thing) -> Filter:
+    if isinstance(thing, str):
+        rc = re.compile(thing)
+        def filter_(u: str) -> bool:
+            return rc.search(u) is not None
+        return filter_
+    else: # must be predicate
+        return thing
+
 class History:
+    FILTERS: List[Filter] = [
+        make_filter(f) for f in
+        [
+            r'^chrome-devtools://',
+            r'^chrome-extension://',
+            r'^chrome-error://',
+            r'^chrome-native://',
+            r'^chrome-search://',
+
+            r'chrome://newtab',
+            r'chrome://apps',
+            r'chrome://history',
+
+            r'^about:',
+            r'^blob:',
+            r'^view-source:',
+
+            r'^content:',
+
+            # TODO maybe file:// too?
+            # chrome-search:
+        ]
+    ]
+
+    @classmethod
+    def add_filter(cls, filterish):
+        cls.FILTERS.append(make_filter(filterish))
+
     def __init__(self):
         self.urls: Dict[Url, Entry] = {}
 
     @classmethod
-    def from_urls(cls, urls: Dict[Url, Entry]) -> 'History':
+    def from_urls(cls, urls: Dict[Url, Entry], filters: List[Filter] = None) -> 'History':
         hist = cls()
         hist.urls = urls
         return hist
 
-    def filtered(self, url: Url) -> bool:
-        SCHEMAS = ['chrome-extension://', 'chrome-error://']
-        for s in SCHEMAS:
-            if url.startswith(s):
+    # TODO mm. maybe history should get filters from some global config?
+    # wonder how okay is it to set class attribute..
+
+    @classmethod
+    def filtered(cls, url: Url) -> bool:
+        for f in cls.FILTERS:
+            if f(url):
                 return True
         return False
 
     def register(self, url: Url, v: Visit) -> None:
-        if self.filtered(url):
+        if History.filtered(url):
             return
 
         e = self.urls.get(url, None)
@@ -78,4 +121,3 @@ def entry_merger(a: Entry, b: Entry):
 
 def merge_histories(hists: Iterable[History]) -> History:
     return History.from_urls(merge_dicts(entry_merger, [h.urls for h in hists]))
-

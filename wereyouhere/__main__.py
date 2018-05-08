@@ -1,12 +1,12 @@
 # TODO move to kython?
-def import_config():
-    import os, sys
+def cwd_import(name: str):
+    import os, sys, importlib
     sys.path.append(os.getcwd())
-    import config
+    res = importlib.import_module(name)
     sys.path.pop()
-    return config
+    return res
 
-config = import_config()
+config = cwd_import('config')
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -16,14 +16,19 @@ import inspect
 import os.path
 from typing import List, Tuple
 
-from .common import Entry, Visit, History, simple_history
+from .common import Entry, Visit, History, simple_history, Filter, make_filter
 from .render import render
+
 
 def main():
     chrome_dir = config.CHROME_HISTORY_DB_DIR
     takeout_dir = config.GOOGLE_TAKEOUT_DIR
     custom_extractors = config.CUSTOM_EXTRACTORS
     output_dir = config.OUTPUT_DIR
+    filters = [make_filter(f) for f in config.FILTERS]
+    for f in filters:
+        History.add_filter(f) # meh..
+
     if output_dir is None or not os.path.lexists(output_dir):
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
 
@@ -66,6 +71,7 @@ def main():
 
         log_hists(custom_histories, str(extractor))
         all_histories.extend(custom_histories)
+
     urls_json = os.path.join(output_dir, 'urls.json')
     render(all_histories, urls_json)
 
