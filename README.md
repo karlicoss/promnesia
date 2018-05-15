@@ -25,7 +25,6 @@ To generate the URL database, run:
 To use chrome extension, just 'load unpacked' on chrome://extensions/
 
 # TODOs
-* [in progress] use current chrome history too
 * [in progress] be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
   * maybe icons for mobile/desktop?
 * use some sort of smarter matching, e.g. no difference between http and https; normalise, remove trailing slash, etc, ignore some schemas/urls
@@ -34,8 +33,8 @@ To use chrome extension, just 'load unpacked' on chrome://extensions/
 * merge chrome db backups to avoid duplication
 * update map daily/hourly?
 * web service? so you don't have to carry the generated json file around
-
 * better regex fox url extraction
 eh, urls can have commas...  e.g. http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
 so, for csv need a separate extractor.
 * describe why and what for each permission used
+* timestamps seem wrong either in JS or in sqlite backup (most likely in sqlite)

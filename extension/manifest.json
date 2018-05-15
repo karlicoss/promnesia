@@ -16,7 +16,8 @@
     "permissions": [
         "file:///*",
         "tabs",
-        "storage"
+        "storage",
+        "history"
     ],
     "icons": {
         "48": "ic_not_visited_48.png"
