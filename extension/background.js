@@ -3,7 +3,7 @@
 // measure slowdown? Although it's async, so it's fine probably
 var all_urls;
 
-function refreshMap (cb /* Map[Url, List[Visit]] -> Void */) {
+function refreshMap (cb /* Map[Url, Visits] -> Void */) {
     console.log("Urls map refresh requested!");
     chrome.storage.local.get(['history_json'], function(result) {
         var histfile = result.history_json;
@@ -22,7 +22,7 @@ function refreshMap (cb /* Map[Url, List[Visit]] -> Void */) {
                 all_urls = {};
                 Object.keys(map).map(function (key, index) {
                     var xxx = map[key];
-                    all_urls[key] = new Visit(xxx[0], xxx[1]);
+                    all_urls[key] = new Visits(xxx[0], xxx[1]);
                 });
                 if (cb) {
                     cb(all_urls);
@@ -36,7 +36,7 @@ function refreshMap (cb /* Map[Url, List[Visit]] -> Void */) {
     });
 }
 
-function getMap(cb /* Map[Url, List[Visit]] -> Void */) {
+function getMap(cb /* Map[Url, Visits] -> Void */) {
     // not sure why is this even necessary... just as extensions is running, all_urls is getting set to null occasionally
     if (all_urls) {
         cb(all_urls);
@@ -48,10 +48,9 @@ function getMap(cb /* Map[Url, List[Visit]] -> Void */) {
 
 chrome.runtime.onInstalled.addListener(function () {refreshMap(null); });
 
-function getVisits(url, cb /* List[Visit] -> Void */) {
-    getMap(function (map) {
-        cb(map[url]);
-    });
+var TIME_FORMAT = "%d %b %Y %H:%M"; // TODO make sure it's consistent with python..
+
+function getVisits(url, cb /* Visits -> Void */) {
 }
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {

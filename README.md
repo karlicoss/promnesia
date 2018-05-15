@@ -25,10 +25,7 @@ To generate the URL database, run:
 To use chrome extension, just 'load unpacked' on chrome://extensions/
 
 # TODOs
-
-* [in progress] commit scripts to process history sources
-* [in progress] collect from filesystem
-* [in progress] use chrome history too
+* [in progress] use current chrome history too
 * [in progress] be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
   * maybe icons for mobile/desktop?
 * use some sort of smarter matching, e.g. no difference between http and https; normalise, remove trailing slash, etc, ignore some schemas/urls

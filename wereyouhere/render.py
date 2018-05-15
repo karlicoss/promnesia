@@ -5,6 +5,8 @@ from typing import List
 
 from .common import History, Entry, Visit, Filter
 
+TIME_FORMAT = "%d %b %Y %H:%M"
+
 def render(all_histories: List[History], where: str) -> None:
     from wereyouhere.common import merge_histories
     res = merge_histories(all_histories)
@@ -40,14 +42,13 @@ def render(all_histories: List[History], where: str) -> None:
 
         contexts = [v.context for v in visits if v.context is not None]
 
-        FORMAT = "%d %b %Y %H:%M"
         res = []
         for group in groups:
             tags = {e.tag for e in group}
             stags = ':'.join(tags)
 
-            start_time_s = group[0].dt.strftime(FORMAT)
-            end_time_s = group[-1].dt.strftime(FORMAT)
+            start_time_s = group[0].dt.strftime(TIME_FORMAT)
+            end_time_s = group[-1].dt.strftime(TIME_FORMAT)
             if start_time_s == end_time_s:
                 res.append("{} ({})".format(start_time_s, stags))
             else:

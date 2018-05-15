@@ -1,4 +1,4 @@
-class Visit {
+class Visits {
     constructor(visits, contexts) {
         this.visits = visits;
         this.contexts = contexts;
