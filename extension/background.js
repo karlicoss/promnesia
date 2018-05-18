@@ -145,7 +145,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         // TODO why am I getting multiple results???
         var url = tabs[0].url;
         getVisits(url, function (visits) {
-            if (visits) { // TODO check if visits are trivial?
+            if (visits.visits.length > 0) { // TODO check if visits are trivial?
                 chrome.browserAction.setIcon({
                     path: "ic_visited_48.png",
                     tabId: tab.id
