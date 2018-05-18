@@ -38,3 +38,4 @@ To use chrome extension, just 'load unpacked' on chrome://extensions/
 * better regex fox url extraction
 eh, urls can have commas...  e.g. http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
 so, for csv need a separate extractor.
+* describe why and what for each permission used
