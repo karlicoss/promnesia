@@ -1,8 +1,9 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 from os.path import join, getsize
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pytest # type: ignore
 from pytest import mark # type: ignore
 skip = mark.skip
 
@@ -68,7 +69,7 @@ def test_custom():
 def test_merge():
     merge = backup_db.merge
 
-    testdata_path = "/L/data/wereyouhere/chrome-history"
+    testdata_path = "/L/data/wereyouhere/testdata/chrome-history"
     first  = join(testdata_path, "20180415/History")
     second = join(testdata_path, "20180417/History")
     with TemporaryDirectory() as tdir:
@@ -95,3 +96,5 @@ def test_merge():
 
         assert ssize_2 == ssize
 
+if __name__ == '__main__':
+    pytest.main(__file__)

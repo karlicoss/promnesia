@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 
 from datetime import datetime
+import logging
 import os
-from os.path import expanduser, join
+from os.path import expanduser, join, getsize, lexists
 from tempfile import TemporaryDirectory
+
+__logger: logging.Logger = None
+
+def get_logger():
+    global __logger
+    if __logger is None:
+        logging.basicConfig(level=logging.INFO)
+        __logger = logging.getLogger("WereYouHere")
+    return __logger
+
 
 def atomic_copy(src: str, dest: str):
     """
@@ -34,9 +45,15 @@ def backup_to(prefix: str) -> str:
     return join(BPATH, "History")
 
 def merge(merged: str, chunk: str):
+    logger = get_logger()
     from subprocess import check_call
     # TODO script relative to path
+    if lexists(merged):
+        logger.info(f"Merged DB size before: {getsize(merged)}")
+    else:
+        logger.info(f"Merged DB doesn't exist yet: {merged}")
     check_call(['/L/coding/were-you-here/scripts/merge-chrome-db/merge.sh', merged, chunk])
+    logger.info(f"Merged DB size after: {getsize(merged)}")
 
 
 def update_backup(merged: str):
