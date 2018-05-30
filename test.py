@@ -9,6 +9,8 @@ skip = mark.skip
 from wereyouhere.common import History
 from wereyouhere.render import render
 
+import imp
+backup_db = imp.load_source('hdb', 'scripts/backup-chrome-history-db.py')
 
 def test_takeout():
     test_takeout_dir = "testdata/takeout"
@@ -22,13 +24,11 @@ def test_takeout():
 
 def test_chrome():
     import wereyouhere.generator.chrome as chrome_gen
-    import imp
-    backup_db = imp.load_source('hdb', 'scripts/backup-chrome-history-db.py')
 
     with TemporaryDirectory() as tdir:
-        backup_db.backup_to(tdir)
+        path = backup_db.backup_to(tdir)
 
-        [hist] = list(chrome_gen.iter_chrome_histories(tdir))
+        [hist] = list(chrome_gen.iter_chrome_histories(path))
         assert len(hist) > 10 # kinda random sanity check
 
         render([hist], join(tdir, 'res.json'))
@@ -64,12 +64,10 @@ def test_custom():
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
 
-def merge(merged: str, chunk: str):
-    from subprocess import check_call
-    # TODO script relative to path
-    check_call(['/L/coding/were-you-here/scripts/merge-chrome-db/merge.sh', merged, chunk])
 
 def test_merge():
+    merge = backup_db.merge
+
     testdata_path = "/L/data/wereyouhere/chrome-history"
     first  = join(testdata_path, "20180415/History")
     second = join(testdata_path, "20180417/History")

@@ -9,7 +9,7 @@ You can use the helper script in scripts/backup-chrome-history-db.py, e.g. add i
 
 If not set, the script will just skip it.
 """
-CHROME_HISTORY_DB_DIR: str = None
+CHROME_HISTORY_DB: str = None
 
 """
 This directory contains your latest google activity takeout (takeout.google.com).
