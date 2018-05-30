@@ -1,7 +1,7 @@
+from collections.abc import Sized
+from datetime import datetime
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List
-
-from datetime import datetime
 
 Date = datetime
 class Visit(NamedTuple):
@@ -26,7 +26,8 @@ def make_filter(thing) -> Filter:
     else: # must be predicate
         return thing
 
-class History:
+# TODO do i really need to inherit this??
+class History(Sized):
     FILTERS: List[Filter] = [
         make_filter(f) for f in
         [
