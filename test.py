@@ -66,7 +66,6 @@ def test_custom():
 
 def merge(merged: str, chunk: str):
     from subprocess import check_call
-    # TODO assert that argument orders is correct (e.g. check original db schema)
     # TODO script relative to path
     check_call(['/L/coding/were-you-here/scripts/merge-chrome-db/merge.sh', merged, chunk])
 
