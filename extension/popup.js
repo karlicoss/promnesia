@@ -24,8 +24,12 @@ function requestVisits() {
             var context = contexts[i];
             row = contexts_table.insertRow(-1);
             cell = row.insertCell(0);
-            // TODO not sure how to jump to a specific line from here...
-            cell.innerHTML = "<a href='file:///" + context + "'>" + context + "</a>";
+            // ugh, mime links in href don't seem to work for some reason :(
+            // not sure how to trigger it opening without creating new tab, but background isn't too bad
+            cell.addEventListener('click', function() {
+                chrome.tabs.create({'url': "emacs:" + context, 'active': false});
+            });
+            cell.innerHTML = "<a href='emacs:" + context + "'>" + context + "</a>";
         }
     });
 };
