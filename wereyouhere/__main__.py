@@ -22,7 +22,7 @@ from .render import render
 
 def main():
     chrome_db = config.CHROME_HISTORY_DB
-    takeout_dir = config.GOOGLE_TAKEOUT_DIR
+    takeout_path = config.GOOGLE_TAKEOUT_PATH
     custom_extractors = config.CUSTOM_EXTRACTORS
     output_dir = config.OUTPUT_DIR
     filters = [make_filter(f) for f in config.FILTERS]
@@ -46,13 +46,13 @@ def main():
     else:
         logger.warning("CHROME_HISTORY_DB is not set, not using chrome entries to populate extension DB!")
 
-    if takeout_dir is not None:
+    if takeout_path is not None:
         import wereyouhere.generator.takeout as takeout_gen
-        takeout_histories = list(takeout_gen.get_takeout_histories(takeout_dir))
+        takeout_histories = list(takeout_gen.get_takeout_histories(takeout_path))
         all_histories.extend(takeout_histories)
         log_hists(takeout_histories, 'Google Takeout')
     else:
-        logger.warning("GOOGLE_TAKEOUT_DIR is not set, not using Google Takeout for populating extension DB!")
+        logger.warning("GOOGLE_TAKEOUT_PATH is not set, not using Google Takeout for populating extension DB!")
 
     from wereyouhere.generator import plaintext
 

@@ -12,10 +12,14 @@ If not set, the script will just skip it.
 CHROME_HISTORY_DB: str = None
 
 """
-This directory contains your latest google activity takeout (takeout.google.com).
+This is the source for takeout.google.com
+The path is one of the following:
+- Unpacked takeout dir (so GOOGLE_TAKEOUT_PATH/My Activity/ is expected to exist)
+- Takeout zip 
+- Path which contains takeout zips (in which case the latest takeout will be processed)
 If not set, the script will just skip it.
 """
-GOOGLE_TAKEOUT_DIR: str = None
+GOOGLE_TAKEOUT_PATH: str = None
 
 """
 Specify commands which just output urls line by line

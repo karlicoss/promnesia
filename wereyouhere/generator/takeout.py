@@ -5,9 +5,10 @@ from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
 from html.parser import HTMLParser
-from os.path import join, lexists
+from os.path import join, lexists, isfile
 from typing import List, Dict, Any, Optional
 from urllib.parse import unquote
+from zipfile import ZipFile
 import json
 
 from wereyouhere.common import Entry, History, Visit
@@ -94,35 +95,57 @@ class TakeoutHTMLParser(HTMLParser):
                     self.state = State.OUTSIDE
                     return
 
-def _read_google_activity(myactivity_html: str, tag: str):
-    if not lexists(myactivity_html):
-        logger.warning(f"{myactivity_html} is not present... skipping")
-        return None
+def _read_google_activity(myactivity_html_fo, tag: str):
+    # # TODO ugh, for zip files we'd have to be more careful...
+    # if not lexists(myactivity_html):
+    #     logger.warning(f"{myactivity_html} is not present... skipping")
+    #     return None
 
-    data: str
-    with open(myactivity_html, 'r') as fo:
-        data = fo.read()
+    data: str = myactivity_html_fo.read()
     parser = TakeoutHTMLParser(tag)
     parser.feed(data)
     return parser.urls
 
-def read_google_activity(takeout_dir: str) -> Optional[History]:
-    myactivity_html = join(takeout_dir, "My Activity", "Chrome", "MyActivity.html")
-    return _read_google_activity(myactivity_html, 'activity-chrome')
+def _exists(thing, path):
+    if isinstance(thing, ZipFile):
+        # TODO
+        raise NotImplementedError
+    else:
+        return lexists(join(thing, path))
 
-def read_search_activity(takeout_dir: str) -> Optional[History]:
-    myactivity_html = join(takeout_dir, "My Activity", "Search", "MyActivity.html")
-    return _read_google_activity(myactivity_html, 'activity-search')
 
-def read_browser_history_json(takeout_dir: str) -> History:
-    jfile = join(takeout_dir, "Chrome", "BrowserHistory.json")
+def _open(thing, path):
+    if isinstance(thing, ZipFile):
+        return thing.open(path, 'r')
+    else:
+        return open(join(thing, path), 'r')
 
-    if not lexists(jfile):
-        logger.warning(f"{jfile} is not present... skipping")
+
+def read_google_activity(takeout) -> Optional[History]:
+    spath = join("My Activity", "Chrome", "MyActivity.html")
+    if not _exists(takeout, spath):
+        logger.warning(f"{spath} is not present... skipping")
+        return None
+    with _open(takeout, spath) as fo:
+        return _read_google_activity(fo, 'activity-chrome')
+
+def read_search_activity(takeout) -> Optional[History]:
+    spath = join("My Activity", "Search", "MyActivity.html")
+    if not _exists(takeout, spath):
+        logger.warning(f"{spath} is not present... skipping")
+        return None
+    with _open(takeout, spath) as fo:
+        return _read_google_activity(fo, 'activity-search')
+
+def read_browser_history_json(takeout) -> Optional[History]:
+    spath = join("Chrome", "BrowserHistory.json")
+
+    if not _exists(takeout, spath):
+        logger.warning(f"{spath} is not present... skipping")
         return None
 
     j = None
-    with open(jfile, 'r') as fo:
+    with _open(takeout, spath) as fo:
         j = json.load(fo)
 
     urls = History()
@@ -137,10 +160,24 @@ def read_browser_history_json(takeout_dir: str) -> History:
         urls.register(url, visit)
     return urls
 
-def get_takeout_histories(takeout_dir: str) -> List[History]:
-    chrome_myactivity = read_google_activity(takeout_dir)
-    search_myactivity = read_search_activity(takeout_dir)
-    browser_history_json = read_browser_history_json(takeout_dir)
+def get_takeout_histories(takeout_path: str) -> List[History]:
+    # first, figure out what is takeout_path...
+    takeout = None
+    if isfile(takeout_path):
+        # must be a takeout zip
+        # TODO support other formats too
+        pass
+    elif lexists(join(takeout_path, 'My Activity')):
+        # unpacked dir, just process it
+        takeout = takeout_path
+    else:
+        # TODO
+        pass
+
+
+    chrome_myactivity = read_google_activity(takeout_path)
+    search_myactivity = read_search_activity(takeout_path)
+    browser_history_json = read_browser_history_json(takeout_path)
     return [h for h in (
         chrome_myactivity,
         search_myactivity,
