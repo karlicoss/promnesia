@@ -44,7 +44,7 @@ def render(all_histories: List[History], where: str) -> None:
 
         res = []
         for group in groups:
-            tags = {e.tag for e in group}
+            tags = {e.tag for e in group if e.tag is not None}
             stags = ':'.join(tags)
 
             start_time_s = group[0].dt.strftime(TIME_FORMAT)

@@ -1,9 +1,11 @@
 from datetime import datetime
-from subprocess import check_output, check_call
-from urllib.parse import unquote
 from os import stat
+from subprocess import check_output, check_call
+from typing import Optional
+from urllib.parse import unquote
 
 from wereyouhere.common import Entry, History, Visit
+
 
 def get_custom_history(command: str, tag: str = "") -> History:
     output = check_output(command, shell=True)
@@ -19,8 +21,8 @@ def get_custom_history(command: str, tag: str = "") -> History:
         else:
             parts = [line]
 
-        fname: str
-        lineno: str
+        fname: Optional[str]
+        lineno: Optional[str]
         url: str
         if len(parts) == 1:
             fname = None

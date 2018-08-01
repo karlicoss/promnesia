@@ -1,13 +1,13 @@
 from collections.abc import Sized
 from datetime import datetime
 import re
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional
 
 Date = datetime
 class Visit(NamedTuple):
     dt: datetime
-    tag: str = None
-    context: str = None
+    tag: Optional[str] = None
+    context: Optional[str] = None
 
 Url = str
 class Entry(NamedTuple):
