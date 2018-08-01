@@ -14,7 +14,6 @@ import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-chrome-history-db.py')
 
 def test_takeout():
-    # test_takeout_path = "/L/backups/takeout/karlicoss_gmail_com/takeout-20180623T190546Z-001.zip"
     test_takeout_path = "testdata/takeout"
     import wereyouhere.generator.takeout as takeout_gen
     histories = takeout_gen.get_takeout_histories(test_takeout_path)

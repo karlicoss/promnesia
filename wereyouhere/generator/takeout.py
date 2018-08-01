@@ -6,9 +6,11 @@ from datetime import datetime
 from enum import Enum
 from html.parser import HTMLParser
 from os.path import join, lexists, isfile
-from typing import List, Dict, Any, Optional
+import os
+from typing import List, Dict, Any, Optional, Union
 from urllib.parse import unquote
 from zipfile import ZipFile
+import re
 import json
 
 from wereyouhere.common import Entry, History, Visit
@@ -96,12 +98,7 @@ class TakeoutHTMLParser(HTMLParser):
                     return
 
 def _read_google_activity(myactivity_html_fo, tag: str):
-    # # TODO ugh, for zip files we'd have to be more careful...
-    # if not lexists(myactivity_html):
-    #     logger.warning(f"{myactivity_html} is not present... skipping")
-    #     return None
-
-    data: str = myactivity_html_fo.read()
+    data: str = myactivity_html_fo.read().decode('utf-8')
     parser = TakeoutHTMLParser(tag)
     parser.feed(data)
     return parser.urls
@@ -117,7 +114,7 @@ def _open(thing, path):
     if isinstance(thing, ZipFile):
         return thing.open(path, 'r')
     else:
-        return open(join(thing, path), 'r')
+        return open(join(thing, path), 'rb')
 
 
 def read_google_activity(takeout) -> Optional[History]:
@@ -161,18 +158,20 @@ def read_browser_history_json(takeout) -> Optional[History]:
 
 def get_takeout_histories(takeout_path: str) -> List[History]:
     # first, figure out what is takeout_path...
-    takeout = None
+    takeout: Union[ZipFile, str]
     if isfile(takeout_path):
         # must be a takeout zip
         # TODO support other formats too
         takeout = ZipFile(takeout_path)
     elif lexists(join(takeout_path, 'Takeout', 'My Activity')):
         # unpacked dir, just process it
-        takeout = takeout_path # type: ignore
+        takeout = takeout_path
     else:
-        # TODO
-        pass
-
+        # directory with many takeout archives
+        TAKEOUT_REGEX = re.compile(r'takeout-\d{8}T\d{6}Z')
+        takeout_name = max([ff for ff in os.listdir(takeout_path) if TAKEOUT_REGEX.match(ff)]) # lastest chronologically
+        takeout = ZipFile(join(takeout_path, takeout_name))
+        # TODO multipart archives?
 
     chrome_myactivity = read_google_activity(takeout)
     search_myactivity = read_search_activity(takeout)
