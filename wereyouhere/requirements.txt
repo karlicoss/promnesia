@@ -1,3 +1,6 @@
 # for detecting sqlite databases
 python-magic
 pytest
+
+# for py -> js translation
+

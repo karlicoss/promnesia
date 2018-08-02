@@ -1,11 +1,12 @@
 {
     "name": "Were you here?",
-    "version": "0.3",
+    "version": "0.3.1",
     "description": "Indicates whether and when the page was visited (and more!)",
     "background": {
         "scripts": [
             "background.js",
-            "common.js"
+            "common.js",
+            "js_shared.js"
         ],
         "persistent": false
     },

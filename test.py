@@ -41,7 +41,7 @@ def test_plaintext_path_extractor():
     hist = custom_gen.get_custom_history(
         extract_from_path('testdata/custom'),
     )
-    assert len(hist) == 5
+    assert len(hist) == 4
 
 @skip("use a different way to specify filter other than class variable..")
 def test_filter():
@@ -61,7 +61,7 @@ def test_custom():
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
         tag='test',
     )
-    assert len(hist) == 5 # TODO this will be changed later when we actually normalise
+    assert len(hist) == 4 # https and http are same
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
 

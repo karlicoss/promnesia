@@ -3,6 +3,8 @@ from datetime import datetime
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional
 
+from .normalise import normalise_url
+
 Date = datetime
 class Visit(NamedTuple):
     dt: datetime
@@ -78,6 +80,9 @@ class History(Sized):
     def register(self, url: Url, v: Visit) -> None:
         if History.filtered(url):
             return
+        # TODO hmm some filters make sense before stripping off protocol...
+        # TODO is it a good place to normalise?
+        url = normalise_url(url)
 
         e = self.urls.get(url, None)
         if e is None:
