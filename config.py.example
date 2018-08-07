@@ -1,3 +1,4 @@
+from typing import List, Tuple, Optional
 from wereyouhere.generator.plaintext import extract_from_path
 
 """
@@ -8,8 +9,11 @@ Note that it CAN'T be ~/.config/google-chrome, since SQLITE will refuse connecti
 You can use the helper script in scripts/backup-chrome-history-db.py, e.g. add it to cron to run every week or something. 
 
 If not set, the script will just skip it.
+
+# TODO update desctiption
+[(tag, path)]
 """
-CHROME_HISTORY_DB: str = None
+CHROME_HISTORY_DBS: Optional[List[Tuple[str, str]]] = None
 
 """
 This is the source for takeout.google.com
@@ -19,7 +23,7 @@ The path is one of the following:
 - Path which contains takeout zips (in which case the latest takeout will be processed)
 If not set, the script will just skip it.
 """
-GOOGLE_TAKEOUT_PATH: str = None
+GOOGLE_TAKEOUT_PATH: Optional[str] = None
 
 """
 Specify commands which just output urls line by line
@@ -38,7 +42,7 @@ CUSTOM_EXTRACTORS = [
 """
 This directory contains output which is to be consumed by the plugin.
 """
-OUTPUT_DIR: str = None
+OUTPUT_DIR: str
 
 """
 Custom regexes for filtering out URLS. Can be a regex or a predicate returning True if the URL has to be filtered

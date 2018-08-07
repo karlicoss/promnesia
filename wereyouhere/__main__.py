@@ -21,7 +21,7 @@ from .render import render
 
 
 def main():
-    chrome_db = config.CHROME_HISTORY_DB
+    chrome_dbs = config.CHROME_HISTORY_DBS
     takeout_path = config.GOOGLE_TAKEOUT_PATH
     custom_extractors = config.CUSTOM_EXTRACTORS
     output_dir = config.OUTPUT_DIR
@@ -38,13 +38,14 @@ def main():
         lengths = [len(h) for h in histories]
         logger.info(f"Got {len(histories)} Histories from {from_}: {lengths}")
 
-    if chrome_db is not None:
+    if chrome_dbs is not None:
         import wereyouhere.generator.chrome as chrome_gen
-        chrome_histories = list(chrome_gen.iter_chrome_histories(chrome_db))
-        all_histories.extend(chrome_histories)
-        log_hists(chrome_histories, 'Chrome')
+        for tag, db in chrome_dbs:
+            chrome_histories = list(chrome_gen.iter_chrome_histories(db, tag))
+            all_histories.extend(chrome_histories)
+            log_hists(chrome_histories, f'Chrome {tag}')
     else:
-        logger.warning("CHROME_HISTORY_DB is not set, not using chrome entries to populate extension DB!")
+        logger.warning("CHROME_HISTORY_DBS is not set, not using chrome entries to populate extension DB!")
 
     if takeout_path is not None:
         import wereyouhere.generator.takeout as takeout_gen

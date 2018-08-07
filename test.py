@@ -29,7 +29,7 @@ def test_chrome():
     with TemporaryDirectory() as tdir:
         path = backup_db.backup_to(tdir)
 
-        [hist] = list(chrome_gen.iter_chrome_histories(path))
+        [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
         assert len(hist) > 10 # kinda random sanity check
 
         render([hist], join(tdir, 'res.json'))
