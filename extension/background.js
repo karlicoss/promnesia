@@ -113,18 +113,11 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
     );
 }
 
-var PROTOCOL_REGEX;
-
-function normalise_url(url) {
-    if (!PROTOCOL_REGEX) {
-        PROTOCOL_REGEX = RegExp(PROTOCOL_REGEXS);
-    }
-    return PROTOCOL_REGEX[Symbol.replace](url, '');
-}
-
 function getMapVisits(url, cb /* Visits -> Void */) {
     getMap(map => {
         var nurl = normalise_url(url);
+        console.log("Original: %s", url);
+        console.log("Normalised: %s", nurl);
         var v = map[nurl];
         if (v) {
             cb(v);

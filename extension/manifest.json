@@ -6,7 +6,7 @@
         "scripts": [
             "background.js",
             "common.js",
-            "js_shared.js"
+            "normalise.js"
         ],
         "persistent": false
     },

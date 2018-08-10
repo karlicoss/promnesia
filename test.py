@@ -43,6 +43,17 @@ def test_plaintext_path_extractor():
     )
     assert len(hist) == 4
 
+def test_normalise():
+    import wereyouhere.generator.custom as custom_gen
+    from wereyouhere.generator.plaintext import extract_from_path
+
+    hist = custom_gen.get_custom_history(
+        extract_from_path('testdata/normalise'),
+    )
+    print(hist.urls)
+    assert len(hist) == 3
+
+
 @skip("use a different way to specify filter other than class variable..")
 def test_filter():
     import wereyouhere.generator.custom as custom_gen

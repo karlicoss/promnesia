@@ -1,14 +1,19 @@
-from .js_shared import PROTOCOL_REGEXS
+from re import compile as R
 
-def __init_regex():
-    import re
-    return re.compile(PROTOCOL_REGEXS)
+STRIP_RULES = [
+    (R('.*')         , R('^\\w+://'         )), # protocol
+    (R('.*')         , R('[&#\\?].*$'       )), # query
+    (R('reddit.com') , R('(www|ww|amp)\\.'  )),
+]
+# TODO fine tune, start with reddit?
 
-PROTOCOL_REGEX = __init_regex()
+def normalise_url(url):
+    cur = url
+    for target, reg in STRIP_RULES:
 
-def strip_protocol(s):
-    return PROTOCOL_REGEX.sub('', s)
+
+        if target.search(cur):
+            cur = reg.sub('', cur)
 
 
-def normalise_url(s):
-    return strip_protocol(s)
+    return cur

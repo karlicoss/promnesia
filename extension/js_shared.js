@@ -1,1 +1,0 @@
-PROTOCOL_REGEXS = '^\\w+://';
