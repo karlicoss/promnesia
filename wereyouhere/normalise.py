@@ -2,11 +2,11 @@ from re import compile as R
 
 STRIP_RULES = [
     [R('.*')                     , R('^\\w+://'         )],
-    [R('reddit.com|youtube.com') , R('(www|ww|amp)\\.'  )],
+    [R('.*')                     , R('(www|ww|amp)\\.'  )],
     [R('.*')                     , R('[&#].*$'       )],
     [
-        [R('^youtube') , None],
-        [R('.*')       , R('[\\?].*$')],
+        [R('^(youtube|urbandictionary|tesco|scottaaronson|answers.yahoo.com|code.google.com)') , None],
+        [R('.*'), R('[\\?].*$')],
     ]
 ]
 

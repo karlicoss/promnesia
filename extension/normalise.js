@@ -2,11 +2,11 @@ var R = RegExp;
 
 STRIP_RULES = [
     [R('.*')                     , R('^\\w+://'         )],
-    [R('reddit.com|youtube.com') , R('(www|ww|amp)\\.'  )],
+    [R('.*')                     , R('(www|ww|amp)\\.'  )],
     [R('.*')                     , R('[&#].*$'       )],
     [
-        [R('^youtube') , null],
-        [R('.*')       , R('[\\?].*$')],
+        [R('^(youtube|urbandictionary|tesco|scottaaronson|answers.yahoo.com|code.google.com)') , null],
+        [R('.*'), R('[\\?].*$')],
     ]
 ]
 ;
