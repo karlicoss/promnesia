@@ -72,6 +72,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Backup and merge tool for chrome history db")
     parser.add_argument('--backup', action='store_true', default=False)
+    parser.add_argument('--backup-to', type=str, default=None)
     parser.add_argument('--merge', action='store_true', default=False)
     parser.add_argument('--merge-from', type=str, default=None)
     parser.add_argument('--merge-to', type=str, default=None, help="Database containing merged visits. Used as input to CHROME_HISTORY_DB in config.py")
@@ -86,8 +87,9 @@ def main():
 
     if args.backup:
         tdir = TemporaryDirectory()
-        backup_to(tdir.name)
-        merge_from = tdir.name
+        bdir = args.backup_to if args.backup_to is not None else tdir.name
+        backup_to(bdir)
+        merge_from = bdir
     else:
         merge_from = args.merge_from
 
