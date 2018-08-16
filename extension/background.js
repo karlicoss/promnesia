@@ -142,34 +142,41 @@ function getVisits(url, cb /* Visits -> Void */) {
     });
 }
 
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+function updateState () {
     // TODO ugh no simpler way??
     chrome.tabs.query({'active': true}, function (tabs) {
         // TODO why am I getting multiple results???
-        var url = tabs[0].url;
+        let atab = tabs[0];
+        let url = atab.url;
+        let tabId = atab.tabId;
         getVisits(url, function (visits) {
             if (visits.visits.length > 0) { // TODO check if visits are trivial?
                 chrome.browserAction.setIcon({
                     path: "ic_visited_48.png",
-                    tabId: tab.id
+                    tabId: tabId
                 });
                 chrome.browserAction.setTitle({
                     title: "Was visited! " + String(visits),
-                    tabId: tab.id
+                    tabId: tabId
                 });
             } else {
                 chrome.browserAction.setIcon({
                     path: "ic_not_visited_48.png",
-                    tabId: tab.id
+                    tabId: tabId
                 });
                 chrome.browserAction.setTitle({
                     title: "Was not visited",
-                    tabId: tab.id
+                    tabId: tabId
                 });
             }
         });
     });
-});
+}
+
+// erm.. all these things are pretty confusing, but that seems to work... just onUpdated didnt
+chrome.tabs.onActivated.addListener(updateState);
+chrome.tabs.onUpdated.addListener(updateState);
+// chrome.tabs.onReplaced.addListener(updateState);
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.method == 'getVisits') {

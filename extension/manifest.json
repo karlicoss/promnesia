@@ -1,6 +1,6 @@
 {
     "name": "Were you here?",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "description": "Indicates whether and when the page was visited (and more!)",
     "background": {
         "scripts": [
