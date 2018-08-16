@@ -51,7 +51,7 @@ def test_normalise():
         extract_from_path('testdata/normalise'),
     )
     print(hist.urls)
-    assert len(hist) == 3
+    assert len(hist) == 5
 
 
 @skip("use a different way to specify filter other than class variable..")
