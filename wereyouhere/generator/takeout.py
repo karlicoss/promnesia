@@ -16,7 +16,7 @@ import json
 from wereyouhere.common import Entry, History, Visit
 
 # Mar 8, 2018, 5:14:40 PM
-_TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p"
+_TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p %Z"
 
 class State(Enum):
     OUTSIDE = 0
