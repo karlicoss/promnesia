@@ -3,6 +3,7 @@ from datetime import datetime
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional
 import logging
+from functools import lru_cache
 
 from .normalise import normalise_url
 
@@ -131,3 +132,11 @@ def merge_histories(hists: Iterable[History]) -> History:
 
 def get_logger():
     return logging.getLogger("WereYouHere")
+
+
+# kinda singleton
+@lru_cache()
+def get_tmpdir():
+    import tempfile
+    tdir = tempfile.TemporaryDirectory(suffix="wereyouhere")
+    return tdir

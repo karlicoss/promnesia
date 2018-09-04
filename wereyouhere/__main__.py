@@ -6,21 +6,20 @@ def cwd_import(name: str):
     sys.path.pop()
     return res
 
-config = cwd_import('config')
-
 import logging
 
 import inspect
 import os.path
 from typing import List, Tuple
 
-from .common import Entry, Visit, History, simple_history, Filter, make_filter, get_logger
+from .common import Entry, Visit, History, simple_history, Filter, make_filter, get_logger, get_tmpdir
 from .render import render
 
 
-def main():
+def run():
     logger = get_logger()
-    logging.basicConfig(level=logging.INFO)
+
+    config = cwd_import('config')
 
     chrome_dbs = config.CHROME_HISTORY_DBS
     takeout_path = config.GOOGLE_TAKEOUT_PATH
@@ -77,5 +76,13 @@ def main():
     urls_json = os.path.join(output_dir, 'urls.json')
     render(all_histories, urls_json)
 
+def main():
+    logging.basicConfig(level=logging.INFO)
+    try:
+        run()
+    except:
+        tdir = get_tmpdir()
+        tdir.cleanup()
+        raise
 
 main()
