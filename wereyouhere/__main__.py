@@ -9,18 +9,19 @@ def cwd_import(name: str):
 config = cwd_import('config')
 
 import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("WereYouHere")
 
 import inspect
 import os.path
 from typing import List, Tuple
 
-from .common import Entry, Visit, History, simple_history, Filter, make_filter
+from .common import Entry, Visit, History, simple_history, Filter, make_filter, get_logger
 from .render import render
 
 
 def main():
+    logger = get_logger()
+    logging.basicConfig(level=logging.INFO)
+
     chrome_dbs = config.CHROME_HISTORY_DBS
     takeout_path = config.GOOGLE_TAKEOUT_PATH
     custom_extractors = config.CUSTOM_EXTRACTORS
@@ -75,7 +76,6 @@ def main():
 
     urls_json = os.path.join(output_dir, 'urls.json')
     render(all_histories, urls_json)
-
 
 
 main()

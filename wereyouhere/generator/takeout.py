@@ -1,5 +1,4 @@
 import logging
-logger = logging.getLogger("WereYouHere")
 
 from collections import OrderedDict
 from datetime import datetime
@@ -13,7 +12,7 @@ from zipfile import ZipFile
 import re
 import json
 
-from wereyouhere.common import Entry, History, Visit
+from wereyouhere.common import Entry, History, Visit, get_logger
 
 # Mar 8, 2018, 5:14:40 PM
 _TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p %Z"
@@ -118,6 +117,7 @@ def _open(thing, path):
 
 
 def read_google_activity(takeout) -> Optional[History]:
+    logger = get_logger()
     spath = join("Takeout", "My Activity", "Chrome", "MyActivity.html")
     if not _exists(takeout, spath):
         logger.warning(f"{spath} is not present... skipping")
@@ -126,6 +126,7 @@ def read_google_activity(takeout) -> Optional[History]:
         return _read_google_activity(fo, 'activity-chrome')
 
 def read_search_activity(takeout) -> Optional[History]:
+    logger = get_logger()
     spath = join("Takeout", "My Activity", "Search", "MyActivity.html")
     if not _exists(takeout, spath):
         logger.warning(f"{spath} is not present... skipping")
@@ -134,6 +135,7 @@ def read_search_activity(takeout) -> Optional[History]:
         return _read_google_activity(fo, 'activity-search')
 
 def read_browser_history_json(takeout) -> Optional[History]:
+    logger = get_logger()
     spath = join("Takeout", "Chrome", "BrowserHistory.json")
 
     if not _exists(takeout, spath):

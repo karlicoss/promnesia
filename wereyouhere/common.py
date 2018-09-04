@@ -2,6 +2,7 @@ from collections.abc import Sized
 from datetime import datetime
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional
+import logging
 
 from .normalise import normalise_url
 
@@ -127,3 +128,6 @@ def entry_merger(a: Entry, b: Entry):
 
 def merge_histories(hists: Iterable[History]) -> History:
     return History.from_urls(merge_dicts(entry_merger, [h.urls for h in hists]))
+
+def get_logger():
+    return logging.getLogger("WereYouHere")
