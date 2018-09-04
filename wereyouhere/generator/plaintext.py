@@ -17,9 +17,9 @@ def _extract_from_dir(path: str) -> str:
 
 def _extract_from_file(path: str) -> str:
     return _GREP_CMD.format(
-        grep_args="",
+        grep_args="-n",
         regex=_URL_REGEX,
-        path=path,
+        path=f"'{path}' /dev/null", # dev null to trick into displaying filename
     )
 
 
