@@ -1,0 +1,46 @@
+{
+  "name": "wereyouhere-chrome-extension",
+  "version": "1.0.0",
+  "description": "Extension to aid you in rememberin what you already visited and in which context",
+  "main": "dist/background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --progress --profile --colors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karlicoss/were-you-here.git"
+  },
+  "keywords": [
+    "pkm",
+    "history"
+  ],
+  "author": "Dmitrii Gerasimov <karlicoss@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/karlicoss/were-you-here/issues"
+  },
+  "homepage": "https://github.com/karlicoss/were-you-here#readme",
+  "devDependencies": {
+    "babel-core": "6.24.0",
+    "babel-eslint": "^7.2.3",
+    "babel-generator": "6.24.0",
+    "babel-loader": "6.4.1",
+    "babel-plugin-module-resolver": "2.6.2",
+    "babel-plugin-react-require": "3.0.0",
+    "babel-plugin-transform-class-properties": "6.22.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "6.24.0",
+    "babel-plugin-transform-object-rest-spread": "6.22.0",
+    "babel-plugin-transform-react-jsx-source": "6.22.0",
+    "babel-plugin-transform-react-remove-prop-types": "0.3.3",
+    "babel-plugin-transform-runtime": "6.22.0",
+    "babel-preset-env": "^1.4.0",
+    "babel-preset-latest": "6.24.0",
+    "babel-preset-node6-es6": "^11.2.5",
+    "babel-preset-react": "6.23.0",
+    "babel-preset-stage-0": "^6.24.1",
+    "babel-runtime": "6.23.0",
+    "copy-webpack-plugin": "^4.0.1",
+    "webpack": "^2.5.1"
+  }
+}
