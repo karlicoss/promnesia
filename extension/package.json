@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --progress --profile --colors",
     "watch": "webpack --watch --progress --colors",
-    "dev": "npm run watch"
+    "dev": "npm run watch",
+    "lint": "eslint src"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,8 @@
     "babel-preset-stage-0": "^6.24.1",
     "babel-runtime": "6.23.0",
     "copy-webpack-plugin": "^4.0.1",
+    "eslint": "^5.6.0",
+    "eslint-config-google": "^0.10.0",
     "webpack": "^2.5.1"
   }
 }

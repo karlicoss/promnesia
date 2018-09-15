@@ -21,7 +21,7 @@ function refreshMap (cb /* Map[Url, Visits] -> Void */) {
             console.log("Loaded map of length ", len);
             if (len > 0) {
                 all_urls = {};
-                Object.keys(map).map(function (key, index) {
+                Object.keys(map).map(function (key /*index*/) {
                     var xxx = map[key];
                     all_urls[key] = new Visits(xxx[0], xxx[1]);
                 });
@@ -49,9 +49,9 @@ function getMap(cb /* Map[Url, Visits] -> Void */) {
 
 chrome.runtime.onInstalled.addListener(function () {refreshMap(null); });
 
-function getDelay(url) {
+function getDelay(/*url*/) {
     return 24 * 60 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
-};
+}
 
 function getChromeVisits(url, cb /* Visits -> Void */) {
     chrome.history.getVisits(
@@ -68,13 +68,13 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
                     groups.push(group);
                     group = [];
                 }
-            };
+            }
 
             function split_date_time (dt) {
                 var d = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
                 var spl = d.toISOString().split('Z')[0].split('T');
                 return [spl[0], spl[1].substring(0, 5)];
-            };
+            }
 
             function format_time (dt) {
                 return split_date_time(dt)[1];
@@ -92,7 +92,7 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
 
             function format_group (g) {
                 return format_date(g[0]) + " " + format_time(g[0]) + "--" + format_time(g[g.length - 1]) + '  (chr)';
-            };
+            }
 
             var delta = 20 * 60 * 1000; // make sure it matches with python
             for (const t of times) {
@@ -133,7 +133,7 @@ function getVisits(url, cb /* Visits -> Void */) {
         getMapVisits(url, function (map_visits) {
             cb(new Visits(
                 map_visits.visits.concat(chr_visits.visits),
-                map_visits.contexts.concat(chr_visits.contexts),
+                map_visits.contexts.concat(chr_visits.contexts)
                 // TODO actually, we should sort somehow... but with dates as strings gonna be tedious...
                 // maybe, get range of timestamps from python and convert in JS? If we're doing that anyway...
                 // also need to share domain filters with js...

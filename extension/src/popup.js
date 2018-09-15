@@ -32,6 +32,6 @@ function requestVisits() {
             cell.innerHTML = "<a href='emacs:" + context + "'>" + context + "</a>";
         }
     });
-};
+}
 
 document.addEventListener('DOMContentLoaded', requestVisits);

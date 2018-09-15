@@ -4,7 +4,7 @@ function save_options() {
         console.log('Value is set to ' + fpath);
         chrome.runtime.sendMessage({
             'method':'refreshMap'
-        }, function(response){
+        }, function(/*response*/){
             console.log("reloaded the map");
         });
     });
