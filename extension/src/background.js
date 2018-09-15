@@ -1,4 +1,5 @@
-// import Visit from 'common.js'; does not work???
+import {Visits} from './common';
+import {normalise_url} from './normalise';
 
 // measure slowdown? Although it's async, so it's fine probably
 var all_urls;
@@ -94,8 +95,8 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
             };
 
             var delta = 20 * 60 * 1000; // make sure it matches with python
-            for (t of times) {
-                last = group.length == 0 ? t : group[group.length - 1];
+            for (const t of times) {
+                const last = group.length == 0 ? t : group[group.length - 1];
                 if (t - last > delta) {
                     dump_group();
                 }
@@ -152,7 +153,7 @@ function updateState () {
         getVisits(url, function (visits) {
             if (visits.visits.length > 0) { // TODO check if visits are trivial?
                 chrome.browserAction.setIcon({
-                    path: "ic_visited_48.png",
+                    path: "images/ic_visited_48.png",
                     tabId: tabId
                 });
                 chrome.browserAction.setTitle({
@@ -161,7 +162,7 @@ function updateState () {
                 });
             } else {
                 chrome.browserAction.setIcon({
-                    path: "ic_not_visited_48.png",
+                    path: "images/ic_not_visited_48.png",
                     tabId: tabId
                 });
                 chrome.browserAction.setTitle({

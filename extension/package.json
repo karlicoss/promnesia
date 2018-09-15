@@ -5,7 +5,9 @@
   "main": "dist/background.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --progress --profile --colors"
+    "build": "webpack --progress --profile --colors",
+    "watch": "webpack --watch --progress --colors",
+    "dev": "npm run watch"
   },
   "repository": {
     "type": "git",

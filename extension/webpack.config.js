@@ -1,12 +1,12 @@
-const path = require('path')
-const webpack = require('webpack')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
+const path = require('path');
+const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: {
     background: path.join(__dirname, './src/background'),
-    /*entry: path.join(__dirname, './src/entry'),*/
-
+    options   : path.join(__dirname, './src/options'),
+    popup     : path.join(__dirname, './src/popup'),
   },
   output: {
     path: path.join(__dirname, './dist'),
@@ -15,13 +15,18 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin([
       { from: 'src/manifest.json' },
-      { from: 'images/**/*' }
+      { from: 'images/*' },
+      { from: 'src/*.html' , flatten: true},
     ]),
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify('production')
       }
-    })
+    }),
+    // new webpack.optimize.UglifyJsPlugin({
+    //     minimize: false,
+    //     compress: false
+    // }),
   ],
   resolve: {
     extensions: ['.js']

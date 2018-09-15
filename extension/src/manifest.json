@@ -1,13 +1,9 @@
 {
     "name": "Were you here?",
-    "version": "0.3.2",
+    "version": "0.4.0",
     "description": "Indicates whether and when the page was visited (and more!)",
     "background": {
-        "scripts": [
-            "background.js",
-            "common.js",
-            "normalise.js"
-        ],
+        "scripts": ["background.js"],
         "persistent": false
     },
 "options_ui": {
@@ -21,10 +17,10 @@
         "history"
     ],
     "icons": {
-        "48": "ic_not_visited_48.png"
+        "48": "images/ic_not_visited_48.png"
     },
     "browser_action": {
-        "default_icon": "ic_not_visited_48.png",
+        "default_icon": "images/ic_not_visited_48.png",
         "default_title": "Was not visited",
         "default_popup": "popup.html"
 

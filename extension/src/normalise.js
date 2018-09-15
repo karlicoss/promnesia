@@ -1,5 +1,6 @@
 var R = RegExp;
 
+export const
 STRIP_RULES = [
     [R('.*')                     , R('^\\w+://'         )],
     [R('.*')                     , R('(www|ww|amp)\\.'  )],
@@ -11,7 +12,7 @@ STRIP_RULES = [
 ]
 ;
 
-function normalise_url(url) {
+export function normalise_url(url) {
     var cur = url;
     STRIP_RULES.forEach(function (thing) { // meh impure foreach..
         let first = thing[0];
