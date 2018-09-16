@@ -8,9 +8,24 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 * Google Takeout/Activity backups
 * custom shell command 
 * [todo] file system link extractors
-* in general, it's super extendable. It's JSON, duh!
+* in general, it's super extendable. It's JSON, after all!
 
 See more in [sources.md](sources.md).
+
+# Demo (as of v 0.5)
+![Demo screenshot](/misc/demo.jpg)
+
+Apologies for design, I'm not great at it and it's a screenshot of the first (as of v 0.5) version of sidebar :)
+
+Some explanations:
+
+* green eye indicates that the link was visited, so after you click it, you get the sidebar with more information
+* Visits: I have this link added in my Pinboard, and visited it few times from different computers.
+* Contexts
+
+  * I chatted with some of my friends and sent them the link at some point. If I click the context, my Emacs will jump right at the point where the link was in the Telegram backup file. Json is clearly not the most convenient way to go through conversations with friends, but that's a matter of representing chats in a plaintext form. The benefit though is that once you have any sort of grepable source it's super easy to feed it into the plugin.
+  * I had this link stored somewhere in my org mode notes in readlater.org file.
+  * I also have this link annotated via [Hypothesis](https://hypothes.is/)!
 
 # Configuring
 * generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m wereyouhere`
