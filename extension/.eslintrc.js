@@ -1,9 +1,12 @@
 module.exports = {
     // "extends": "google",
-    'extends': 'eslint:recommended',
+    'extends': [
+        "eslint:recommended",
+        "plugin:react/recommended",
+    ],
     'env': {
-        "browser": true,
-        "webextensions": true,
+        'browser': true,
+        'webextensions': true,
         'node': true,
         'es6': true,
     },
@@ -21,4 +24,5 @@ module.exports = {
         "comma-dangle": "off",
         "no-console": "off",
     }
+    // TODO use flow?
 };

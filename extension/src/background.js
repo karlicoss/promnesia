@@ -194,3 +194,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
     return false;
 });
+
+// TODO what about default listener??
+chrome.browserAction.onClicked.addListener(tab => {
+    chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'});
+});
