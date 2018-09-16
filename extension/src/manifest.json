@@ -1,7 +1,8 @@
 {
     "name": "Were you here?",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "description": "Indicates whether and when the page was visited (and more!)",
+    "web_accessible_resources": ["sidebar.js"],
     "background": {
         "scripts": ["background.js"],
         "persistent": false
@@ -11,6 +12,9 @@
     "chrome_style": true
   },
     "permissions": [
+        "https://*/*",
+        "http://*/*",
+
         "file:///*",
         "tabs",
         "storage",
@@ -21,9 +25,7 @@
     },
     "browser_action": {
         "default_icon": "images/ic_not_visited_48.png",
-        "default_title": "Was not visited",
-        "default_popup": "popup.html"
-
+        "default_title": "Was not visited"
     },
     "manifest_version": 2
 }
