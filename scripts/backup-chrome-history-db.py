@@ -3,11 +3,14 @@
 from datetime import datetime
 import logging
 import os
-from os.path import expanduser, join, getsize, lexists
+from os.path import expanduser, join, getsize, lexists, abspath, dirname
 from os import listdir
 import shutil
 from tempfile import TemporaryDirectory
 from typing import Optional
+
+
+MERGE_SCRIPT = join(abspath(dirname(__file__)), 'merge-chrome-db/merge.sh')
 
 
 def get_logger():
@@ -51,7 +54,7 @@ def merge(merged: str, chunk: str):
         logger.info(f"Merged DB size before: {getsize(merged)}")
     else:
         logger.info(f"Merged DB doesn't exist yet: {merged}")
-    check_call(['/L/coding/were-you-here/scripts/merge-chrome-db/merge.sh', merged, chunk])
+    check_call([MERGE_SCRIPT, merged, chunk])
     logger.info(f"Merged DB size after: {getsize(merged)}")
 
 def merge_all_from(merged: str, merge_from: str, move_to: str):
