@@ -4,6 +4,8 @@ from os.path import join, getsize
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import pytz
+from shutil import copytree
+from os import mkdir
 
 import pytest # type: ignore
 from pytest import mark # type: ignore
@@ -101,15 +103,25 @@ def test_custom():
         render([hist], join(tdir, 'res.json'))
 
 
+
+TESTDATA_CHROME_HISTORY = "/L/data/wereyouhere/testdata/chrome-history"
+
+def get_chrome_history_backup(td: str):
+    copytree(TESTDATA_CHROME_HISTORY, join(td, 'backup'))
+
 def test_merge():
     merge = backup_db.merge
 
-    testdata_path = "/L/data/wereyouhere/testdata/chrome-history"
-    first  = join(testdata_path, "20180415/History")
-    second = join(testdata_path, "20180417/History")
     # TODO third is implicit... use merging function
     with TemporaryDirectory() as tdir:
-        merged_path = join(tdir, 'merged.sql')
+        get_chrome_history_backup(tdir)
+        first  = join(tdir, "backup/20180415/History")
+        second = join(tdir, "backup/20180417/History")
+
+        mdir = join(tdir, 'merged')
+        mkdir(mdir)
+        merged_path = join(mdir, 'merged.sql')
+
 
         def merged_size() -> int:
             return getsize(merged_path)
