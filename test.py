@@ -164,6 +164,18 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
+    import wereyouhere.generator.chrome as chrome_gen
+
+    [hist] = list(chrome_gen.iter_chrome_histories(mfile, 'sqlite'))
+    assert len(hist) > 0
+
+    older = hist['github.com/orgzly/orgzly-android/issues']
+    assert any(v.dt < datetime(year=2018, month=1, day=17) for v in older.visits)
+    # in particular, "2018-01-16 19:56:56"
+
+    newer = hist['en.wikipedia.org/wiki/Notice_and_take_down']
+    assert any(v.dt >= datetime(year=2018, month=4, day=16) for v in newer.visits)
+    # print(xxx)
     # TODO check for 'https://en.wikipedia.org/wiki/Notice_and_take_down' ? from database for 20180417
 
 def test_merge_all_from():

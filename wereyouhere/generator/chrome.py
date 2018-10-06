@@ -15,6 +15,8 @@ def read_chrome_history(histfile: str, tag: str) -> History:
         # TODO hmm, not so sure about this unquote...
         url = unquote(x['url']) 
         times = x['time']
+        # TODO should be utc? https://stackoverflow.com/a/26226771/706389
+        # yep, tested it and looks like utc
         time = datetime.strptime(times, _TIME_FORMAT)
         visit = Visit(
             dt=time,
