@@ -175,8 +175,10 @@ def _test_merge_all_from(tdir):
 
     newer = hist['en.wikipedia.org/wiki/Notice_and_take_down']
     assert any(v.dt >= datetime(year=2018, month=4, day=16) for v in newer.visits)
-    # print(xxx)
-    # TODO check for 'https://en.wikipedia.org/wiki/Notice_and_take_down' ? from database for 20180417
+
+    # from implicit db
+    newest = hist['feedly.com/i/discover']
+    assert any(v.dt >= datetime(year=2018, month=9, day=27) for v in newest.visits)
 
 def test_merge_all_from():
     with TemporaryDirectory() as tdir:

@@ -4,10 +4,11 @@ from datetime import datetime
 import logging
 import os
 from os.path import expanduser, join, getsize, lexists, abspath, dirname
-from os import listdir
+from os import listdir, mkdir
 import shutil
 from tempfile import TemporaryDirectory
 from typing import Optional
+from subprocess import check_output
 
 
 MERGE_SCRIPT = join(abspath(dirname(__file__)), 'merge-chrome-db/merge.sh')
@@ -57,17 +58,37 @@ def merge(merged: str, chunk: str):
     check_call([MERGE_SCRIPT, merged, chunk])
     logger.info(f"Merged DB size after: {getsize(merged)}")
 
+def guess_date(db: str):
+    maxvisit = check_output([
+        'sqlite3',
+        '-csv',
+        db,
+        'SELECT max(datetime(((visits.visit_time/1000000)-11644473600), "unixepoch")) FROM visits;'
+    ]).decode('utf8').strip().strip('"');
+    dates = datetime.strptime(maxvisit, "%Y-%m-%d %H:%M:%S").strftime("%Y%m%d")
+    return dates
+
 def merge_all_from(merged: str, merge_from: str, move_to: str):
-    for d in sorted(listdir(merge_from)):
-        hdb = join(merge_from, d, 'History')
+    def handle(dirr, hdb):
         if lexists(hdb): # TODO sqlite mime?
             merge(merged, hdb)
             if move_to is not None:
-                shutil.move(join(merge_from, d), move_to)
+                shutil.move(join(merge_from, dirr), move_to)
             else:
                 os.unlink(hdb)
-                os.rmdir(join(merge_from, d))
+                os.rmdir(join(merge_from, dirr))
                 # could use shutil.rmtree, but don't want to remove extra files by accident...
+
+    implicit = join(merge_from, 'History')
+    if lexists(implicit):
+        dt = guess_date(implicit)
+        bdir = join(merge_from, dt)
+        mkdir(bdir)
+        shutil.move(implicit, bdir)
+
+    for d in sorted(listdir(merge_from)):
+        hdb = join(merge_from, d, 'History')
+        handle(d, hdb)
 
 def main():
     logging.basicConfig(level=logging.INFO)
