@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import pytz
 from shutil import copytree
 from os import mkdir
+from os.path import lexists
 
 import pytest # type: ignore
 from pytest import mark # type: ignore
@@ -143,6 +144,32 @@ def test_merge():
         ssize_2 = merged_size()
 
         assert ssize_2 == ssize
+
+merge_all_from = backup_db.merge_all_from # type: ignore
+
+
+def _test_merge_all_from(tdir):
+    mdir = join(tdir, 'merged')
+    mkdir(mdir)
+    mfile = join(mdir, 'merged.sql')
+
+    get_chrome_history_backup(tdir)
+
+    merge_all_from(mfile, join(tdir, 'backup'), None)
+
+    first  = join(tdir, "backup/20180415/History")
+    second = join(tdir, "backup/20180417/History")
+
+    # should be removed
+    assert not lexists(first)
+    assert not lexists(second)
+
+    # TODO check for 'https://en.wikipedia.org/wiki/Notice_and_take_down' ? from database for 20180417
+
+def test_merge_all_from():
+    with TemporaryDirectory() as tdir:
+        _test_merge_all_from(tdir)
+        # TODO and also some other unique thing..
 
 if __name__ == '__main__':
     pytest.main(__file__)
