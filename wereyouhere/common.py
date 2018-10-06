@@ -5,6 +5,8 @@ from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Opt
 import logging
 from functools import lru_cache
 
+import pytz
+
 from .normalise import normalise_url
 
 Date = datetime
@@ -82,6 +84,11 @@ class History(Sized):
     def register(self, url: Url, v: Visit) -> None:
         if History.filtered(url):
             return
+        if v.dt.tzinfo is None:
+            # TODO log that?...
+            pass
+        # TODO replace dt i
+
         # TODO hmm some filters make sense before stripping off protocol...
         # TODO is it a good place to normalise?
         url = normalise_url(url)
@@ -107,9 +114,9 @@ class History(Sized):
 def simple_history(urls: List[Url], tag: str) -> History:
     h = History()
     for u in urls:
-        # TODO date?
+        ts = datetime.utcnow().replace(tzinfo=pytz.utc)
         visit = Visit(
-            datetime.now(), # TODO
+            ts,
             tag=tag,
         )
         h.register(u, visit)

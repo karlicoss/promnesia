@@ -7,15 +7,22 @@ from .common import History, Entry, Visit, Filter
 
 TIME_FORMAT = "%d %b %Y %H:%M"
 
-def render(all_histories: List[History], where: str) -> None:
+# TODO hmm, only use implicit datetime for rendering? And use set of tags that allow implicit?
+def render(all_histories: List[History], where: str, fallback_timezone = None) -> None:
     from wereyouhere.common import merge_histories
     res = merge_histories(all_histories)
 
+    def fallback(v: Visit):
+        dt = v.dt
+        if dt.tzinfo is not None:
+            return v
+        else:
+            return v._replace(dt=dt.replace(tzinfo=fallback_timezone))
+
     # sort visits by datetime, sort all items by URL
     entries = [
-        entry._replace(visits=sorted(entry.visits)) for _, entry in sorted(res.items())
+        entry._replace(visits=sorted([fallback(v) for v in entry.visits])) for _, entry in sorted(res.items())
     ]
-    # # TODO filter somehow; sort and remove google queries, etc
     # # TODO filter by length?? or by query length (after ?)
 
     RVisits = List[str]

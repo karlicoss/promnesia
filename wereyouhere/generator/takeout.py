@@ -100,6 +100,7 @@ class TakeoutHTMLParser(HTMLParser):
                     url = self.current['url']
                     times = self.current['time']
                     time = parse_dt(times)
+                    assert time.tzinfo is not None
                     visit = Visit(
                         dt=time,
                         tag=self.tag,
@@ -148,6 +149,7 @@ def read_search_activity(takeout) -> Optional[History]:
     with _open(takeout, spath) as fo:
         return _read_google_activity(fo, 'activity-search')
 
+# TODO add this to tests?
 def read_browser_history_json(takeout) -> Optional[History]:
     logger = get_logger()
     spath = join("Takeout", "Chrome", "BrowserHistory.json")
@@ -164,7 +166,7 @@ def read_browser_history_json(takeout) -> Optional[History]:
     hist = j['Browser History']
     for item in hist:
         url = item['url']
-        time = datetime.fromtimestamp(item['time_usec'] / 10**6)
+        time = datetime.utcfromtimestamp(item['time_usec'] / 10 ** 6).replace(tzinfo=pytz.utc)
         visit = Visit(
             dt=time,
             tag="history_json",

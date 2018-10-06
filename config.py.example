@@ -1,5 +1,6 @@
 from typing import List, Tuple, Optional
 from wereyouhere.generator.plaintext import extract_from_path
+import pytz
 
 """
 This directory keeps backups of chrome history databases (~/.config/google-chrome/Default/History).
@@ -55,3 +56,6 @@ FILTERS = [
 """
 FILTERS = [
 ]
+
+
+FALLBACK_TIMEZONE = pytz.timezone('Europe/London')

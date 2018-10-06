@@ -21,6 +21,8 @@ def run():
 
     config = cwd_import('config')
 
+    fallback_tz = config.FALLBACK_TIMEZONE
+
     chrome_dbs = config.CHROME_HISTORY_DBS
     takeout_path = config.GOOGLE_TAKEOUT_PATH
     custom_extractors = config.CUSTOM_EXTRACTORS
@@ -74,9 +76,11 @@ def run():
         all_histories.extend(custom_histories)
 
     urls_json = os.path.join(output_dir, 'urls.json')
-    render(all_histories, urls_json)
+    render(all_histories, urls_json, fallback_timezone=fallback_tz)
+
 
 def main():
+
     logging.basicConfig(level=logging.INFO)
     try:
         run()

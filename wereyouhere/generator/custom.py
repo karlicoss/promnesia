@@ -4,6 +4,8 @@ from subprocess import check_output, check_call
 from typing import Optional
 from urllib.parse import unquote
 
+import pytz
+
 from wereyouhere.common import Entry, History, Visit
 
 
@@ -40,8 +42,8 @@ def get_custom_history(command: str, tag: str = "") -> History:
         if fname:
             ts = datetime.fromtimestamp(stat(fname).st_mtime)
         else:
-            ts = datetime.now()
-
+            ts = datetime.utcnow().replace(tzinfo=pytz.utc)
+        # TODO !1 extract org notes properly...
         visit = Visit(
             dt=ts,
             tag=tag,
