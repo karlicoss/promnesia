@@ -12,10 +12,18 @@ from zipfile import ZipFile
 import re
 import json
 
+from dateutil import parser
+
 from wereyouhere.common import Entry, History, Visit, get_logger
 
+
+# TODO wonder if that old format used to be UTC...
 # Mar 8, 2018, 5:14:40 PM
 _TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p %Z"
+
+# ugh. something is seriously wrong with datetime, it wouldn't parse timezone aware UTC timestamp :(
+def parse_dt(s: str) -> datetime:
+    return parser.parse(s)
 
 class State(Enum):
     OUTSIDE = 0
@@ -85,7 +93,7 @@ class TakeoutHTMLParser(HTMLParser):
 
                     url = self.current['url']
                     times = self.current['time']
-                    time = datetime.strptime(times, _TIME_FORMAT)
+                    time = parse_dt(times)
                     visit = Visit(
                         dt=time,
                         tag=self.tag,

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+from datetime import datetime
 from os.path import join, getsize
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import pytz
 
 import pytest # type: ignore
 from pytest import mark # type: ignore
@@ -22,6 +24,29 @@ def test_takeout():
 
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
+
+def test_takeout_new_zip():
+    test_takeout_path = "testdata/takeout.zip"
+    import wereyouhere.generator.takeout as tgen
+    hists = tgen.get_takeout_histories(test_takeout_path)
+    [hist] = hists
+    assert len(hist) == 3
+    entry = hist['takeout.google.com/settings/takeout']
+    vis, = entry.visits
+
+    edt = datetime(
+        year=2018,
+        month=9,
+        day=18,
+        hour=5,
+        minute=48,
+        second=23,
+        tzinfo=pytz.utc,
+    )
+    assert vis.dt == edt
+
+
+# TODO run condition?? and flag to force all
 
 def test_chrome():
     import wereyouhere.generator.chrome as chrome_gen
@@ -50,7 +75,6 @@ def test_normalise():
     hist = custom_gen.get_custom_history(
         extract_from_path('testdata/normalise'),
     )
-    print(hist.urls)
     assert len(hist) == 5
 
 
@@ -83,6 +107,7 @@ def test_merge():
     testdata_path = "/L/data/wereyouhere/testdata/chrome-history"
     first  = join(testdata_path, "20180415/History")
     second = join(testdata_path, "20180417/History")
+    # TODO third is implicit... use merging function
     with TemporaryDirectory() as tdir:
         merged_path = join(tdir, 'merged.sql')
 

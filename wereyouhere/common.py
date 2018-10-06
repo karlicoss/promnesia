@@ -95,8 +95,14 @@ class History(Sized):
     def __len__(self) -> int:
         return len(self.urls)
 
+    def __getitem__(self, url: Url) -> Entry:
+        return self.urls[url]
+
     def items(self):
         return self.urls.items()
+
+    def __repr__(self):
+        return 'History{' + repr(self.urls) + '}'
 
 def simple_history(urls: List[Url], tag: str) -> History:
     h = History()
