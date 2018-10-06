@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime
+from datetime import datetime, date
 from os.path import join, getsize
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -18,12 +18,20 @@ from wereyouhere.render import render
 import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-chrome-history-db.py')
 
+def assert_got_tzinfo(h: History):
+    for url, entry in h.items():
+        visits = entry.visits
+        for v in visits:
+            assert v.dt.tzinfo is not None
+
 def test_takeout():
     test_takeout_path = "testdata/takeout"
     import wereyouhere.generator.takeout as takeout_gen
     histories = takeout_gen.get_takeout_histories(test_takeout_path)
     [hist] = histories
     assert len(hist) > 0 # kinda arbitrary?
+
+    assert_got_tzinfo(hist)
 
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
@@ -48,6 +56,8 @@ def test_takeout_new_zip():
     )
     assert vis.dt == edt
 
+    assert_got_tzinfo(hist)
+
 
 # TODO run condition?? and flag to force all
 
@@ -61,6 +71,8 @@ def test_chrome():
         assert len(hist) > 10 # kinda random sanity check
 
         render([hist], join(tdir, 'res.json'))
+
+        assert_got_tzinfo(hist)
 
 def test_plaintext_path_extractor():
     import wereyouhere.generator.custom as custom_gen
@@ -170,15 +182,15 @@ def _test_merge_all_from(tdir):
     assert len(hist) > 0
 
     older = hist['github.com/orgzly/orgzly-android/issues']
-    assert any(v.dt < datetime(year=2018, month=1, day=17) for v in older.visits)
+    assert any(v.dt.date() < date(year=2018, month=1, day=17) for v in older.visits)
     # in particular, "2018-01-16 19:56:56"
 
     newer = hist['en.wikipedia.org/wiki/Notice_and_take_down']
-    assert any(v.dt >= datetime(year=2018, month=4, day=16) for v in newer.visits)
+    assert any(v.dt.date() >= date(year=2018, month=4, day=16) for v in newer.visits)
 
     # from implicit db
     newest = hist['feedly.com/i/discover']
-    assert any(v.dt >= datetime(year=2018, month=9, day=27) for v in newest.visits)
+    assert any(v.dt.date() >= date(year=2018, month=9, day=27) for v in newest.visits)
 
 def test_merge_all_from():
     with TemporaryDirectory() as tdir:

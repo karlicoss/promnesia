@@ -1,5 +1,6 @@
 import logging
 
+import pytz
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
@@ -23,7 +24,12 @@ _TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p %Z"
 
 # ugh. something is seriously wrong with datetime, it wouldn't parse timezone aware UTC timestamp :(
 def parse_dt(s: str) -> datetime:
-    return parser.parse(s)
+    dt = parser.parse(s)
+    if dt.tzinfo is None:
+        # TODO log?
+        # hopefully it was utc? Legacy, so no that much of an issue anymore..
+        dt = dt.replace(tzinfo=pytz.utc)
+    return dt
 
 class State(Enum):
     OUTSIDE = 0
