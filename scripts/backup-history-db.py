@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 import glob
 import os
-from os.path import expanduser, join, getsize, lexists, abspath, dirname
+from os.path import expanduser, join, getsize, lexists, abspath, dirname, basename
 from os import listdir, mkdir
 import shutil
 from tempfile import TemporaryDirectory
@@ -49,13 +49,10 @@ def backup_to(prefix: str, browser: str) -> str:
 
     DB = get_path(browser)
 
-    # TODO do we need journal?
-    # ~/.config/google-chrome/Default/History-journal
-
     # if your chrome is open, database would normally be locked, so you can't just make a snapshot
     # so we'll just copy it till it converge. bit paranoid, but should work
     atomic_copy(DB, BPATH)
-    return join(BPATH, "History")
+    return join(BPATH, basename(DB))
 
 def merge(merged: str, chunk: str):
     logger = get_logger()
@@ -90,7 +87,7 @@ def merge_all_from(merged: str, merge_from: str, move_to: str):
                 os.rmdir(join(merge_from, dirr))
                 # could use shutil.rmtree, but don't want to remove extra files by accident...
 
-    implicit = join(merge_from, 'History')
+    implicit = join(merge_from, 'History') # TODO store history file name somewhere?...
     if lexists(implicit):
         dt = guess_date(implicit)
         bdir = join(merge_from, dt)
@@ -124,7 +121,7 @@ def main():
     if args.backup:
         tdir = TemporaryDirectory()
         bdir = args.backup_to if args.backup_to is not None else tdir.name
-        backup_to(bdir)
+        backup_to(bdir, args.browser)
         merge_from = bdir
     else:
         merge_from = args.merge_from
