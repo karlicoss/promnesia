@@ -16,7 +16,7 @@ from wereyouhere.common import History
 from wereyouhere.render import render
 
 import imp
-backup_db = imp.load_source('hdb', 'scripts/backup-chrome-history-db.py')
+backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')
 
 def assert_got_tzinfo(h: History):
     for url, entry in h.items():
@@ -65,7 +65,7 @@ def test_chrome():
     import wereyouhere.generator.chrome as chrome_gen
 
     with TemporaryDirectory() as tdir:
-        path = backup_db.backup_to(tdir)
+        path = backup_db.backup_to(tdir, 'chrome')
 
         [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
         assert len(hist) > 10 # kinda random sanity check
@@ -73,6 +73,19 @@ def test_chrome():
         render([hist], join(tdir, 'res.json'))
 
         assert_got_tzinfo(hist)
+
+def test_firefox():
+    with TemporaryDirectory() as tdir:
+        path = backup_db.backup_to(tdir, 'firefox')
+        # shouldn't fail at least
+
+        # [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
+        # assert len(hist) > 10 # kinda random sanity check
+
+        # render([hist], join(tdir, 'res.json'))
+
+        # assert_got_tzinfo(hist)
+
 
 def test_plaintext_path_extractor():
     import wereyouhere.generator.custom as custom_gen

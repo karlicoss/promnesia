@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import logging
+import glob
 import os
 from os.path import expanduser, join, getsize, lexists, abspath, dirname
 from os import listdir, mkdir
@@ -30,13 +31,23 @@ def atomic_copy(src: str, dest: str):
         res = shutil.copy(src, dest)
         differs = not filecmp.cmp(src, res)
 
-def backup_to(prefix: str) -> str:
+def get_path(browser: str):
+    if browser == 'chrome':
+        return expanduser("~/.config/google-chrome/Default/History")
+    elif browser == 'firefox':
+        matched = glob.glob(expanduser('~/.mozilla/firefox/**/places.sqlite'), recursive=True)
+        [match] = matched
+        return match
+    else:
+        raise RuntimeError(f'Unexpected browser {browser}')
+
+def backup_to(prefix: str, browser: str) -> str:
     today = datetime.now().strftime("%Y%m%d")
     BPATH = f"{prefix}/{today}/"
 
     os.makedirs(BPATH, exist_ok=True)
 
-    DB = expanduser("~/.config/google-chrome/Default/History")
+    DB = get_path(browser)
 
     # TODO do we need journal?
     # ~/.config/google-chrome/Default/History-journal
@@ -95,6 +106,7 @@ def main():
 
     import argparse
     parser = argparse.ArgumentParser(description="Backup and merge tool for chrome history db")
+    parser.add_argument('--browser', type=str, default='chrome') # TODO 
     parser.add_argument('--backup', action='store_true', default=False)
     parser.add_argument('--backup-to', type=str, default=None)
     parser.add_argument('--merge', action='store_true', default=False)
@@ -118,6 +130,9 @@ def main():
         merge_from = args.merge_from
 
     if args.merge: # TODO merge should always be set??
+        if args.browser != 'chrome':
+            raise RuntimeError(f'Merging {args.browser} backups is not supported yet!')
+
         assert args.merge_to is not None
         move_to: Optional[str]
         if args.move_to is None:
