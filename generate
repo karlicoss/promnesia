@@ -1,4 +1,4 @@
 #!/bin/bash
-cd "$(this_dir)"
+cd "$(dirname "$0")"
 
 python3 -m wereyouhere
