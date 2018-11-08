@@ -1,13 +1,18 @@
 import {Visits} from './common';
 import {normalise_url} from './normalise';
+import {getUrlsFile} from './options';
 
 // measure slowdown? Although it's async, so it's fine probably
-var all_urls;
+var all_urls = null;
 
 function refreshMap (cb /* Map[Url, Visits] -> Void */) {
     console.log("Urls map refresh requested!");
-    chrome.storage.local.get(['history_json'], function(result) {
-        var histfile = result.history_json;
+    getUrlsFile(histfile => {
+        if (histfile === null) {
+            console.log("No urls file! Please set it in extension options!");
+            return;
+        }
+
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             // ugh, ideally should check that status is 200 etc, but that doesn't seem to work =/
@@ -39,10 +44,11 @@ function refreshMap (cb /* Map[Url, Visits] -> Void */) {
 
 function getMap(cb /* Map[Url, Visits] -> Void */) {
     // not sure why is this even necessary... just as extensions is running, all_urls is getting set to null occasionally
-    if (all_urls) {
+    if (all_urls !== null) {
         cb(all_urls);
     } else {
         refreshMap(cb);
+        // TODO if still null, return dummy visits with 'not set' message?
     }
 }
 
@@ -80,7 +86,7 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
                 return split_date_time(dt)[1];
             }
 
-            // UGH there are no decent custom time format functions in python..
+            // UGH there are no decent custom time format functions in JS..
             function format_date (dt) {
                 var options = {
                     day  : 'numeric',

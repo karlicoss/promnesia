@@ -1,21 +1,7 @@
-function save_options() {
-  var fpath = document.getElementById('fpath').value;
-    chrome.storage.local.set({'history_json': fpath}, function() {
-        console.log('Value is set to ' + fpath);
-        chrome.runtime.sendMessage({
-            'method':'refreshMap'
-        }, function(/*response*/){
-            console.log("reloaded the map");
-        });
-    });
+export function setUrlsFile(path, cb) {
+    chrome.storage.local.set({'urls_json_file': path}, cb);
 }
 
-function restore_options() {
-    // Use default value color = 'red' and likesColor = true.
-    chrome.storage.local.get({'history_json': ""}, function(items) {
-        document.getElementById('fpath').value = items.history_json;
-    });
+export function getUrlsFile(cb) {
+    chrome.storage.local.get({'urls_json_file': null}, res => cb(res.urls_json_file));
 }
-
-document.addEventListener('DOMContentLoaded', restore_options);
-document.getElementById('save').addEventListener('click', save_options);

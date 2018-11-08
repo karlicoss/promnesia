@@ -10,7 +10,7 @@ STRIP_RULES = [
         [R('.*'), R('[\\?].*$')],
     ]
 ]
-;
+; // TODO perhaps that should be semi-configurable
 
 export function normalise_url(url) {
     var cur = url;

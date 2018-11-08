@@ -107,3 +107,5 @@ venv.bak/
 # End of https://www.gitignore.io/api/js,python
 
 config.py
+
+tmp/

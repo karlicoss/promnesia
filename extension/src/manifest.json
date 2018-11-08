@@ -8,7 +8,7 @@
         "persistent": false
     },
 "options_ui": {
-    "page": "options.html",
+    "page": "options_page.html",
     "chrome_style": true
   },
     "permissions": [
