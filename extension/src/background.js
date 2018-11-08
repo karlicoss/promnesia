@@ -167,6 +167,15 @@ function getVisits(url: Url, cb: (Visits) => void) {
     });
 }
 
+function getIconAndTitle (visits: Visits) {
+    if (visits.visits.length === 0) {
+        return ["images/ic_not_visited_48.png", "Was not visited"];
+    }
+    // debugger;
+    return ["images/ic_visited_48.png"    , "Was visited! " + String(visits)];
+    // TODO if only got chrome visits, yellow icon
+}
+
 function updateState () {
     // TODO ugh no simpler way??
     chrome.tabs.query({'active': true}, function (tabs) {
@@ -176,25 +185,17 @@ function updateState () {
         // $FlowFixMe
         let tabId = atab.tabId;
         getVisits(url, function (visits) {
-            if (visits.visits.length > 0) { // TODO check if visits are trivial?
-                chrome.browserAction.setIcon({
-                    path: "images/ic_visited_48.png",
-                    tabId: tabId
-                });
-                chrome.browserAction.setTitle({
-                    title: "Was visited! " + String(visits),
-                    tabId: tabId
-                });
-            } else {
-                chrome.browserAction.setIcon({
-                    path: "images/ic_not_visited_48.png",
-                    tabId: tabId
-                });
-                chrome.browserAction.setTitle({
-                    title: "Was not visited",
-                    tabId: tabId
-                });
-            }
+            let res = getIconAndTitle(visits);
+            let icon = res[0];
+            let title = res[1];
+            chrome.browserAction.setIcon({
+                path: icon,
+                tabId: tabId,
+            });
+            chrome.browserAction.setTitle({
+                title: title,
+                tabId: tabId,
+            });
         });
     });
 }
