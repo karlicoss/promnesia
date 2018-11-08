@@ -1,6 +1,7 @@
 /* @flow */
 
 export type Url = string;
+export type Tag = string;
 export type VisitsMap = {[Url]: Visits};
 
 export function unwrap<T>(x: ?T): T {
@@ -12,15 +13,17 @@ export function unwrap<T>(x: ?T): T {
 
 
 export class Visit {
-    vs: string;
+    time: string;
+    tags: Array<Tag>;
 
-    constructor(vs: string) {
-        this.vs = vs;
-        // TODO parse it or use static mehtod
+
+    constructor(time: string, tags: Array<Tag>) {
+        this.time = time;
+        this.tags = tags;
     }
 
     repr(): string {
-        return this.vs;
+        return this.time  + " " + this.tags.toString();
     }
 }
 

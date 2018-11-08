@@ -11,7 +11,6 @@ function requestVisits() {
             return;
         }
 
-        console.log(response);
         var visits_table = document.getElementById('visits');
         const visits = response.visits;
         // flow can't handle arrays?

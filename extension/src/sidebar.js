@@ -1,5 +1,9 @@
+/* @flow */
+import {Visits, Visit} from './common';
+
 import React from 'react';
 import ReactDOM from 'react-dom';
+// $FlowFixMe
 import { Frame } from 'chrome-sidebar';
 
 if (Frame.isReady()) {
@@ -13,6 +17,7 @@ const SIDEBAR_ID = "wereyouhere-sidebar";
 
 function getSidebarNode() {
     const root = document.getElementById(SIDEBAR_ID);
+    // $FlowFixMe
     const cont = root.children[0].children[1]; // TODO very fragile...
     return cont;
 }
@@ -27,14 +32,16 @@ function clearUpSidebar() {
 }
 
 // TODO move to common??
+// TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 function requestVisits() {
     chrome.runtime.sendMessage({
         'method':'getVisits'
-    }, response => {
+    }, (response)  => {
         if (response == null) {
             console.log("No visits for this url");
             return;
         }
+        // TODO shit, would I need to parse dates again? Hopefully datetime is not erased...
 
         clearUpSidebar();
 
@@ -43,9 +50,11 @@ function requestVisits() {
         // TODO css override?
         // TODO align somehow??
         cont.appendChild(document.createTextNode("Visits:"));
-        for (const visit of response.visits) {
+        for (const visit_raw of response.visits) {
+            const visit = new Visit(visit_raw.time, visit_raw.tags); // TODO ugh ugly..
+
             const vdiv = document.createElement('div');
-            vdiv.innerText = visit;
+            vdiv.innerText = visit.repr();
             cont.appendChild(vdiv);
         }
         cont.appendChild(document.createTextNode("Contexts:"));
@@ -67,6 +76,7 @@ function requestVisits() {
 function boot() {
     const sidebar = document.createElement('div');
     sidebar.id = "wereyouhere-sidebar";
+    // $FlowFixMe
     document.body.appendChild(sidebar);
 
     const App = (

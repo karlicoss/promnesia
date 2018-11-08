@@ -18,9 +18,14 @@ function rawMapToVisits(map): ?VisitsMap {
     var result = {};
     Object.keys(map).map(function (url /*index*/) {
         const vis = map[url];
-        const visits: Array<string> = vis[0];
+        const visits = vis[0];
         const contexts: Array<string> = vis[1];
-        result[url] = new Visits(visits.map(v => new Visit(v)), contexts);
+
+        result[url] = new Visits(visits.map(v => {
+            const vtime: string = v[0];
+            const vtags: Array<string> = v[1];
+            return new Visit(vtime, vtags);
+        }), contexts);
     });
     return result;
 }
@@ -115,7 +120,9 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
             }
 
             function format_group (g) {
-                return format_date(g[0]) + " " + format_time(g[0]) + "--" + format_time(g[g.length - 1]) + '  (chr)';
+                const dts = format_date(g[0]) + " " + format_time(g[0]) + "--" + format_time(g[g.length - 1]);
+                const tags = ["chr"];
+                return new Visit(dts, tags);
             }
 
             var delta = 20 * 60 * 1000; // make sure it matches with python
