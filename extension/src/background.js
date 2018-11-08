@@ -77,18 +77,18 @@ function getMap(cb: (VisitsMap) => void) {
 
 chrome.runtime.onInstalled.addListener(function () {refreshMap(null); });
 
-function getDelay(/*url*/) {
-    return 24 * 60 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
+function getDelayMs(/*url*/) {
+    return 10 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
 }
 
-function getChromeVisits(url, cb /* Visits -> Void */) {
+function getChromeVisits(url: Url, cb: (Visits) => void) {
     // $FlowFixMe
     chrome.history.getVisits(
         {url: url},
         function (results) {
-            var delay = getDelay(url);
-            var current = new Date();
-            var times = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
+            const delay = getDelayMs();
+            const current = new Date();
+            const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
             var groups = [];
             var group = [];
 
@@ -178,9 +178,13 @@ function getIconAndTitle (visits: Visits) {
     if (visits.visits.length === 0) {
         return ["images/ic_not_visited_48.png", "Was not visited"];
     }
-    // debugger;
-    return ["images/ic_visited_48.png"    , "Was visited! " + String(visits)];
-    // TODO if only got chrome visits, yellow icon
+    // TODO a bit ugly, but ok for now.. maybe cut off by time?
+    const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == "chr");
+    if (boring) {
+        return ["images/ic_boring_48.png"     , "Was visited (boring)"];
+    } else {
+        return ["images/ic_visited_48.png"    , "Was visited!"];
+    }
 }
 
 function updateState () {
