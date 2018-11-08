@@ -1,6 +1,6 @@
 /* @flow */
 
-import {Visits} from './common';
+import {Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
 
@@ -58,7 +58,7 @@ function refreshMap (cb: ?(VisitsMap) => void) {
     });
 }
 
-function getMap(cb /* Map[Url, Visits] -> Void */) {
+function getMap(cb: (VisitsMap) => void) {
     // not sure why is this even necessary... just as extensions is running, all_urls is getting set to null occasionally
     if (all_urls !== null) {
         cb(all_urls);
@@ -137,7 +137,7 @@ function getChromeVisits(url, cb /* Visits -> Void */) {
     );
 }
 
-function getMapVisits(url, cb /* Visits -> Void */) {
+function getMapVisits(url: Url, cb: (Visits) => void) {
     getMap(map => {
         var nurl = normalise_url(url);
         console.log("Original: %s", url);
@@ -151,7 +151,7 @@ function getMapVisits(url, cb /* Visits -> Void */) {
     });
 }
 
-function getVisits(url, cb /* Visits -> Void */) {
+function getVisits(url: Url, cb: (Visits) => void) {
     getChromeVisits(url, function (chr_visits) {
         getMapVisits(url, function (map_visits) {
             cb(new Visits(
@@ -171,7 +171,7 @@ function updateState () {
     chrome.tabs.query({'active': true}, function (tabs) {
         // TODO why am I getting multiple results???
         let atab = tabs[0];
-        let url = atab.url;
+        let url = unwrap(atab.url);
         // $FlowFixMe
         let tabId = atab.tabId;
         getVisits(url, function (visits) {
@@ -207,7 +207,7 @@ chrome.tabs.onUpdated.addListener(updateState);
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.method == 'getVisits') {
         chrome.tabs.query({'active': true}, function (tabs) {
-            var url = tabs[0].url;
+            var url = unwrap(tabs[0].url);
             getVisits(url, function (visits) {
                 sendResponse(visits);
             });

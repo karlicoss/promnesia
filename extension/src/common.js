@@ -1,5 +1,13 @@
 /* @flow */
 
+export function unwrap<T>(x: ?T): T {
+    if (!x) {
+        throw "undefined or null!";
+    }
+    return x;
+}
+
+
 export class Visit {
     // TODO parse it
 }
