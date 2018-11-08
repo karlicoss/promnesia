@@ -12,14 +12,25 @@ export function unwrap<T>(x: ?T): T {
 
 
 export class Visit {
-    // TODO parse it
+    vs: string;
+
+    constructor(vs: string) {
+        this.vs = vs;
+        // TODO parse it or use static mehtod
+    }
+
+    repr(): string {
+        return this.vs;
+    }
 }
 
+type VisitsList = Array<Visit>;
+
 export class Visits {
-    visits: Array<any>;
+    visits: VisitsList;
     contexts: Array<any>;
 
-    constructor(visits: Array<any>, contexts: Array<any>) {
+    constructor(visits: VisitsList, contexts: Array<any>) {
         this.visits = visits;
         this.contexts = contexts;
     }

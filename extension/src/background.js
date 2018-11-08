@@ -1,7 +1,7 @@
 /* @flow */
 
 import type {Url, VisitsMap} from './common';
-import {Visits, unwrap} from './common';
+import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
 
@@ -18,7 +18,9 @@ function rawMapToVisits(map): ?VisitsMap {
     var result = {};
     Object.keys(map).map(function (url /*index*/) {
         const vis = map[url];
-        result[url] = new Visits(vis[0], vis[1]);
+        const visits: Array<string> = vis[0];
+        const contexts: Array<string> = vis[1];
+        result[url] = new Visits(visits.map(v => new Visit(v)), contexts);
     });
     return result;
 }
