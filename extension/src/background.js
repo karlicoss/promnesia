@@ -5,6 +5,20 @@ import {getUrlsFile} from './options';
 // measure slowdown? Although it's async, so it's fine probably
 var all_urls = null;
 
+
+function rawMapToVisits(map) {
+    const len = Object.keys(map).length;
+    if (len == 0) {
+        return null; // TODO not sure if that's really necessary
+    }
+    var result = {};
+    Object.keys(map).map(function (url /*index*/) {
+        const vis = map[url];
+        result[url] = new Visits(vis[0], vis[1]);
+    });
+    return result;
+}
+
 function refreshMap (cb /* Map[Url, Visits] -> Void */) {
     console.log("Urls map refresh requested!");
     getUrlsFile(histfile => {
@@ -21,20 +35,17 @@ function refreshMap (cb /* Map[Url, Visits] -> Void */) {
             if (xhr.readyState != XMLHttpRequest.DONE) {
                 return;
             }
-            var map = JSON.parse(xhr.responseText);
-            var len = Object.keys(map).length;
+            const map = JSON.parse(xhr.responseText);
+            const len = Object.keys(map).length;
             console.log("Loaded map of length ", len);
-            if (len > 0) {
-                all_urls = {};
-                Object.keys(map).map(function (key /*index*/) {
-                    var xxx = map[key];
-                    all_urls[key] = new Visits(xxx[0], xxx[1]);
-                });
-                if (cb) {
-                    cb(all_urls);
+            const visits = rawMapToVisits(map);
+            if (visits !== null) {
+                if (cb !== null) {
+                    cb(visits);
                 }
-                // TODO remove listener?
             }
+            // TODO warn otherwise?
+            // TODO remove listener?
         };
         xhr.open("GET", 'file:///' + histfile, true);
         xhr.send();
