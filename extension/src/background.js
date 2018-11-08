@@ -1,15 +1,14 @@
 /* @flow */
 
+import type {Url, VisitsMap} from './common';
 import {Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
 
 // measure slowdown? Although it's async, so it's fine probably
-var all_urls = null;
 
-type Url = string;
-type VisitsMap = {[Url]: Visits};
-// type VisitsMap = {}
+var all_urls: ?VisitsMap = null;
+
 
 function rawMapToVisits(map): ?VisitsMap {
     const len = Object.keys(map).length;
@@ -60,7 +59,7 @@ function refreshMap (cb: ?(VisitsMap) => void) {
 
 function getMap(cb: (VisitsMap) => void) {
     // not sure why is this even necessary... just as extensions is running, all_urls is getting set to null occasionally
-    if (all_urls !== null) {
+    if (all_urls) {
         cb(all_urls);
     } else {
         refreshMap(cb);

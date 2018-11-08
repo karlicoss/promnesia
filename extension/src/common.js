@@ -1,5 +1,8 @@
 /* @flow */
 
+export type Url = string;
+export type VisitsMap = {[Url]: Visits};
+
 export function unwrap<T>(x: ?T): T {
     if (!x) {
         throw "undefined or null!";
