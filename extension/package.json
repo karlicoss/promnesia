@@ -1,6 +1,6 @@
 {
   "name": "wereyouhere-chrome-extension",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Extension to aid you in rememberin what you already visited and in which context",
   "main": "dist/background.js",
   "scripts": {

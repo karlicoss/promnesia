@@ -1,6 +1,6 @@
 {
     "name": "Were you here?",
-    "version": "0.5.0",
+    "version": "0.1.0",
     "description": "Indicates whether and when the page was visited (and more!)",
     "web_accessible_resources": ["sidebar.js"],
     "background": {
