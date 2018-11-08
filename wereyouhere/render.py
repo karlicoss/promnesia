@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 import os.path
-from typing import List
+from typing import List, Any
 
 from .common import History, Entry, Visit, Filter
 
@@ -25,11 +25,11 @@ def render(all_histories: List[History], where: str, fallback_timezone = None) -
     ]
     # # TODO filter by length?? or by query length (after ?)
 
-    RVisits = List[str]
+    RVisits = List[Any]
     RContext = List[str]
     # TODO ugh. any?
 
-    def format_entry(e: Entry) -> List[List[str]]:
+    def format_entry(e: Entry):
         visits = e.visits
 
         delta = timedelta(minutes=20)
@@ -51,15 +51,14 @@ def render(all_histories: List[History], where: str, fallback_timezone = None) -
 
         res = []
         for group in groups:
-            tags = {e.tag for e in group if e.tag is not None}
-            stags = ':'.join(tags)
+            tags = list(sorted({e.tag for e in group if e.tag is not None}))
 
             start_time_s = group[0].dt.strftime(TIME_FORMAT)
             end_time_s = group[-1].dt.strftime(TIME_FORMAT)
             if start_time_s == end_time_s:
-                res.append("{} ({})".format(start_time_s, stags))
+                res.append([start_time_s, tags])
             else:
-                res.append("{}--{} ({})".format(start_time_s, group[-1].dt.strftime("%H:%M"), stags))
+                res.append(["{}--{}".format(start_time_s, group[-1].dt.strftime("%H:%M")), tags])
         # we presumably want descending date!
         return [list(reversed(res)), contexts]
 
