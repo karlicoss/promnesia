@@ -1,3 +1,5 @@
+/* @flow */
+
 import {Visits} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
@@ -5,8 +7,11 @@ import {getUrlsFile} from './options';
 // measure slowdown? Although it's async, so it's fine probably
 var all_urls = null;
 
+type Url = string;
+type VisitsMap = {[Url]: Visits};
+// type VisitsMap = {}
 
-function rawMapToVisits(map) {
+function rawMapToVisits(map): ?VisitsMap {
     const len = Object.keys(map).length;
     if (len == 0) {
         return null; // TODO not sure if that's really necessary
@@ -19,7 +24,7 @@ function rawMapToVisits(map) {
     return result;
 }
 
-function refreshMap (cb /* Map[Url, Visits] -> Void */) {
+function refreshMap (cb: ?(VisitsMap) => void) {
     console.log("Urls map refresh requested!");
     getUrlsFile(histfile => {
         if (histfile === null) {
@@ -32,15 +37,15 @@ function refreshMap (cb /* Map[Url, Visits] -> Void */) {
             // ugh, ideally should check that status is 200 etc, but that doesn't seem to work =/
             // TODO maybe swallowing exceptions here is a good idea?
             // could be paranoid and ignore if all_urls is already set?
-            if (xhr.readyState != XMLHttpRequest.DONE) {
+            if (xhr.readyState != xhr.DONE) {
                 return;
             }
             const map = JSON.parse(xhr.responseText);
             const len = Object.keys(map).length;
             console.log("Loaded map of length ", len);
             const visits = rawMapToVisits(map);
-            if (visits !== null) {
-                if (cb !== null) {
+            if (visits) {
+                if (cb) {
                     cb(visits);
                 }
             }
@@ -71,6 +76,7 @@ function getDelay(/*url*/) {
 }
 
 function getChromeVisits(url, cb /* Visits -> Void */) {
+    // $FlowFixMe
     chrome.history.getVisits(
         {url: url},
         function (results) {
@@ -166,6 +172,7 @@ function updateState () {
         // TODO why am I getting multiple results???
         let atab = tabs[0];
         let url = atab.url;
+        // $FlowFixMe
         let tabId = atab.tabId;
         getVisits(url, function (visits) {
             if (visits.visits.length > 0) { // TODO check if visits are trivial?
@@ -196,6 +203,7 @@ chrome.tabs.onActivated.addListener(updateState);
 chrome.tabs.onUpdated.addListener(updateState);
 // chrome.tabs.onReplaced.addListener(updateState);
 
+// $FlowFixMe
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.method == 'getVisits') {
         chrome.tabs.query({'active': true}, function (tabs) {
