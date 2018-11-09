@@ -46,7 +46,7 @@ def save_state(new_state):
     print(f"Repository size: {sz}")
 
 def print_diff():
-    gits('show', '-p')
+    gits('show', '-U0', '-p')
 
 def load_urls():
     # TODO needs path to links db.... so it should use config?
@@ -63,6 +63,7 @@ def to_state(urls):
 
 
 def main():
+    # TODO dry run so it doesn't save state? But then I wouldn't have diff (unless I print it beforehand)
     prev_state = load_state()
     new_state = to_state(load_urls())
     save_state(new_state)
