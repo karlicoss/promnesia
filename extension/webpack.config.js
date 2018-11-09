@@ -1,6 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+const pkg = require('./package.json');
+const baseManifest = require('./src/manifest.json');
 
 module.exports = {
   entry: {
@@ -15,7 +18,6 @@ module.exports = {
   },
   plugins: [
     new CopyWebpackPlugin([
-      { from: 'src/manifest.json' },
       { from: 'images/*' },
       { from: 'src/*.html' , flatten: true},
     ]),
@@ -24,10 +26,12 @@ module.exports = {
         NODE_ENV: JSON.stringify('production')
       }
     }),
-    // new webpack.optimize.UglifyJsPlugin({
-    //     minimize: false,
-    //     compress: false
-    // }),
+    new WebpackExtensionManifestPlugin({
+        config: {
+            base: baseManifest,
+            extend: {version: pkg.version}
+        }
+    }),
   ],
   resolve: {
     extensions: ['.js']

@@ -1,6 +1,6 @@
 {
     "name": "Were you here?",
-    "version": "0.1.1",
+    "version": "<webpack managed>",
     "description": "Indicates whether and when the page was visited (and more!)",
     "web_accessible_resources": ["sidebar.js"],
     "background": {

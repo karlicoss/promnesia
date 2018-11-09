@@ -1,6 +1,6 @@
 {
   "name": "wereyouhere-chrome-extension",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Extension to aid you in rememberin what you already visited and in which context",
   "main": "dist/background.js",
   "scripts": {
@@ -53,6 +53,7 @@
     "eslint-config-google": "^0.10.0",
     "eslint-plugin-react": "^7.11.1",
     "flow-interfaces-chrome": "^0.5.2",
-    "webpack": "^2.5.1"
+    "webpack": "^2.5.1",
+    "webpack-extension-manifest-plugin": "^0.4.2"
   }
 }
