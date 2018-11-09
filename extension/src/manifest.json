@@ -7,10 +7,11 @@
         "scripts": ["background.js"],
         "persistent": false
     },
-"options_ui": {
-    "page": "options_page.html",
-    "chrome_style": true
-  },
+    "options_ui": {
+        "page": "options_page.html",
+        "chrome_style": true
+    },
+
     "permissions": [
         "https://*/*",
         "http://*/*",
@@ -18,7 +19,9 @@
         "file:///*",
         "tabs",
         "storage",
-        "history"
+        "history",
+
+        "notifications"
     ],
     "icons": {
         "48": "images/ic_not_visited_48.png"

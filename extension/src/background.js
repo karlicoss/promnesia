@@ -30,8 +30,22 @@ function rawMapToVisits(map): ?VisitsMap {
     return result;
 }
 
+function showNotification(text: string) {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    } else {
+        // TODO ugh. is there no way to show in-browser only notification??
+        const notification = new Notification(
+            'wereyouhere',
+            // $FlowFixMe
+            {body: text},
+        );
+    }
+}
+
 function refreshMap (cb: ?(VisitsMap) => void) {
     console.log("Urls map refresh requested!");
+    showNotification("requested url map reloading");
     getUrlsFile(histfile => {
         if (histfile === null) {
             console.log("No urls file! Please set it in extension options!");
