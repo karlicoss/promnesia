@@ -4,11 +4,13 @@
   "description": "Extension to aid you in rememberin what you already visited and in which context",
   "main": "dist/background.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --progress --profile --colors",
-    "watch": "webpack --watch --progress --colors",
-    "dev": "npm run watch",
-    "lint": "eslint src"
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "bkuild": "webpack --progress --profile --colors",
+      "watch": "webpack --watch --progress --colors",
+      "dev": "npm run watch",
+      "eslint": "eslint src",
+      "jslint": "jslint --todo --white src/background.js",
+      "flow": "flow"
   },
   "repository": {
     "type": "git",

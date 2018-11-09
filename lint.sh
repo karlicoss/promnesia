@@ -1,2 +1,5 @@
 #!/bin/bash
-jslint --todo --white extension/background.js
+set -eu
+cd "$(dirname "$0")/extension"
+
+npm run-script jslint
