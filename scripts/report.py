@@ -50,7 +50,7 @@ def print_diff():
 
 def load_urls():
     # TODO needs path to links db.... so it should use config?
-    with open('/L/data/wereyouhere/urls.json', 'r') as fo:
+    with open('/L/data/wereyouhere/linksdb.json', 'r') as fo:
         return json.load(fo)
 
 

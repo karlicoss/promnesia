@@ -84,7 +84,7 @@ def run():
             log_hists(custom_histories, str(extractor))
             all_histories.extend(custom_histories)
 
-    urls_json = os.path.join(output_dir, 'urls.json')
+    urls_json = os.path.join(output_dir, 'linksdb.json')
     render(all_histories, urls_json, fallback_timezone=fallback_tz)
 
     if errors:
