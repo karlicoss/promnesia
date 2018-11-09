@@ -3,5 +3,3 @@ pytz
 
 # for detecting sqlite databases
 python-magic
-
-pytest
