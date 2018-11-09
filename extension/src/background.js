@@ -222,6 +222,11 @@ function updateState () {
                 title: title,
                 tabId: tabId,
             });
+
+            // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
+            if (visits.contexts.length > 0) {
+                showNotification('contexts are available for this link!');
+            }
         });
     });
 }
