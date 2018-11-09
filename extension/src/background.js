@@ -51,6 +51,7 @@ function refreshMap (cb: ?(VisitsMap) => void) {
             console.log("Loaded map of length ", len);
             const visits = rawMapToVisits(map);
             if (visits) {
+                all_urls = visits;
                 if (cb) {
                     cb(visits);
                 }
