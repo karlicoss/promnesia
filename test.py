@@ -212,3 +212,5 @@ def test_merge_all_from():
 
 if __name__ == '__main__':
     pytest.main(__file__)
+
+# TODO mark tests with @skip_if_ci

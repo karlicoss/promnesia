@@ -109,3 +109,4 @@ venv.bak/
 config.py
 
 tmp/
+extension/dist
