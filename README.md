@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/karlicoss/were-you-here.svg?style=svg)](https://circleci.com/gh/karlicoss/were-you-here)  (just started configuring CI)
+
 Has it ever occured to you that you were reading an old bookmark or some lengthy blog post and suddenly realized you had read it already before? It would be fairly easy to search in chrome history, however it is only stored locally for three months. 
 
 Or perhaps you even have a habit of annotating and making notes elsewhere? And you wanna know quickly if you have the current page annotated. Then this tool is for you.
