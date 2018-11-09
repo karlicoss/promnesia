@@ -4,11 +4,12 @@ export const
 STRIP_RULES = [
     [R('.*')                     , R('^\\w+://'         )],
     [R('.*')                     , R('(www|ww|amp)\\.'  )],
-    [R('.*')                     , R('[&#].*$'       )],
+    [R('.*')                     , R('[&#].*$'          )],
     [
         [R('^(youtube|urbandictionary|tesco|scottaaronson|answers.yahoo.com|code.google.com)') , null],
         [R('.*'), R('[\\?].*$')],
-    ]
+    ],
+    [R('.*')                     , R('/$'               )],
 ]
 ; // TODO perhaps that should be semi-configurable
 

@@ -3,11 +3,12 @@ from re import compile as R
 STRIP_RULES = [
     [R('.*')                     , R('^\\w+://'         )],
     [R('.*')                     , R('(www|ww|amp)\\.'  )],
-    [R('.*')                     , R('[&#].*$'       )],
+    [R('.*')                     , R('[&#].*$'          )],
     [
         [R('^(youtube|urbandictionary|tesco|scottaaronson|answers.yahoo.com|code.google.com)') , None],
         [R('.*'), R('[\\?].*$')],
-    ]
+    ],
+    [R('.*')                     , R('/$'               )],
 ]
 
 

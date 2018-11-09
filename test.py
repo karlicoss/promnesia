@@ -94,7 +94,7 @@ def test_plaintext_path_extractor():
     hist = custom_gen.get_custom_history(
         extract_from_path('testdata/custom'),
     )
-    assert len(hist) == 4
+    assert len(hist) == 3
 
 def test_normalise():
     import wereyouhere.generator.custom as custom_gen
@@ -124,7 +124,7 @@ def test_custom():
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
         tag='test',
     )
-    assert len(hist) == 4 # https and http are same
+    assert len(hist) == 3 # https and http are same; also trailing slash and no trailing slash
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
 
