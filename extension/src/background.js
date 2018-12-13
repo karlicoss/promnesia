@@ -5,29 +5,39 @@ import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
 
-import { Store, set, keys, clear, get } from 'idb-keyval';
+// $FlowFixMe
+import idb from 'idb';
 // measure slowdown? Although it's async, so it's fine probably
 
-const urls_store = new Store('urls-db', 'urls-store');
+// TODO ok, in case of issues just clear /home/karlicos/.config/google-chrome/Default/IndexedDB/chrome-extension_lilgepckbpdcefoofonbalbecljohhhj_0.indexeddb.leveldb
+const UDB = 'urls-db';
+const US = 'urls-store';
 
-// TODO eh, need to update in single transaction...
-function putVisits(url: Url, visits: Visits) {
-    set(url, visits, urls_store);
-        // .then(() => console.log('It worked!'))
-        //.catch(err => console.log('It failed!', err));
+function getDb() {
+    return idb.open(UDB, 1, udb => {
+        console.log('Upgraded db');
+        udb.createObjectStore(US);
+    });
 }
 
+
 function putVisitsMap(mm: VisitsMap) {
-    // mm = {
-    //     'url1': 'whatever',
-    //     'url2': 'whatever',
-    // };
-    clear(urls_store);
-    // TODO iteratively so we don't have memory spike??
-    Object.keys(mm).map(url => {
-        const vis = mm[url];
-        putVisits(url, vis);
-    });
+    getDb().then(db => {
+        const tx = db.transaction(US, 'readwrite');
+        const os = tx.objectStore(US);
+        const kk = Object.keys(mm);
+        console.log('updating object store...');
+        for (var i = 0; i < kk.length; i++) {
+            if (i % 5000 == 0) {
+                console.log(`handling visit ${i}/${kk.length}`);
+            }
+            const url = kk[i];
+            const vis = mm[url];
+            os.put(vis, url);
+        }
+        return os.complete;
+    }).then(xx => console.log("finished updating the database"), err => console.log("ERROR! " + err));
+    // TODO read from json iteratively so we don't have memory spike?? I gues we can't really...
 }
 
 function rawMapToVisits(map): ?VisitsMap {
@@ -39,7 +49,11 @@ function rawMapToVisits(map): ?VisitsMap {
     Object.keys(map).map(function (url /*index*/) {
         const vis = map[url];
         const visits = vis[0];
-        const contexts: Array<string> = vis[1];
+        var contexts: Array<string> = vis[1];
+        // TODO tried that to save up db space, but that doesn't really help...
+        // if (contexts.length == 0) {
+        //     contexts = null;
+        // }
 
         result[url] = new Visits(visits.map(v => {
             const vtime: string = v[0];
@@ -100,10 +114,8 @@ function refreshMap (cb: ?(VisitsMap) => void) {
 }
 
 function getJsonVisits(u: Url, cb: (Visits) => void) {
-    // TODO shit why is it so slow???
-    get(u, urls_store).then(vis => {
-        console.log('got visit', vis);
-        cb(vis); // TODO if not empty??
+    getDb().then(db => {
+        db.transaction(US).objectStore(US).get(u).then(cb); // TODO error??
     });
 }
 
@@ -262,6 +274,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         });
         return true; // this is important!! otherwise message will not be sent?
     } else if (request.method == 'refreshMap') {
+        console.log('refreshing map (requested by message listener)');
         refreshMap();
         return true;
     }
@@ -275,14 +288,16 @@ chrome.browserAction.onClicked.addListener(tab => {
 
 
 const refreshMapAlarm = 'refreshUrlMap';
+const delayMinutes = 20; // TODO ??
 
 function setupAlarm() {
+    console.log('refreshing map (initial)');
+    refreshMap(null);
     chrome.alarms.get(refreshMapAlarm, function(alarm) {
         if (!alarm) {
             chrome.alarms.create(refreshMapAlarm, {
-                // when: Date.now(),
-                delayInMinutes: 0,
-                periodInMinutes: 1,
+                delayInMinutes: delayMinutes,
+                periodInMinutes: delayMinutes,
             });
         }
     });
@@ -295,6 +310,7 @@ chrome.runtime.onStartup.addListener(setupAlarm);
 function onAlarm(alarm) {
     switch (alarm.name) {
     case refreshMapAlarm:
+        console.log('refreshing map (alarm)');
         refreshMap(null);
         break;
     default:
