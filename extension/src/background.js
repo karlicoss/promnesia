@@ -5,10 +5,30 @@ import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
 
+import { Store, set, keys, clear, get } from 'idb-keyval';
 // measure slowdown? Although it's async, so it's fine probably
 
-var all_urls: ?VisitsMap = null;
+const urls_store = new Store('urls-db', 'urls-store');
 
+// TODO eh, need to update in single transaction...
+function putVisits(url: Url, visits: Visits) {
+    set(url, visits, urls_store);
+        // .then(() => console.log('It worked!'))
+        //.catch(err => console.log('It failed!', err));
+}
+
+function putVisitsMap(mm: VisitsMap) {
+    // mm = {
+    //     'url1': 'whatever',
+    //     'url2': 'whatever',
+    // };
+    clear(urls_store);
+    // TODO iteratively so we don't have memory spike??
+    Object.keys(mm).map(url => {
+        const vis = mm[url];
+        putVisits(url, vis);
+    });
+}
 
 function rawMapToVisits(map): ?VisitsMap {
     const len = Object.keys(map).length;
@@ -65,7 +85,7 @@ function refreshMap (cb: ?(VisitsMap) => void) {
             console.log("Loaded map of length ", len);
             const visits = rawMapToVisits(map);
             if (visits) {
-                all_urls = visits;
+                putVisitsMap(visits);
                 if (cb) {
                     cb(visits);
                 }
@@ -79,18 +99,14 @@ function refreshMap (cb: ?(VisitsMap) => void) {
     });
 }
 
-function getMap(cb: (VisitsMap) => void) {
-    // not sure why is this even necessary... just as extensions is running, all_urls is getting set to null occasionally
-    if (all_urls) {
-        cb(all_urls);
-    } else {
-        refreshMap(cb);
-        // TODO if still null, return dummy visits with 'not set' message?
-    }
+function getJsonVisits(u: Url, cb: (Visits) => void) {
+    // TODO shit why is it so slow???
+    get(u, urls_store).then(vis => {
+        console.log('got visit', vis);
+        cb(vis); // TODO if not empty??
+    });
 }
 
-
-chrome.runtime.onInstalled.addListener(function () {refreshMap(null); });
 
 function getDelayMs(/*url*/) {
     return 10 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
@@ -161,11 +177,10 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
 }
 
 function getMapVisits(url: Url, cb: (Visits) => void) {
-    getMap(map => {
-        var nurl = normalise_url(url);
-        console.log("Original: %s", url);
-        console.log("Normalised: %s", nurl);
-        var v = map[nurl];
+    var nurl = normalise_url(url);
+    console.log("Original: %s", url);
+    console.log("Normalised: %s", nurl);
+    getJsonVisits(nurl, v => {
         if (v) {
             cb(v);
         } else {
@@ -257,3 +272,33 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 chrome.browserAction.onClicked.addListener(tab => {
     chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'});
 });
+
+
+const refreshMapAlarm = 'refreshUrlMap';
+
+function setupAlarm() {
+    chrome.alarms.get(refreshMapAlarm, function(alarm) {
+        if (!alarm) {
+            chrome.alarms.create(refreshMapAlarm, {
+                // when: Date.now(),
+                delayInMinutes: 0,
+                periodInMinutes: 1,
+            });
+        }
+    });
+}
+
+
+chrome.runtime.onInstalled.addListener(setupAlarm);
+chrome.runtime.onStartup.addListener(setupAlarm);
+
+function onAlarm(alarm) {
+    switch (alarm.name) {
+    case refreshMapAlarm:
+        refreshMap(null);
+        break;
+    default:
+        break;
+    }
+}
+chrome.alarms.onAlarm.addListener(onAlarm);

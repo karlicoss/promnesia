@@ -4,13 +4,13 @@
   "description": "Extension to aid you in rememberin what you already visited and in which context",
   "main": "dist/background.js",
   "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "bkuild": "webpack --progress --profile --colors",
-      "watch": "webpack --watch --progress --colors",
-      "dev": "npm run watch",
-      "eslint": "eslint src",
-      "jslint": "jslint --todo --white src/background.js",
-      "flow": "flow"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --progress --profile --colors",
+    "watch": "webpack --watch --progress --colors",
+    "dev": "npm run watch",
+    "eslint": "eslint src",
+    "jslint": "jslint --todo --white src/background.js",
+    "flow": "flow"
   },
   "repository": {
     "type": "git",
@@ -27,9 +27,10 @@
   },
   "homepage": "https://github.com/karlicoss/were-you-here#readme",
   "dependencies": {
+    "chrome-sidebar": "^0.1.2",
+    "idb-keyval": "^3.1.0",
     "react": "^15.5.4",
-    "react-dom": "^15.5.4",
-    "chrome-sidebar": "^0.1.2"
+    "react-dom": "^15.5.4"
   },
   "devDependencies": {
     "babel-core": "6.24.0",
@@ -55,6 +56,7 @@
     "eslint-config-google": "^0.10.0",
     "eslint-plugin-react": "^7.11.1",
     "flow-interfaces-chrome": "^0.5.2",
+    "idb-keyval": "^3.1.0",
     "webpack": "^2.5.1",
     "webpack-extension-manifest-plugin": "^0.4.2"
   }

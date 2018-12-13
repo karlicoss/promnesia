@@ -13,6 +13,8 @@
     },
 
     "permissions": [
+        "alarms",
+
         "https://*/*",
         "http://*/*",
 
