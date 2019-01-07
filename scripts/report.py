@@ -23,8 +23,8 @@ def load_state():
 
 # although the database might inflate git repository due to everything in a single file, worth trying cause it makes everything way simpler..
 
-def gits(*args):
-    return check_call([
+def gits(*args, method=check_call):
+    return method([
         'git', '-C', STATE_DIR, *args,
     ])
 
@@ -46,7 +46,17 @@ def save_state(new_state):
     print(f"Repository size: {sz}")
 
 def print_diff():
-    gits('show', '-U0', '-p')
+    out = gits(
+        'show',
+        '--color',     # need to force it due to running non-interactively
+        '-U0',         # do not show context
+        '--word-diff', # do not use line changes, makes output more compact
+        '-p',
+        method=check_output,
+    ).decode('utf-8').splitlines()
+    out = [l for l in out if not '@@' in l]
+    for l in out:
+        print(l)
 
 def load_urls():
     # TODO needs path to links db.... so it should use config?
