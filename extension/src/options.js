@@ -3,12 +3,14 @@
 export type Options = {
     host: string;
     dots: boolean;
+    token: string;
 }
 
 function default_options(): Options {
     return {
         host: "http://localhost:13131",
         dots: true,
+        token: "",
     };
 }
 

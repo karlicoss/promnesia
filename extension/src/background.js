@@ -52,6 +52,7 @@ function getJsonVisits(u: Url, opts: Options, cb: (Visits) => void) {
 
     const endpoint = `${opts.host}/visits`;
     request.open('POST', endpoint, true);
+    request.setRequestHeader('Authorization', `Basic ${btoa(opts.token)}`);
     request.onreadystatechange = () => {
         if (request.readyState != request.DONE) {
             return;
@@ -271,6 +272,10 @@ function showDots(tabId, options: Options) {
             throw "shouldn't happen";
         }
         const res = results[0];
+        if (res == null) {
+            console.error("Weird, res is null. Not doing anything");
+            return;
+        }
         // TODO check if zero? not sure if necessary...
         // TODO maybe, I need a per-site extension?
 
@@ -278,6 +283,9 @@ function showDots(tabId, options: Options) {
             url: `${options.host}/visited`
             , method: 'post'
             , contentType: 'application/json'
+            , headers: {
+                'Authorization': "Basic " + btoa(options.token),
+            }
             , data: JSON.stringify({
                 "urls": res,
             })
