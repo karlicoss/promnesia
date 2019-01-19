@@ -3,7 +3,9 @@
 import type {Url, VisitsMap} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
-import {getUrlsFile} from './options';
+import type {Options} from './options';
+import {get_options} from './options';
+// $FlowFixMe
 import reqwest from 'reqwest';
 
 // TODO common?
@@ -39,7 +41,7 @@ function rawToVisits(vis): Visits {
 // TODO definitely need to use something very lightweight for json requests..
 
 // TODO better name?
-function getJsonVisits(u: Url, cb: (Visits) => void) {
+function getJsonVisits(u: Url, opts: Options, cb: (Visits) => void) {
     // TODO ok, here we want to do an async request
 
     const data = JSON.stringify({
@@ -48,7 +50,7 @@ function getJsonVisits(u: Url, cb: (Visits) => void) {
 
     const request = new XMLHttpRequest();
 
-    const endpoint = 'http://localhost:13131/visits';
+    const endpoint = `${opts.host}/visits`;
     request.open('POST', endpoint, true);
     request.onreadystatechange = () => {
         if (request.readyState != request.DONE) {
@@ -169,12 +171,14 @@ function getMapVisits(url: Url, cb: (Visits) => void) {
     var nurl = normalise_url(url);
     console.log("Original: %s", url);
     console.log("Normalised: %s", nurl);
-    getJsonVisits(nurl, v => {
-        if (v) {
-            cb(v);
-        } else {
-            cb(new Visits([], []));
-        }
+    get_options(opts => {
+        getJsonVisits(nurl, opts, v => {
+            if (v) {
+                cb(v);
+            } else {
+                cb(new Visits([], []));
+            }
+        });
     });
 }
 
@@ -214,7 +218,7 @@ function updateState () {
         let url = unwrap(atab.url);
         // $FlowFixMe
         let tabId = atab.tabId;
-        getVisits(url, function (visits) {
+        getVisits(url,  function (visits) {
             let res = getIconAndTitle(visits);
             let icon = res[0];
             let title = res[1];
@@ -235,7 +239,7 @@ function updateState () {
     });
 }
 
-function alala(tabId) {
+function showDots(tabId, options: Options) {
     // TODO ugh ignore chrome:// here too
 
     chrome.tabs.executeScript(tabId, {
@@ -263,12 +267,15 @@ function alala(tabId) {
      Array.from(aurls)
  `
     }, results => {
+        if (results == null) {
+            throw "shouldn't happen";
+        }
         const res = results[0];
         // TODO check if zero? not sure if necessary...
         // TODO maybe, I need a per-site extension?
 
         reqwest({
-            url: 'http://localhost:13131/visited'
+            url: `${options.host}/visited`
             , method: 'post'
             , contentType: 'application/json'
             , data: JSON.stringify({
@@ -289,9 +296,14 @@ function alala(tabId) {
                     code: `
 .wereyouhere-visited:after {
   content: "⚫";
-  color: red;
+  color: '#006699';
   vertical-align: super;
   font-size: smaller;
+
+  user-select: none;
+
+  position:absolute;
+  z-index:100;
 }
 `
                 });
@@ -329,14 +341,19 @@ console.log("adding class to ", a_tag);
 
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     const url = tab.url;
+    if (url == null) {
+        throw "shouldn't happen";
+    }
     if (url.match('chrome://')) {
         console.log("Ignoring %s", url);
         return;
     }
-    if (info.status == 'complete') {
-        alala(tabId);
-    }
-    updateState();
+    get_options(opts => {
+        if (opts.dots && info.status == 'complete') {
+            showDots(tabId, opts);
+        }
+        updateState();
+    });
 });
 // chrome.tabs.onReplaced.addListener(updateState);
 

@@ -1,20 +1,25 @@
-import {setUrlsFile, getUrlsFile} from './options';
+import {get_options, set_options} from './options';
 
-function saveOptions() {
-    const fpath = document.getElementById('fpath').value;
-    setUrlsFile(fpath, () => {
-        console.log('Value is set to ' + fpath);
-        // TODO abstract it away
-        // TODO here, we will set endpoint instead
-    });
+function getHost(): HTMLInputElement {
+    return ((document.getElementById('host_id'): any): HTMLInputElement);
 }
 
-function restoreOptions() {
-    // Use default value color = 'red' and likesColor = true.
-    getUrlsFile(fname => {
-        document.getElementById('fpath').value = fname;
-    });
+function getDots(): HTMLInputElement {
+    return ((document.getElementById('dots_id'): any): HTMLInputElement);
 }
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('save').addEventListener('click', saveOptions);
+// TODO display it floating
+
+document.addEventListener('DOMContentLoaded', () => {
+    get_options(opts => {
+        getHost().value = opts.host;
+        getDots().checked = opts.dots;
+    });
+});
+document.getElementById('save_id').addEventListener('click', () => {
+    const opts = {
+        host: getHost().value,
+        dots: getDots().checked,
+    };
+    set_options(opts, () => { alert("Saved!"); });
+});

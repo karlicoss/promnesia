@@ -1,7 +1,25 @@
-export function setUrlsFile(path, cb) {
-    chrome.storage.local.set({'urls_json_file': path}, cb);
+/* @flow */
+
+export type Options = {
+    host: string;
+    dots: boolean;
 }
 
-export function getUrlsFile(cb) {
-    chrome.storage.local.get({'urls_json_file': null}, res => cb(res.urls_json_file));
+function default_options(): Options {
+    return {
+        host: "http://localhost:13131",
+        dots: true,
+    };
+}
+
+export function get_options(cb: (Options) => void)  {
+    chrome.storage.local.get(null, res => {
+        res = {...default_options(), ...res};
+        cb(res);
+    });
+}
+
+export function set_options(opts: Options, cb: () => void) {
+    console.log('Saving %s', JSON.stringify(opts));
+    chrome.storage.local.set(opts, cb);
 }
