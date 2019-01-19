@@ -3,6 +3,7 @@ import argparse
 import json
 import re
 import os
+from datetime import timedelta, datetime
 from pathlib import Path
 
 import hug # type: ignore
@@ -16,13 +17,32 @@ def log(*things):
 
 # TODO how to have a worker in parallel??
 
+DELTA = timedelta(minutes=20)
 LINKS = Path('/L/data/wereyouhere/linksdb.json')
 
-def get_visits_map():
+class State:
+    def __init__(self, links: Path) -> None:
+        self.links = links
+
+        self.vmap = None
+        self.last = None
+
+    def refresh(self):
+        now = datetime.now()
+        if self.last is not None and (now - self.last) < DELTA:
+            return
+
+        log("Reloading the map")
+        with self.links.open('r') as fo:
+            self.vmap = json.load(fo)
+        self.last = now
+
+    def get_map(self):
+        self.refresh()
+        return self.vmap
+        # TODO how to do it in background??
+
     # TODO could even store in some decent format now instead of lists...
-    with VISITS.open('r') as fo:
-        vmap = json.load(fo)
-    return vmap # TODO keep it in memory so don't have to reload every time
     # res = {}
     # for u, (vis, cont) in vmap.items():
     #     res[u] = {
@@ -30,6 +50,8 @@ def get_visits_map():
     #         'contexts': cont,
     #     }
     # return res
+
+state = State(LINKS)
 
 
 @hug.local()
@@ -39,7 +61,7 @@ def visits(
 ):
     # TODO could also normalise here!! wohoo
     log(f"getting visits for {url}")
-    vmap = get_visits_map()
+    vmap = state.get_map()
     res = vmap.get(url, None)
     log(res)
     return res

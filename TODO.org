@@ -8,4 +8,6 @@ looks like the way to go is just running a server in parallel. the benefit is be
    
 
 * TODO hmm, it's doing too many requests for some reason..
+* TODO maybe I need something a bit more discrete for contexts notification...
 
+* TODO shit, request on every tab switch is not good...

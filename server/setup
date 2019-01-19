@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+import argparse
+
+from pathlib import Path
+from subprocess import check_call, run
+
+from wereyouhere_server import setup_parser
+
+SYSTEMD_CONFIG = """
+[Unit]
+Description=Wereyouhere extension server conterpart
+
+[Install]
+WantedBy=default.target
+
+[Service]
+ExecStart={server} {extra_args}
+Type=simple
+Restart=always
+"""
+
+
+def systemd(*args, method=check_call):
+    method([
+        'systemctl', '--user', *args,
+    ])
+
+def setup(args):
+    unit_name = args.unit_name
+    out = Path(f'~/.config/systemd/user/{unit_name}').expanduser()
+    print(f"Writing systemd config to {out}:")
+
+    server_bin = Path(__file__).parent.joinpath('wereyouhere_server.py').absolute()
+
+    extra_args = f'--port {args.port}'
+
+    with out.open('w') as fo:
+        fo.write(SYSTEMD_CONFIG.format(
+            server=server_bin,
+            extra_args=extra_args,
+        ))
+
+    try:
+        systemd('stop' , unit_name, method=run) # ignore errors here if it wasn't running in the first place
+        systemd('daemon-reload')
+        systemd('enable', unit_name)
+        systemd('start' , unit_name)
+        systemd('status', unit_name)
+    except Exception as e:
+        print(f"Something has gone wrong... you might want to use 'journalctl --user -u {unit_name}' to debug")
+        raise e
+
+def main():
+    p = argparse.ArgumentParser('wereyouhere server setup', formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=100)) # type: ignore
+    p.add_argument('--unit-name', type=str, default='wereyouhere.service', help='Systemd unit name')
+    setup_parser(p)
+    args = p.parse_args()
+    setup(args)
+
+if __name__ == '__main__':
+    main()
+
+# TODO eh, move somewhere common??
