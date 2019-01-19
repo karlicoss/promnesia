@@ -28,7 +28,8 @@
   "dependencies": {
     "chrome-sidebar": "^0.1.2",
     "react": "^15.5.4",
-    "react-dom": "^15.5.4"
+    "react-dom": "^15.5.4",
+    "reqwest": "^2.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",

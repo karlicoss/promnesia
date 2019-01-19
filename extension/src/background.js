@@ -304,7 +304,7 @@ function showDots(tabId, options: Options) {
                     code: `
 .wereyouhere-visited:after {
   content: "⚫";
-  color: '#006699';
+  color: #FF4500;
   vertical-align: super;
   font-size: smaller;
 
