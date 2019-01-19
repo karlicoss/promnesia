@@ -87,7 +87,7 @@ def run(port: str): # , capture_path: str):
     # # not sure if there is a simpler way to communicate with the server...
     # env[CAPTURE_PATH_VAR] = capture_path
     os.execvp(
-        'hug',
+        '/home/karlicos/.local/bin/hug',
         [
             'wereyouhere-server',
             '-p', port,
