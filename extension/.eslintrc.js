@@ -1,9 +1,18 @@
 module.exports = {
-    // "extends": "google",
+    'plugins': [
+        "flowtype",
+        "react",
+    ],
     'extends': [
         "eslint:recommended",
         "plugin:react/recommended",
+        "plugin:flowtype/recommended",
     ],
+    'settings': {
+        'react': {
+            'version': "detect"
+        }
+    },
     'env': {
         'browser': true,
         'webextensions': true,

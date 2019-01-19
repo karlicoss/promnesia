@@ -33,5 +33,6 @@
         "default_icon": "images/ic_not_visited_48.png",
         "default_title": "Was not visited"
     },
-    "manifest_version": 2
+    "manifest_version": 2,
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

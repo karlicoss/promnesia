@@ -1,11 +1,14 @@
 const path = require('path');
 const webpack = require('webpack');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin'),
+      CleanWebpackPlugin = require("clean-webpack-plugin"),
+      WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
 
-module.exports = {
+const options = {
+  mode: 'development',
+
   entry: {
     background   : path.join(__dirname, './src/background'),
     options_page : path.join(__dirname, './src/options_page'),
@@ -16,34 +19,49 @@ module.exports = {
     path: path.join(__dirname, './dist'),
     filename: '[name].js',
   },
+  module: {
+      rules: [{
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: {
+              loader: 'babel-loader',
+          }
+      },
+      {
+          test: /\.css$/,
+          loader: "style-loader!css-loader",
+          exclude: /node_modules/
+      },
+      // {
+      //     test: new RegExp('\.(' + fileExtensions.join('|') + ')$'),
+      //     loader: "file-loader?name=[name].[ext]",
+      //     exclude: /node_modules/
+      // },
+      {
+          test: /\.html$/,
+          loader: "html-loader",
+          exclude: /node_modules/
+      }
+    ]
+  },
   plugins: [
-    new CopyWebpackPlugin([
+   new CleanWebpackPlugin(["dist/*"]),
+   new CopyWebpackPlugin([
       { from: 'images/*' },
       { from: 'src/*.html' , flatten: true},
     ]),
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify('production')
-      }
-    }),
     new WebpackExtensionManifestPlugin({
         config: {
             base: baseManifest,
             extend: {version: pkg.version}
         }
     }),
-  ],
-  resolve: {
-    extensions: ['.js']
-  },
-  module: {
-    loaders: [{
-      test: /\.js$/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['react', 'es2015', 'stage-0']
-      },
-      exclude: /node_modules/
-    }]
-  }
-}
+  ]
+    //TODO??
+  // resolve: {
+  //   extensions: ['.js']
+  // },
+};
+
+
+module.exports = options;
