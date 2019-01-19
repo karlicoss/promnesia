@@ -347,18 +347,20 @@ console.log("adding class to ", a_tag);
 // ok, looks like this one was excessive..
 // chrome.tabs.onActivated.addListener(updateState);
 
-chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
-    const url = tab.url;
-    if (url == null) {
-        throw "shouldn't happen";
-    }
-    if (url.match('chrome://')) {
+
+// TODO ehh... not even sure that this is correct thing to do...
+// $FlowFixMe
+chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
+    const url = unwrap(detail.url);
+    // not sure why about:blank is loading like 5 times.. but this seems to fix it
+    if (url.match('chrome://') || url == 'about:blank') {
         console.log("Ignoring %s", url);
         return;
     }
+    console.log(detail);
     get_options(opts => {
-        if (opts.dots && info.status == 'complete') {
-            showDots(tabId, opts);
+        if (opts.dots) {
+            showDots(detail.tabId, opts);
         }
         updateState();
     });
@@ -370,6 +372,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.method == 'getVisits') {
         chrome.tabs.query({'active': true}, function (tabs) {
             var url = unwrap(tabs[0].url);
+            // TODO ugh duplication
+            console.log(url);
+            if (url.match('chrome://')) {
+                console.log("Ignoring %s", url);
+                return;
+            }
+
             getVisits(url, function (visits) {
                 sendResponse(visits);
             });

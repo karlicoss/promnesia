@@ -13,18 +13,20 @@
     },
 
     "permissions": [
-        "alarms",
-
+        "file://*",
         "https://*/*",
         "http://*/*",
 
-        "tabs",
         "storage",
+
+        "tabs",
         "history",
 
         "activeTab",
 
-        "notifications"
+        "notifications",
+
+        "webNavigation"
     ],
     "icons": {
         "48": "images/ic_not_visited_48.png"
