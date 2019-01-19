@@ -18,10 +18,11 @@
         "https://*/*",
         "http://*/*",
 
-        "file:///*",
         "tabs",
         "storage",
         "history",
+
+        "activeTab",
 
         "notifications"
     ],

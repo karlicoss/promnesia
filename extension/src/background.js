@@ -4,6 +4,7 @@ import type {Url, VisitsMap} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import {getUrlsFile} from './options';
+import reqwest from 'reqwest';
 
 // TODO common?
 function showNotification(text: string) {
@@ -34,6 +35,8 @@ function rawToVisits(vis): Visits {
     }), contexts);
 }
 
+
+// TODO definitely need to use something very lightweight for json requests..
 
 // TODO better name?
 function getJsonVisits(u: Url, cb: (Visits) => void) {
@@ -176,16 +179,6 @@ function getMapVisits(url: Url, cb: (Visits) => void) {
 }
 
 function getVisits(url: Url, cb: (Visits) => void) {
-    if (url.match('chrome://')) {
-        console.log("Ignoring %s", url);
-        cb(new Visits(
-            [],
-            []
-        ));
-        return;
-    }
-
-
     getChromeVisits(url, function (chr_visits) {
         getMapVisits(url, function (map_visits) {
             cb(new Visits(
@@ -242,11 +235,109 @@ function updateState () {
     });
 }
 
+function alala(tabId) {
+    // TODO ugh ignore chrome:// here too
+
+    chrome.tabs.executeScript(tabId, {
+        code: `
+     const aaa = document.getElementsByTagName("a");
+     const domain = document.domain;
+
+     const urls = new Set([]);
+     for (var i = 0; i< aaa.length; i++) {
+         urls.add(aaa[i].getAttribute('href'));
+     }
+     urls.delete("#");
+     urls.delete(null);
+     const aurls = new Set([]);
+     for (let u of urls) {
+         if (u.startsWith('javascript')) {
+             continue
+         } else if (u.startsWith('/')) {
+             aurls.add(domain + u);
+         } else {
+             aurls.add(u);
+         }
+     }
+     // TODO move more stuff to background??
+     Array.from(aurls)
+ `
+    }, results => {
+        const res = results[0];
+        // TODO check if zero? not sure if necessary...
+        // TODO maybe, I need a per-site extension?
+
+        reqwest({
+            url: 'http://localhost:13131/visited'
+            , method: 'post'
+            , contentType: 'application/json'
+            , data: JSON.stringify({
+                "urls": res,
+            })
+            , success: resp => {
+                // TODO ok, we received exactly same elements as in res. now what??
+                // TODO cache results internally? At least for visited. ugh.
+                // TODO make it custom option?
+                console.log(resp);
+
+                const vis = {};
+                for (var i = 0; i < res.length; i++) {
+                    vis[res[i]] = resp[i];
+                }
+                // TODO make a map from it..
+                chrome.tabs.insertCSS(tabId, {
+                    code: `
+.wereyouhere-visited:after {
+  content: "⚫";
+  color: red;
+  vertical-align: super;
+  font-size: smaller;
+}
+`
+                });
+                chrome.tabs.executeScript(tabId, {
+                    code: `
+const vis = ${JSON.stringify(vis)}; // madness!
+for (var i = 0; i < aaa.length; i++) {
+    var a_tag = aaa[i];
+    var url = a_tag.getAttribute('href');
+    if (url == null) {
+        continue;
+    }
+    if (url.startsWith('/')) {
+        url = domain + url;
+    }
+    if (vis[url] == true) {
+console.log("adding class to ", a_tag);
+        a_tag.classList.add('wereyouhere-visited');
+    }
+}
+`
+                });
+            }
+            , error: err => {
+                console.error(err);
+                showNotification(err.responseText);
+            }
+        });
+
+    });
+}
+
 // ok, looks like this one was excessive..
 // chrome.tabs.onActivated.addListener(updateState);
 
-
-chrome.tabs.onUpdated.addListener(updateState);
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+    const url = tab.url;
+    if (url.match('chrome://')) {
+        console.log("Ignoring %s", url);
+        return;
+    }
+    if (info.status == 'complete') {
+        alala(tabId);
+    }
+    updateState();
+});
 // chrome.tabs.onReplaced.addListener(updateState);
 
 // $FlowFixMe

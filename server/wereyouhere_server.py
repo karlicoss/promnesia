@@ -3,6 +3,7 @@ import argparse
 import json
 import re
 import os
+import sys
 from datetime import timedelta, datetime
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import hug.types as T # type: ignore
 
 def log(*things):
     # TODO proper logging
-    print(*things)
+    print(*things, file=sys.stderr, flush=True)
 
 
 # TODO how to have a worker in parallel??
@@ -54,17 +55,31 @@ class State:
 state = State(LINKS)
 
 
+from normalise import normalise_url
+# TODO hacky!
+
 @hug.local()
 @hug.post('/visits')
 def visits(
         url: T.text,
 ):
-    # TODO could also normalise here!! wohoo
-    log(f"getting visits for {url}")
+    url = normalise_url(url)
     vmap = state.get_map()
     res = vmap.get(url, None)
     log(res)
     return res
+
+@hug.local()
+@hug.post('/visited')
+def visited(
+        urls, # TODO type
+):
+    vmap = state.get_map()
+    nurls = list(map(normalise_url, urls))
+    log(nurls)
+    return [
+        u in vmap for u in nurls
+    ]
 
 
 def run(port: str): # , capture_path: str):
