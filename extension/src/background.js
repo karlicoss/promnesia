@@ -242,8 +242,10 @@ function updateState () {
     });
 }
 
-// erm.. all these things are pretty confusing, but that seems to work... just onUpdated didnt
-chrome.tabs.onActivated.addListener(updateState);
+// ok, looks like this one was excessive..
+// chrome.tabs.onActivated.addListener(updateState);
+
+
 chrome.tabs.onUpdated.addListener(updateState);
 // chrome.tabs.onReplaced.addListener(updateState);
 
