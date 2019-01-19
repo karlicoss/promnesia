@@ -5,11 +5,7 @@ function saveOptions() {
     setUrlsFile(fpath, () => {
         console.log('Value is set to ' + fpath);
         // TODO abstract it away
-        chrome.runtime.sendMessage({
-            'method':'refreshMap'
-        }, function(/*response*/){
-            console.log("reloaded the map");
-        });
+        // TODO here, we will set endpoint instead
     });
 }
 
