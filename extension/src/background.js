@@ -37,6 +37,15 @@ function rawToVisits(vis): Visits {
     }), contexts);
 }
 
+// $FlowFixMe
+function log() {
+    const args = [];
+    for (var i = 1; i < arguments.length; i++) {
+        args.push(arguments[i]);
+    }
+    console.log('[background] ' + arguments[0], ...args);
+}
+
 
 // TODO definitely need to use something very lightweight for json requests..
 
@@ -61,13 +70,13 @@ function getJsonVisits(u: Url, opts: Options, cb: (Visits) => void) {
         const rtext = request.responseText;
         var had_error = false;
         var error_message = `status ${status}, response ${rtext}`;
-        console.log(`[background] status: ${status}, response: ${rtext}`);
+        log(`status: ${status}, response: ${rtext}`);
 
         if (status >= 200 && status < 400) { // success
             try {
                 // TODO handle json parsing defensively here
                 const response = JSON.parse(request.response);
-                console.log(`[background] success: ${response}`);
+                log(`success: ${response}`);
                 const vis = rawToVisits(response);
                 cb(vis);
                 // if (options.notification) {
@@ -170,8 +179,8 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
 
 function getMapVisits(url: Url, cb: (Visits) => void) {
     var nurl = normalise_url(url);
-    console.log("Original: %s", url);
-    console.log("Normalised: %s", nurl);
+    log("original: %s", url);
+    log("normalised: %s", nurl);
     get_options(opts => {
         getJsonVisits(nurl, opts, v => {
             if (v) {
@@ -293,8 +302,6 @@ function showDots(tabId, options: Options) {
                 // TODO ok, we received exactly same elements as in res. now what??
                 // TODO cache results internally? At least for visited. ugh.
                 // TODO make it custom option?
-                console.log(resp);
-
                 const vis = {};
                 for (var i = 0; i < res.length; i++) {
                     vis[res[i]] = resp[i];
@@ -347,17 +354,27 @@ console.log("adding class to ", a_tag);
 // ok, looks like this one was excessive..
 // chrome.tabs.onActivated.addListener(updateState);
 
+function ignored(url: string): boolean {
+    // not sure why about:blank is loading like 5 times.. but this seems to fix it
+    return url.match('chrome://') != null || url == 'about:blank';
+}
 
 // TODO ehh... not even sure that this is correct thing to do...
 // $FlowFixMe
 chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
     const url = unwrap(detail.url);
-    // not sure why about:blank is loading like 5 times.. but this seems to fix it
-    if (url.match('chrome://') || url == 'about:blank') {
-        console.log("Ignoring %s", url);
+
+    if (detail.frameId != 0) {
+        log('ignoring child iframe for %s', url);
         return;
     }
-    console.log(detail);
+
+    if (ignored(url)) {
+        log("ignoring %s", url);
+        return;
+    }
+    // https://kk.org/thetechnium/
+    log('finished loading ', detail);
     get_options(opts => {
         if (opts.dots) {
             showDots(detail.tabId, opts);
@@ -373,9 +390,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         chrome.tabs.query({'active': true}, function (tabs) {
             var url = unwrap(tabs[0].url);
             // TODO ugh duplication
-            console.log(url);
-            if (url.match('chrome://')) {
-                console.log("Ignoring %s", url);
+            if (ignored(url)) {
+                log("ignoring %s", url);
                 return;
             }
 
