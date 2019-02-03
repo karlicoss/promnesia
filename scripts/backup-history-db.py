@@ -35,7 +35,7 @@ def get_path(browser: str):
     if browser == 'chrome':
         return expanduser("~/.config/google-chrome/Default/History")
     elif browser == 'firefox':
-        matched = glob.glob(expanduser('~/.mozilla/firefox/**/places.sqlite'), recursive=True)
+        matched = glob.glob(expanduser('~/.mozilla/firefox/*/places.sqlite'), recursive=True)
         [match] = matched
         return match
     else:
