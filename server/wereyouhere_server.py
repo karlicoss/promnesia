@@ -19,7 +19,8 @@ def log(*things):
 # TODO how to have a worker in parallel??
 
 DELTA = timedelta(minutes=20)
-LINKS = Path('/L/data/wereyouhere/linksdb.json')
+
+LINKSDB = 'WEREYOUHERE_LINKSDB'
 
 class State:
     def __init__(self, links: Path) -> None:
@@ -52,7 +53,12 @@ class State:
     #     }
     # return res
 
-state = State(LINKS)
+state = None
+def get_state():
+    global state
+    if state is None:
+        state = State(Path(os.environ.get(LINKSDB)))
+    return state
 
 
 from normalise import normalise_url
@@ -64,7 +70,7 @@ def visits(
         url: T.text,
 ):
     url = normalise_url(url)
-    vmap = state.get_map()
+    vmap = get_state().get_map()
     res = vmap.get(url, None)
     log(res)
     return res
@@ -74,7 +80,7 @@ def visits(
 def visited(
         urls, # TODO type
 ):
-    vmap = state.get_map()
+    vmap = get_state().get_map()
     nurls = list(map(normalise_url, urls))
     log(nurls)
     return [
@@ -82,29 +88,29 @@ def visited(
     ]
 
 
-def run(port: str): # , capture_path: str):
-    # env = os.environ.copy()
+def run(port: str, linksdb: str):
+    env = os.environ.copy()
     # # not sure if there is a simpler way to communicate with the server...
-    # env[CAPTURE_PATH_VAR] = capture_path
-    os.execvp(
+    env[LINKSDB] = linksdb
+    os.execvpe(
         '/home/karlicos/.local/bin/hug',
         [
             'wereyouhere-server',
             '-p', port,
             '-f', __file__,
         ],
-        # env,
+        env,
     )
 
 def setup_parser(p):
     p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension')
-    # p.add_argument('--path', type=str, default='~/capture.org', help='File to capture into')
+    p.add_argument('--links', type=str, default='/L/data/wereyouhere/linksdb.json', help='Path to links database')
 
 def main():
     p = argparse.ArgumentParser('wereyouhere server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()
-    run(args.port) # , args.path)
+    run(args.port, args.links)
 
 if __name__ == '__main__':
     main()
