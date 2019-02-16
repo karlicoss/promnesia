@@ -34,6 +34,7 @@ class State:
         if self.last is not None and (now - self.last) < DELTA:
             return
 
+        # TODO use that?? https://github.com/timothycrosley/hug/blob/develop/tests/test_async.py
         log("Reloading the map")
         with self.links.open('r') as fo:
             self.vmap = json.load(fo)

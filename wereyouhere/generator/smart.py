@@ -1,12 +1,16 @@
 # TODO: give a better name...
 from typing import Iterable
 
-from wereyouhere.common import History, Visit, PreVisit
+from wereyouhere.common import History, Visit, PreVisit, get_logger
 
 import dateparser # type: ignore
 
-def extract(extr: Iterable[PreVisit]) -> History:
+def extract(ff, *args, **kwargs) -> History:
     # TODO make more defensive?
+    logger = get_logger()
+    logger.info(f'extracting via {ff.__module__}:{ff.__name__} {args} {kwargs} ...')
+
+    extr: Iterable[PreVisit] = ff(*args, **kwargs)
     h = History()
     previsits = list(extr)
     for p in previsits:
@@ -21,4 +25,6 @@ def extract(extr: Iterable[PreVisit]) -> History:
             context=p.context,
         )
         h.register(p.url, visit)
+
+    logger.info(f'extracting via {ff.__module__}:{ff.__name__} {args} {kwargs}: got {len(h)} visits')
     return h

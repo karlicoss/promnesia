@@ -5,9 +5,11 @@ import logging
 from datetime import datetime
 from typing import NamedTuple, List, Optional, Union, Iterable
 
-from wereyouhere.common import PathIsh, PreVisit
+from wereyouhere.common import PathIsh, PreVisit, get_logger
 
-def extract(json_path: PathIsh, logger=logging, tag='hyp') -> Iterable[PreVisit]:
+def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
+    logger = get_logger()
+
     j = json.loads(Path(json_path).read_text())
     # TODO what I really need is my hypothesis provider... is it possible to share somehow?
     for x in j:

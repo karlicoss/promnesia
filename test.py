@@ -14,6 +14,7 @@ skip = mark.skip
 
 from wereyouhere.common import History
 from wereyouhere.render import render
+from wereyouhere.generator.smart import extract as E
 
 import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')
@@ -62,12 +63,12 @@ def test_takeout_new_zip():
 # TODO run condition?? and flag to force all
 
 def test_chrome():
-    import wereyouhere.generator.chrome as chrome_gen
+    import wereyouhere.extrators.chrome as chrome_ex
 
     with TemporaryDirectory() as tdir:
         path = backup_db.backup_to(tdir, 'chrome')
 
-        [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
+        hist = E(chrome_ex.extract, path)
         assert len(hist) > 10 # kinda random sanity check
 
         render([hist], join(tdir, 'res.json'))
@@ -189,9 +190,9 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
-    import wereyouhere.generator.chrome as chrome_gen
+    import wereyouhere.extrators.chrome as chrome_ex
 
-    [hist] = list(chrome_gen.iter_chrome_histories(mfile, 'sqlite'))
+    hist = E(chrome_ex.extract, mfile)
     assert len(hist) > 0
 
     older = hist['github.com/orgzly/orgzly-android/issues']

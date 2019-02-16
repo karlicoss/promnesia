@@ -19,13 +19,14 @@ from .render import render
 
 def run():
     logger = get_logger()
+    from kython.klogging import setup_logzero
+    setup_logzero(logger, level=logging.DEBUG)
 
     config = cwd_import('config')
 
     fallback_tz = config.FALLBACK_TIMEZONE
 
     errors = False
-    chrome_dbs = config.CHROME_HISTORY_DBS
     takeout_path = config.GOOGLE_TAKEOUT_PATH
     custom_extractors = config.CUSTOM_EXTRACTORS
     extractors = config.EXTRACTORS
@@ -42,15 +43,6 @@ def run():
     def log_hists(histories: List[History], from_: str):
         lengths = [len(h) for h in histories]
         logger.info(f"Got {len(histories)} Histories from {from_}: {lengths}")
-
-    if chrome_dbs is not None:
-        import wereyouhere.generator.chrome as chrome_gen
-        for tag, db in chrome_dbs:
-            chrome_histories = list(chrome_gen.iter_chrome_histories(db, tag))
-            all_histories.extend(chrome_histories)
-            log_hists(chrome_histories, f'Chrome {tag}')
-    else:
-        logger.warning("CHROME_HISTORY_DBS is not set, not using chrome entries to populate extension DB!")
 
     if takeout_path is not None:
         import wereyouhere.generator.takeout as takeout_gen
@@ -86,10 +78,8 @@ def run():
             all_histories.extend(custom_histories)
 
     for extractor in extractors:
-        # TODO make defensive
-        all_histories.append(extractor())
-
-
+        hist = extractor()
+        all_histories.append(hist)
 
     urls_json = os.path.join(output_dir, 'linksdb.json')
     render(all_histories, urls_json, fallback_timezone=fallback_tz)
