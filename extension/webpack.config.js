@@ -49,6 +49,7 @@ const options = {
    new CopyWebpackPlugin([
       { from: 'images/*' },
       { from: 'src/*.html' , flatten: true},
+      { from: 'src/*.css' , flatten: true},
     ]),
     new WebpackExtensionManifestPlugin({
         config: {

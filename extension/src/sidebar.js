@@ -37,8 +37,6 @@ function clearSidebar() {
     while (cont.firstChild) {
         cont.removeChild(cont.firstChild);
     }
-    cont.style.backgroundColor = "rgba(236, 236, 236, 0.4)";
-    cont.style.fontSize = "16px";
 }
 
 function bindSidebarData(response) {
@@ -49,7 +47,6 @@ function bindSidebarData(response) {
     }
     clearSidebar();
 
-    // TODO css override?
     // TODO align somehow??
     cont.appendChild(document.createTextNode("Visits:"));
     for (const visit_raw of response.visits) {
@@ -94,6 +91,12 @@ function boot() {
     sidebar.id = SIDEBAR_ID;
     // $FlowFixMe
     document.body.appendChild(sidebar);
+
+    var link = document.createElement("link");
+    link.href = chrome.extension.getURL("sidebar.css");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    document.getElementsByTagName("head")[0].appendChild(link); // TODO why [0]??
 
     const App = (
             <Frame/>
