@@ -27,8 +27,20 @@ function getSidebarNode(): ?HTMLElement {
     if (root == null) {
         return null;
     }
-    const cont = root.children[0].children[1]; // TODO very fragile... div data-reactroot -> some other thing that is an actual container
-    return (cont: HTMLElement);
+    const frame = root.getElementsByTagName('iframe')[0];
+    frame.style.background = "rgba(236, 236, 236, 0.4)";
+
+    const cdoc = frame.contentDocument;
+    var link = cdoc.createElement("link");
+    link.href = chrome.extension.getURL("sidebar.css");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    cdoc.getElementsByTagName("head")[0].appendChild(link); // TODO why [0]??
+    return cdoc.body;
+    // right, iframe is pretty convenient for scrolling...
+
+    // const cont = root.children[0].children[1]; // TODO very fragile... div data-reactroot -> some other thing that is an actual container
+    // return (cont: HTMLElement);
 }
 
 // This is pretty insane... but it's the only sidebar lib I found :(
@@ -91,12 +103,6 @@ function boot() {
     sidebar.id = SIDEBAR_ID;
     // $FlowFixMe
     document.body.appendChild(sidebar);
-
-    var link = document.createElement("link");
-    link.href = chrome.extension.getURL("sidebar.css");
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    document.getElementsByTagName("head")[0].appendChild(link); // TODO why [0]??
 
     const App = (
             <Frame/>
