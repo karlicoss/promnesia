@@ -8,18 +8,16 @@ import {get_options} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
+
 // TODO common?
-function showNotification(text: string) {
-    if (Notification.permission !== "granted") {
-        Notification.requestPermission();
-    } else {
-        // TODO ugh. is there no way to show in-browser only notification??
-        const notification = new Notification(
-            'wereyouhere',
-            // $FlowFixMe
-            {body: text},
-        );
-    }
+export function showNotification(text: string, priority: number=0) {
+    chrome.notifications.create({
+        'type': "basic",
+        'title': "wereyouhere",
+        'message': text,
+        'priority': priority,
+        'iconUrl': 'images/ic_not_visited_48.png',
+    });
 }
 
 function rawToVisits(vis): Visits {
@@ -226,8 +224,13 @@ function updateState () {
         // TODO why am I getting multiple results???
         let atab = tabs[0];
         let url = unwrap(atab.url);
-        // $FlowFixMe
-        let tabId = atab.tabId;
+        let tabId = unwrap(atab.id);
+
+        if (ignored(url)) {
+            log("ignoring %s", url);
+            return;
+        }
+
         getVisits(url,  function (visits) {
             let res = getIconAndTitle(visits);
             let icon = res[0];
@@ -245,13 +248,19 @@ function updateState () {
             if (visits.contexts.length > 0) {
                 showNotification('contexts are available for this link!');
             }
+
+            chrome.tabs.executeScript(tabId, {
+                file: 'sidebar.js',
+            }, () => {
+                chrome.tabs.executeScript(tabId, {
+                    code: `bindSidebarData(${JSON.stringify(visits)})`
+                });
+            });
         });
     });
 }
 
 function showDots(tabId, options: Options) {
-    // TODO ugh ignore chrome:// here too
-
     chrome.tabs.executeScript(tabId, {
         code: `
      const aaa = document.getElementsByTagName("a");
@@ -335,7 +344,7 @@ for (var i = 0; i < aaa.length; i++) {
         url = domain + url;
     }
     if (vis[url] == true) {
-console.log("adding class to ", a_tag);
+        // console.log("adding class to ", a_tag);
         a_tag.classList.add('wereyouhere-visited');
     }
 }
@@ -356,14 +365,19 @@ console.log("adding class to ", a_tag);
 
 function ignored(url: string): boolean {
     // not sure why about:blank is loading like 5 times.. but this seems to fix it
-    return url.match('chrome://') != null || url == 'about:blank';
+    if (url.match('chrome://') != null || url.match('chrome-devtools://') != null || url == 'about:blank') {
+        return true;
+    }
+    if (url === 'https://www.google.com/_/chrome/newtab?ie=UTF-8') { // ugh, not sure how to dix that properly
+        return true;
+    }
+    return false;
 }
 
 // TODO ehh... not even sure that this is correct thing to do...
 // $FlowFixMe
 chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
     const url = unwrap(detail.url);
-
     if (detail.frameId != 0) {
         log('ignoring child iframe for %s', url);
         return;
@@ -374,7 +388,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
         return;
     }
     // https://kk.org/thetechnium/
-    log('finished loading ', detail);
+    log(`finished loading DOM ${JSON.stringify(detail)}`);
     get_options(opts => {
         if (opts.dots) {
             showDots(detail.tabId, opts);
@@ -384,9 +398,31 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
 });
 // chrome.tabs.onReplaced.addListener(updateState);
 
+
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+    const url = unwrap(tab.url);
+
+    if (ignored(url)) {
+        log("ignoring %s", url);
+        return;
+    }
+    // right, tab updated triggered quite a lot, e.g. when the title is blinking
+    // log(`TAB UPDATED ${url} ${info}`);
+    // console.log(info);
+    // ok, so far there are basically two cases
+    // 1. you open new tab. in that case 'url' won't be passed but onDomContentLoaded will be triggered
+    // 2. you navigate within the same tab, e.g. on youtube. then url will be passed, but onDomContentLoaded doesn't trigger. TODO not sure if it's always the case. maybe it's only YT
+    // TODO shit, so we might need to hide previous dots? ugh...
+    if (info['status'] === 'loading' && info['url'] != null) {
+        log(`requesting! ${url}`);
+        /// TODO how tocheck that dom is loaded?
+        updateState();
+    }
+});
+
 // $FlowFixMe
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.method == 'getVisits') {
+    if (request.method == 'getActiveTabVisits') {
         chrome.tabs.query({'active': true}, function (tabs) {
             var url = unwrap(tabs[0].url);
             // TODO ugh duplication
@@ -404,7 +440,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     return false;
 });
 
-// TODO what about default listener??
 chrome.browserAction.onClicked.addListener(tab => {
-    chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'});
+    const url = unwrap(tab.url);
+    if (ignored(url)) {
+        showNotification(`${url} can't be handled`);
+        return;
+    }
+    chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'}, () => {
+        chrome.tabs.executeScript(tab.id, {code: 'toggleSidebar();'});
+    });
 });

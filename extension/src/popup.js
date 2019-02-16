@@ -2,6 +2,7 @@
 import {Visits, Visit} from './common';
 
 
+// ok, this isn't even used ATM
 function requestVisits() {
     chrome.runtime.sendMessage({
         'method':'getVisits'
