@@ -3,3 +3,6 @@ pytz
 
 # for detecting sqlite databases
 python-magic
+
+# for smart date extraction
+dateparser

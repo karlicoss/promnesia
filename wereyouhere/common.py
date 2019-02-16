@@ -1,7 +1,8 @@
 from collections.abc import Sized
 from datetime import datetime
 import re
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union
+from pathlib import Path
 import logging
 from functools import lru_cache
 
@@ -9,13 +10,23 @@ import pytz
 
 from .normalise import normalise_url
 
-Date = datetime
+Url = str
+Tag = str
+DatetimeIsh = Union[datetime, str]
+Context = str
+
+class PreVisit(NamedTuple):
+    url: Url
+    dt: DatetimeIsh
+    context: Optional[Context] = None
+    tag: Optional[Tag] = None
+
+
 class Visit(NamedTuple):
     dt: datetime
-    tag: Optional[str] = None
-    context: Optional[str] = None
+    tag: Optional[Tag] = None
+    context: Optional[Context] = None
 
-Url = str
 class Entry(NamedTuple):
     url: Url
     visits: Set[Visit]
@@ -153,3 +164,5 @@ def get_tmpdir():
     import tempfile
     tdir = tempfile.TemporaryDirectory(suffix="wereyouhere")
     return tdir
+
+PathIsh = Union[Path, str]

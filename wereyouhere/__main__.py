@@ -28,6 +28,7 @@ def run():
     chrome_dbs = config.CHROME_HISTORY_DBS
     takeout_path = config.GOOGLE_TAKEOUT_PATH
     custom_extractors = config.CUSTOM_EXTRACTORS
+    extractors = config.EXTRACTORS
     output_dir = config.OUTPUT_DIR
     filters = [make_filter(f) for f in config.FILTERS]
     for f in filters:
@@ -83,6 +84,12 @@ def run():
         else:
             log_hists(custom_histories, str(extractor))
             all_histories.extend(custom_histories)
+
+    for extractor in extractors:
+        # TODO make defensive
+        all_histories.append(extractor())
+
+
 
     urls_json = os.path.join(output_dir, 'linksdb.json')
     render(all_histories, urls_json, fallback_timezone=fallback_tz)
