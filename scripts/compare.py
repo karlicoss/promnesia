@@ -56,7 +56,7 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
         onotn, nnoto = vdiff(vo, vn)
         if len(onotn) == 0 and len(nnoto) == 0:
             continue
-        if len(nnoto) > 0 and ignore_new:
+        if len(nnoto) > 0 and len(onotn) == 0 and ignore_new:
             # print(f'ignoring new {k}') # TODO FIXME
             continue
 
