@@ -82,27 +82,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# all_keys = set(s1.keys()).union(s2.keys())
-
-# incr = []
-# decr = []
-
-# for k in all_keys:
-#     v1 = s1.get(k, -1)
-#     v2 = s2.get(k, -1)
-#     if v1 != v2:
-#         ll = f"{v1:3d} {v2:3d} {k}"
-#         if v1 < v2:
-#             incr.append(ll)
-#         else:
-#             decr.append(ll)
-
-# print("---------INCREASED")
-# for ll in incr:
-#     print(ll)
-
-
-# print("---------DECREASED")
-# for ll in decr:
-#     print(ll)
