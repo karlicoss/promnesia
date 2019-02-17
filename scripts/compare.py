@@ -37,10 +37,22 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
                 res.add(Visit(when=v[0], tags=tuple(tags)))
         return res
 
+    import urllib
+    # urllib.quote
 
+    total = 0
     for k in all_keys:
         vo = getv(o, k)
         vn = getv(n, k)
+
+        if vn is None:
+            qk = urllib.parse.quote(k)
+            # TODO encoding??
+            # TODO uncomment some of old suppressions
+            # print(f'attempt to fallback on {qk}')
+            vn = getv(n, qk)
+
+
         onotn, nnoto = vdiff(vo, vn)
         if len(onotn) == 0 and len(nnoto) == 0:
             continue
@@ -59,6 +71,8 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
         if len(nnoto) > 0:
             errs.append(f'    new only {nnoto}')
         print('\n'.join(errs))
+        if len(errs) > 0:
+            total += 1
         # if vo != vn:
         #     print(f'ERROR: difference at {k}: {vo} vs {vn}')
             # ll = f"{v1:3d} {v2:3d} {k}"
@@ -66,15 +80,15 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
             #     incr.append(ll)
             # else:
             #     decr.append(ll)
+    print(f"Total mismatches: {total}")
+    # print("---------INCREASED")
+    # for ll in incr:
+    #     print(ll)
 
-    print("---------INCREASED")
-    for ll in incr:
-        print(ll)
 
-
-    print("---------DECREASED")
-    for ll in decr:
-        print(ll)
+    # print("---------DECREASED")
+    # for ll in decr:
+    #     print(ll)
 
 def load_visits(p):
     import json
