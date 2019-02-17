@@ -31,7 +31,7 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
         res = set()
         for v in vis:
             tags = set(v[1])
-            tags = {t for t in tags if only is not None and t in only}
+            tags = {t for t in tags if only is None or t in only}
             tags = {t for t in tags if not ignore_url(url=u, tag=t)}
             if len(tags) > 0:
                 res.add(Visit(when=v[0], tags=tuple(tags)))
