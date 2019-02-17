@@ -100,7 +100,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--old', required=True)
     p.add_argument('--new', required=True)
-    p.add_argument('--only', nargs='*', help='only compare certain tags')
+    p.add_argument('--only', action='append', help='only compare certain tags')
     p.add_argument('--ignore-new', action='store_true', help="do not report items that weren't present in old links database")
     args = p.parse_args()
     vold = load_visits(args.old)
