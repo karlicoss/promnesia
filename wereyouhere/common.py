@@ -21,6 +21,8 @@ class PreVisit(NamedTuple):
     context: Optional[Context] = None
     tag: Optional[Tag] = None
 
+Extraction = Union[PreVisit, Exception]
+
 
 class Visit(NamedTuple):
     dt: datetime

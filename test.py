@@ -23,7 +23,7 @@ def W(*args, **kwargs):
 
 def history(*args, **kwargs):
     from wereyouhere.generator.smart import previsits_to_history
-    return previsits_to_history(*args, **kwargs)
+    return previsits_to_history(*args, **kwargs)[0] # TODO meh
 
 import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')

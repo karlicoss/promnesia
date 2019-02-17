@@ -36,17 +36,18 @@ def run():
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
 
     all_histories = []
-    errors = False
+    had_errors = False
 
     for extractor in extractors:
-        hist = previsits_to_history(extractor)
-        # TODO FIXME set error!!!
+        hist, errors = previsits_to_history(extractor)
+        if len(errors) > 0:
+            had_errors = True
         all_histories.append(hist)
 
     urls_json = os.path.join(output_dir, 'linksdb.json')
     render(all_histories, urls_json, fallback_timezone=fallback_tz)
 
-    if errors:
+    if had_errors:
         exit(1)
 
 

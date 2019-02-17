@@ -1,5 +1,5 @@
 # TODO: give a better name...
-from typing import Iterable
+from typing import Iterable, List, Tuple
 
 from wereyouhere.common import History, Visit, PreVisit, get_logger
 
@@ -11,7 +11,7 @@ class Wrapper:
         self.args = args
         self.kwargs = kwargs
 
-def previsits_to_history(extractor) -> History:
+def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
     ex = extractor
     # TODO isinstance wrapper?
     # TODO make more defensive?
@@ -30,9 +30,11 @@ def previsits_to_history(extractor) -> History:
     logger.info('extracting via %s ...', log_info)
 
     h = History()
+    errors = []
     previsits = list(extr()) # TODO DEFENSIVE HERE!!!
     for p in previsits:
         if isinstance(p, Exception):
+            errors.append(p)
             logger.error('extractor emitted exception!')
             logger.exception(p)
             continue
@@ -50,4 +52,4 @@ def previsits_to_history(extractor) -> History:
         h.register(p.url, visit)
 
     logger.info('extracting via %s: got %d visits', log_info, len(h))
-    return h
+    return h, errors
