@@ -63,7 +63,7 @@ def test_takeout_new_zip():
 # TODO run condition?? and flag to force all
 
 def test_chrome():
-    import wereyouhere.extrators.chrome as chrome_ex
+    import wereyouhere.extractors.chrome as chrome_ex
 
     with TemporaryDirectory() as tdir:
         path = backup_db.backup_to(tdir, 'chrome')
@@ -89,7 +89,7 @@ def test_firefox():
 
 
 def test_plaintext_path_extractor():
-    import wereyouhere.extrators.custom as custom_gen
+    import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
     hist = E(custom_gen.extract,
@@ -99,7 +99,7 @@ def test_plaintext_path_extractor():
     assert len(hist) == 3
 
 def test_normalise():
-    import wereyouhere.extrators.custom as custom_gen
+    import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
     hist = E(custom_gen.extract,
@@ -121,7 +121,7 @@ def test_filter():
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
-    import wereyouhere.extrators.custom as custom_gen
+    import wereyouhere.extractors.custom as custom_gen
 
     hist = E(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
@@ -192,7 +192,7 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
-    import wereyouhere.extrators.chrome as chrome_ex
+    import wereyouhere.extractors.chrome as chrome_ex
 
     hist = E(chrome_ex.extract, mfile)
     assert len(hist) > 0
