@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import NamedTuple, List, Set, Tuple
+from typing import NamedTuple, List, Set, Tuple, Optional
 
 class Visit(NamedTuple):
     when: str
@@ -17,7 +17,7 @@ def vdiff(a: Set, b: Set):
     #     return (a, None)
     return a.difference(b), b.difference(a)
 
-def compare(old, new, ignore_new=False):
+def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
     o = old
     n = new
     all_keys = set(o.keys()).union(n.keys())
@@ -45,6 +45,11 @@ def compare(old, new, ignore_new=False):
         if len(nnoto) > 0 and ignore_new:
             # print(f'ignoring new {k}') # TODO FIXME
             continue
+
+        if only is not None:
+            if all(len(only.intersection(v.tags)) == 0 for v in onotn) and all(len(only.intersection(v.tags)) == 0 for v in nnoto):
+                continue
+
         errs = []
         errs.append(f"ERROR: {k}")
         if len(onotn) > 0:
@@ -79,11 +84,12 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--old', required=True)
     p.add_argument('--new', required=True)
+    p.add_argument('--only', nargs='*', help='only compare certain tags')
     p.add_argument('--ignore-new', action='store_true', help="do not report items that weren't present in old links database")
     args = p.parse_args()
     vold = load_visits(args.old)
     vnew = load_visits(args.new)
-    compare(old=vold, new=vnew, ignore_new=args.ignore_new)
+    compare(old=vold, new=vnew, ignore_new=args.ignore_new, only=None if args.only is None else set(args.only))
 
 
 
