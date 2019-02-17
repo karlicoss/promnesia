@@ -122,17 +122,6 @@ class History(Sized):
     def __repr__(self):
         return 'History{' + repr(self.urls) + '}'
 
-def simple_history(urls: List[Url], tag: str) -> History:
-    h = History()
-    for u in urls:
-        ts = datetime.utcnow().replace(tzinfo=pytz.utc)
-        visit = Visit(
-            ts,
-            tag=tag,
-        )
-        h.register(u, visit)
-    return h
-
 # f is value merger function
 _K = TypeVar("_K")
 _V = TypeVar("_V")

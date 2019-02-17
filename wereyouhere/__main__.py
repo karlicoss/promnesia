@@ -13,7 +13,7 @@ import os.path
 from sys import exit
 from typing import List, Tuple
 
-from .common import Entry, Visit, History, simple_history, Filter, make_filter, get_logger, get_tmpdir
+from .common import Entry, Visit, History, Filter, make_filter, get_logger, get_tmpdir
 from .render import render
 
 
@@ -28,7 +28,6 @@ def run():
 
     errors = False
     takeout_path = config.GOOGLE_TAKEOUT_PATH
-    custom_extractors = config.CUSTOM_EXTRACTORS
     extractors = config.EXTRACTORS
     output_dir = config.OUTPUT_DIR
     filters = [make_filter(f) for f in config.FILTERS]
@@ -57,25 +56,6 @@ def run():
             log_hists(takeout_histories, 'Google Takeout')
     else:
         logger.warning("GOOGLE_TAKEOUT_PATH is not set, not using Google Takeout for populating extension DB!")
-
-    for tag, extractor in custom_extractors:
-        import wereyouhere.generator.custom as custom_gen
-        logger.info(f"Running extractor {extractor} (tag {tag})")
-        try:
-            custom_histories: List[History]
-            if isinstance(extractor, str): # must be shell command
-                custom_histories = [custom_gen.get_custom_history(extractor, tag)]
-            elif inspect.isfunction(extractor):
-                urls = extractor()
-                custom_histories = [simple_history(urls, tag)]
-            else:
-                raise RuntimeError(f'{type(extractor)}')
-        except Exception as e:
-            logger.exception(e)
-            logger.error(f'Error while curring exctractor {extractor}')
-        else:
-            log_hists(custom_histories, str(extractor))
-            all_histories.extend(custom_histories)
 
     for extractor in extractors:
         hist = extractor()

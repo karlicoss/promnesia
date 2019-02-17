@@ -89,20 +89,22 @@ def test_firefox():
 
 
 def test_plaintext_path_extractor():
-    import wereyouhere.generator.custom as custom_gen
+    import wereyouhere.extrators.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = custom_gen.get_custom_history(
+    hist = E(custom_gen.extract,
         extract_from_path('testdata/custom'),
+        tag='whatever',
     )
     assert len(hist) == 3
 
 def test_normalise():
-    import wereyouhere.generator.custom as custom_gen
+    import wereyouhere.extrators.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = custom_gen.get_custom_history(
+    hist = E(custom_gen.extract,
         extract_from_path('testdata/normalise'),
+        tag='whatever',
     )
     assert len(hist) == 5
 
@@ -119,9 +121,9 @@ def test_filter():
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
-    import wereyouhere.generator.custom as custom_gen
+    import wereyouhere.extrators.custom as custom_gen
 
-    hist = custom_gen.get_custom_history(
+    hist = E(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
         tag='test',
     )

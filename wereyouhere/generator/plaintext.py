@@ -1,5 +1,6 @@
-from ..common import get_logger, get_tmpdir
+from ..common import get_logger, get_tmpdir, PathIsh
 
+from pathlib import Path
 import os.path
 import os
 
@@ -26,14 +27,16 @@ def _extract_from_file(path: str) -> str:
     )
 
 
-def extract_from_path(path: str) -> str:
+def extract_from_path(path: PathIsh) -> str:
+    pp = Path(path)
+
     tdir = get_tmpdir()
 
     logger = get_logger()
-    if os.path.isdir(path): # TODO handle archives here???
-        return _extract_from_dir(path)
+    if pp.is_dir(): # TODO handle archives here???
+        return _extract_from_dir(str(pp))
     else:
-        if any(path.endswith(ex) for ex in (
+        if any(pp.suffix == ex for ex in (
                 '.xz',
                 '.bz2',
                 '.gz',
@@ -49,4 +52,4 @@ def extract_from_path(path: str) -> str:
                     fo.write(cf.read())
                 return _extract_from_file(fname)
         else:
-            return _extract_from_file(path)
+            return _extract_from_file(str(pp))

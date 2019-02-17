@@ -6,7 +6,7 @@ from urllib.parse import unquote
 
 import pytz
 
-from wereyouhere.common import Entry, PathIsh, PreVisit, get_logger
+from wereyouhere.common import PathIsh, PreVisit, get_logger
 
 def extract(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
     logger = get_logger()
