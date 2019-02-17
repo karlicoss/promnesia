@@ -43,10 +43,10 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
         # TODO might want to append errors here too?
         if isinstance(p.dt, str):
             dt = dateparser.parse(p.dt)
-        elif isinstance(p.dt, date):
-            dt = datetime.combine(p.dt, datetime.min.time()) # meh..
         elif isinstance(p.dt, datetime):
             dt = p.dt
+        elif isinstance(p.dt, date):
+            dt = datetime.combine(p.dt, datetime.min.time()) # meh..
         else:
             raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
 
