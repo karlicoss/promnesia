@@ -16,6 +16,8 @@ from typing import List, Tuple
 from .common import Entry, Visit, History, Filter, make_filter, get_logger, get_tmpdir
 from .render import render
 
+# TODO smart is misleading... perhaps, get rid of it?
+from wereyouhere.generator.smart import previsits_to_history
 
 def run():
     logger = get_logger()
@@ -37,8 +39,8 @@ def run():
     errors = False
 
     for extractor in extractors:
+        hist = previsits_to_history(extractor)
         # TODO FIXME set error!!!
-        hist = extractor()
         all_histories.append(hist)
 
     urls_json = os.path.join(output_dir, 'linksdb.json')

@@ -14,12 +14,16 @@ skip = mark.skip
 
 from wereyouhere.common import History
 from wereyouhere.render import render
-from wereyouhere.generator.smart import extract
+from wereyouhere.generator.smart import Wrapper
 
-def E(*args, **kwargs):
+def W(*args, **kwargs):
     if 'tag' not in kwargs:
         kwargs['tag'] = 'whatever'
-    return extract(*args, **kwargs)
+    return Wrapper(*args, **kwargs)
+
+def history(*args, **kwargs):
+    from wereyouhere.generator.smart import previsits_to_history
+    return previsits_to_history(*args, **kwargs)
 
 import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')
@@ -32,8 +36,8 @@ def assert_got_tzinfo(h: History):
 
 def test_takeout():
     test_takeout_path = "testdata/takeout"
-    import wereyouhere.extractors.takeout as takeout_gen
-    hist = E(takeout_gen.extract, test_takeout_path)
+    import wereyouhere.extractors.takeout as tex
+    hist = history(W(tex.extract, test_takeout_path))
     assert len(hist) > 0 # kinda arbitrary?
 
     assert_got_tzinfo(hist)
@@ -43,8 +47,8 @@ def test_takeout():
 
 def test_takeout_new_zip():
     test_takeout_path = "testdata/takeout.zip"
-    import wereyouhere.extractors.takeout as tgen
-    hist = E(tgen.extract, test_takeout_path)
+    import wereyouhere.extractors.takeout as tex
+    hist = history(lambda: tex.extract(test_takeout_path, tag='whatevs'))
     assert len(hist) == 3
     entry = hist['takeout.google.com/settings/takeout']
     vis, = entry.visits
@@ -71,7 +75,7 @@ def test_chrome():
     with TemporaryDirectory() as tdir:
         path = backup_db.backup_to(tdir, 'chrome')
 
-        hist = E(chrome_ex.extract, path)
+        hist = history(W(chrome_ex.extract, path))
         assert len(hist) > 10 # kinda random sanity check
 
         render([hist], join(tdir, 'res.json'))
@@ -95,18 +99,18 @@ def test_plaintext_path_extractor():
     import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = E(custom_gen.extract,
+    hist = history(W(custom_gen.extract,
         extract_from_path('testdata/custom'),
-    )
+    ))
     assert len(hist) == 3
 
 def test_normalise():
     import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = E(custom_gen.extract,
+    hist = history(W(custom_gen.extract,
         extract_from_path('testdata/normalise'),
-    )
+    ))
     assert len(hist) == 5
 
 
@@ -124,9 +128,9 @@ def test_filter():
 def test_custom():
     import wereyouhere.extractors.custom as custom_gen
 
-    hist = E(custom_gen.extract,
+    hist = history(W(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
-    )
+    ))
     assert len(hist) == 3 # https and http are same; also trailing slash and no trailing slash
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
@@ -194,7 +198,7 @@ def _test_merge_all_from(tdir):
 
     import wereyouhere.extractors.chrome as chrome_ex
 
-    hist = E(chrome_ex.extract, mfile)
+    hist = history(W(chrome_ex.extract, mfile))
     assert len(hist) > 0
 
     older = hist['github.com/orgzly/orgzly-android/issues']
