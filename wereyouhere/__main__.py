@@ -19,15 +19,11 @@ from .render import render
 
 def run():
     logger = get_logger()
-    from kython.klogging import setup_logzero
-    setup_logzero(logger, level=logging.DEBUG)
 
     config = cwd_import('config')
 
     fallback_tz = config.FALLBACK_TIMEZONE
 
-    errors = False
-    takeout_path = config.GOOGLE_TAKEOUT_PATH
     extractors = config.EXTRACTORS
     output_dir = config.OUTPUT_DIR
     filters = [make_filter(f) for f in config.FILTERS]
@@ -38,26 +34,10 @@ def run():
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
 
     all_histories = []
-
-    def log_hists(histories: List[History], from_: str):
-        lengths = [len(h) for h in histories]
-        logger.info(f"Got {len(histories)} Histories from {from_}: {lengths}")
-
-    if takeout_path is not None:
-        import wereyouhere.generator.takeout as takeout_gen
-        try:
-            takeout_histories = list(takeout_gen.get_takeout_histories(takeout_path))
-        except Exception as e:
-            logger.exception(e)
-            logger.error("Error while processing google takeout")
-            errors = True
-        else:
-            all_histories.extend(takeout_histories)
-            log_hists(takeout_histories, 'Google Takeout')
-    else:
-        logger.warning("GOOGLE_TAKEOUT_PATH is not set, not using Google Takeout for populating extension DB!")
+    errors = False
 
     for extractor in extractors:
+        # TODO FIXME set error!!!
         hist = extractor()
         all_histories.append(hist)
 
@@ -69,8 +49,8 @@ def run():
 
 
 def main():
-
-    logging.basicConfig(level=logging.INFO)
+    from kython.klogging import setup_logzero
+    setup_logzero(get_logger(), level=logging.DEBUG)
     try:
         run()
     except:

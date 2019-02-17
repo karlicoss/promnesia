@@ -14,7 +14,12 @@ skip = mark.skip
 
 from wereyouhere.common import History
 from wereyouhere.render import render
-from wereyouhere.generator.smart import extract as E
+from wereyouhere.generator.smart import extract
+
+def E(*args, **kwargs):
+    if 'tag' not in kwargs:
+        kwargs['tag'] = 'whatever'
+    return extract(*args, **kwargs)
 
 import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')
@@ -27,9 +32,8 @@ def assert_got_tzinfo(h: History):
 
 def test_takeout():
     test_takeout_path = "testdata/takeout"
-    import wereyouhere.generator.takeout as takeout_gen
-    histories = takeout_gen.get_takeout_histories(test_takeout_path)
-    [hist] = histories
+    import wereyouhere.extractors.takeout as takeout_gen
+    hist = E(takeout_gen.extract, test_takeout_path)
     assert len(hist) > 0 # kinda arbitrary?
 
     assert_got_tzinfo(hist)
@@ -39,9 +43,8 @@ def test_takeout():
 
 def test_takeout_new_zip():
     test_takeout_path = "testdata/takeout.zip"
-    import wereyouhere.generator.takeout as tgen
-    hists = tgen.get_takeout_histories(test_takeout_path)
-    [hist] = hists
+    import wereyouhere.extractors.takeout as tgen
+    hist = E(tgen.extract, test_takeout_path)
     assert len(hist) == 3
     entry = hist['takeout.google.com/settings/takeout']
     vis, = entry.visits
@@ -94,7 +97,6 @@ def test_plaintext_path_extractor():
 
     hist = E(custom_gen.extract,
         extract_from_path('testdata/custom'),
-        tag='whatever',
     )
     assert len(hist) == 3
 
@@ -104,7 +106,6 @@ def test_normalise():
 
     hist = E(custom_gen.extract,
         extract_from_path('testdata/normalise'),
-        tag='whatever',
     )
     assert len(hist) == 5
 
@@ -125,7 +126,6 @@ def test_custom():
 
     hist = E(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
-        tag='test',
     )
     assert len(hist) == 3 # https and http are same; also trailing slash and no trailing slash
     with TemporaryDirectory() as tdir:
