@@ -32,7 +32,11 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
         vis = r[0]
         res = set()
         for v in vis:
-            res.add(Visit(v[0], tuple(v[1])))
+            tags = set(v[1])
+            if only is not None:
+                tags.intersection_update(only)
+            if len(tags) > 0:
+                res.add(Visit(when=v[0], tags=tuple(tags)))
         return res
 
 
@@ -46,14 +50,14 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
             # print(f'ignoring new {k}') # TODO FIXME
             continue
 
-        if only is not None:
-            if all(len(only.intersection(v.tags)) == 0 for v in onotn) and all(len(only.intersection(v.tags)) == 0 for v in nnoto):
-                continue
-
         errs = []
         errs.append(f"ERROR: {k}")
         if len(onotn) > 0:
             errs.append(f'    old only {onotn}')
+            # TODO WIP
+            # supers = [u for u in n.keys() if u.startswith(k)]
+            # if len(supers) > 0:
+            #     errs.append(f'    BUT present in {supers}')
         if len(nnoto) > 0:
             errs.append(f'    new only {nnoto}')
         print('\n'.join(errs))
