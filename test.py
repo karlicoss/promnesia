@@ -12,7 +12,7 @@ import pytest # type: ignore
 from pytest import mark # type: ignore
 skip = mark.skip
 
-from wereyouhere.common import History
+from wereyouhere.common import History, PreVisit
 from wereyouhere.render import render
 from wereyouhere.generator.smart import Wrapper
 
@@ -44,6 +44,21 @@ def test_takeout():
 
     with TemporaryDirectory() as tdir:
         render([hist], join(tdir, 'res.json'))
+
+def test_with_error():
+    class ExtractionError(Exception):
+        pass
+    def err_ex():
+        for i in range(3):
+            if i == 1:
+                yield ExtractionError()
+            else:
+                yield PreVisit(
+                    url=f'http://test{i}',
+                    dt=datetime.utcfromtimestamp(0),
+                )
+    hist = history(lambda: err_ex())
+    assert len(hist) == 2
 
 def test_takeout_new_zip():
     test_takeout_path = "testdata/takeout.zip"

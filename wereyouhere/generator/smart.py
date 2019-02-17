@@ -32,6 +32,11 @@ def previsits_to_history(extractor) -> History:
     h = History()
     previsits = list(extr()) # TODO DEFENSIVE HERE!!!
     for p in previsits:
+        if isinstance(p, Exception):
+            logger.error('extractor emitted exception!')
+            logger.exception(p)
+            continue
+
         if isinstance(p.dt, str):
             dt = dateparser.parse(p.dt)
         else:
