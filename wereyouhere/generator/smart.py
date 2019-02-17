@@ -1,4 +1,5 @@
 # TODO: give a better name...
+from datetime import datetime, date
 from typing import Iterable, List, Tuple
 
 from wereyouhere.common import History, Visit, PreVisit, get_logger
@@ -39,10 +40,15 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
             logger.exception(p)
             continue
 
+        # TODO might want to append errors here too?
         if isinstance(p.dt, str):
             dt = dateparser.parse(p.dt)
-        else:
+        elif isinstance(p.dt, date):
+            dt = datetime.combine(p.dt, datetime.min.time()) # meh..
+        elif isinstance(p.dt, datetime):
             dt = p.dt
+        else:
+            raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
 
         visit = Visit(
             dt=dt,

@@ -1,5 +1,5 @@
 from collections.abc import Sized
-from datetime import datetime
+from datetime import datetime, date
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union
 from pathlib import Path
@@ -12,7 +12,7 @@ from .normalise import normalise_url
 
 Url = str
 Tag = str
-DatetimeIsh = Union[datetime, str]
+DatetimeIsh = Union[datetime, date, str]
 Context = str
 
 class PreVisit(NamedTuple):
