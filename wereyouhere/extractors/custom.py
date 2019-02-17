@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytz
 
-from wereyouhere.common import PreVisit, Tag, Url, PathIsh
+from wereyouhere.common import PreVisit, Tag, Url, PathIsh, get_logger
 
 
 def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
@@ -68,7 +68,17 @@ def _collect(thing, result: List[Url]):
     else:
         pass
 
-def simple(path: PathIsh, tag: Tag) -> Iterable[PreVisit]:
+from typing import Union
+
+
+
+def simple(path: Union[List[PathIsh], PathIsh], tag: Tag) -> Iterable[PreVisit]:
+    logger = get_logger()
+    if isinstance(path, list):
+        for p in path:
+            yield from simple(p, tag=tag)
+        return
+
     pp = Path(path)
     urls: List[Url] = []
     if pp.suffix == '.json': # TODO make it possible to force
@@ -82,7 +92,11 @@ def simple(path: PathIsh, tag: Tag) -> Iterable[PreVisit]:
             for line in reader:
                 _collect(line, urls)
     else:
-        raise RuntimeError(f'Unexpected suffix {pp}')
+        # TODO use url extractor..
+        logger.info(f'{pp}: fallback to grep')
+        from wereyouhere.generator.plaintext import extract_from_path
+        yield from extract(extract_from_path(pp), tag=tag)
+        # raise RuntimeError(f'Unexpected suffix {pp}')
 
     dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
 
