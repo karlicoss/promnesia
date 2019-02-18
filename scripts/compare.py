@@ -15,7 +15,7 @@ def vdiff(a: Set, b: Set):
 
 from private import ignore_url, compatible_visits
 
-def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
+def compare(old, new, ignore_new=False, only: Optional[Set[str]]=None, compare_visits=False):
     o = old
     n = new
     all_keys = set(o.keys()).union(n.keys())
@@ -60,28 +60,39 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
             # print(f'ignoring new {k}') # TODO FIXME
             continue
 
-        [tag] = list(only)
         # TODO ok, makes more sense to only use in --only mode?
 
         # TODO shit. ok, no surprise timestamps are different since it depends on multiple sources simultaneously..
         # TODO lesson I guess -- dump data as raw as possible so it's easy to compare it. only then use postprocessing
         # TODO yaml for python objects??
-        if compatible_visits(onotn, nnoto, tag=tag, url=k):
-            continue
-
         errs = []
-        errs.append(f"ERROR: {k}")
-        if len(onotn) > 0:
-            errs.append(f'    old only {onotn}')
-            # TODO WIP
-            # supers = [u for u in n.keys() if u.startswith(k)]
-            # if len(supers) > 0:
-            #     errs.append(f'    BUT present in {supers}')
-        if len(nnoto) > 0:
-            errs.append(f'    new only {nnoto}')
-        print('\n'.join(errs))
+        if compare_visits:
+            [tag] = list(only)
+            if compatible_visits(onotn, nnoto, tag=tag, url=k):
+                continue
+            errs.append(f"ERROR: {k}")
+            if len(onotn) > 0:
+                errs.append(f'    old only {onotn}')
+                # TODO WIP
+                # supers = [u for u in n.keys() if u.startswith(k)]
+                # if len(supers) > 0:
+                #     errs.append(f'    BUT present in {supers}')
+            if len(nnoto) > 0:
+                errs.append(f'    new only {nnoto}')
+        else:
+            if len(nnoto) == 0:
+                errs.append(f"ERROR: {k}")
+                if len(onotn) > 0:
+                    errs.append(f'    old only {onotn}')
+                errs.append(f'    new only {nnoto}')
+
         if len(errs) > 0:
+            print('\n'.join(errs))
             total += 1
+
+
+
+
         # if vo != vn:
         #     print(f'ERROR: difference at {k}: {vo} vs {vn}')
             # ll = f"{v1:3d} {v2:3d} {k}"
@@ -111,10 +122,11 @@ def main():
     p.add_argument('--new', required=True)
     p.add_argument('--only', action='append', help='only compare certain tags')
     p.add_argument('--ignore-new', action='store_true', help="do not report items that weren't present in old links database")
+    p.add_argument('--compare-visits', action='store_true')
     args = p.parse_args()
     vold = load_visits(args.old)
     vnew = load_visits(args.new)
-    compare(old=vold, new=vnew, ignore_new=args.ignore_new, only=None if args.only is None else set(args.only))
+    compare(old=vold, new=vnew, ignore_new=args.ignore_new, only=None if args.only is None else set(args.only), compare_visits=args.compare_visits)
 
 
 
