@@ -4,7 +4,7 @@ from typing import NamedTuple, List, Set, Tuple, Optional
 
 class Visit(NamedTuple):
     when: str
-    tags: Tuple[str]
+    tag: str
 
 def vdiff(a: Set, b: Set):
     if a is None:
@@ -13,7 +13,7 @@ def vdiff(a: Set, b: Set):
         b = set()
     return a.difference(b), b.difference(a)
 
-from private import ignore_url
+from private import ignore_url, compatible_visits
 
 def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
     o = old
@@ -33,8 +33,8 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
             tags = set(v[1])
             tags = {t for t in tags if only is None or t in only}
             tags = {t for t in tags if not ignore_url(url=u, tag=t)}
-            if len(tags) > 0:
-                res.add(Visit(when=v[0], tags=tuple(tags)))
+            for t in tags:
+                res.add(Visit(when=v[0], tag=t))
         return res
 
     import urllib
@@ -58,6 +58,15 @@ def compare(old, new, ignore_new=False, only=Optional[Set[str]]):
             continue
         if len(nnoto) > 0 and len(onotn) == 0 and ignore_new:
             # print(f'ignoring new {k}') # TODO FIXME
+            continue
+
+        [tag] = list(only)
+        # TODO ok, makes more sense to only use in --only mode?
+
+        # TODO shit. ok, no surprise timestamps are different since it depends on multiple sources simultaneously..
+        # TODO lesson I guess -- dump data as raw as possible so it's easy to compare it. only then use postprocessing
+        # TODO yaml for python objects??
+        if compatible_visits(onotn, nnoto, tag=tag, url=k):
             continue
 
         errs = []
