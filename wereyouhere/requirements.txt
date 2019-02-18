@@ -6,3 +6,5 @@ python-magic
 
 # for smart date extraction
 dateparser
+
+urlextract
