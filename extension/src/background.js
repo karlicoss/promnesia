@@ -418,11 +418,12 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     // clicking on link: loading (url) -> complete
     // opening new link: loading -> loading (url) -> complete
     // ugh. looks like 'complete' is the most realiable???
+    // but, I checked with 'complete' and sometimes it would reload many things with loading -> complete..... shit.
 
     // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
 
-    //if (info['status'] === 'loading' && info['url'] != null) {
-    if (info['status'] === 'complete') {
+    log(JSON.stringify(info));
+    if (info['status'] === 'loading' && info['url'] != null) {
         log(`requesting! ${url}`);
         updateState();
     }
