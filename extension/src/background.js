@@ -8,7 +8,6 @@ import {get_options} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
-
 // TODO common?
 export function showNotification(text: string, priority: number=0) {
     chrome.notifications.create({
@@ -17,6 +16,25 @@ export function showNotification(text: string, priority: number=0) {
         'message': text,
         'priority': priority,
         'iconUrl': 'images/ic_not_visited_48.png',
+    });
+}
+
+export function showTabNotification(tabId: int, text: string) {
+    // TODO can it be remote script?
+    chrome.tabs.executeScript(tabId, {file: 'toastify.js'}, () => {
+        chrome.tabs.insertCSS(tabId, {file: 'toastify.css'}, () => {
+            chrome.tabs.executeScript(tabId, { code: `
+Toastify({
+  text: "${text}",
+  duration: 2000,
+  newWindow: true,
+  close: true,
+  gravity: "top",
+  positionLeft: false,
+  backgroundColor: "green",
+}).showToast();
+    `    });
+      });
     });
 }
 
@@ -246,7 +264,8 @@ function updateState () {
 
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             if (visits.contexts.length > 0) {
-                showNotification('contexts are available for this link!');
+                // TODO add context sources to notification message...
+                showTabNotification(tabId, `${visits.contexts.length} contexts!`);
             }
 
             chrome.tabs.executeScript(tabId, {

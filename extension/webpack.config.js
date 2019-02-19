@@ -50,6 +50,7 @@ const options = {
       { from: 'images/*' },
       { from: 'src/*.html' , flatten: true},
       { from: 'src/*.css' , flatten: true},
+      { from: 'src/toastify.js', flatten: true},
     ]),
     new WebpackExtensionManifestPlugin({
         config: {
