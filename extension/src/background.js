@@ -19,7 +19,7 @@ export function showNotification(text: string, priority: number=0) {
     });
 }
 
-export function showTabNotification(tabId: int, text: string) {
+export function showTabNotification(tabId: number, text: string) {
     // TODO can it be remote script?
     chrome.tabs.executeScript(tabId, {file: 'toastify.js'}, () => {
         chrome.tabs.insertCSS(tabId, {file: 'toastify.css'}, () => {
@@ -95,9 +95,6 @@ function getJsonVisits(u: Url, opts: Options, cb: (Visits) => void) {
                 log(`success: ${response}`);
                 const vis = rawToVisits(response);
                 cb(vis);
-                // if (options.notification) {
-                //     showNotification(`OK: captured to ${path}`);
-                // }
             } catch (err) {
                 had_error = true;
                 error_message = error_message.concat(String(err));
@@ -195,9 +192,12 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
 
 function getMapVisits(url: Url, cb: (Visits) => void) {
     var nurl = normalise_url(url);
-    log("original: %s", url);
-    log("normalised: %s", nurl);
+    log("original: %s -> normalised %s", url, nurl);
     get_options(opts => {
+        if (opts.blacklist.includes(nurl)) {
+            log('%s is blacklisted! ignoring it', nurl);
+            return;
+        }
         getJsonVisits(nurl, opts, v => {
             if (v) {
                 cb(v);
@@ -265,6 +265,7 @@ function updateState () {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             if (visits.contexts.length > 0) {
                 // TODO add context sources to notification message...
+                // TODO need settings...
                 showTabNotification(tabId, `${visits.contexts.length} contexts!`);
             }
 

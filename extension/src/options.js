@@ -4,6 +4,7 @@ export type Options = {
     host: string;
     dots: boolean;
     token: string;
+    blacklist: Array<string>;
 }
 
 function default_options(): Options {
@@ -11,6 +12,7 @@ function default_options(): Options {
         host: "http://localhost:13131",
         dots: true,
         token: "",
+        blacklist: [],
     };
 }
 
