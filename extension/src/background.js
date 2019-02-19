@@ -393,7 +393,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
         if (opts.dots) {
             showDots(detail.tabId, opts);
         }
-        updateState();
+        // updateState();
     });
 });
 // chrome.tabs.onReplaced.addListener(updateState);
@@ -413,9 +413,17 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     // 1. you open new tab. in that case 'url' won't be passed but onDomContentLoaded will be triggered
     // 2. you navigate within the same tab, e.g. on youtube. then url will be passed, but onDomContentLoaded doesn't trigger. TODO not sure if it's always the case. maybe it's only YT
     // TODO shit, so we might need to hide previous dots? ugh...
-    if (info['status'] === 'loading' && info['url'] != null) {
+
+    // page refresh: loading -> complete (no url at any point)
+    // clicking on link: loading (url) -> complete
+    // opening new link: loading -> loading (url) -> complete
+    // ugh. looks like 'complete' is the most realiable???
+
+    // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
+
+    //if (info['status'] === 'loading' && info['url'] != null) {
+    if (info['status'] === 'complete') {
         log(`requesting! ${url}`);
-        /// TODO how tocheck that dom is loaded?
         updateState();
     }
 });
