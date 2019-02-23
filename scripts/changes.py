@@ -8,12 +8,17 @@ import os.path
 from os.path import expanduser, dirname, lexists, join
 import sys
 from subprocess import check_call, check_output
+import logging
 
 STATE_DIR = expanduser("~/.cache/wereyouhere/")
 STATE_FILE = join(STATE_DIR, 'state.json')
 STATE_FILE_OLD = join(STATE_DIR, 'state.old.json')
 
 # TODO use atomicwrite?
+
+def get_logger():
+    return logging.getLogger('wereyouhere-changes')
+
 
 def load_state():
     if not lexists(STATE_FILE):
@@ -71,13 +76,55 @@ def to_state(urls):
     stats = {url: len(vc[0]) + len(vc[1]) for url, vc in urls.items()}
     return stats
 
+def difference(old, new):
+    logger = get_logger()
+    # os = to_state(old)
+    # ns = to_state(new)
+    os = old
+    ns = new
+    for url in set().union(os.keys(), ns.keys()):
+        oc = os.get(url, 0)
+        nc = ns.get(url, 0)
+        if oc <= nc:
+            continue # that's always good
+
+        diff = f'{url}: old {oc}, new {nc}'
+        print(diff)
+
+def report_all():
+    logger = get_logger()
+
+    from kython.kgit import RepoHandle
+    repo = RepoHandle('/L/Dropbox/tmp/wereyouhere')
+
+    prev = None
+    for r in repo.revisions():
+        logger.info('handing %r', r)
+        cur = json.loads(repo.read_text(r, 'state.json'))
+        if prev is None:
+            logger.info('initial revision, no comparison!')
+        else:
+            difference(prev, cur)
+        prev = cur
+
 
 def main():
-    # TODO dry run so it doesn't save state? But then I wouldn't have diff (unless I print it beforehand)
-    prev_state = load_state()
-    new_state = to_state(load_urls())
-    save_state(new_state)
-    print_diff()
+    logger = get_logger()
+    from kython.klogging import setup_logzero
+    setup_logzero(logger, level=logging.DEBUG)
+
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument('--all', action='store_true')
+    args = p.parse_args()
+    if args.all:
+        report_all()
+    else:
+        # TODO dry run so it doesn't save state? But then I wouldn't have diff (unless I print it beforehand)
+        prev_state = load_state()
+        new_state = to_state(load_urls())
+        save_state(new_state)
+        print_diff()
 
 
 if __name__ == '__main__':
