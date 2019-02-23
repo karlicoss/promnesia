@@ -76,20 +76,28 @@ def to_state(urls):
     stats = {url: len(vc[0]) + len(vc[1]) for url, vc in urls.items()}
     return stats
 
-def difference(old, new):
+from compare_config import acceptable
+
+diffs = []
+
+def difference(rev, old, new):
     logger = get_logger()
     # os = to_state(old)
     # ns = to_state(new)
     os = old
     ns = new
-    for url in set().union(os.keys(), ns.keys()):
+    for url in sorted(set().union(os.keys(), ns.keys())):
         oc = os.get(url, 0)
         nc = ns.get(url, 0)
         if oc <= nc:
             continue # that's always good
-
+        if acceptable(url=url, diff=oc - nc, rev=rev):
+            continue
         diff = f'{url}: old {oc}, new {nc}'
         print(diff)
+        diffs.append(diff)
+        # if len(diffs) > 15:
+        #     raise RuntimeError
 
 def report_all():
     logger = get_logger()
@@ -98,13 +106,15 @@ def report_all():
     repo = RepoHandle('/L/Dropbox/tmp/wereyouhere')
 
     prev = None
-    for r in repo.revisions():
+    revisions = repo.revisions()
+    # last = json.loads(repo.read_text(r[-1], 'state.json'))
+    for r in revisions:
         logger.info('handing %r', r)
         cur = json.loads(repo.read_text(r, 'state.json'))
         if prev is None:
             logger.info('initial revision, no comparison!')
         else:
-            difference(prev, cur)
+            difference(str(r), prev, cur)
         prev = cur
 
 
