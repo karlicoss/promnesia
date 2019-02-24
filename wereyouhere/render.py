@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 import os.path
 from typing import List, Any
 
@@ -8,10 +7,7 @@ from .common import History, Entry, Visit, Filter
 TIME_FORMAT = "%d %b %Y %H:%M"
 
 # TODO hmm, only use implicit datetime for rendering? And use set of tags that allow implicit?
-def render(all_histories: List[History], where: str, fallback_timezone = None) -> None:
-    from wereyouhere.common import merge_histories
-    res = merge_histories(all_histories)
-
+def render(history: History, fallback_timezone = None):
     def fallback(v: Visit):
         dt = v.dt
         if dt.tzinfo is not None:
@@ -21,7 +17,7 @@ def render(all_histories: List[History], where: str, fallback_timezone = None) -
 
     # sort visits by datetime, sort all items by URL
     entries = [
-        entry._replace(visits=sorted([fallback(v) for v in entry.visits])) for _, entry in sorted(res.items())
+        entry._replace(visits=sorted([fallback(v) for v in entry.visits])) for _, entry in sorted(history.items())
     ]
     # # TODO filter by length?? or by query length (after ?)
 
@@ -67,6 +63,4 @@ def render(all_histories: List[History], where: str, fallback_timezone = None) -
         e.url: format_entry(e)
         for e in entries
     }
-    with open(where, 'w') as fo:
-        json.dump(json_dict, fo, indent=1, ensure_ascii=False)
-    pass
+    return json_dict
