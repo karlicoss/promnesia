@@ -94,7 +94,7 @@ def difference(rev, old, new):
         if acceptable(url=url, diff=oc - nc, rev=rev):
             continue
         diff = f'{url}: old {oc}, new {nc}'
-        print(diff)
+        # print(diff) # TODO?
         diffs.append(diff)
         # if len(diffs) > 15:
         #     raise RuntimeError
