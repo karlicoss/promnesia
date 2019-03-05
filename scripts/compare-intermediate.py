@@ -100,66 +100,10 @@ def compare(before: Set[Visit], after: Set[Visit], before_fdt=None):
     logger.info('removing explicitly ignored items')
     before = {b for b in before if not ignore(b, fdt=before_fdt)}
     logger.info('before: %d', len(before))
-    from pprint import pprint
-    pprint(before)
 
 
-    # TODO FIXME error if duplicate provider names
-    # TODO items might move between sources?
-    # providers = list(sorted(x[0] for x in before))
-    urls = sorted(set().union(before.keys(), after.keys())) # type: ignore
-
-    def by_ts(xxx):
-        res = {}
-        for x in sorted(xxx, key=str):
-            ts = x['dt']
-            ll = res.get(ts, [])
-            ll.append(x)
-            res[ts] = ll
-        return res
-
-    errors = 0
-    for u in urls:
-        bb = by_ts(before.get(u, []))
-        aa = by_ts(after.get(u, []))
-        mb = []
-        ma = []
-        for ts in sorted(set().union(bb.keys(), aa.keys())): # type: ignore
-            tb = bb.get(ts, [])
-            ta = aa.get(ts, [])
-            if tb == ta:
-                # TODO FIXME actually, remove all common items
-                continue 
-                # so, dt is same, the only changes that are possible are tags?
-                # TODO only append the differences?
-            mb.extend(tb)
-            ma.extend(ta)
-        if len(mb) == 0:
-            continue # all ok?
-
-        errors += 1
-        # import ipdb; ipdb.set_trace() 
-        logger.warning('%s: before %s after %s', u, mb, ma)
-        if errors > 10:
-            raise RuntimeError
-
-
-                # import ipdb; ipdb.set_trace()
-        # TODO compute diff between these?
-
-    # ob, common, oa = ddiff(set(before.keys()), set(after.keys()))
-    # for u in ob:
-    #     logger.warning('%s is only in old', u)
-    # for u in oa:
-    #     pass
-    #     # logger.info('%s is only in new', u)
-    # for u in common:
-    #     bb = before[u]
-    #     aa = after[u]
-    #     # TODO if aa dominates bb, then just carry on?
-    #     # if bb != aa:
-    #     #     logger.info('%s vs %s', bb, aa)
-    import ipdb; ipdb.set_trace() 
+    for b in before:
+        logger.warning('%s', b)
 
 def collect(jj):
     # TODO FIXME multiset??
