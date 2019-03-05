@@ -8,6 +8,9 @@ from typing import Dict, List, Any, NamedTuple, Optional, Set
 
 from kython.klogging import setup_logzero
 
+# TODO include latest too?
+from cconfig import ignore
+
 def get_logger():
     return logging.getLogger('wereyouhere-db-changes')
 
@@ -15,9 +18,6 @@ int_dir = Path('intermediate')
 
 
 # TODO return error depending on severity?
-# TODO needs private config or something?
-# TODO need to indicate timezone in serialized data?
-# ah, looks like it does
 
 Url = str
 Dt = str
@@ -66,17 +66,8 @@ def eliminate_by(sa, sb, key):
             onlyb.update(lb[len(la):])
 
     return onlya, common, onlyb
-    # common = sorted(ka.intersection(kb))
-    # onlya = sorted(ka.difference(common))
-    # onlyb = sorted(kb.difference(common))
-    # return {da[o] for o in onlya}.union(ra), {da[o] for o in common}, {db[o] for o in onlyb}.union(rb)
 
 
-# TODO ok some data providers can respect timestamps. some cant...
-# TODO include latest too?
-# TODO configure so some urls can be ignored. by regex?
-import sys, ipdb, traceback; exec("def info(type, value, tb):\n    traceback.print_exception(type, value, tb)\n    ipdb.pm()"); sys.excepthook = info # type: ignore 
-from cconfig import ignore
 def compare(before: Set[Visit], after: Set[Visit], before_fdt=None):
     logger = get_logger()
     # optimisation: elimiante common
@@ -84,7 +75,7 @@ def compare(before: Set[Visit], after: Set[Visit], before_fdt=None):
     eliminations = [
         ('identity'               , lambda x: x),
         ('without dt'             , lambda x: x._replace(source='', dt='')),
-        ('without context'        , lambda x: x._replace(source='', context='')), # TODO only allow for certain tags?
+        ('without context'        , lambda x: x._replace(source='', context='')), # TODO FIXME only allow for certain tags?
         ('without dt and context' , lambda x: x._replace(source='', dt='', context='')), # ugh..
     ]
     for ename, ekey in eliminations:
@@ -92,10 +83,6 @@ def compare(before: Set[Visit], after: Set[Visit], before_fdt=None):
         logger.info('before: %d, after: %d', len(before), len(after))
         before, common, after = eliminate_by(before, after, key=ekey)
         logger.info('common: %d, before: %d, after: %d', len(common), len(before), len(after))
-    # common = before.intersection(after)
-    # before = before.difference(common)
-    # after = after.difference(common)
-    # ok, still 10K left.. a bit too much but hopefully more managable
 
     logger.info('removing explicitly ignored items')
     before = {b for b in before if not ignore(b, fdt=before_fdt)}
