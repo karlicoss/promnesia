@@ -1,7 +1,7 @@
 from collections.abc import Sized
 from datetime import datetime, date
 import re
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any
 from pathlib import Path
 import logging
 from functools import lru_cache
@@ -10,14 +10,27 @@ import pytz
 
 from .normalise import normalise_url
 
+PathIsh = Union[Path, str]
+
 Url = str
 Tag = str
 DatetimeIsh = Union[datetime, date, str]
 Context = str
+Locator = Dict[str, Any]
+# TODO hmm. arguably, source and context are almost same things...
+# locator? source then context within file
+
+class Loc:
+    @staticmethod
+    def file(fname: PathIsh):
+        return {
+            'file': str(fname),
+        }
 
 class PreVisit(NamedTuple):
     url: Url
     dt: DatetimeIsh
+    locator: Locator
     context: Optional[Context] = None
     tag: Optional[Tag] = None
 
@@ -26,9 +39,16 @@ Extraction = Union[PreVisit, Exception]
 
 class Visit(NamedTuple):
     dt: datetime
+    locator: Locator
     tag: Optional[Tag] = None
     context: Optional[Context] = None
 
+    def __hash__(self):
+        # well, that's quite mad. but dict is not hashable..
+        ll = self._replace(locator=None)
+        return super(Visit, ll).__hash__()
+
+# TODO should ve even split url off Visit? not sure what benefit that actually gives..
 class Entry(NamedTuple):
     url: Url
     visits: Set[Visit]
@@ -155,5 +175,3 @@ def get_tmpdir():
     import tempfile
     tdir = tempfile.TemporaryDirectory(suffix="wereyouhere")
     return tdir
-
-PathIsh = Union[Path, str]

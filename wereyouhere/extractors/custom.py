@@ -5,9 +5,12 @@ from typing import Optional, Iterable
 from urllib.parse import unquote
 from pathlib import Path
 
+import csv
+import json
+
 import pytz
 
-from wereyouhere.common import PreVisit, Tag, Url, PathIsh, get_logger
+from wereyouhere.common import PreVisit, Tag, Url, PathIsh, get_logger, Loc
 
 
 def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
@@ -82,11 +85,9 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag) -> Iterable[PreVisit]:
     pp = Path(path)
     urls: List[Url] = []
     if pp.suffix == '.json': # TODO make it possible to force
-        import json
         jj = json.loads(pp.read_text())
         _collect(jj, urls)
     elif pp.suffix == '.csv':
-        import csv
         with pp.open() as fo:
             reader = csv.DictReader(fo)
             for line in reader:
@@ -105,5 +106,6 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag) -> Iterable[PreVisit]:
             url=u,
             dt=dt,
             tag=tag,
+            locator=Loc.file(pp),
         )
 

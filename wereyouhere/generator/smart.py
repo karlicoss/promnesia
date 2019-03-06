@@ -54,6 +54,7 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
             dt=dt,
             tag=p.tag,
             context=p.context,
+            locator=p.locator,
         )
         h.register(p.url, visit)
 

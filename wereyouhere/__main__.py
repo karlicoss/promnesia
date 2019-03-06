@@ -18,12 +18,39 @@ def import_config(config_file: str):
     finally:
         sys.path.pop()
 
-
 from .common import Entry, Visit, History, Filter, make_filter, get_logger, get_tmpdir, merge_histories
 from .render import render
 
 # TODO smart is misleading... perhaps, get rid of it?
 from wereyouhere.generator.smart import previsits_to_history, Wrapper
+
+
+# jeez...
+class hdict(dict):
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+# shit, it's gonna be really hard to hack namedtuples int JSONEncoder...
+# https://github.com/python/cpython/blob/dc078947a5033a048d804e244e847b5844734439/Lib/json/encoder.py#L263
+def dictify(obj):
+    if isinstance(obj, tuple) and hasattr(obj, '_asdict'):
+        return dictify(obj._asdict())
+    elif isinstance(obj, dict):
+        return hdict({k: dictify(v) for k, v in obj.items()})
+    elif isinstance(obj, (set, list, tuple)):
+        cls = type(obj)
+        return cls(dictify(x) for x in obj)
+    else:
+        return obj
+
+def encoder(o):
+    if isinstance(o, datetime):
+        return o.isoformat() # hopefully that's ok; python 3.7 is capable of deserializing it, but I might have to backport it
+    elif isinstance(o, set):
+        return list(o)
+    else:
+        raise RuntimeError(f"can't encode {o}")
+
 
 def run(config_file: str, intermediate: Optional[str]):
     logger = get_logger()
@@ -69,19 +96,13 @@ def run(config_file: str, intermediate: Optional[str]):
         cur = []
         # TODO what do we do in case of parity?
         for entry in sorted(h.urls.values(), key=lambda e: e.url):
+            # TODO hmm. how to make sure we have used up all Visit fields here?
             url = entry.url
             visits = list(sorted(entry.visits, key=lambda v: (v.dt.isoformat(), v.context or ''))) # isoformat just to get away with comparing aware/unaware...
-            cur.append({
-                'url': url,
-                'visits': [{
-                    'dt': v.dt.isoformat(), # hopefully that's ok; python 3.7 is capable of deserializing it, but I might have to backport it
-                    'tag': v.tag,
-                    'context': v.context,
-                } for v in visits],
-            })
+            cur.append(dictify(entry))
         intermediates.append((e, cur))
     with intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json')).open('w') as fo:
-        json.dump(intermediates, fo, ensure_ascii=False, sort_keys=True, indent=1)
+        json.dump(intermediates, fo, ensure_ascii=False, sort_keys=True, indent=1, default=encoder)
 
     history = merge_histories([h for _, h in all_histories])
     j = render(history, fallback_timezone=fallback_tz)
