@@ -8,7 +8,7 @@ from enum import Enum
 from html.parser import HTMLParser
 from os.path import join, lexists, isfile
 import os
-from typing import List, Dict, Any, Optional, Union, Iterable
+from typing import List, Dict, Any, Optional, Union, Iterable, Tuple
 from urllib.parse import unquote
 from zipfile import ZipFile
 from pathlib import Path
@@ -17,7 +17,7 @@ import json
 
 from dateutil import parser
 
-from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag
+from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url
 
 
 # TODO wonder if that old format used to be UTC...
@@ -138,7 +138,7 @@ def read_google_activity(takeout) -> List[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Chrome", "MyActivity.html")
     if not _exists(takeout, spath):
-        logger.warning(f"{spath} is not present... skipping")
+        logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
     with _open(takeout, spath) as fo:
         return _read_google_activity(fo, 'activity-chrome')
@@ -147,7 +147,7 @@ def read_search_activity(takeout) -> List[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Search", "MyActivity.html")
     if not _exists(takeout, spath):
-        logger.warning(f"{spath} is not present... skipping")
+        logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
     with _open(takeout, spath) as fo:
         return _read_google_activity(fo, 'activity-search')
@@ -158,11 +158,11 @@ def read_browser_history_json(takeout) -> Iterable[PreVisit]:
     spath = join("Takeout", "Chrome", "BrowserHistory.json")
 
     if not _exists(takeout, spath):
-        logger.warning(f"{spath} is not present... skipping")
-        return []
+        logger.warning(f"{spath} is not present in {takeout}... skipping")
+        return
 
     j = None
-    with _open(takeout, spath) as fo:
+    with _open(takeout, spath) as fo: # TODO iterative parser?
         j = json.load(fo)
 
     hist = j['Browser History']
@@ -176,25 +176,73 @@ def read_browser_history_json(takeout) -> Iterable[PreVisit]:
             tag="history_json",
         )
 
+_TAKEOUT_REGEX = re.compile(r'(\d{8}T\d{6}Z)')
+
+def is_takeout_archive(fp: Path) -> bool:
+    return fp.suffix == '.zip' and _TAKEOUT_REGEX.search(fp.stem) is not None
+
+def takeout_candidates(takeouts_path: Path) -> Iterable[Path]:
+    if not takeouts_path.exists():
+        raise RuntimeError(f"{takeouts_path} doesn't exist!")
+
+    if takeouts_path.is_file():
+        if is_takeout_archive(takeouts_path):
+            yield takeouts_path
+    for root, dirs, files in os.walk(str(takeouts_path)): # TODO make sure it traverses inside in case it's a symlink
+        rp = Path(root)
+        if rp.joinpath('Takeout').exists():
+            yield rp
+
+        for f in files:
+            fp = Path(root, f)
+            if fp.suffix == '.zip' and _TAKEOUT_REGEX.search(fp.stem):
+                # TODO support other formats too
+                # TODO multipart archives?
+                yield fp
+
+Key = Tuple[Url, datetime]
+_Map = Dict[Key, PreVisit]
+
+def _merge(current: _Map, new: Iterable[PreVisit], tag=''):
+    logger = get_logger()
+    # TODO would be nice to add specific takeout source??
+    logger.debug('before merging %s: %d', tag, len(current))
+    for pv in new:
+        key = (pv.url, pv.dt)
+        if key in current:
+            pass
+            # logger.debug('skipping %s', pv)
+        else:
+            # logger.info('adding %s', pv)
+            current[key] = pv
+    logger.debug('after merging %s: %d', tag, len(current))
+
 def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
+    logger = get_logger()
     path = Path(takeout_path_)
 
-    # first, figure out what is takeout_path...
-    takeout: Union[ZipFile, Path]
-    if path.is_file():
-        # must be a takeout zip
-        # TODO support other formats too
-        takeout = ZipFile(str(path))
-    elif path.joinpath('Takeout', 'My Activity').exists():
-        # unpacked dir, just process it
-        takeout = path
-    else:
-        # directory with multiple takeout archives
-        TAKEOUT_REGEX = re.compile(r'takeout-\d{8}T\d{6}Z')
-        takeout_name = max([ff for ff in path.iterdir() if TAKEOUT_REGEX.match(ff.name)]) # lastest chronologically
-        takeout = ZipFile(str(path.joinpath(takeout_name)))
-        # TODO multipart archives?
-    chrome_myactivity = read_google_activity(takeout)
-    search_myactivity = read_search_activity(takeout)
-    browser_history_json = read_browser_history_json(takeout)
-    return itertools.chain(chrome_myactivity, search_myactivity, browser_history_json)
+    takeouts = []
+    for t in takeout_candidates(path):
+        if t.is_dir():
+            # TODO uh, not a great way I guess
+            dts = datetime.utcfromtimestamp(t.stat().st_mtime).strftime('%Y%m%dT%H%M%SZ')
+            takeouts.append((dts, t))
+        else: # must be an archive
+            dts = _TAKEOUT_REGEX.search(t.stem).group(1) # type: ignore
+            takeouts.append((dts, t))
+
+    browser_history_json: _Map = {}
+    chrome_myactivity: _Map = {}
+    search_myactivity: _Map = {}
+
+    for dts, takeout in sorted(takeouts):
+        tr: Union[ZipFile, Path]
+        if not takeout.is_dir(): # must be zim file
+            tr = ZipFile(str(takeout))
+        else:
+            tr = takeout
+        logger.info('handling takeout %s', tr)
+        _merge(chrome_myactivity, read_google_activity(tr), tag='chrome_myactivity')
+        _merge(search_myactivity, read_search_activity(tr), tag='search_myactivity')
+        _merge(browser_history_json, read_browser_history_json(tr), tag='browser_history_json')
+    return itertools.chain(chrome_myactivity.values(), search_myactivity.values(), browser_history_json.values())

@@ -43,7 +43,7 @@ def test_takeout():
     assert_got_tzinfo(hist)
 
     with TemporaryDirectory() as tdir:
-        render([hist], join(tdir, 'res.json'))
+        render(hist, join(tdir, 'res.json'))
 
 def test_with_error():
     class ExtractionError(Exception):
@@ -61,7 +61,7 @@ def test_with_error():
     assert len(hist) == 2
 
 def test_takeout_new_zip():
-    test_takeout_path = "testdata/takeout.zip"
+    test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
     import wereyouhere.extractors.takeout as tex
     hist = history(lambda: tex.extract(test_takeout_path, tag='whatevs'))
     assert len(hist) == 3
@@ -93,7 +93,7 @@ def test_chrome():
         hist = history(W(chrome_ex.extract, path))
         assert len(hist) > 10 # kinda random sanity check
 
-        render([hist], join(tdir, 'res.json'))
+        render(hist, join(tdir, 'res.json'))
 
         assert_got_tzinfo(hist)
 
@@ -148,7 +148,7 @@ def test_custom():
     ))
     assert len(hist) == 3 # https and http are same; also trailing slash and no trailing slash
     with TemporaryDirectory() as tdir:
-        render([hist], join(tdir, 'res.json'))
+        render(hist, join(tdir, 'res.json'))
 
 
 
