@@ -14,9 +14,6 @@ from cconfig import ignore
 def get_logger():
     return logging.getLogger('wereyouhere-db-changes')
 
-int_dir = Path('intermediate')
-
-
 # TODO return error depending on severity?
 
 Url = str
@@ -113,9 +110,20 @@ def main():
     setup_logzero(get_logger(), level=logging.DEBUG)
     logger = get_logger()
 
+    p = argparse.ArgumentParser()
+    # TODO better name?
+    p.add_argument('--intermediate-dir', type=Path, required=True)
+    args = p.parse_args()
+    # TODO perhaps get rid of linksdb completely? The server could merge them by itself
+    int_dir = args.intermediate_dir
+    assert int_dir.exists()
+
+    jsons = list(sorted(int_dir.glob('*.json')))
+    assert len(jsons) > 0
+
     last = None
     last_dt = None
-    for f in sorted(int_dir.glob('*.json')):
+    for f in jsons:
         logger.info('processing %r', f)
         vis = collect(json.loads(f.read_text()))
         if last is not None:
