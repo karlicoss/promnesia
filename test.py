@@ -56,6 +56,7 @@ def test_with_error():
                 yield PreVisit(
                     url=f'http://test{i}',
                     dt=datetime.utcfromtimestamp(0),
+                    locator=None,
                 )
     hist = history(lambda: err_ex())
     assert len(hist) == 2

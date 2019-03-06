@@ -6,7 +6,7 @@ from urllib.parse import unquote
 
 import pytz
 
-from wereyouhere.common import PathIsh, PreVisit, get_logger
+from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
 
 def extract(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
     logger = get_logger()
@@ -28,5 +28,6 @@ def extract(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
             url=url,
             dt=dt,
             tag=tag,
+            locator=Loc.make(histfile),
         )
     logger.debug('done extracing')

@@ -88,6 +88,8 @@ def run(config_file: str, intermediate: Optional[str]):
             had_errors = True
         all_histories.append((einfo, hist))
 
+    logger.info('preparing intermediate state...')
+
     # this is intermediate, to make future raw data comparisons easier...
     intermediates = []
     for e, h in all_histories:
@@ -100,8 +102,10 @@ def run(config_file: str, intermediate: Optional[str]):
             )
             cur.append(dictify(entry))
         intermediates.append((e, cur))
-    with intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json')).open('w') as fo:
+    intp = intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json'))
+    with intp.open('w') as fo:
         json.dump(intermediates, fo, ensure_ascii=False, sort_keys=True, indent=1, default=encoder)
+    logger.info('saved intermediate state to %s', intp)
 
     history = merge_histories([h for _, h in all_histories])
     j = render(history, fallback_timezone=fallback_tz)

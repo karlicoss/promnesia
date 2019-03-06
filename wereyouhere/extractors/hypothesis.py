@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from typing import NamedTuple, List, Optional, Union, Iterable
 
-from wereyouhere.common import PathIsh, PreVisit, get_logger
+from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
 
 def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
     logger = get_logger()
@@ -38,7 +38,7 @@ def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
             url=tg['source'],
             dt=x['created'], # TODO 'updated'? # 2019-02-15T18:24:16.874113+00:00
             context='\n\n'.join(cparts),
-            locator=str(json_path),
+            locator=Loc.make(json_path),
             tag=tag,
         )
         yield v

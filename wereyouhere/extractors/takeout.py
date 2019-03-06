@@ -17,7 +17,7 @@ import json
 
 from dateutil import parser
 
-from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url
+from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
 
 
 # TODO wonder if that old format used to be UTC...
@@ -45,12 +45,13 @@ class TakeoutHTMLParser(HTMLParser):
     current: Dict[str, str]
     visits: List[PreVisit]
 
-    def __init__(self, tag: str) -> None:
+    def __init__(self, tag: str, fpath: Path) -> None:
         super().__init__()
         self.state = State.OUTSIDE
         self.visits = []
         self.current = {}
         self.tag = tag
+        self.locator = Loc.make(fpath)
 
     def _reg(self, name, value):
         assert name not in self.current
@@ -107,6 +108,7 @@ class TakeoutHTMLParser(HTMLParser):
                         url=url,
                         dt=time,
                         tag=self.tag,
+                        locator=self.locator,
                     )
                     self.visits.append(visit)
 
@@ -114,52 +116,66 @@ class TakeoutHTMLParser(HTMLParser):
                     self.state = State.OUTSIDE
                     return
 
-def _read_google_activity(myactivity_html_fo, tag: str):
+
+def _read_google_activity(myactivity_html_fo, tag: str, fpath: Path):
     # TODO is it possible to parse iteratively?
     data: str = myactivity_html_fo.read().decode('utf-8')
-    parser = TakeoutHTMLParser(tag)
+    parser = TakeoutHTMLParser(tag, fpath=fpath)
     parser.feed(data)
     return parser.visits
 
-def _exists(thing, path):
+
+TakeoutSource = Union[ZipFile, Path]
+
+def _path(thing: TakeoutSource) -> Path:
+    if isinstance(thing, Path):
+        return thing
+    else:
+        return Path(thing.filename) # type: ignore
+
+def _exists(thing: TakeoutSource, path):
     if isinstance(thing, ZipFile):
         return path in thing.namelist()
     else:
         return thing.joinpath(path).exists()
 
 
-def _open(thing, path):
+def _open(thing: TakeoutSource, path):
     if isinstance(thing, ZipFile):
         return thing.open(path, 'r')
     else:
         return thing.joinpath(path).open('rb')
 
-def read_google_activity(takeout) -> List[PreVisit]:
+def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Chrome", "MyActivity.html")
     if not _exists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
     with _open(takeout, spath) as fo:
-        return _read_google_activity(fo, 'activity-chrome')
+        return _read_google_activity(fo, 'activity-chrome', fpath=_path(takeout))
 
-def read_search_activity(takeout) -> List[PreVisit]:
+def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Search", "MyActivity.html")
     if not _exists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
     with _open(takeout, spath) as fo:
-        return _read_google_activity(fo, 'activity-search')
+        return _read_google_activity(fo, 'activity-search', fpath=_path(takeout))
+
 
 # TODO add this to tests?
-def read_browser_history_json(takeout) -> Iterable[PreVisit]:
+def read_browser_history_json(takeout: TakeoutSource) -> Iterable[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "Chrome", "BrowserHistory.json")
 
     if not _exists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return
+
+    fpath = _path(takeout)
+    locator = Loc.make(fpath)
 
     j = None
     with _open(takeout, spath) as fo: # TODO iterative parser?
@@ -174,6 +190,7 @@ def read_browser_history_json(takeout) -> Iterable[PreVisit]:
             url=url,
             dt=time,
             tag="history_json",
+            locator=locator,
         )
 
 _TAKEOUT_REGEX = re.compile(r'(\d{8}T\d{6}Z)')
@@ -236,7 +253,7 @@ def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
     search_myactivity: _Map = {}
 
     for dts, takeout in sorted(takeouts):
-        tr: Union[ZipFile, Path]
+        tr: TakeoutSource
         if not takeout.is_dir(): # must be zim file
             tr = ZipFile(str(takeout))
         else:
