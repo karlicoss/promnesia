@@ -24,7 +24,6 @@ from .render import render
 # TODO smart is misleading... perhaps, get rid of it?
 from wereyouhere.generator.smart import previsits_to_history, Wrapper
 
-
 # jeez...
 class hdict(dict):
     def __hash__(self):
@@ -32,12 +31,13 @@ class hdict(dict):
 
 # shit, it's gonna be really hard to hack namedtuples int JSONEncoder...
 # https://github.com/python/cpython/blob/dc078947a5033a048d804e244e847b5844734439/Lib/json/encoder.py#L263
+# also guarantees consistent ordering...
 def dictify(obj):
     if isinstance(obj, tuple) and hasattr(obj, '_asdict'):
         return dictify(obj._asdict())
     elif isinstance(obj, dict):
         return hdict({k: dictify(v) for k, v in obj.items()})
-    elif isinstance(obj, (set, list, tuple)):
+    elif isinstance(obj, (list, tuple)):
         cls = type(obj)
         return cls(dictify(x) for x in obj)
     else:
@@ -46,8 +46,6 @@ def dictify(obj):
 def encoder(o):
     if isinstance(o, datetime):
         return o.isoformat() # hopefully that's ok; python 3.7 is capable of deserializing it, but I might have to backport it
-    elif isinstance(o, set):
-        return list(o)
     else:
         raise RuntimeError(f"can't encode {o}")
 
@@ -94,11 +92,12 @@ def run(config_file: str, intermediate: Optional[str]):
     intermediates = []
     for e, h in all_histories:
         cur = []
-        # TODO what do we do in case of parity?
         for entry in sorted(h.urls.values(), key=lambda e: e.url):
-            # TODO hmm. how to make sure we have used up all Visit fields here?
-            url = entry.url
-            visits = list(sorted(entry.visits, key=lambda v: (v.dt.isoformat(), v.context or ''))) # isoformat just to get away with comparing aware/unaware...
+            # TODO ugh what do we do in case of parity?
+            entry = entry._replace(
+                visits=list(sorted(entry.visits, key=lambda v: (v.dt.isoformat(), v.context or '')))
+                # isoformat just to get away with comparing aware/unaware...
+            )
             cur.append(dictify(entry))
         intermediates.append((e, cur))
     with intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json')).open('w') as fo:

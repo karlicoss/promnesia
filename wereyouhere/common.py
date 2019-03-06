@@ -1,7 +1,7 @@
 from collections.abc import Sized
 from datetime import datetime, date
 import re
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection
 from pathlib import Path
 import logging
 from functools import lru_cache
@@ -51,7 +51,7 @@ class Visit(NamedTuple):
 # TODO should ve even split url off Visit? not sure what benefit that actually gives..
 class Entry(NamedTuple):
     url: Url
-    visits: Set[Visit]
+    visits: Collection[Visit]
     # TODO compare urls?
 
 Filter = Callable[[Url], bool]

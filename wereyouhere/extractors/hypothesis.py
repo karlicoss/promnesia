@@ -38,6 +38,7 @@ def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
             url=tg['source'],
             dt=x['created'], # TODO 'updated'? # 2019-02-15T18:24:16.874113+00:00
             context='\n\n'.join(cparts),
+            locator=str(json_path),
             tag=tag,
         )
         yield v
