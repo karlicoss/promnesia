@@ -16,21 +16,21 @@ Url = str
 Tag = str
 DatetimeIsh = Union[datetime, date, str]
 Context = str
-Locator = Dict[str, Any]
+
 # TODO hmm. arguably, source and context are almost same things...
 # locator? source then context within file
+class Loc(NamedTuple):
+    file: str
+    line: Optional[int]=None
 
-class Loc:
-    @staticmethod
-    def file(fname: PathIsh):
-        return {
-            'file': str(fname),
-        }
+    @classmethod
+    def make(cls, fname: PathIsh, **kwargs):
+        return cls(file=str(fname), **kwargs)
 
 class PreVisit(NamedTuple):
     url: Url
     dt: DatetimeIsh
-    locator: Locator
+    locator: Loc
     context: Optional[Context] = None
     tag: Optional[Tag] = None
 
@@ -39,7 +39,7 @@ Extraction = Union[PreVisit, Exception]
 
 class Visit(NamedTuple):
     dt: datetime
-    locator: Locator
+    locator: Loc
     tag: Optional[Tag] = None
     context: Optional[Context] = None
 

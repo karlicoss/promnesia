@@ -51,6 +51,7 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
             url=url,
             dt=ts,
             tag=tag,
+            locator=Loc.make(fname, line=lineno),
             context=context,
         )
 
@@ -106,6 +107,6 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag) -> Iterable[PreVisit]:
             url=u,
             dt=dt,
             tag=tag,
-            locator=Loc.file(pp),
+            locator=Loc.make(pp),
         )
 
