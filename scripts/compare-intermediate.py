@@ -87,10 +87,10 @@ def compare(before: Set[Visit], after: Set[Visit], before_fdt=None):
 
 
     for b in before:
-        logger.warning('%s', b)
+        logger.error('missing %s', b)
 
 def collect(jj):
-    # TODO FIXME multiset??
+    logger = get_logger()
     visits = set()
     for src, data in sorted(jj):
         for x in data:
@@ -102,7 +102,12 @@ def collect(jj):
                     dt=v['dt'],
                     context=v['context'] or '<no context>', # to simplify comparisons...
                 )
-                assert vs not in visits
+                # assert vs not in visits
+                if vs in visits:
+                    # TODO FIXME multiset??
+                    # TODO debug level? not sure if should show them at all
+                    logger.warning('duplicate visit %s', vs)
+                #     import ipdb; ipdb.set_trace() 
                 visits.add(vs)
     return visits
 
