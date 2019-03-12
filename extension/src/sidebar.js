@@ -59,14 +59,27 @@ function bindSidebarData(response) {
     }
     clearSidebar();
 
-    // TODO align somehow??
-    cont.appendChild(document.createTextNode("Visits:"));
+    const doc = document;
+
+    cont.appendChild(doc.createTextNode("Visits:"));
+    const tbl = doc.createElement('table'); cont.appendChild(tbl);
+    tbl.id = 'visits';
+    const tbody = doc.createElement('tbody'); tbl.appendChild(tbody);
+
+    // TODO colors for sources would be nice... not sure if server or client provided
     for (const visit_raw of response.visits) {
         const visit = new Visit(visit_raw.time, visit_raw.tags); // TODO ugh ugly..
 
-        const vdiv = document.createElement('div');
-        vdiv.innerText = visit.repr();
-        cont.appendChild(vdiv);
+        const rep = visit.repr().split(" ");
+
+        // TODO font
+        const tr = doc.createElement('tr'); tbody.appendChild(tr);
+        const tdd = doc.createElement('td'); tr.appendChild(tdd);
+        tdd.appendChild(doc.createTextNode(rep[0] + " " + rep[1] + " " + rep[2]));
+        const tdt = doc.createElement('td'); tr.appendChild(tdt);
+        tdt.appendChild(doc.createTextNode(rep[3]));
+        const tds = doc.createElement('td'); tr.appendChild(tds);
+        tds.appendChild(doc.createTextNode(rep[4]));
     }
     cont.appendChild(document.createTextNode("Contexts:"));
     for (const context of response.contexts) {

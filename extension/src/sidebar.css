@@ -7,3 +7,8 @@ body {
 a {
     text-decoration: none;
 }
+
+/* meh, but ok for now */
+#visits {
+    font-size: 11px; 
+}
