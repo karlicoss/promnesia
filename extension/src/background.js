@@ -165,8 +165,8 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
             }
 
             function format_group (g) {
-                const dts = format_date(g[0]) + " " + format_time(g[0]) + "--" + format_time(g[g.length - 1]);
-                const tags = ["chr"];
+                const dts = format_date(g[0]) + " " + format_time(g[0]) + (g.length == 1 ? "" : "--" + format_time(g[g.length - 1]));
+                const tags = ["local"];
                 return new Visit(dts, tags);
             }
 
@@ -208,11 +208,48 @@ function getMapVisits(url: Url, cb: (Visits) => void) {
     });
 }
 
+const _monmap = {
+    Jan: '01',
+    Feb: '02',
+    Mar: '03',
+    Apr: '04',
+    May: '05',
+    Jun: '06',
+    Jul: '07',
+    Aug: '08',
+    Sep: '09',
+    Oct: '10',
+    Nov: '11',
+    Dec: '12',
+};
+
+function _visitKey(vis: Visit): string {
+    const spl = vis.repr().split(" ");
+    const emm = spl[2] + _monmap[spl[1]] + spl[0] + spl[3];
+    console.log(emm);
+    return emm;
+}
+
+function _visitsCmp(visa: Visit, visb: Visit): int {
+    const ka = _visitKey(visa);
+    const kb = _visitKey(visb);
+    if (ka < kb) {
+        return -1;
+    } else if (ka > kb) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 function getVisits(url: Url, cb: (Visits) => void) {
     getChromeVisits(url, function (chr_visits) {
         getMapVisits(url, function (map_visits) {
+            var all_visits = map_visits.visits.concat(chr_visits.visits);
+            all_visits.sort(_visitsCmp);
+            all_visits.reverse();
             cb(new Visits(
-                map_visits.visits.concat(chr_visits.visits),
+                all_visits,
                 map_visits.contexts.concat(chr_visits.contexts)
                 // TODO actually, we should sort somehow... but with dates as strings gonna be tedious...
                 // maybe, get range of timestamps from python and convert in JS? If we're doing that anyway...
