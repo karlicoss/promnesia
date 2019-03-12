@@ -83,13 +83,20 @@ function bindSidebarData(response) {
     }
     cont.appendChild(document.createTextNode("Contexts:"));
     for (const context of response.contexts) {
-        const cdiv = document.createElement('div');
-        cdiv.innerHTML = `<a href='emacs:${context}'>${context}</a>`;
+        const summary = context.substring(0, 50); // TODO is is possible to make this dynamic?
 
-        cdiv.addEventListener('click', function() {
-            chrome.tabs.create({'url': "emacs:" + context, 'active': false});
-        });
-        cont.appendChild(cdiv);
+        const det = doc.createElement('details'); cont.appendChild(det);
+        const summ = doc.createElement('summary'); det.appendChild(summ);
+        summ.appendChild(doc.createTextNode(summary));
+        det.appendChild(doc.createTextNode(context));
+        // TODO FIXME bring that back... somehow
+        // const cdiv = document.createElement('div');
+        // cdiv.innerHTML = `<a href='emacs:${context}'>${context}</a>`;
+
+        // cdiv.addEventListener('click', function() {
+        //     chrome.tabs.create({'url': "emacs:" + context, 'active': false});
+        // });
+        // cont.appendChild(cdiv);
         // ugh, mime links in href don't seem to work for some reason :(
         // not sure how to trigger it opening without creating new tab, but background isn't too bad
         // TODO hmm maybe they will now!
