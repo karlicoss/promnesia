@@ -3,6 +3,7 @@ import json
 import logging
 from datetime import datetime
 from typing import NamedTuple, List, Optional, Union, Iterable
+from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
 from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch
 
@@ -28,7 +29,7 @@ select coalesce(U.first_name || " " || U.last_name, U.username) as sender, M.tim
         dt = from_epoch(row['time'])
         for u in urls:
             yield PreVisit(
-                url=u,
+                url=unquote(u),
                 dt=dt,
                 context=f"{sender}: {text}", # TODO no locator I guess?
                 locator=None,

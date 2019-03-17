@@ -182,7 +182,21 @@ def get_tmpdir():
 @lru_cache()
 def _get_extractor():
     from urlextract import URLExtract # type: ignore
-    return URLExtract()
+    u = URLExtract()
+    # https://github.com/lipoja/URLExtract/issues/13
+    # u._stop_chars_right |= {','}
+    # u._stop_chars_left  |= {','}
+    return u
+
+
+def sanitize(url: str) -> str:
+    # TODO not sure it's a really good idea.. but seems easiest now
+    # TODO have whitelisted urls that allow trailing parens??
+    url = url.strip(',.…\\')
+    if 'wikipedia' not in url:
+        # urls might end with parens en.wikipedia.org/wiki/Widget_(beer)
+        url = url.strip(')')
+    return url
 
 
 def extract_urls(s: str) -> List[str]:
@@ -190,10 +204,17 @@ def extract_urls(s: str) -> List[str]:
     if len(s.strip()) == 0:
         return [] # optimize just in case..
 
+    # TODO special handling for org links
+
+    # TODO fuck. doesn't look like it's handling multiple urls in same line well...
+    # ("python.org/one.html python.org/two.html",
+    # hopefully ok... I guess if there are spaces in url we are fucked anyway..
     extractor = _get_extractor()
-    urls = extractor.find_urls(s)
-    # START investigate...
-    return [u.strip(',') for u in urls]
+    urls: List[str] = []
+    for x in s.split():
+        urls.extend(extractor.find_urls(x))
+
+    return [sanitize(u) for u in urls]
 
 
 def from_epoch(ts: int) -> datetime:
