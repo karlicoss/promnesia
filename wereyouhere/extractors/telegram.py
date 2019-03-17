@@ -31,7 +31,7 @@ select coalesce(U.first_name || " " || U.last_name, U.username) as sender, M.tim
             yield PreVisit(
                 url=unquote(u),
                 dt=dt,
-                context=f"{sender}: {text}", # TODO no locator I guess?
-                locator=None,
+                context=f"{sender}: {text}",
+                locator=Loc.make(database), # TODO not sure if there is a better way... would be great to jump to the message though
                 tag=tag,
             )
