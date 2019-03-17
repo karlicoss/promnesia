@@ -18,7 +18,8 @@ class Visit(NamedTuple):
     tag: Tag
 
 
-def load(fname: Path) -> Dict[Url, List[Visit]]:
+def load(fname) -> Dict[Url, List[Visit]]:
+    fname = Path(fname)
     jj = json.loads(fname.read_text())
     res: Dict[Url, List[Visit]] = OrderedDict()
     for url, vv in sorted(jj.items()):

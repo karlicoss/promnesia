@@ -132,6 +132,9 @@ class History(Sized):
         e.visits.add(v)
         self.urls[url] = e
 
+    def __contains__(self, k) -> bool:
+        return k in self.urls
+
     def __len__(self) -> int:
         return len(self.urls)
 
@@ -183,6 +186,7 @@ def _get_extractor():
 
 
 def extract_urls(s: str) -> List[str]:
+    # TODO unit test for escaped urls.. or should it be in normalise instead?
     if len(s.strip()) == 0:
         return [] # optimize just in case..
 

@@ -130,6 +130,17 @@ def test_normalise():
     assert len(hist) == 5
 
 
+def test_normalise_weird():
+    import wereyouhere.extractors.custom as custom_gen
+    from wereyouhere.generator.plaintext import extract_from_path
+
+    hist = history(W(custom_gen.extract,
+        extract_from_path('testdata/weird.txt'),
+    ))
+    assert "urbandictionary.com/define.php?term=Belgian Whistle" in hist
+    assert "en.wikipedia.org/wiki/Dinic's_algorithm" in hist
+
+
 @skip("use a different way to specify filter other than class variable..")
 def test_filter():
     import wereyouhere.generator.custom as custom_gen
