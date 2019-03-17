@@ -175,3 +175,24 @@ def get_tmpdir():
     import tempfile
     tdir = tempfile.TemporaryDirectory(suffix="wereyouhere")
     return tdir
+
+@lru_cache()
+def _get_extractor():
+    from urlextract import URLExtract # type: ignore
+    return URLExtract()
+
+
+def extract_urls(s: str) -> List[str]:
+    if len(s.strip()) == 0:
+        return [] # optimize just in case..
+
+    extractor = _get_extractor()
+    urls = extractor.find_urls(s)
+    # START investigate...
+    return [u.strip(',') for u in urls]
+
+
+def from_epoch(ts: int) -> datetime:
+    res = datetime.utcfromtimestamp(ts)
+    res.replace(tzinfo=pytz.utc)
+    return res
