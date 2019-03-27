@@ -10,7 +10,7 @@ import json
 
 import pytz
 
-from wereyouhere.common import PreVisit, Tag, Url, PathIsh, get_logger, Loc
+from wereyouhere.common import PreVisit, Tag, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
 
 
 def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
@@ -59,10 +59,7 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
 from typing import List
 def _collect(thing, result: List[Url]):
     if isinstance(thing, str):
-        # TODO good enough?
-        # or use regex?
-        if thing.startswith('http'):
-            result.append(thing)
+        result.extend(extract_urls(thing))
     elif isinstance(thing, list):
         for x in thing:
             _collect(x, result)
@@ -74,10 +71,11 @@ def _collect(thing, result: List[Url]):
         pass
 
 from typing import Union
+from tempfile import TemporaryDirectory
 
 
-
-def simple(path: Union[List[PathIsh], PathIsh], tag: Tag) -> Iterable[PreVisit]:
+# TODO FIXME unquote is temporary hack till we figure out everything..
+def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> Iterable[PreVisit]:
     logger = get_logger()
     if isinstance(path, list):
         for p in path:
@@ -86,9 +84,22 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag) -> Iterable[PreVisit]:
 
     pp = Path(path)
     urls: List[Url] = []
-    if pp.suffix == '.json': # TODO make it possible to force
+    # TODO ugh. kythonize that..
+    if pp.suffix == '.xz':
+        import lzma
+        uname = pp.name[:-len('.xz')]
+        uncomp = Path(get_tmpdir().name) / uname
+        with lzma.open(pp, 'rb') as cf:
+            with uncomp.open('wb') as fo:
+                fo.write(cf.read())
+        yield from simple(path=uncomp, tag=tag, do_unquote=True) # ugh. only used for reddit currelty
+    elif pp.suffix == '.json': # TODO make it possible to force
         jj = json.loads(pp.read_text())
-        _collect(jj, urls)
+        uuu: List[str] = []
+        _collect(jj, uuu)
+        if do_unquote:
+            uuu = [unquote(u) for u in uuu]
+        urls.extend(uuu)
     elif pp.suffix == '.csv':
         with pp.open() as fo:
             reader = csv.DictReader(fo)
