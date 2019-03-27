@@ -24,6 +24,7 @@ Dt = str
 Source = str
 Context = str
 Tag = str
+Locator = str
 
 
 class Visit(NamedTuple):
@@ -32,6 +33,7 @@ class Visit(NamedTuple):
     source: Source
     context: Context
     tag: Tag
+    locator: Locator
 
 
     # special id for easier excluding..
@@ -96,8 +98,8 @@ def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
     eliminations = [
         ('identity'               , lambda x: x),
         ('without dt'             , lambda x: x._replace(source='', dt='')),
-        ('without context'        , lambda x: x._replace(source='', context='')), # TODO FIXME only allow for certain tags?
-        ('without dt and context' , lambda x: x._replace(source='', dt='', context='')), # ugh..
+        ('without context'        , lambda x: x._replace(source='', context='', locator='')), # TODO FIXME only allow for certain tags?
+        ('without dt and context' , lambda x: x._replace(source='', dt='', context='', locator='')), # ugh..
     ]
     for ename, ekey in eliminations:
         logger.info('eliminating by %s', ename)
@@ -122,12 +124,15 @@ def collect(jj):
     for src, data in sorted(jj):
         for x in data:
             for v in x['visits']:
+                loc = v['locator']
+                locs = '{}:{}'.format(loc['file'], loc['line'])
                 vs = Visit(
                     source=src,
                     url=x['url'],
                     tag=v['tag'],
                     dt=v['dt'],
                     context=v['context'] or '<no context>', # to simplify comparisons...
+                    locator=locs,
                 )
                 # assert vs not in visits
                 if vs in visits:
