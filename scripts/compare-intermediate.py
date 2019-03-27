@@ -89,7 +89,7 @@ def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
     def reg_error(b):
         errors.append(b)
         logger.error('between %s missing %s', between, b)
-        logger.error('ignore line: "%s", # %s %s', b.exid, b.url, b.tag)
+        print('ignoreline "%s", # %s %s' % (b.exid, b.url, b.tag), file=sys.stderr)
 
 
     logger = get_logger()
