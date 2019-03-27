@@ -77,6 +77,13 @@ def eliminate_by(sa, sb, key):
 def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
     errors: List[Visit] = []
 
+    umap: Dict[str, List[Visit]] = {
+    }
+    for a in after:
+        xx = umap.get(a.url, [])
+        xx.append(a)
+        umap[a.url] = xx
+
     def reg_error(b):
         errors.append(b)
         logger.error('between %s missing %s', between, b)
@@ -99,7 +106,7 @@ def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
         logger.info('common: %d, before: %d, after: %d', len(common), len(before), len(after))
 
     logger.info('removing explicitly ignored items')
-    before = {b for b in before if not ignore(b, between=between)}
+    before = {b for b in before if not ignore(b, between=between, umap=umap)}
     logger.info('before: %d', len(before))
 
 
