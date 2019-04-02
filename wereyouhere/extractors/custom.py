@@ -1,9 +1,10 @@
 from datetime import datetime
 from os import stat
 from subprocess import check_output, check_call
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Union, List, Tuple, NamedTuple
 from urllib.parse import unquote
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import csv
 import json
@@ -56,22 +57,38 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
             context=context,
         )
 
-from typing import List
-def _collect(thing, result: List[Url]):
+Ctx = Tuple[str]
+
+class EUrl(NamedTuple):
+    url: Url
+    ctx: Ctx
+
+
+
+def _collect(thing, path: List[str], result: List[EUrl]):
     if isinstance(thing, str):
-        result.extend(extract_urls(thing))
+        ctx: CtxPath = tuple(path) # type: ignore
+        result.extend([EUrl(url=u, ctx=ctx) for u in extract_urls(thing)])
     elif isinstance(thing, list):
+        path.append('[]')
         for x in thing:
-            _collect(x, result)
+            _collect(x, path, result)
+        path.pop()
     elif isinstance(thing, dict):
         for k, v in thing.items():
-            _collect(k, result)
-            _collect(v, result)
+            path.append(k)
+            _collect(k, path, result)
+            _collect(v, path, result)
+            path.pop()
     else:
         pass
 
-from typing import Union
-from tempfile import TemporaryDirectory
+def collect_from(thing) -> List[EUrl]:
+    uuu: List[EUrl] = []
+    path: List[str] = []
+    _collect(thing, path, uuu)
+    return uuu
+
 
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
@@ -83,7 +100,6 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> I
         return
 
     pp = Path(path)
-    urls: List[Url] = []
     # TODO ugh. kythonize that..
     if pp.suffix == '.xz':
         import lzma
@@ -93,30 +109,36 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> I
             with uncomp.open('wb') as fo:
                 fo.write(cf.read())
         yield from simple(path=uncomp, tag=tag, do_unquote=True) # ugh. only used for reddit currelty
-    elif pp.suffix == '.json': # TODO make it possible to force
+        return
+
+    urls: List[EUrl]
+    if pp.suffix == '.json': # TODO make it possible to force
         jj = json.loads(pp.read_text())
-        uuu: List[str] = []
-        _collect(jj, uuu)
+
+        urls = collect_from(jj)
         if do_unquote:
-            uuu = [unquote(u) for u in uuu]
-        urls.extend(uuu)
+            urls = [u._replace(url=unquote(u.url)) for u in urls]
     elif pp.suffix == '.csv':
+        urls = []
         with pp.open() as fo:
+            # TODO support do_unquote??
+            # TODO shit need to urldecode
             reader = csv.DictReader(fo)
             for line in reader:
-                _collect(line, urls)
+                urls.extend(collect_from(line))
     else:
         # TODO use url extractor..
         logger.info(f'{pp}: fallback to grep')
         from wereyouhere.generator.plaintext import extract_from_path
         yield from extract(extract_from_path(pp), tag=tag)
         # raise RuntimeError(f'Unexpected suffix {pp}')
+        return
 
     dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
 
-    for u in urls:
+    for eu in urls:
         yield PreVisit(
-            url=u,
+            url=eu.url, # TODO FIXME use ctx?
             dt=dt,
             tag=tag,
             locator=Loc.make(pp),
