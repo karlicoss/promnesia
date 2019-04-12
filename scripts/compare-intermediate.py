@@ -12,7 +12,7 @@ from hashlib import sha1
 from kython.klogging import setup_logzero
 
 # TODO include latest too?
-from cconfig import ignore
+from cconfig import ignore, filtered
 
 def get_logger():
     return logging.getLogger('wereyouhere-db-changes')
@@ -108,9 +108,8 @@ def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
         logger.info('common: %d, before: %d, after: %d', len(common), len(before), len(after))
 
     logger.info('removing explicitly ignored items')
-    before = {b for b in before if not ignore(b, between=between, umap=umap)}
+    before = filtered(before, between=between, umap=umap)
     logger.info('before: %d', len(before))
-
 
     for b in before:
         reg_error(b)
