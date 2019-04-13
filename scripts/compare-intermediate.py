@@ -152,6 +152,7 @@ def main():
     # TODO better name?
     p.add_argument('--intermediate-dir', type=Path, required=True)
     p.add_argument('--all', action='store_true')
+    p.add_argument('paths', nargs='*')
     args = p.parse_args()
     # TODO perhaps get rid of linksdb completely? The server could merge them by itself
     int_dir = args.intermediate_dir
@@ -159,8 +160,11 @@ def main():
 
     jsons = list(sorted(int_dir.glob('*.json')))
     if not args.all:
-        # only compare last
-        jsons = jsons[-2:]
+        if len(args.paths) == 0:
+            # only compare last
+            jsons = jsons[-2:]
+        else:
+            jsons = [Path(p) for p in args.paths]
 
     assert len(jsons) > 0
 
