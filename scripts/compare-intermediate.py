@@ -10,6 +10,7 @@ from typing import Dict, List, Any, NamedTuple, Optional, Set
 from hashlib import sha1
 
 from kython.klogging import setup_logzero
+from kython import kompress
 
 # TODO include latest too?
 from cconfig import ignore, filtered
@@ -158,7 +159,7 @@ def main():
     int_dir = args.intermediate_dir
     assert int_dir.exists()
 
-    jsons = list(sorted(int_dir.glob('*.json')))
+    jsons = list(sorted(int_dir.glob('*.json.*')))
     if not args.all:
         if len(args.paths) == 0:
             # only compare last
@@ -174,8 +175,10 @@ def main():
     last_dts = None
     for f in jsons:
         logger.info('processing %r', f)
-        this_dts = f.stem
-        vis = collect(json.loads(f.read_text()))
+        name = f.name
+        this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
+        with kompress.open(f) as fo:
+            vis = collect(json.load(fo))
         if last is not None:
             between = f'{last_dts}:{this_dts}'
             errs = compare(last, vis, between=between)
