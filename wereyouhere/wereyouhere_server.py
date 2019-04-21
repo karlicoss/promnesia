@@ -69,7 +69,7 @@ def _get_state(mpath: PathWithMtime) -> VMap:
         # TODO parse loc
         for vis in v['visits']:
             dt = fromisoformat(vis['dt'])
-            if dt is None:
+            if dt.tzinfo is None:
                 dt = config.FALLBACK_TIMEZONE.localize(dt)
 
             ld = vis['locator']

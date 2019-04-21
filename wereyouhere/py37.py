@@ -1,5 +1,5 @@
 # borrowed from /usr/lib/python3.7/datetime.py
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 def _parse_isoformat_date(dtstr):
     # It is assumed that this function will only be called with a
