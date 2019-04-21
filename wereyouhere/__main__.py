@@ -3,20 +3,16 @@ import os.path
 import logging
 import json
 import inspect
-from sys import exit
+import sys
 from typing import List, Tuple, Optional
 from pathlib import Path
 from datetime import datetime
 
-def import_config(config_file: str):
-    import os, sys, importlib
-    mpath = Path(config_file)
-    sys.path.append(mpath.parent.as_posix())
-    try:
-        res = importlib.import_module(mpath.stem)
-        return res
-    finally:
-        sys.path.pop()
+
+from kython.ktyping import PathIsh
+
+
+from .common import Config, import_config
 
 from .common import Entry, Visit, History, Filter, make_filter, get_logger, get_tmpdir, merge_histories
 from .render import render
@@ -50,10 +46,8 @@ def encoder(o):
         raise RuntimeError(f"can't encode {o}")
 
 
-def run(config_file: str, intermediate: Optional[str]):
+def do_extract(config: Config):
     logger = get_logger()
-
-    config = import_config(config_file)
 
     fallback_tz = config.FALLBACK_TIMEZONE
     extractors = config.EXTRACTORS
@@ -62,7 +56,7 @@ def run(config_file: str, intermediate: Optional[str]):
     if not output_dir.exists():
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
 
-    intm = output_dir.joinpath('intermediate') if intermediate is None else Path(intermediate)
+    intm = output_dir / 'intermediate'
     intm.mkdir(exist_ok=True)
 
     filters = [make_filter(f) for f in config.FILTERS]
@@ -90,13 +84,12 @@ def run(config_file: str, intermediate: Optional[str]):
 
     logger.info('preparing intermediate state...')
 
-    # this is intermediate, to make future raw data comparisons easier...
     intermediates = []
     for e, h in all_histories:
         cur = []
         for entry in sorted(h.urls.values(), key=lambda e: e.url):
             # TODO ugh what do we do in case of parity?
-            entry = entry._replace(
+            entry = entry._replace( # type: ignore
                 visits=list(sorted(entry.visits, key=lambda v: (v.dt.isoformat(), v.context or '')))
                 # isoformat just to get away with comparing aware/unaware...
             )
@@ -107,34 +100,38 @@ def run(config_file: str, intermediate: Optional[str]):
         json.dump(intermediates, fo, ensure_ascii=False, sort_keys=True, indent=1, default=encoder)
     logger.info('saved intermediate state to %s', intp)
 
-    history = merge_histories([h for _, h in all_histories])
-    j = render(history, fallback_timezone=fallback_tz)
-
-    urls_json = output_dir.joinpath('linksdb.json')
-    with urls_json.open('w') as fo:
-        json.dump(j, fo, indent=1, ensure_ascii=False)
-
     if had_errors:
-        exit(1)
+        sys.exit(1)
 
+
+from .wereyouhere_server import setup_parser, run as do_serve
 
 def main():
     from kython.klogging import setup_logzero
     setup_logzero(get_logger(), level=logging.DEBUG)
 
     p = argparse.ArgumentParser()
-    p.add_argument('--config', default='config.py')
-    p.add_argument('--intermediate', required=False)
+    p.add_argument('--config', type=Path, default=Path('config.py'))
+    sp = p.add_subparsers(dest='mode')
+    ep = sp.add_parser('extract')
+    ep.add_argument('--intermediate', required=False)
+    sp = sp.add_parser('serve')
+    setup_parser(sp)
+
+    args = p.parse_args()
+
     # TODO maybe, it's better for server to compute intermediate represetnation?
     # the only downside is storage. dunno.
     # worst case -- could use database?
-    args = p.parse_args()
 
-    try:
-        run(config_file=args.config, intermediate=args.intermediate)
-    except:
-        tdir = get_tmpdir()
-        tdir.cleanup()
-        raise
+    config = import_config(args.config)
+    with get_tmpdir() as tdir:
+        if args.mode == 'extract':
+            run(config=config, intermediate=args.intermediate)
+        elif args.mode == 'serve':
+            do_serve(port=args.port, config=config)
+        else:
+            raise AssertionError(f'unexpected mode {args.mode}')
+
 
 main()

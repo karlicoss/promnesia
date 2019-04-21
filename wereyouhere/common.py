@@ -10,7 +10,12 @@ import pytz
 
 from .normalise import normalise_url
 
-PathIsh = Union[Path, str]
+
+from kython.ktyping import PathIsh
+
+
+from typing_extensions import Protocol
+
 
 Url = str
 Tag = str
@@ -48,10 +53,15 @@ class Visit(NamedTuple):
         ll = self._replace(locator=None)
         return super(Visit, ll).__hash__()
 
+    @property
+    def cmp_key(self):
+        return (self.dt, str(self.tag), str(self.context))
+    # TODO deserialize method??
+
 # TODO should ve even split url off Visit? not sure what benefit that actually gives..
 class Entry(NamedTuple):
     url: Url
-    visits: Collection[Visit]
+    visits: Set[Visit]
     # TODO compare urls?
 
 Filter = Callable[[Url], bool]
@@ -221,3 +231,37 @@ def from_epoch(ts: int) -> datetime:
     res = datetime.utcfromtimestamp(ts)
     res.replace(tzinfo=pytz.utc)
     return res
+
+
+# TODO kythonize?
+class PathWithMtime(NamedTuple):
+    path: Path
+    mtime: float
+
+    @classmethod
+    def make(cls, p: Path):
+        return cls(
+            path=p,
+            mtime=p.stat().st_mtime,
+        )
+
+
+class Config(Protocol):
+    FALLBACK_TIMEZONE: pytz.BaseTzInfo
+    OUTPUT_DIR: PathIsh
+    EXTRACTORS: List
+    FILTERS: List[str]
+
+
+
+def import_config(config_file: PathIsh) -> Config:
+    mpath = Path(config_file)
+    import os, sys, importlib
+    sys.path.append(mpath.parent.as_posix())
+    try:
+        res = importlib.import_module(mpath.stem)
+        # TODO hmm. check that config conforms to the protocol?? perhaps even in config itself?
+        return res # type: ignore
+    finally:
+        sys.path.pop()
+

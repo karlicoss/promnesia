@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 from subprocess import check_call, run
 
-from wereyouhere_server import setup_parser
+from wereyouhere.wereyouhere_server import setup_parser
 
 SYSTEMD_CONFIG = """
 [Unit]
@@ -30,9 +30,9 @@ def setup(args):
     out = Path(f'~/.config/systemd/user/{unit_name}').expanduser()
     print(f"Writing systemd config to {out}:")
 
-    server_bin = Path(__file__).parent.joinpath('wereyouhere_server.py').absolute()
+    server_bin = (Path(__file__).parent / 'run').absolute()
 
-    extra_args = f'--port {args.port}'
+    extra_args = f'serve --port {args.port}'
 
     with out.open('w') as fo:
         fo.write(SYSTEMD_CONFIG.format(
