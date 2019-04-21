@@ -1,0 +1,52 @@
+#+FILETAGS: wereyouhere
+
+* Building
+apparently needs `npm install` done [once?]
+
+* Testing scenarios
+** [#A] [2019-04-19 Fri 22:38] open new visited tab via a link (have a html page for that)
+
+ Pinboard: public bookmarks for tswaterman
+ https://pinboard.in/u:tswaterman/
+ Comment:
+ shit. it doesn't trigger if I open new tab form the link, but seems to work fine if I create new tab and enter the url..
+*** [2019-04-21 Sun 09:52] 
+    onCreated with url set
+    onDomContentLoaded
+    onUpdated with status complete
+
+** refreshing the tab
+    multiple onDomContentLoaded
+    onUpdated with status complete
+
+** click url in the same tab
+    onUpdated with url set   
+    onDomContentLoaded
+    onUpdated with status complete
+    (that works now)
+
+** url changes automatically in the same tab (e.g. youtube)
+    ------ tested on YT watch later
+    onUpdated with url set
+    NO onDomContentLoaded
+    onUpdated with status complete
+ 
+
+** open new empty tab, type in url, enter
+  first, when you open the tab:
+    onCreated with empty tab
+    onUpdated with url set   
+    onUpdated with complete
+  then when you type in the url:
+    onUpdated with url set
+    onDomContentLoaded
+    onUpdated with status complete
+
+
+** tab open triggered via external link handling
+    onCreated with url set
+    onDomContentLoaded
+    onUpdated with status complete
+** [2019-04-21 Sun 10:16] ok, overall onUpdated(complete) seems the most reliable. the only a bit annoying thing is that it happens late sometimes
+   I guess I could keep some sort of cache? not sure..
+   

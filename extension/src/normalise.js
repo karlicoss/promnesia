@@ -28,7 +28,7 @@ export function normalise_url(url) {
             let target = rules[i][0];
             let reg = rules[i][1];
             if (target[Symbol.search](cur) >= 0) {
-                console.log("%s: matched %s, applying %s", cur, target, reg);
+                console.log("[normalise] %s: matched %s, applying %s", cur, target, reg);
                 if (reg !== null) {
                     cur = reg[Symbol.replace](cur, '');
                 }

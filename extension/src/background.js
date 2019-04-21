@@ -57,11 +57,15 @@ function rawToVisits(vis): Visits {
 function log() {
     const args = [];
     for (var i = 1; i < arguments.length; i++) {
-        args.push(arguments[i]);
+        const arg = arguments[i];
+        args.push(JSON.stringify(arg));
     }
     console.log('[background] ' + arguments[0], ...args);
 }
 
+const ldebug = log; // TODO
+const linfo = log; // TODO
+const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
@@ -226,11 +230,10 @@ const _monmap = {
 function _visitKey(vis: Visit): string {
     const spl = vis.repr().split(" ");
     const emm = spl[2] + _monmap[spl[1]] + spl[0] + spl[3];
-    console.log(emm);
     return emm;
 }
 
-function _visitsCmp(visa: Visit, visb: Visit): int {
+function _visitsCmp(visa: Visit, visb: Visit): number {
     const ka = _visitKey(visa);
     const kb = _visitKey(visb);
     if (ka < kb) {
@@ -434,43 +437,53 @@ function ignored(url: string): boolean {
 // TODO ehh... not even sure that this is correct thing to do...
 // $FlowFixMe
 chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
-    const url = unwrap(detail.url);
-    if (detail.frameId != 0) {
-        log('ignoring child iframe for %s', url);
-        return;
-    }
-
-    if (ignored(url)) {
-        log("ignoring %s", url);
-        return;
-    }
-    // https://kk.org/thetechnium/
-    log(`finished loading DOM ${JSON.stringify(detail)}`);
     get_options(opts => {
-        if (opts.dots) {
-            showDots(detail.tabId, opts);
+        if (!opts.dots) {
+            return;
         }
+        const url = unwrap(detail.url);
+        if (detail.frameId != 0) {
+            ldebug('ignoring child iframe for %s', url);
+            return;
+        }
+
+        if (ignored(url)) {
+            ldebug("ignoring %s", url);
+            return;
+        }
+        // https://kk.org/thetechnium/
+        ldebug('finished loading DOM %s', detail);
+
+        showDots(detail.tabId, opts);
         // updateState();
     });
 });
 // chrome.tabs.onReplaced.addListener(updateState);
 
+chrome.tabs.onCreated.addListener((tab) => {
+    ldebug("!!!!!! CREATED %s", tab);
+});
 
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
-    const url = unwrap(tab.url);
+    ldebug("!!!!!! UPDATED %s %s", tab, info);
+
+    const url = tab.url;
+    if (url == null) {
+        ldebug('URL is not set; ignoring');
+        return;
+    }
 
     if (ignored(url)) {
-        log("ignoring %s", url);
+        linfo("ignoring %s", url);
         return;
     }
     // right, tab updated triggered quite a lot, e.g. when the title is blinking
-    // log(`TAB UPDATED ${url} ${info}`);
-    // console.log(info);
     // ok, so far there are basically two cases
     // 1. you open new tab. in that case 'url' won't be passed but onDomContentLoaded will be triggered
     // 2. you navigate within the same tab, e.g. on youtube. then url will be passed, but onDomContentLoaded doesn't trigger. TODO not sure if it's always the case. maybe it's only YT
     // TODO shit, so we might need to hide previous dots? ugh...
 
+    // TODO vvvv these might need to be cleaned up; not sure how relevant...
     // page refresh: loading -> complete (no url at any point)
     // clicking on link: loading (url) -> complete
     // opening new link: loading -> loading (url) -> complete
@@ -479,9 +492,8 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 
     // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
 
-    log(JSON.stringify(info));
-    if (info['status'] === 'loading' && info['url'] != null) {
-        log(`requesting! ${url}`);
+    if (info['status'] === 'complete') {
+        linfo('requesting! %s', url);
         updateState();
     }
 });
