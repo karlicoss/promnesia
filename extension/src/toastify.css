@@ -21,12 +21,12 @@
     text-decoration: none;
     max-width: calc(50% - 20px);
     z-index: 2147483647;
+
+    white-space: pre-wrap;
 }
 
 .toastify.on {
     opacity: 1;
-
-    white-space: pre-wrap;
 }
 
 .toast-close {
