@@ -32,6 +32,10 @@ class Loc(NamedTuple):
     def make(cls, fname: PathIsh, **kwargs):
         return cls(file=str(fname), **kwargs)
 
+    # TODO need some uniform way of string conversion
+    # but generally, it would be
+    # (url|file)(linenumber|json_path|anchor)
+
 class PreVisit(NamedTuple):
     url: Url
     dt: DatetimeIsh

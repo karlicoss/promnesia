@@ -18,7 +18,7 @@ import hug # type: ignore
 import hug.types as T # type: ignore
 
 
-from .common import PathWithMtime, Config, Visit, Url, import_config
+from .common import PathWithMtime, Config, Visit, Url, import_config, Loc
 from .normalise import normalise_url
 from .py37 import fromisoformat
 
@@ -72,9 +72,12 @@ def _get_state(mpath: PathWithMtime) -> VMap:
             if dt is None:
                 dt = config.FALLBACK_TIMEZONE.localize(dt)
 
+            ld = vis['locator']
+            loc = Loc(file=ld['file'], line=ld['line'])
+
             vlist.append(Visit(
                 dt=dt,
-                locator=vis['locator'],
+                locator=loc,
                 context=vis['context'],
                 tag=vis['tag'],
             ))
@@ -104,17 +107,20 @@ def get_state(path: Path=None) -> VMap:
 
 from typing import Dict
 
-# TODO locator goes well with context..
 def as_json(v: Visit) -> Dict:
    #  "09 Aug 2018 19:48",
    #  "06 Aug 2018 21:36--21:37",
     # TODO perhaps tag merging should be done by browser as well?
     # TODO also local should be suppressed if any other tag with this timestamp is present
+    dts = v.dt.strftime('%d %b %Y %H:%M')
+    loc = v.locator
+    locs = loc.file + (':' + str(loc.line) if loc.line is not None else '')
     return {
         # TODO do not display year if it's current year??
-        'dt': v.dt.strftime('%d %b %Y %H:%M'),
-        'context': v.context,
+        'dt': dts,
         'tags': [v.tag],
+        'context': v.context,
+        'locator': locs,
     }
 
 

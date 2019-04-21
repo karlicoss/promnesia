@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Url, VisitsMap} from './common';
+import type {Locator, Tag, Url, VisitsMap} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import type {Options} from './options';
@@ -21,6 +21,8 @@ export function showNotification(text: string, priority: number=0) {
 
 export function showTabNotification(tabId: number, text: string) {
     // TODO can it be remote script?
+    text = text.replace(/\n/, "\\n"); // ....
+
     chrome.tabs.executeScript(tabId, {file: 'toastify.js'}, () => {
         chrome.tabs.insertCSS(tabId, {file: 'toastify.css'}, () => {
             chrome.tabs.executeScript(tabId, { code: `
@@ -46,9 +48,10 @@ function rawToVisits(vis): Visits {
 
     return new Visits(vis.map(v => {
         const vtime: string = v['dt'];
-        const vtags: Array<string> = v['tags']; // TODO hmm. backend is responsible for tag merging?
+        const vtags: Array<Tag> = v['tags']; // TODO hmm. backend is responsible for tag merging?
         const vctx: ?string = v['context'];
-        return new Visit(vtime, vtags, vctx);
+        const vloc: ?Locator = v['locator']
+        return new Visit(vtime, vtags, vctx, vloc);
     }));
 }
 
@@ -303,10 +306,7 @@ function updateState () {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             const locs = visits.contexts();
             if (locs.length !== 0) {
-                // TODO add context sources to notification message...
-                // TODO actually use locators in notification
-                // TODO need settings...
-                showTabNotification(tabId, `${locs.length} contexts!`);
+                showTabNotification(tabId, `${locs.length} contexts!\n${locs.join('\n')}`);
             }
 
             chrome.tabs.executeScript(tabId, {

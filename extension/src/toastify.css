@@ -25,6 +25,8 @@
 
 .toastify.on {
     opacity: 1;
+
+    white-space: pre-wrap;
 }
 
 .toast-close {
