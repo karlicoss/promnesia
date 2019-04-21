@@ -1,6 +1,8 @@
+from typing import List, Any
 from re import compile as R
 
-STRIP_RULES = [
+
+STRIP_RULES: List[List[Any]] = [
     [R('.*')                     , R('^\\w+://'         )],
     [R('.*')                     , R('(www|ww|amp)\\.'  )],
     [R('.*')                     , R('[&#].*$'          )],
@@ -16,7 +18,7 @@ def normalise_url(url):
     cur = url
     for thing in STRIP_RULES:
         first = thing[0]
-        rules = None
+        rules: List
         if isinstance(first, list):
             rules = thing
         else:

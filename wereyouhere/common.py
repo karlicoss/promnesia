@@ -54,7 +54,9 @@ class Visit(NamedTuple):
 
     def __hash__(self):
         # well, that's quite mad. but dict is not hashable..
-        ll = self._replace(locator=None)
+        # pylint: disable=no-member
+        ll = self._replace(locator=None) # type: ignore
+        # pylint: disable=bad-super-call
         return super(Visit, ll).__hash__()
 
     @property

@@ -30,7 +30,7 @@ class hdict(dict):
 # also guarantees consistent ordering...
 def dictify(obj):
     if isinstance(obj, tuple) and hasattr(obj, '_asdict'):
-        return dictify(obj._asdict())
+        return dictify(obj._asdict()) # type: ignore
     elif isinstance(obj, dict):
         return hdict({k: dictify(v) for k, v in obj.items()})
     elif isinstance(obj, (list, tuple)):
@@ -46,20 +46,22 @@ def encoder(o):
         raise RuntimeError(f"can't encode {o}")
 
 
-def do_extract(config: Config):
+def do_extract(config: Path):
+    cfg = import_config(config)
+
     logger = get_logger()
 
-    fallback_tz = config.FALLBACK_TIMEZONE
-    extractors = config.EXTRACTORS
+    fallback_tz = cfg.FALLBACK_TIMEZONE
+    extractors = cfg.EXTRACTORS
 
-    output_dir = Path(config.OUTPUT_DIR)
+    output_dir = Path(cfg.OUTPUT_DIR)
     if not output_dir.exists():
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
 
     intm = output_dir / 'intermediate'
     intm.mkdir(exist_ok=True)
 
-    filters = [make_filter(f) for f in config.FILTERS]
+    filters = [make_filter(f) for f in cfg.FILTERS]
     for f in filters:
         History.add_filter(f) # meh..
 
@@ -112,10 +114,10 @@ def main():
 
     p = argparse.ArgumentParser()
     p.add_argument('--config', type=Path, default=Path('config.py'))
-    sp = p.add_subparsers(dest='mode')
-    ep = sp.add_parser('extract')
+    subp = p.add_subparsers(dest='mode')
+    ep = subp.add_parser('extract')
     ep.add_argument('--intermediate', required=False)
-    sp = sp.add_parser('serve')
+    sp = subp.add_parser('serve')
     setup_parser(sp)
 
     args = p.parse_args()
@@ -124,12 +126,11 @@ def main():
     # the only downside is storage. dunno.
     # worst case -- could use database?
 
-    config = import_config(args.config)
     with get_tmpdir() as tdir:
         if args.mode == 'extract':
-            do_extract(config=config)
+            do_extract(config=args.config)
         elif args.mode == 'serve':
-            do_serve(port=args.port, config=config)
+            do_serve(port=args.port, config=args.config)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 

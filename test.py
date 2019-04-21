@@ -245,6 +245,6 @@ def test_merge_all_from():
         # TODO and also some other unique thing..
 
 if __name__ == '__main__':
-    pytest.main(__file__)
+    pytest.main([__file__])
 
 # TODO mark tests with @skip_if_ci
