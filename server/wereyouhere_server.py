@@ -15,7 +15,21 @@ import hug # type: ignore
 import hug.types as T # type: ignore
 
 
-# TODO cachy thing from kython??
+_LINKSDB = 'WEREYOUHERE_LINKSDB'
+
+
+# TODO kythonize?
+from typing import NamedTuple
+class PathWithMtime(NamedTuple):
+    path: Path
+    mtime: float
+
+    @classmethod
+    def make(cls, p: Path):
+        return cls(
+            path=p,
+            mtime=p.stat().st_mtime,
+        )
 
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
@@ -30,49 +44,29 @@ def get_logger():
 
 # TODO how to have a worker in parallel??
 
-DELTA = timedelta(minutes=20)
-
-LINKSDB = 'WEREYOUHERE_LINKSDB'
 
 class State:
     def __init__(self, links: Path) -> None:
-        self.links = links
+        self.links_db = links
 
-        self.vmap = None
-        self.last = None
-
-    def refresh(self):
         logger = get_logger()
-        now = datetime.now()
-        if self.last is not None and (now - self.last) < DELTA:
-            return
+        logger.info("Reloading the map")
 
         # TODO use that?? https://github.com/timothycrosley/hug/blob/develop/tests/test_async.py
-        logger.info("Reloading the map")
-        with self.links.open('r') as fo:
+        with self.links_db.open('r') as fo:
             self.vmap = json.load(fo)
-        self.last = now
 
     def get_map(self):
-        self.refresh()
         return self.vmap
-        # TODO how to do it in background??
 
-    # TODO could even store in some decent format now instead of lists...
-    # res = {}
-    # for u, (vis, cont) in vmap.items():
-    #     res[u] = {
-    #         'visits': vis,
-    #         'contexts': cont,
-    #     }
-    # return res
 
-state = None
+@functools.lru_cache(1)
+def _get_state(mpath: PathWithMtime):
+    return State(mpath.path)
+
 def get_state():
-    global state
-    if state is None:
-        state = State(Path(os.environ.get(LINKSDB)))
-    return state
+    path = Path(os.environ.get(_LINKSDB))
+    return _get_state(PathWithMtime.make(path))
 
 
 from normalise import normalise_url
@@ -107,7 +101,7 @@ def visited(
 def run(port: str, linksdb: str):
     env = os.environ.copy()
     # # not sure if there is a simpler way to communicate with the server...
-    env[LINKSDB] = linksdb
+    env[_LINKSDB] = linksdb
     os.execvpe(
         '/home/karlicos/.local/bin/hug',
         [
