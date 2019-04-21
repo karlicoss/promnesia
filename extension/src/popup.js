@@ -1,8 +1,9 @@
 /* @flow */
 import {Visits, Visit} from './common';
 
-
 // ok, this isn't even used ATM
+// commented in case it would be revived
+/*
 function requestVisits() {
     chrome.runtime.sendMessage({
         'method':'getVisits'
@@ -45,3 +46,4 @@ function requestVisits() {
 }
 
 document.addEventListener('DOMContentLoaded', requestVisits);
+*/

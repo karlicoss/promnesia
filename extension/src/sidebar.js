@@ -58,37 +58,55 @@ function bindSidebarData(response) {
         return;
     }
     clearSidebar();
+    console.log(response);
 
     const doc = document;
 
-    cont.appendChild(doc.createTextNode("Visits:"));
     const tbl = doc.createElement('table'); cont.appendChild(tbl);
     tbl.id = 'visits';
     const tbody = doc.createElement('tbody'); tbl.appendChild(tbody);
 
-    // TODO colors for sources would be nice... not sure if server or client provided
-    for (const visit_raw of response.visits) {
-        const visit = new Visit(visit_raw.time, visit_raw.tags); // TODO ugh ugly..
+    const visits = response.visits.map(rvisit =>
+        new Visit(
+            rvisit.time,
+            rvisit.tags,
+            rvisit.context,
+        ) // TODO ugh ugly..
+    );
+    // move visits with contexts on top
+    visits.sort((f, s) => (f.context === null ? 1 : 0) - (s.context === null ? 1 : 0));
 
+    // TODO colors for sources would be nice... not sure if server or client provided
+    for (const visit of visits) {
         const rep = visit.repr().split(" ");
 
-        // TODO font
-        const tr = doc.createElement('tr'); tbody.appendChild(tr);
-        const tdd = doc.createElement('td'); tr.appendChild(tdd);
+        const tr = tbl.insertRow(-1);
+        const tdd = tr.insertCell(-1);
         tdd.appendChild(doc.createTextNode(rep[0] + " " + rep[1] + " " + rep[2]));
-        const tdt = doc.createElement('td'); tr.appendChild(tdt);
+        const tdt = tr.insertCell(-1);
         tdt.appendChild(doc.createTextNode(rep[3]));
-        const tds = doc.createElement('td'); tr.appendChild(tds);
+        const tds = tr.insertCell(-1);
         tds.appendChild(doc.createTextNode(rep[4]));
-    }
-    cont.appendChild(document.createTextNode("Contexts:"));
-    for (const context of response.contexts) {
-        const summary = context.substring(0, 50); // TODO is is possible to make this dynamic?
 
-        const det = doc.createElement('details'); cont.appendChild(det);
-        const summ = doc.createElement('summary'); det.appendChild(summ);
-        summ.appendChild(doc.createTextNode(summary));
-        det.appendChild(doc.createTextNode(context));
+        if (visit.context !== null) {
+            const context = visit.context;
+
+            const crow = tbl.insertRow(-1);
+            crow.classList.add('context');
+            const ccell = crow.insertCell(-1);
+            ccell.setAttribute('colspan', '3');
+
+            // TODO locator
+            // TODO is is possible to make this dynamic?
+            const trim_till = Math.min(context.indexOf('\n'), 100);
+            const summary = context.substring(0, trim_till);
+
+            const det = doc.createElement('details'); ccell.appendChild(det);
+            const summ = doc.createElement('summary'); det.appendChild(summ);
+            summ.appendChild(doc.createTextNode(summary));
+            det.appendChild(doc.createTextNode(context));
+        }
+    }
         // TODO FIXME bring that back... somehow
         // const cdiv = document.createElement('div');
         // cdiv.innerHTML = `<a href='emacs:${context}'>${context}</a>`;
@@ -96,11 +114,10 @@ function bindSidebarData(response) {
         // cdiv.addEventListener('click', function() {
         //     chrome.tabs.create({'url': "emacs:" + context, 'active': false});
         // });
-        // cont.appendChild(cdiv);
         // ugh, mime links in href don't seem to work for some reason :(
         // not sure how to trigger it opening without creating new tab, but background isn't too bad
         // TODO hmm maybe they will now!
-    }
+    // }
 }
 window.bindSidebarData = bindSidebarData;
 

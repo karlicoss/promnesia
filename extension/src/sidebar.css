@@ -10,5 +10,12 @@ a {
 
 /* meh, but ok for now */
 #visits {
-    font-size: 11px; 
+    font-size: 11px;
+
+    /* handles line breaks */
+    white-space: pre-wrap;
+}
+
+#visits .context {
+    padding-left: 1em;
 }

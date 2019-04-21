@@ -41,16 +41,15 @@ Toastify({
 function rawToVisits(vis): Visits {
     // TODO not sure, maybe we want to distinguish..
     if (vis == null) {
-        return new Visits([], []);
+        return new Visits([]);
     }
 
-    const visits = vis[0];
-    const contexts: Array<string> = vis[1];
-    return new Visits(visits.map(v => {
-        const vtime: string = v[0];
-        const vtags: Array<string> = v[1];
-        return new Visit(vtime, vtags);
-    }), contexts);
+    return new Visits(vis.map(v => {
+        const vtime: string = v['dt'];
+        const vtags: Array<string> = v['tags']; // TODO hmm. backend is responsible for tag merging?
+        const vctx: ?string = v['context'];
+        return new Visit(vtime, vtags, vctx);
+    }));
 }
 
 // $FlowFixMe
@@ -189,7 +188,7 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
             visits.reverse();
             // TODO might be a good idea to have some delay for showing up items in extended history, otherwise you will always be seeing it as visited
             // also could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
-            cb(new Visits(visits, []));
+            cb(new Visits(visits));
         }
     );
 }
@@ -206,7 +205,7 @@ function getMapVisits(url: Url, cb: (Visits) => void) {
             if (v) {
                 cb(v);
             } else {
-                cb(new Visits([], []));
+                cb(new Visits([]));
             }
         });
     });
@@ -252,8 +251,7 @@ function getVisits(url: Url, cb: (Visits) => void) {
             all_visits.sort(_visitsCmp);
             all_visits.reverse();
             cb(new Visits(
-                all_visits,
-                map_visits.contexts.concat(chr_visits.contexts)
+                all_visits
                 // TODO actually, we should sort somehow... but with dates as strings gonna be tedious...
                 // maybe, get range of timestamps from python and convert in JS? If we're doing that anyway...
                 // also need to share domain filters with js...
@@ -289,7 +287,7 @@ function updateState () {
             return;
         }
 
-        getVisits(url,  function (visits) {
+        getVisits(url, visits => {
             let res = getIconAndTitle(visits);
             let icon = res[0];
             let title = res[1];
@@ -303,10 +301,12 @@ function updateState () {
             });
 
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
-            if (visits.contexts.length > 0) {
+            const locs = visits.contexts();
+            if (locs.length !== 0) {
                 // TODO add context sources to notification message...
+                // TODO actually use locators in notification
                 // TODO need settings...
-                showTabNotification(tabId, `${visits.contexts.length} contexts!`);
+                showTabNotification(tabId, `${locs.length} contexts!`);
             }
 
             chrome.tabs.executeScript(tabId, {
