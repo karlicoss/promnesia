@@ -1,6 +1,6 @@
 /* sup */
 body {
-    font-size: 14px;
+    font-size: 13px;
     color: black;
 }
 
@@ -10,8 +10,6 @@ a {
 
 /* meh, but ok for now */
 #visits {
-    font-size: 11px;
-
     /* handles line breaks */
     white-space: pre-wrap;
 }

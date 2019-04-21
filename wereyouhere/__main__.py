@@ -127,7 +127,7 @@ def main():
     config = import_config(args.config)
     with get_tmpdir() as tdir:
         if args.mode == 'extract':
-            run(config=config, intermediate=args.intermediate)
+            do_extract(config=config)
         elif args.mode == 'serve':
             do_serve(port=args.port, config=config)
         else:

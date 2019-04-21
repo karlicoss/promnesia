@@ -21,7 +21,7 @@ export function showNotification(text: string, priority: number=0) {
 
 export function showTabNotification(tabId: number, text: string) {
     // TODO can it be remote script?
-    text = text.replace(/\n/, "\\n"); // ....
+    text = text.replace(/\n/g, "\\n"); // ....
 
     chrome.tabs.executeScript(tabId, {file: 'toastify.js'}, () => {
         chrome.tabs.insertCSS(tabId, {file: 'toastify.css'}, () => {
