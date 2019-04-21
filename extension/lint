@@ -1,5 +1,5 @@
 #!/bin/bash
 set -eu
-cd "$(dirname "$0")/extension"
+cd "$(dirname "$0")"
 
 npm run-script eslint
