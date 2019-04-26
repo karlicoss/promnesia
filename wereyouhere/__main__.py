@@ -134,5 +134,5 @@ def main():
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 
-
-main()
+if __name__ == '__main__':
+    main()
