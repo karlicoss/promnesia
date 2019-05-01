@@ -20,6 +20,9 @@ from dateutil import parser
 from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
 
 
+from kython.kcache import make_dbcache, mtime_hash
+
+
 # TODO wonder if that old format used to be UTC...
 # Mar 8, 2018, 5:14:40 PM
 _TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p %Z"
@@ -234,6 +237,13 @@ def _merge(current: _Map, new: Iterable[PreVisit], tag=''):
             current[key] = pv
     logger.debug('after merging %s: %d', tag, len(current))
 
+
+def db_pathf(tpath: PathIsh, tag: Tag) -> Path:
+    cache_dir = Path('/L/data/wereyouhere/dbcache/')
+    return cache_dir / (Path(tpath).name + '.cache')
+
+
+# @make_dbcache(db_path=db_pathf, type_=PreVisit, logger=get_logger())
 def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
     logger = get_logger()
     path = Path(takeout_path_)
@@ -254,7 +264,7 @@ def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
 
     for dts, takeout in sorted(takeouts):
         tr: TakeoutSource
-        if not takeout.is_dir(): # must be zim file
+        if not takeout.is_dir(): # must be zip file
             tr = ZipFile(str(takeout))
         else:
             tr = takeout
