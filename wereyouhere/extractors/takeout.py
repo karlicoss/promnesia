@@ -149,6 +149,15 @@ def _open(thing: TakeoutSource, path):
     else:
         return thing.joinpath(path).open('rb')
 
+
+def cacheme(ident: str):
+    def db_pathf(takeout: TakeoutSource) -> Path:
+        tpath = _path(takeout)
+        cache_dir = Path('/L/data/wereyouhere/dbcache/')
+        return cache_dir / (tpath.name + '_' + ident + '.cache')
+    return make_dbcache(db_pathf, type_=PreVisit, logger=get_logger())
+
+@cacheme('google_activity')
 def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Chrome", "MyActivity.html")
@@ -158,6 +167,7 @@ def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:
     with _open(takeout, spath) as fo:
         return _read_google_activity(fo, 'activity-chrome', fpath=_path(takeout))
 
+@cacheme('search_activity')
 def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Search", "MyActivity.html")
@@ -169,6 +179,7 @@ def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
 
 
 # TODO add this to tests?
+@cacheme('browser_activity')
 def read_browser_history_json(takeout: TakeoutSource) -> Iterable[PreVisit]:
     logger = get_logger()
     spath = join("Takeout", "Chrome", "BrowserHistory.json")
@@ -238,12 +249,13 @@ def _merge(current: _Map, new: Iterable[PreVisit], tag=''):
     logger.debug('after merging %s: %d', tag, len(current))
 
 
+# doesn't even need a nontrivial hash function, timestsamp is encoded in name
 def db_pathf(tpath: PathIsh, tag: Tag) -> Path:
     cache_dir = Path('/L/data/wereyouhere/dbcache/')
     return cache_dir / (Path(tpath).name + '.cache')
 
 
-# @make_dbcache(db_path=db_pathf, type_=PreVisit, logger=get_logger())
+# TODO make an iterator, insert in db as we go? handle errors gracefully?
 def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
     logger = get_logger()
     path = Path(takeout_path_)

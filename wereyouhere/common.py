@@ -36,9 +36,11 @@ class Loc(NamedTuple):
     # but generally, it would be
     # (url|file)(linenumber|json_path|anchor)
 
+
+# TODO serialize unions? Might be a bit mad...
 class PreVisit(NamedTuple):
     url: Url
-    dt: DatetimeIsh
+    dt: datetime # TODO FIXME back to DatetimeIsh, but somehow make compatible to dbcache
     locator: Loc
     context: Optional[Context] = None
     tag: Optional[Tag] = None
