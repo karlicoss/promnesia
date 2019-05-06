@@ -159,7 +159,7 @@ def main():
     int_dir = args.intermediate_dir
     assert int_dir.exists()
 
-    jsons = list(sorted(int_dir.glob('*.json.*')))
+    jsons = list(sorted(int_dir.glob('*.json*')))
     if not args.all:
         if len(args.paths) == 0:
             # only compare last
