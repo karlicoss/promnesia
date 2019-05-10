@@ -113,9 +113,9 @@ def main():
     setup_logzero(get_logger(), level=logging.DEBUG)
 
     p = argparse.ArgumentParser()
-    p.add_argument('--config', type=Path, default=Path('config.py'))
     subp = p.add_subparsers(dest='mode')
     ep = subp.add_parser('extract')
+    ep.add_argument('--config', type=Path, default=Path('config.py'))
     ep.add_argument('--intermediate', required=False)
     sp = subp.add_parser('serve')
     setup_parser(sp)
