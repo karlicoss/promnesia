@@ -176,6 +176,29 @@ def test_load():
     from pprint import pprint
     pprint(state)
 
+# TODO takes 22 secs for some reason... but works!
+# I guess I need a smaller test db to run server against
+def test_query():
+    path = (Path(__file__).parent.parent / 'run_test').absolute()
+    from subprocess import Popen, PIPE
+    from subprocess import check_output
+    import time
+    import json
+    PORT = "16555" # TODO random?
+    cmd = [str(path), 'serve', '--port', PORT]
+    print(cmd)
+    with Popen(cmd, stdout=PIPE, stderr=PIPE) as server:
+        time.sleep(5) # give it time to start up
+        # TODO which url??
+        test_url = 'https://slatestarcodex.com/2014/03/17/what-universal-human-experiences-are-you-missing-without-realizing-it/'
+        response = json.loads(check_output([
+            'http', 'post', f'http://localhost:{PORT}/visits', f'url={test_url}',
+        ]).decode('utf8'))
+        assert len(response) > 10
+        server.kill()
+
+
+
 
 def setup_parser(p):
     p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension')
