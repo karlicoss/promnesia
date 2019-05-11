@@ -96,9 +96,8 @@ def get_stuff(): # TODO better name
 
     binder = Binder(clazz=XVisit)
 
-    meta = MetaData(engine) # , reflect=True) # TODO what does reflect do?
+    meta = MetaData(engine)
     table = Table('visits', meta, *binder.columns)
-    meta.create_all()
 
     return engine, binder, table
 
@@ -120,8 +119,7 @@ def visits(
     query = table.select().where(table.c.url == url)
 
     with engine.connect() as conn:
-        rows = conn.execute(query)
-        visits = [binder.from_row(row) for row in rows]
+        visits = [binder.from_row(row) for row in conn.execute(query)]
 
     logger.debug('got %d visits from db', len(visits))
 
@@ -196,8 +194,8 @@ def test_query():
     cmd = [str(path), 'serve', '--port', PORT]
     print(cmd)
     with Popen(cmd, stdout=PIPE, stderr=PIPE) as server:
-        print("Giving 5 secs to start server up")
-        time.sleep(5)
+        print("Giving few secs to start server up")
+        time.sleep(2)
         print("Started server up")
         # TODO which url??
 
