@@ -119,7 +119,7 @@ def visits(
         dt = vis.dt
         if dt.tzinfo is None:
             dt = config.FALLBACK_TIMEZONE.localize(dt)
-            vis = vis.replace(dt=dt)
+            vis = vis._replace(dt=dt)
         vlist.append(vis)
     if len(vlist) is None:
         return None # TODO handle empty list in client?

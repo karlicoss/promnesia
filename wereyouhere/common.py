@@ -45,21 +45,7 @@ class PreVisit(NamedTuple):
     context: Optional[Context] = None
     tag: Optional[Tag] = None
 
-# class Visit(NamedTuple):
-#     url: Url
-#     dt: datetime
-#     locator: Loc
-#     tag: Optional[Tag] = None
-#     context: Optional[Context] = None
-
-#     def __hash__(self):
-#         # well, that's quite mad. but dict is not hashable..
-#         # pylint: disable=no-member
-#         ll = self._replace(locator=None) # type: ignore
-#         # pylint: disable=bad-super-call
-#         return super(Visit, ll).__hash__()
-# TODO might need to fix hash?
-# Extraction = Union[PreVisit, Exception]
+Extraction = Union[PreVisit, Exception]
 
 class DbVisit(NamedTuple):
     norm_url: Url
@@ -161,9 +147,6 @@ class History(Sized):
         # TODO should we filter before normalising? not sure...
         if History.filtered(v.url):
             return None
-        if v.dt.tzinfo is None:
-            # TODO warn?
-            pass
 
         if v in self.vmap:
             return None

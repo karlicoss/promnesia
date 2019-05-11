@@ -1,4 +1,6 @@
 # TODO: give a better name...
+from kython.kerror import unwrap
+
 from typing import Iterable, List, Tuple
 
 from wereyouhere.common import History, PreVisit, get_logger, Loc
@@ -38,10 +40,12 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
             logger.exception(p)
             continue
 
-        # TODO ytry??
         # TODO check whether it's filtered before construction? probably doesn't really impact
-        h.register(p)
-        # TODO might want to append errors here too?
+        try:
+            unwrap(h.register(p))
+        except Exception as e:
+            logger.exception(e)
+            errors.append(e)
 
     logger.info('extracting via %s: got %d visits', log_info, len(h))
     return h, errors
