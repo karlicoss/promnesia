@@ -78,3 +78,4 @@ def dump_histories(all_histories: List[Tuple[str, History]], config: Config):
         for chunk in ichunks(iter_visits(), n=1000):
             bound = [binder.to_row(x) for x in chunk]
             engine.execute(table.insert().values(bound))
+    logger.info('saved database to %s', db_path)

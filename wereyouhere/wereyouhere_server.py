@@ -11,12 +11,16 @@ from functools import lru_cache
 from typing import Collection, List, NamedTuple, Dict
 
 from kython import setup_logzero
+from kython.kcache import Binder
 
 import hug # type: ignore
 import hug.types as T # type: ignore
 
+from sqlalchemy import create_engine, MetaData # type: ignore
+from sqlalchemy import Column, Table # type: ignore
 
-from .common import PathWithMtime, Config, Visit, Url, import_config, Loc
+
+from .common import PathWithMtime, Config, DbVisit, Url, import_config, Loc
 from .normalise import normalise_url
 
 _ENV_CONFIG = 'WEREYOUHERE_CONFIG'
@@ -54,7 +58,7 @@ def load_config() -> Config:
 
 # TODO how to return exception in error?
 
-def as_json(v: Visit) -> Dict:
+def as_json(v: DbVisit) -> Dict:
    #  "09 Aug 2018 19:48",
    #  "06 Aug 2018 21:36--21:37",
     # TODO perhaps tag merging should be done by browser as well?
@@ -71,19 +75,6 @@ def as_json(v: Visit) -> Dict:
         'locator': locs,
     }
 
-from sqlalchemy import create_engine, MetaData # type: ignore
-from sqlalchemy import Column, Table # type: ignore
-
-from kython.kcache import Binder
-
-class XVisit(NamedTuple):
-    url: str
-    dt: datetime
-    context: str
-    tag: str
-    # TODO locator?
-
-
 @lru_cache(1)
 def get_stuff(): # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
@@ -94,7 +85,7 @@ def get_stuff(): # TODO better name
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path}')
 
-    binder = Binder(clazz=XVisit)
+    binder = Binder(clazz=DbVisit)
 
     meta = MetaData(engine)
     table = Table('visits', meta, *binder.columns)
@@ -116,7 +107,7 @@ def visits(
 
     engine, binder, table = get_stuff()
 
-    query = table.select().where(table.c.url == url)
+    query = table.select().where(table.c.norm_url == url)
 
     with engine.connect() as conn:
         visits = [binder.from_row(row) for row in conn.execute(query)]
@@ -128,13 +119,8 @@ def visits(
         dt = vis.dt
         if dt.tzinfo is None:
             dt = config.FALLBACK_TIMEZONE.localize(dt)
-        loc = Loc(file="TODO", line=None) # TODO FIXME, that'
-        vlist.append(Visit(
-            dt=dt,
-            locator=loc,
-            context=vis.context,
-            tag=vis.tag,
-        ))
+            vis = vis.replace(dt=dt)
+        vlist.append(vis)
     if len(vlist) is None:
         return None # TODO handle empty list in client?
     else:
@@ -176,23 +162,27 @@ def run(port: str, config: Path):
 _DEFAULT_CONFIG = Path('config.py')
 
 
-# def test_load():
-#     state = get_state(get_latest_db(Path('test_config.py')))
-#     from pprint import pprint
-#     pprint(state)
+def test_query(tmp_path):
+    tdir = Path(tmp_path)
+    # TODO ugh. quite hacky...
+    from shutil import copy
+    template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
+    copy(template_config, tdir)
+    config = tdir / 'test_config.py'
+    with config.open('a') as fo:
+        fo.write(f"OUTPUT_DIR = '{tdir}'")
 
-
-# TODO takes 22 secs for some reason... but works!
-# I guess I need a smaller test db to run server against
-def test_query():
-    path = (Path(__file__).parent.parent / 'run_test').absolute()
+    path = (Path(__file__).parent.parent / 'run').absolute()
     from subprocess import Popen, PIPE
-    from subprocess import check_output
+    from subprocess import check_output, check_call
     import time
     import json
+
+
+    check_call([str(path), 'extract', '--config', config])
+
     PORT = "16555" # TODO random?
-    cmd = [str(path), 'serve', '--port', PORT]
-    print(cmd)
+    cmd = [str(path), 'serve', '--port', PORT, '--config', config]
     with Popen(cmd, stdout=PIPE, stderr=PIPE) as server:
         print("Giving few secs to start server up")
         time.sleep(2)
@@ -201,11 +191,11 @@ def test_query():
 
         for q in range(3):
             print(f"querying {q}")
-            test_url = 'https://slatestarcodex.com/2014/03/17/what-universal-human-experiences-are-you-missing-without-realizing-it/'
+            test_url = 'https://takeout.google.com/settings/takeout'
             response = json.loads(check_output([
                 'http', 'post', f'http://localhost:{PORT}/visits', f'url={test_url}',
             ]).decode('utf8'))
-            assert len(response) > 10
+            assert len(response) > 0
         print("DONE!!!!")
         server.kill()
 

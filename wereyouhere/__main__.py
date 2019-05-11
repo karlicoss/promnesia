@@ -12,7 +12,7 @@ from kython.ktyping import PathIsh
 
 
 from .common import Config, import_config
-from .common import Visit, History, Filter, make_filter, get_logger, get_tmpdir
+from .common import History, Filter, make_filter, get_logger, get_tmpdir
 from .dump import dump_histories
 
 # TODO smart is misleading... perhaps, get rid of it?

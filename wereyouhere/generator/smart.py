@@ -38,7 +38,6 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
             logger.exception(p)
             continue
 
-        # TODO also return errorish thing??
         # TODO ytry??
         # TODO check whether it's filtered before construction? probably doesn't really impact
         h.register(p)
