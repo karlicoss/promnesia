@@ -74,8 +74,10 @@ def dump_histories(all_histories: List[Tuple[str, History]], config: Config):
             yield from h.visits
 
     with engine.begin() as trans:
+        # pylint: disable=no-value-for-parameter
         engine.execute(table.delete())
         for chunk in ichunks(iter_visits(), n=1000):
             bound = [binder.to_row(x) for x in chunk]
+            # pylint: disable=no-value-for-parameter
             engine.execute(table.insert().values(bound))
     logger.info('saved database to %s', db_path)

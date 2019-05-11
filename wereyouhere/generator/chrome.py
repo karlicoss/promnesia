@@ -6,7 +6,7 @@ from urllib.parse import unquote
 
 import pytz
 
-from wereyouhere.common import History, Visit
+from wereyouhere.common import History
 
 # def iter_chrome_histories(chrome_db: str, tag: str):
 #     import magic # type: ignore

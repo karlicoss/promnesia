@@ -183,7 +183,7 @@ def test_query(tmp_path):
 
     PORT = "16555" # TODO random?
     cmd = [str(path), 'serve', '--port', PORT, '--config', config]
-    with Popen(cmd, stdout=PIPE, stderr=PIPE) as server:
+    with Popen(cmd, stdout=PIPE, stderr=PIPE) as server: # type: ignore
         print("Giving few secs to start server up")
         time.sleep(2)
         print("Started server up")
