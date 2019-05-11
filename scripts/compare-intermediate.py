@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import json
 import logging
+from itertools import chain
 from typing import Dict, List, Any, NamedTuple, Optional, Set
 
 from hashlib import sha1
@@ -28,6 +29,7 @@ Tag = str
 Locator = str
 
 
+# TODO reuse DbVisit? or use db?
 class Visit(NamedTuple):
     url: Url
     dt: Dt
@@ -122,27 +124,26 @@ def collect(jj):
     logger = get_logger()
     visits = set()
     for src, data in sorted(jj):
-        for x in data:
-            for v in x['visits']:
-                loc = v['locator']
-                locs = '{}:{}'.format(loc['file'], loc['line'])
-                vs = Visit(
-                    source=src,
-                    url=x['url'],
-                    tag=v['tag'],
-                    dt=v['dt'],
-                    context=v['context'] or '<no context>', # to simplify comparisons...
-                    locator=locs,
-                )
-                # assert vs not in visits
-                if vs in visits:
-                    # TODO FIXME multiset??
-                    # TODO debug level? not sure if should show them at all
-                    # TODO FIXME shit. ok, duplicates are coming from different takeouts apparently. enable back once I merge properly...
-                    # logger.warning('duplicate visit %s', vs)
-                    pass
-                #     import ipdb; ipdb.set_trace() 
-                visits.add(vs)
+        for v in data:
+            loc = v['locator']
+            locs = '{}:{}'.format(loc['file'], loc['line'])
+            vs = Visit(
+                source=src,
+                url=v['norm_url'],
+                tag=v['tag'],
+                dt=v['dt'],
+                context=v['context'] or '<no context>', # to simplify comparisons...
+                locator=locs,
+            )
+            # assert vs not in visits
+            if vs in visits:
+                # TODO FIXME multiset??
+                # TODO debug level? not sure if should show them at all
+                # TODO FIXME shit. ok, duplicates are coming from different takeouts apparently. enable back once I merge properly...
+                # logger.warning('duplicate visit %s', vs)
+                pass
+            #     import ipdb; ipdb.set_trace() 
+            visits.add(vs)
     return visits
 
 def main():
@@ -188,6 +189,7 @@ def main():
 
     if len(all_errors) > 0:
         sys.exit(1)
+import sys; exec("global info\ndef info(type, value, tb):\n    import ipdb, traceback; traceback.print_exception(type, value, tb); ipdb.pm()"); sys.excepthook = info # type: ignore
 
 if __name__ == '__main__':
     main()
