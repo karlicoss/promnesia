@@ -5,15 +5,14 @@ from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Opt
 from pathlib import Path
 import logging
 from functools import lru_cache
-
 import pytz
 
 from .normalise import normalise_url
 
-
 from kython.ktyping import PathIsh
+from kython.kerror import Res, unwrap
 
-
+import dateparser # type: ignore
 from typing_extensions import Protocol
 
 
@@ -30,6 +29,7 @@ class Loc(NamedTuple):
 
     @classmethod
     def make(cls, fname: PathIsh, **kwargs):
+
         return cls(file=str(fname), **kwargs)
 
     # TODO need some uniform way of string conversion
@@ -45,32 +45,57 @@ class PreVisit(NamedTuple):
     context: Optional[Context] = None
     tag: Optional[Tag] = None
 
-Extraction = Union[PreVisit, Exception]
+# class Visit(NamedTuple):
+#     url: Url
+#     dt: datetime
+#     locator: Loc
+#     tag: Optional[Tag] = None
+#     context: Optional[Context] = None
 
+#     def __hash__(self):
+#         # well, that's quite mad. but dict is not hashable..
+#         # pylint: disable=no-member
+#         ll = self._replace(locator=None) # type: ignore
+#         # pylint: disable=bad-super-call
+#         return super(Visit, ll).__hash__()
 
-class Visit(NamedTuple):
+class DbVisit(NamedTuple):
+    norm_url: Url
+    orig_url: Url
     dt: datetime
     locator: Loc
     tag: Optional[Tag] = None
     context: Optional[Context] = None
 
-    def __hash__(self):
-        # well, that's quite mad. but dict is not hashable..
-        # pylint: disable=no-member
-        ll = self._replace(locator=None) # type: ignore
-        # pylint: disable=bad-super-call
-        return super(Visit, ll).__hash__()
+    @staticmethod
+    def make(p: PreVisit) -> Res['DbVisit']:
+        try:
+            if isinstance(p.dt, str):
+                dt = dateparser.parse(p.dt)
+            elif isinstance(p.dt, datetime):
+                dt = p.dt
+            elif isinstance(p.dt, date):
+                dt = datetime.combine(p.dt, datetime.min.time()) # meh..
+            else:
+                raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
+        except Exception as e:
+            return e
 
-    @property
-    def cmp_key(self):
-        return (self.dt, str(self.tag), str(self.context))
-    # TODO deserialize method??
+        try:
+            nurl = normalise_url(p.url)
+        except Exception as e:
+            return e
 
-# TODO should ve even split url off Visit? not sure what benefit that actually gives..
-class Entry(NamedTuple):
-    url: Url
-    visits: Set[Visit]
-    # TODO compare urls?
+        return DbVisit(
+            # TODO shit, can't handle errors properly here...
+            norm_url=nurl,
+            orig_url=p.url,
+            dt=dt,
+            locator=p.locator,
+            tag=p.tag,
+            context=p.context,
+        )
+
 
 Filter = Callable[[Url], bool]
 
@@ -114,13 +139,7 @@ class History(Sized):
         cls.FILTERS.append(make_filter(filterish))
 
     def __init__(self):
-        self.urls: Dict[Url, Entry] = {}
-
-    @classmethod
-    def from_urls(cls, urls: Dict[Url, Entry], filters: List[Filter] = None) -> 'History':
-        hist = cls()
-        hist.urls = urls
-        return hist
+        self.vmap: Dict[PreVisit, DbVisit] = {}
 
     # TODO mm. maybe history should get filters from some global config?
     # wonder how okay is it to set class attribute..
@@ -132,59 +151,48 @@ class History(Sized):
                 return True
         return False
 
-    def register(self, url: Url, v: Visit) -> None:
-        if History.filtered(url):
-            return
+    @property
+    def visits(self):
+        return self.vmap.values()
+
+    def register(self, v: PreVisit) -> Optional[Exception]:
+        # TODO should we filter before normalising? not sure...
+        if History.filtered(v.url):
+            return None
         if v.dt.tzinfo is None:
-            # TODO log that?...
+            # TODO warn?
             pass
-        # TODO replace dt i
 
+        if v in self.vmap:
+            return None
+
+        try:
+            # TODO if we do it as unwrap(DbVisit.make, v), then we can access make return type and properly handle error type?
+            db_visit = unwrap(DbVisit.make(v))
+        except Exception as e:
+            return e
+
+        self.vmap[v] = db_visit
+        return None
         # TODO hmm some filters make sense before stripping off protocol...
-        # TODO is it a good place to normalise?
-        url = normalise_url(url)
 
-        e = self.urls.get(url, None)
-        if e is None:
-            e = Entry(url=url, visits=set())
-        e.visits.add(v)
-        self.urls[url] = e
-
-    def __contains__(self, k) -> bool:
-        return k in self.urls
+    # only used in tests?..
+    def _nmap(self):
+        from kython import group_by_key
+        return group_by_key(self.visits, key=lambda x: x.norm_url)
 
     def __len__(self) -> int:
-        return len(self.urls)
+        return len(self._nmap())
 
-    def __getitem__(self, url: Url) -> Entry:
-        return self.urls[url]
+    def __contains__(self, url) -> bool:
+        return url in self._nmap()
 
-    def items(self):
-        return self.urls.items()
+    def __getitem__(self, url: Url):
+        return self._nmap()[url]
 
     def __repr__(self):
-        return 'History{' + repr(self.urls) + '}'
+        return 'History{' + repr(self.visits) + '}'
 
-# f is value merger function
-_K = TypeVar("_K")
-_V = TypeVar("_V")
-
-def merge_dicts(f: Callable[[_V, _V], _V], dicts: Iterable[Dict[_K, _V]]):
-    res: Dict[_K, _V] = {}
-    for d in dicts:
-        for k, v in d.items():
-            if k not in res:
-                res[k] = v
-            else:
-                res[k] = f(res[k], v)
-    return res
-
-def entry_merger(a: Entry, b: Entry):
-    a.visits.update(b.visits)
-    return a
-
-def merge_histories(hists: Iterable[History]) -> History:
-    return History.from_urls(merge_dicts(entry_merger, [h.urls for h in hists]))
 
 def get_logger():
     return logging.getLogger("WereYouHere")

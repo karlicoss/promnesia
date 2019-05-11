@@ -1,10 +1,7 @@
 # TODO: give a better name...
-from datetime import datetime, date
 from typing import Iterable, List, Tuple
 
-from wereyouhere.common import History, Visit, PreVisit, get_logger, Loc
-
-import dateparser # type: ignore
+from wereyouhere.common import History, PreVisit, get_logger, Loc
 
 class Wrapper:
     def __init__(self, ff, *args, **kwargs):
@@ -12,6 +9,7 @@ class Wrapper:
         self.args = args
         self.kwargs = kwargs
 
+# TODO do we really need it?
 def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
     ex = extractor
     # TODO isinstance wrapper?
@@ -40,23 +38,11 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
             logger.exception(p)
             continue
 
+        # TODO also return errorish thing??
+        # TODO ytry??
+        # TODO check whether it's filtered before construction? probably doesn't really impact
+        h.register(p)
         # TODO might want to append errors here too?
-        if isinstance(p.dt, str):
-            dt = dateparser.parse(p.dt)
-        elif isinstance(p.dt, datetime):
-            dt = p.dt
-        elif isinstance(p.dt, date):
-            dt = datetime.combine(p.dt, datetime.min.time()) # meh..
-        else:
-            raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
-
-        visit = Visit(
-            dt=dt,
-            tag=p.tag,
-            context=p.context,
-            locator=p.locator,
-        )
-        h.register(p.url, visit)
 
     logger.info('extracting via %s: got %d visits', log_info, len(h))
     return h, errors

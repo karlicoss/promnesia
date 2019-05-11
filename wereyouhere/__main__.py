@@ -1,10 +1,9 @@
 import argparse
 import os.path
 import logging
-import json
 import inspect
 import sys
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from pathlib import Path
 from datetime import datetime
 
@@ -13,37 +12,12 @@ from kython.ktyping import PathIsh
 
 
 from .common import Config, import_config
-
-from .common import Entry, Visit, History, Filter, make_filter, get_logger, get_tmpdir, merge_histories
-from .render import render
+from .common import Visit, History, Filter, make_filter, get_logger, get_tmpdir
+from .dump import dump_histories
 
 # TODO smart is misleading... perhaps, get rid of it?
 from wereyouhere.generator.smart import previsits_to_history, Wrapper
 
-# jeez...
-class hdict(dict):
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
-
-# shit, it's gonna be really hard to hack namedtuples int JSONEncoder...
-# https://github.com/python/cpython/blob/dc078947a5033a048d804e244e847b5844734439/Lib/json/encoder.py#L263
-# also guarantees consistent ordering...
-def dictify(obj):
-    if isinstance(obj, tuple) and hasattr(obj, '_asdict'):
-        return dictify(obj._asdict()) # type: ignore
-    elif isinstance(obj, dict):
-        return hdict({k: dictify(v) for k, v in obj.items()})
-    elif isinstance(obj, (list, tuple)):
-        cls = type(obj)
-        return cls(dictify(x) for x in obj)
-    else:
-        return obj
-
-def encoder(o):
-    if isinstance(o, datetime):
-        return o.isoformat() # hopefully that's ok; python 3.7 is capable of deserializing it, but I might have to backport it
-    else:
-        raise RuntimeError(f"can't encode {o}")
 
 
 def do_extract(config: Path):
@@ -57,9 +31,6 @@ def do_extract(config: Path):
     output_dir = Path(cfg.OUTPUT_DIR)
     if not output_dir.exists():
         raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
-
-    intm = output_dir / 'intermediate'
-    intm.mkdir(exist_ok=True)
 
     filters = [make_filter(f) for f in cfg.FILTERS]
     for f in filters:
@@ -84,23 +55,7 @@ def do_extract(config: Path):
             had_errors = True
         all_histories.append((einfo, hist))
 
-    logger.info('preparing intermediate state...')
-
-    intermediates = []
-    for e, h in all_histories:
-        cur = []
-        for entry in sorted(h.urls.values(), key=lambda e: e.url):
-            # TODO ugh what do we do in case of parity?
-            entry = entry._replace( # type: ignore
-                visits=list(sorted(entry.visits, key=lambda v: (v.dt.isoformat(), v.context or '')))
-                # isoformat just to get away with comparing aware/unaware...
-            )
-            cur.append(dictify(entry))
-        intermediates.append((e, cur))
-    intp = intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json'))
-    with intp.open('w') as fo:
-        json.dump(intermediates, fo, ensure_ascii=False, sort_keys=True, indent=1, default=encoder)
-    logger.info('saved intermediate state to %s', intp)
+    dump_histories(all_histories, config=cfg)
 
     if had_errors:
         sys.exit(1)

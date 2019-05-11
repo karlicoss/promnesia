@@ -12,8 +12,8 @@ import pytest # type: ignore
 from pytest import mark # type: ignore
 skip = mark.skip
 
+from wereyouhere.dump import dump_histories
 from wereyouhere.common import History, PreVisit
-from wereyouhere.render import render
 from wereyouhere.generator.smart import Wrapper
 
 def W(*args, **kwargs):
@@ -29,10 +29,17 @@ import imp
 backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')
 
 def assert_got_tzinfo(h: History):
-    for url, entry in h.items():
-        visits = entry.visits
-        for v in visits:
-            assert v.dt.tzinfo is not None
+    for v in h.visits:
+        assert v.dt.tzinfo is not None
+
+
+def dump(hist: History):
+    # TODO cfg??
+    with TemporaryDirectory() as tdir:
+        class Cfg:
+            OUTPUT_DIR = tdir
+        dump_histories([('test', hist)], config=Cfg()) # type: ignore
+
 
 def test_takeout():
     test_takeout_path = "testdata/takeout"
@@ -42,8 +49,7 @@ def test_takeout():
 
     assert_got_tzinfo(hist)
 
-    with TemporaryDirectory() as tdir:
-        render(hist, join(tdir, 'res.json'))
+    dump(hist)
 
 def test_with_error():
     class ExtractionError(Exception):
@@ -66,8 +72,7 @@ def test_takeout_new_zip():
     import wereyouhere.extractors.takeout as tex
     hist = history(lambda: tex.extract(test_takeout_path, tag='whatevs'))
     assert len(hist) == 3
-    entry = hist['takeout.google.com/settings/takeout']
-    vis, = entry.visits
+    [vis] = hist['takeout.google.com/settings/takeout']
 
     edt = datetime(
         year=2018,
@@ -85,23 +90,23 @@ def test_takeout_new_zip():
 
 # TODO run condition?? and flag to force all
 
-def test_chrome():
+def test_chrome(tmp_path):
     import wereyouhere.extractors.chrome as chrome_ex
+    tdir = Path(tmp_path)
 
-    with TemporaryDirectory() as tdir:
-        path = backup_db.backup_to(tdir, 'chrome')
+    path = backup_db.backup_to(tdir, 'chrome')
 
-        hist = history(W(chrome_ex.extract, path))
-        assert len(hist) > 10 # kinda random sanity check
+    hist = history(W(chrome_ex.extract, path))
+    assert len(hist) > 10 # kinda random sanity check
 
-        render(hist, join(tdir, 'res.json'))
+    dump(hist)
 
-        assert_got_tzinfo(hist)
+    assert_got_tzinfo(hist)
 
-def test_firefox():
-    with TemporaryDirectory() as tdir:
-        path = backup_db.backup_to(tdir, 'firefox')
-        # shouldn't fail at least
+def test_firefox(tmp_path):
+    tdir = Path(tmp_path)
+    path = backup_db.backup_to(tdir, 'firefox')
+    # shouldn't fail at least
 
         # [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
         # assert len(hist) > 10 # kinda random sanity check
@@ -159,8 +164,7 @@ def test_custom():
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
     ))
     assert len(hist) == 3 # https and http are same; also trailing slash and no trailing slash
-    with TemporaryDirectory() as tdir:
-        render(hist, join(tdir, 'res.json'))
+    dump(hist)
 
 
 
@@ -229,20 +233,20 @@ def _test_merge_all_from(tdir):
     assert len(hist) > 0
 
     older = hist['github.com/orgzly/orgzly-android/issues']
-    assert any(v.dt.date() < date(year=2018, month=1, day=17) for v in older.visits)
+    assert any(v.dt.date() < date(year=2018, month=1, day=17) for v in older)
     # in particular, "2018-01-16 19:56:56"
 
     newer = hist['en.wikipedia.org/wiki/Notice_and_take_down']
-    assert any(v.dt.date() >= date(year=2018, month=4, day=16) for v in newer.visits)
+    assert any(v.dt.date() >= date(year=2018, month=4, day=16) for v in newer)
 
     # from implicit db
     newest = hist['feedly.com/i/discover']
-    assert any(v.dt.date() >= date(year=2018, month=9, day=27) for v in newest.visits)
+    assert any(v.dt.date() >= date(year=2018, month=9, day=27) for v in newest)
 
-def test_merge_all_from():
-    with TemporaryDirectory() as tdir:
-        _test_merge_all_from(tdir)
-        # TODO and also some other unique thing..
+def test_merge_all_from(tmp_path):
+    tdir = Path(tmp_path)
+    _test_merge_all_from(tdir)
+    # TODO and also some other unique thing..
 
 if __name__ == '__main__':
     pytest.main([__file__])
