@@ -25,6 +25,7 @@ CREATE TABLE main.visits(
 );
 "
 fi
+# TODO shit, perhaps setting visi_duration to NOT NULL wasn't wisest.. but whatever
 
 
 # TODO how to ensure it all happens withing a single commit??
