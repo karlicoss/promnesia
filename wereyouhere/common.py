@@ -20,6 +20,7 @@ Url = str
 Tag = str
 DatetimeIsh = Union[datetime, date, str]
 Context = str
+Second = int
 
 # TODO hmm. arguably, source and context are almost same things...
 # locator? source then context within file
@@ -38,12 +39,17 @@ class Loc(NamedTuple):
 
 
 # TODO serialize unions? Might be a bit mad...
+# TODO FIXME need to discard cache...
 class PreVisit(NamedTuple):
     url: Url
     dt: datetime # TODO FIXME back to DatetimeIsh, but somehow make compatible to dbcache
     locator: Loc
     context: Optional[Context] = None
     tag: Optional[Tag] = None
+    # TODO shit. I need to insert it in chrome db....
+    # TODO gonna be hard to fill retroactively.
+    # spent: Optional[Second] = None
+
 
 Extraction = Union[PreVisit, Exception]
 
