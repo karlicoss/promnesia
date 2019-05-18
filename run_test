@@ -1,6 +1,0 @@
-#!/bin/bash
-set -eu
-
-cd "$(dirname "$0")"
-
-./run "$@" --config test_config.py

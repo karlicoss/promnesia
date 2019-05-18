@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 import tempfile
 from os.path import lexists
-from typing import Optional, NamedTuple, Sequence, Tuple
+from typing import Optional, NamedTuple, Sequence, Tuple, Union
 from pathlib import Path
 import subprocess
 from subprocess import check_call, DEVNULL, check_output
@@ -30,106 +30,134 @@ def sqlite(db: Path, script, method=check_call, **kwargs):
 def entries(db: Path) -> Optional[int]:
     if not db.exists():
         return None
-    return int(sqlite(db, 'SELECT COUNT(*) FROM visits', method=check_output).decode('utf8')) # TODO
+    return int(sqlite(db, 'SELECT COUNT(*) FROM visits', method=check_output).decode('utf8'))
+
+
+Col = Union[str, Tuple[str, Optional[str]]] # tuple is renaming
+ColType = str
 
 
 class Schema(NamedTuple):
-    cols: Sequence[Tuple[str, str]]
+    cols: Sequence[Tuple[Col, ColType]]
     key: Sequence[str]
 
 
+SchemaCheck = Tuple[str, str]
+
 def create(db: Path, table: str, schema: Schema):
-    xx = ', '.join(f'{col} {tp}' for col, tp in schema.cols)
+    things = []
+    for cc, tp in schema.cols:
+        from_: str
+        to: Optional[str]
+        if isinstance(cc, str):
+            from_ = cc
+            to = cc
+        else:
+            (from_, to) = cc
+        if to is not None:
+            to = to.split('.')[-1] # strip off table alias
+            things.append(f'{to} {tp}')
+
     query = f"""
 CREATE TABLE {table}(
-    {xx},
+    {', '.join(things)},
     PRIMARY KEY ({', '.join(schema.key)})
 );
     """
     sqlite(db, query)
 
 
+# at first, I was merging urls and visits tables separately... but it's kinda messy when you e.g. reinstall OS and table ids reset
+# so joining before inserting makes a bit more sense.. we're throwing id anyway since it's fairly useless for the same reasons
 # TODO it's a bit slow now because of the repeating joins presumably... could pass last handled visit date or something... not sure if it's safe
+# TODO not sure how to make chunk read only?
 def merge_browser(
         merged: Path,
         chunk: Path,
         schema: Schema,
+        schema_check: SchemaCheck,
         query: str,
 ):
-    # TODO chunk sould be read only?
+    check_table, expected = schema_check
+    # ugh. a bit ugly but kinda works
+    res = sqlite(chunk, f"select group_concat(name, ', ') from pragma_table_info('{check_table}')", method=check_output).decode('utf8').strip()
+    assert res == expected
+
+
     if not merged.exists():
         create(merged, 'visits', schema)
 
-    sqlite(merged, f"""
+    proj = ', '.join(c for c, _ in schema.cols) # type: ignore
+    query = f"""
 ATTACH '{chunk}' AS chunk;
 
 INSERT OR IGNORE INTO main.visits
+    SELECT {proj}
     {query};
 
 DETACH chunk;
-    """)
+    """
+    sqlite(merged, query)
 
 
 class Extr(NamedTuple):
     detector: str
+    schema_check: SchemaCheck
     schema: Schema
     query: str
 
 
-
 chrome = Extr(
     detector='keyword_search_terms',
+    schema_check=('visits', "id, url, visit_time, from_visit, transition, segment_id, visit_duration, incremented_omnibox_typed_score"),
     schema=Schema(cols=[
-        ('url'                            , 'TEXT'),
+        ('U.url'                                  , 'TEXT'),
 
-        # TODO SHIT! have to keep the order consistent, otherwise would end up with wrong data!
-        # TODO I guess need to assert schema??? job for sqlalchemy?
-        ('id'                             , 'INTEGER'),
-        ('_url'                           , 'INTEGER NOT NULL'),
-        ('visit_time'                     , 'INTEGER NOT NULL'),
-        ('from_visit'                     , 'INTEGER'),
-        ('transition'                     , 'INTEGER NOT NULL'),
-        ('segment_id'                     , 'INTEGER'),
-        ('visit_duration'                 , 'INTEGER NOT NULL'),
-        ('incremented_omnibox_typed_score', 'BOOLEAN NOT NULL'),
+        # ('V.id'                                   , 'INTEGER'),
+        # V.url is quite useless
+        ('V.visit_time'                             , 'INTEGER NOT NULL'),
+        ('V.from_visit'                             , 'INTEGER'),
+        ('V.transition'                             , 'INTEGER NOT NULL'),
+        # V.segment_id looks useless
+        ('V.visit_duration'                         , 'INTEGER NOT NULL'),
+        # V.omnibox thing looks useless
     ], key=('url', 'visit_time')),
-    query='SELECT U.url, V.* FROM chunk.visits as V, chunk.urls as U WHERE V.url = U.id',
+    query='FROM chunk.visits as V, chunk.urls as U WHERE V.url = U.id',
 )
 
 # https://www.forensicswiki.org/wiki/Mozilla_Firefox_3_History_File_Format#moz_historyvisits
 firefox = Extr(
     detector='moz_meta',
+    schema_check=('moz_historyvisits', "id, from_visit, place_id, visit_date, visit_type, session"),
     schema=Schema(cols=[
-        ('url'       , 'TEXT'),
+        ('P.url'       , 'TEXT'),
 
-        ('id'        , 'INTEGER'),
-        ('from_visit', 'INTEGER'),
-        ('place_id'  , 'INTEGER'),
-        ('visit_date', 'INTEGER'),
-        ('visit_type', 'INTEGER'),
-        ('session'   , 'INTEGER'),
+        # ('H.id'        , 'INTEGER'),
+        ('H.from_visit', 'INTEGER'),
+        # ('H.place_id'  , 'INTEGER'),
+        ('H.visit_date', 'INTEGER'),
+        ('H.visit_type', 'INTEGER'),
+        # not sure what session is form but could be useful?..
+        ('H.session'   , 'INTEGER'),
     ], key=('url', 'visit_date')),
-    query='SELECT P.url, H.* FROM chunk.moz_historyvisits as H, chunk.moz_places as P WHERE H.place_id = P.id',
+    query='FROM chunk.moz_historyvisits as H, chunk.moz_places as P WHERE H.place_id = P.id',
 )
-# TODO ok, visits are very important, whereas urls are no so much
-# TODO not sure about visit id... maybe we don't really want them for easier merging? or primary key is pair of url and visit date instead?
-# TODO uh. id is fairly useless anyway...
-# TODO hmm. maybe not, since from_visit is quite useful.....
-# TODO need to remove place id? not sure...
 
 
 firefox_phone = Extr(
     detector='remote_devices',
+    schema_check=('visits', "_id, history_guid, visit_type, date, is_local"),
     schema=Schema(cols=[
-        ('url'         , 'TEXT NOT NULL'),
+        ('H.url'         , 'TEXT NOT NULL'),
 
-        ('_id'         , 'INTEGER NOT NULL'), # primary key in orig table, but here could be non unuque
-        ('history_guid', 'TEXT NOT NULL'),
-        ('visit_type'  , 'INTEGER NOT NULL'),
-        ('date'        , 'INTEGER NOT NULL'),
-        ('is_local'    , 'INTEGER NOT NULL'),
+        # primary key in orig table, but here could be non unuque
+        # ('_id'         , 'INTEGER NOT NULL'),
+        # ('history_guid', 'TEXT NOT NULL'),
+        ('V.visit_type'  , 'INTEGER NOT NULL'),
+        ('V.date'        , 'INTEGER NOT NULL'),
+        # ('is_local'    , 'INTEGER NOT NULL'),
     ], key=('url', 'date')),
-    query='SELECT H.url, V.* FROM chunk.history as H, chunk.visits as V WHERE H.guid = V.history_guid',
+    query='FROM chunk.history as H, chunk.visits as V WHERE H.guid = V.history_guid',
 )
 
 def merge(merged: Path, chunk: Path):
@@ -148,7 +176,7 @@ def merge(merged: Path, chunk: Path):
     assert len(candidates) == 1
     merger = candidates[0]
 
-    merge_browser(merged=merged, chunk=chunk, schema=merger.schema, query=merger.query)
+    merge_browser(merged=merged, chunk=chunk, schema=merger.schema, schema_check=merger.schema_check, query=merger.query)
     logger.info("DB size after : %s items %d bytes", entries(merged), merged.stat().st_size)
 
 
@@ -175,10 +203,16 @@ def _helper(tmp_path, browser):
 
     tdir = Path(tmp_path)
     merged = tdir / 'merged.sqlite'
+
+    entr = entries(merged)
+    assert entr is None
+
     merge_from(browser, None, merged)
     merge_from(browser, None, merged)
 
-    assert merged.stat().st_size > 10000 # TODO
+    entr = entries(merged)
+    assert entr is not None
+    assert entr > 100 # quite arbitrary, but ok for now
 
 def test_merge_chrome(tmp_path):
     _helper(tmp_path, CHROME)
@@ -199,9 +233,8 @@ def main():
 
     from_ = getattr(args, 'from')
 
-    # TODO need to mark already handled
-    # although it's farily quick..
-    # TODO hmm. maybe should use the DB thing to handle merged??
+    # TODO need to mark already handled? although it's farily quick as it s
+    # maybe should use the DB thing to handle merged??
     merge_from(browser=args.browser, from_=from_, to=args.to)
 
 
