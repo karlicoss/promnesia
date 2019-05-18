@@ -47,5 +47,6 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
             logger.exception(e)
             errors.append(e)
 
+    # TODO should handle filtering properly?
     logger.info('extracting via %s: got %d visits', log_info, len(h))
     return h, errors

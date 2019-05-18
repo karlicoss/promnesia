@@ -8,6 +8,7 @@ import pytz
 
 from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
 
+# TODO reuse the browser extractor after you convert database
 def extract(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
     logger = get_logger()
 
