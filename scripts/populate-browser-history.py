@@ -81,7 +81,8 @@ def merge_browser(
     check_table, expected = schema_check
     # ugh. a bit ugly but kinda works
     res = sqlite(chunk, f"select group_concat(name, ', ') from pragma_table_info('{check_table}')", method=check_output).decode('utf8').strip()
-    assert res == expected
+    if res != expected:
+        raise AssertionError(f'expected schema {expected}, got {res}')
 
 
     if not merged.exists():
