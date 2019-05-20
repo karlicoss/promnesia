@@ -8,7 +8,21 @@ import pytz
 
 from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
 
-# TODO reuse the browser extractor after you convert database
+from wereyouhere.extractors.firefox import browser_extract
+
+def extract2(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
+    def row_handler(url, ts):
+        epoch = (int(ts) / 1_000_000) - 11644473600
+        dt = datetime.fromtimestamp(epoch, pytz.utc)
+        return (url, dt)
+
+    yield from browser_extract(
+        histfile=histfile,
+        tag=tag,
+        cols=('url', 'visit_time'),
+        row_handler=row_handler,
+    )
+
 def extract(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
     logger = get_logger()
 

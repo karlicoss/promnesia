@@ -22,6 +22,7 @@ from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
 
 from kython.kcache import make_dbcache, mtime_hash
 
+# TODO reuse kython, but really, release takeout html parser separately
 
 # TODO wonder if that old format used to be UTC...
 # Mar 8, 2018, 5:14:40 PM
