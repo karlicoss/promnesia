@@ -56,6 +56,7 @@ def create(db: Path, table: str, schema: Schema):
             (from_, to) = cc
         if to is not None:
             to = to.split('.')[-1] # strip off table alias
+            to = to.split(' AS ')[-1]
             things.append(f'{to} {tp}')
 
     query = f"""
@@ -81,8 +82,9 @@ def merge_browser(
     check_table, expected = schema_check
     # ugh. a bit ugly but kinda works
     res = sqlite(chunk, f"select group_concat(name, ', ') from pragma_table_info('{check_table}')", method=check_output).decode('utf8').strip()
-    if res != expected:
+    if res != expected and not res in expected:
         raise AssertionError(f'expected schema {expected}, got {res}')
+    # TODO default??
 
 
     if not merged.exists():
@@ -110,19 +112,26 @@ class Extr(NamedTuple):
 
 chrome = Extr(
     detector='keyword_search_terms',
-    schema_check=('visits', "id, url, visit_time, from_visit, transition, segment_id, visit_duration, incremented_omnibox_typed_score"),
+    schema_check=(
+        'visits', [
+            'visits', "id, url, visit_time, from_visit, transition, segment_id, visit_duration, incremented_omnibox_typed_score",
+            'visits', "id, url, visit_time, from_visit, transition, segment_id, visit_duration",
+        ]
+    ),
     schema=Schema(cols=[
         ('U.url'                                  , 'TEXT'),
 
-        # ('V.id'                                   , 'INTEGER'),
-        # V.url is quite useless
+        # while these two are not very useful, might be good to have just in case for some debugging
+        ('U.id AS urlid', 'INTEGER'),
+        ('V.id AS vid', 'INTEGER'),
+
         ('V.visit_time'                             , 'INTEGER NOT NULL'),
         ('V.from_visit'                             , 'INTEGER'),
         ('V.transition'                             , 'INTEGER NOT NULL'),
         # V.segment_id looks useless
         ('V.visit_duration'                         , 'INTEGER NOT NULL'),
         # V.omnibox thing looks useless
-    ], key=('url', 'visit_time')),
+    ], key=('url', 'visit_time', 'vid', 'urlid')),
     query='FROM chunk.visits as V, chunk.urls as U WHERE V.url = U.id',
 )
 
