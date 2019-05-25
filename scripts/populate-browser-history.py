@@ -142,15 +142,16 @@ firefox = Extr(
     schema=Schema(cols=[
         ('P.url'       , 'TEXT'),
 
-        # ('H.id'        , 'INTEGER'),
-        ('H.from_visit', 'INTEGER'),
-        # ('H.place_id'  , 'INTEGER'),
-        ('H.visit_date', 'INTEGER'),
-        ('H.visit_type', 'INTEGER'),
+        ('P.id AS pid' , 'INTEGER'),
+        ('V.id AS vid' , 'INTEGER'),
+
+        ('V.from_visit', 'INTEGER'),
+        ('V.visit_date', 'INTEGER'),
+        ('V.visit_type', 'INTEGER'),
         # not sure what session is form but could be useful?..
-        ('H.session'   , 'INTEGER'),
-    ], key=('url', 'visit_date')),
-    query='FROM chunk.moz_historyvisits as H, chunk.moz_places as P WHERE H.place_id = P.id',
+        ('V.session'   , 'INTEGER'),
+    ], key=('url', 'visit_date', 'vid', 'pid')),
+    query='FROM chunk.moz_historyvisits as V, chunk.moz_places as P WHERE V.place_id = P.id',
 )
 
 
@@ -160,14 +161,15 @@ firefox_phone = Extr(
     schema=Schema(cols=[
         ('H.url'         , 'TEXT NOT NULL'),
 
-        # primary key in orig table, but here could be non unuque
-        # ('_id'         , 'INTEGER NOT NULL'),
-        # ('history_guid', 'TEXT NOT NULL'),
+        ('H.guid AS guid', 'TEXT'),
+        ('H._id  AS hid'  , 'INTEGER'),
+        ('V._id  AS vid'  , 'INTEGER'),
+
         ('V.visit_type'  , 'INTEGER NOT NULL'),
         ('V.date'        , 'INTEGER NOT NULL'),
         # ('is_local'    , 'INTEGER NOT NULL'),
-    ], key=('url', 'date')),
-    query='FROM chunk.history as H, chunk.visits as V WHERE H.guid = V.history_guid',
+    ], key=('url', 'date', 'vid', 'hid')),
+    query='FROM chunk.visits as V, chunk.history as H  WHERE V.history_guid = H.guid',
 )
 
 def merge(merged: Path, chunk: Path):
@@ -203,6 +205,7 @@ def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path):
             from_ = tdir
 
         for dbfile in sorted(x for x in from_.rglob('*') if x.is_file() and mime.from_file(str(x)) in ['application/x-sqlite3']):
+            # TODO maybe, assert they all of the same type?
             logger.info('merging %s', dbfile)
             merge(merged=to, chunk=dbfile)
 
