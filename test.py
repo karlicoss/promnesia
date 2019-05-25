@@ -252,3 +252,5 @@ if __name__ == '__main__':
     pytest.main([__file__])
 
 # TODO mark tests with @skip_if_ci
+
+# TODO once I integrate test for db population, test chrome/firefox extractors
