@@ -25,10 +25,6 @@ def browser_extract(histfile: PathIsh, tag: str, cols, row_handler) -> Iterator[
         pv = row_handler(*row)
         yield pv
 
-        # TODO FIXME hmm, not so sure about this unquote...
-        # is it really necessary in browser?
-        # url = unquote(url)
-
     logger.debug('done extracing')
 
 
@@ -37,10 +33,13 @@ def firefox(histfile: PathIsh, tag: str='firefox') -> Iterator[PreVisit]:
         # ok, looks like it's unix epoch
         # https://stackoverflow.com/a/19430099/706389
         dt = datetime.fromtimestamp(int(ts) / 1_000_000, pytz.utc)
-        if unquote(url) != url:
-            # TODO not sure..
-            raise RuntimeError(url)
-        return (url, dt)
+        url = unquote(url) # firefox urls are all quoted
+        return PreVisit(
+            url=url,
+            dt=dt,
+            tag=tag,
+            locator=Loc.make(histfile),
+        )
     yield from browser_extract(
         histfile=histfile,
         tag=tag,
