@@ -28,7 +28,7 @@ def browser_extract(histfile: PathIsh, tag: str, cols, row_handler) -> Iterator[
     logger.debug('done extracing')
 
 
-def firefox(histfile: PathIsh, tag: str='firefox') -> Iterator[PreVisit]:
+def _firefox(cols, histfile: PathIsh, tag: str) -> Iterator[PreVisit]:
     def row_handler(url, ts):
         # ok, looks like it's unix epoch
         # https://stackoverflow.com/a/19430099/706389
@@ -43,9 +43,16 @@ def firefox(histfile: PathIsh, tag: str='firefox') -> Iterator[PreVisit]:
     yield from browser_extract(
         histfile=histfile,
         tag=tag,
-        cols=('url', 'date'),
+        cols=cols,
         row_handler=row_handler,
     )
+
+def firefox_phone(histfile: PathIsh, tag: str='firefox') -> Iterator[PreVisit]:
+    yield from _firefox(cols=('url', 'date'), histfile=histfile, tag=tag)
+
+def firefox(histfile: PathIsh, tag: str='firefox') -> Iterator[PreVisit]:
+    yield from _firefox(cols=('url', 'visit_date'), histfile=histfile, tag=tag)
+
 
 # should be utc? https://stackoverflow.com/a/26226771/706389
 # yep, tested it and looks like utc
