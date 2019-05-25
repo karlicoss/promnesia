@@ -1,5 +1,6 @@
 /* @flow */
-import {Visits, Visit, unwrap} from './common';
+import {Visits, Visit, unwrap, format_dt} from './common';
+import type {Tag} from './common';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -51,6 +52,14 @@ function clearSidebar() {
     }
 }
 
+function _fmt(dt: Date): [string, string] {
+    // TODO if it's this year, do not display year?
+    const dts = format_dt(dt);
+    const dates = dts.substring(0, "12 Mar 2019".length);
+    const times = dts.substring("12 Mar 2019".length + 1, dts.length);
+    return [dates, times];
+}
+
 function bindSidebarData(response) {
     const cont = getSidebarNode();
     if (cont == null) {
@@ -66,38 +75,51 @@ function bindSidebarData(response) {
     tbl.id = 'visits';
     const tbody = doc.createElement('tbody'); tbl.appendChild(tbody);
 
+    // TODO why has this ended up serialised??
     const visits = response.visits.map(rvisit =>
         new Visit(
-            rvisit.time,
+            new Date(rvisit.time),
             rvisit.tags,
             rvisit.context,
             rvisit.locator,
         ) // TODO ugh ugly..
     );
+    visits.sort((f, s) => (s.time - f.time));
+
     // move visits with contexts on top
-    visits.sort((f, s) => (f.context === null ? 1 : 0) - (s.context === null ? 1 : 0));
+    const with_ctx = [];
+    const no_ctx = [];
+    for (const v of visits) {
+        if (v.context === null) {
+            no_ctx.push(v);
+        } else {
+            with_ctx.push(v);
+        }
+    }
 
-    // TODO colors for sources would be nice... not sure if server or client provided
-    for (const visit of visits) {
-        const rep = visit.repr().split(" ");
-
+    function handle(
+        dates: string,
+        times: string,
+        tags: Array<Tag>,
+        context: ?string=null,
+        locator: ?string=null
+    ) {
         const tr = tbl.insertRow(-1);
         const tdd = tr.insertCell(-1);
-        tdd.appendChild(doc.createTextNode(rep[0] + " " + rep[1] + " " + rep[2]));
+        tdd.appendChild(doc.createTextNode(dates));
         const tdt = tr.insertCell(-1);
-        tdt.appendChild(doc.createTextNode(rep[3]));
+        tdt.appendChild(doc.createTextNode(times));
         const tds = tr.insertCell(-1);
-        tds.appendChild(doc.createTextNode(rep[4]));
+        const tagss = tags.join(':');
+        tds.appendChild(doc.createTextNode(tagss));
 
-        if (visit.context !== null) {
-            const context = visit.context;
-
+        if (context != null) {
             const crow = tbl.insertRow(-1);
             crow.classList.add('context');
             const ccell = crow.insertCell(-1);
             ccell.setAttribute('colspan', '3');
 
-            const loc = unwrap(visit.locator);
+            const loc = unwrap(locator);
             const loc_elem = doc.createElement('div');
             loc_elem.classList.add('locator');
             // loc_elem.appendChild(doc.createTextNode(loc));
@@ -117,6 +139,51 @@ function bindSidebarData(response) {
             summ.appendChild(loc_elem);
             det.appendChild(doc.createTextNode(context));
         }
+    }
+
+    // TODO colors for sources would be nice... not sure if server or client provided
+    for (const v of with_ctx) {
+        const [dates, times] = _fmt(v.time);
+        handle(dates, times, v.tags, v.context, v.locator);
+    }
+
+
+    var groups = [];
+    var group = [];
+
+    function dump_group () {
+        if (group.length > 0) {
+            groups.push(group);
+            group = [];
+        }
+    }
+
+    const delta = 20 * 60 * 1000;
+    for (const v of no_ctx) {
+        const last = group.length == 0 ? v : group[group.length - 1];
+        if (last.time - v.time > delta) {
+            dump_group();
+        }
+        group.push(v);
+    }
+    dump_group();
+
+    // TODO group ones with no ctx..
+    for (const group of groups) {
+        const first = group[0];
+        const last  = group[group.length - 1];
+        const [fdates, ftimes] = _fmt(first.time);
+        const [ldates, ltimes] = _fmt(last.time);
+        const dates = ldates;
+        const times = ltimes == ftimes ? ltimes : ltimes + "-" + ftimes;
+        const tset = new Set();
+        for (const v of group) {
+            for (const tag of v.tags) {
+                tset.add(tag);
+            }
+        }
+        const tags = [...tset];
+        handle(dates, times, tags);
     }
 }
 window.bindSidebarData = bindSidebarData;

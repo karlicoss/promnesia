@@ -46,12 +46,15 @@ function rawToVisits(vis): Visits {
         return new Visits([]);
     }
 
+    // TODO filter errors? not sure.
     return new Visits(vis.map(v => {
-        const vtime: string = v['dt'];
+        // TODO wonder if server is returning utc...
+        // TODO maybe server should return timestamp instead?
+        const dt: Date = new Date(v['dt']);
         const vtags: Array<Tag> = v['tags']; // TODO hmm. backend is responsible for tag merging?
         const vctx: ?string = v['context'];
         const vloc: ?Locator = v['locator']
-        return new Visit(vtime, vtags, vctx, vloc);
+        return new Visit(dt, vtags, vctx, vloc);
     }));
 }
 
@@ -137,60 +140,12 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
     chrome.history.getVisits(
         {url: url},
         function (results) {
+            // without delay you will always be seeing it as visited
+            // but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
             const delay = getDelayMs();
             const current = new Date();
             const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
-            var groups = [];
-            var group = [];
-
-            function dump_group () {
-                if (group.length > 0) {
-                    groups.push(group);
-                    group = [];
-                }
-            }
-
-            function split_date_time (dt) {
-                var d = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
-                var spl = d.toISOString().split('Z')[0].split('T');
-                return [spl[0], spl[1].substring(0, 5)];
-            }
-
-            function format_time (dt) {
-                return split_date_time(dt)[1];
-            }
-
-            // UGH there are no decent custom time format functions in JS..
-            function format_date (dt) {
-                var options = {
-                    day  : 'numeric',
-                    month: 'short',
-                    year : 'numeric',
-                };
-                return dt.toLocaleDateString("en-GB", options);
-            }
-
-            function format_group (g) {
-                const dts = format_date(g[0]) + " " + format_time(g[0]) + (g.length == 1 ? "" : "--" + format_time(g[g.length - 1]));
-                const tags = ["local"];
-                return new Visit(dts, tags);
-            }
-
-            var delta = 20 * 60 * 1000; // make sure it matches with python
-            for (const t of times) {
-                const last = group.length == 0 ? t : group[group.length - 1];
-                if (t - last > delta) {
-                    dump_group();
-                }
-                group.push(t);
-            }
-            dump_group();
-
-
-            var visits = groups.map(format_group);
-            visits.reverse();
-            // TODO might be a good idea to have some delay for showing up items in extended history, otherwise you will always be seeing it as visited
-            // also could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
+            const visits = times.map(t => new Visit(t, ['local']));
             cb(new Visits(visits));
         }
     );
