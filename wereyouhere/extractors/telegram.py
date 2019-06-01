@@ -14,8 +14,18 @@ def extract(database: PathIsh, tag: str) -> Iterable[PreVisit]:
     logger = get_logger()
 
     db = dataset.connect(f'sqlite:///{str(database)}')
+    # TODO source_id??
     query = """
-select coalesce(U.first_name || " " || U.last_name, U.username) as sender, M.time as time, M.text as text from messages as M JOIN users as U ON U.id == M.sender_id where has_media == 1 or (text like '%http%');
+SELECT coalesce(U.first_name || " " || U.last_name, U.username) AS sender
+     , coalesce(C.first_name || " " || C.last_name, C.username) AS chatname
+     , C.username as chat
+     , M.time AS time
+     , M.text AS text
+     , M.id AS mid
+FROM messages AS M
+JOIN users AS U ON U.id == M.sender_id
+JOIN users AS C ON C.id == M.source_id
+WHERE has_media == 1 or (text like '%http%');
     """.strip()
     # TODO eh. filter out ntfy bot?
     for row in db.query(query):
@@ -25,13 +35,25 @@ select coalesce(U.first_name || " " || U.last_name, U.username) as sender, M.tim
         urls = extract_urls(text) # TODO sort just in case? not sure..
         if len(urls) == 0:
             continue
-        sender = row['sender']
+        sender   = row['sender']
+        chatname = row['chatname']
         dt = from_epoch(row['time'])
+
+        chat     = row['chat']
+        mid      = row['mid']
+        in_context = f'https://t.me/{chat}/{mid}'
         for u in urls:
+            # https://www.reddit.com/r/Telegram/comments/6ufwi3/link_to_a_specific_message_in_a_channel_possible/
+            # hmm, only seems to work on mobile app, but better than nothing...
             yield PreVisit(
                 url=unquote(u),
                 dt=dt,
-                context=f"{sender}: {text}",
-                locator=Loc.make(database), # TODO not sure if there is a better way... would be great to jump to the message though
+                context=f"{sender}: {text}\n{in_context}", # TODO remove in_context from here once url suggestion is implemented
+                # TODO not sure if there is a better way... would be great to jump to the message though
+                # locator=Loc.make(database),
+
+                # TODO perhaps locator should be more abstract and we don't want to interpret location? or distinguish active and inactive locators?
+                # TODO locator should contain text and url, yep...
+                locator=Loc.make(f"chat with {chatname}"),
                 tag=tag,
             )
