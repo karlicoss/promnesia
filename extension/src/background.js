@@ -49,8 +49,10 @@ function rawToVisits(vis): Visits {
     // TODO filter errors? not sure.
     return new Visits(vis.map(v => {
         // TODO wonder if server is returning utc...
-        // TODO maybe server should return timestamp instead?
-        const dt: Date = new Date(v['dt']);
+        // TODO server should return tz aware, probably...
+        const dts = v['dt'] + ' UTC'; // jeez. seems like it's the easiest way...
+
+        const dt: Date = new Date(dts);
         const vtags: Array<Tag> = v['tags']; // TODO hmm. backend is responsible for tag merging?
         const vctx: ?string = v['context'];
         const vloc: ?Locator = v['locator']
@@ -144,6 +146,9 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
             // but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
             const delay = getDelayMs();
             const current = new Date();
+
+            // ok, visitTime returns epoch which gives the correct time combined with new Date
+
             const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
             const visits = times.map(t => new Visit(t, ['local']));
             cb(new Visits(visits));
