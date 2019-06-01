@@ -55,9 +55,10 @@ function clearSidebar() {
 function _fmt(dt: Date): [string, string] {
     // TODO if it's this year, do not display year?
     const dts = format_dt(dt);
-    const dates = dts.substring(0, "12 Mar 2019".length);
-    const times = dts.substring("12 Mar 2019".length + 1, dts.length);
-    return [dates, times];
+    const parts = dts.split(' ');
+    const datestr = parts.slice(0, 3).join(' ');
+    const timestr = parts.slice(3).join(' ');
+    return [datestr, timestr];
 }
 
 function bindSidebarData(response) {
