@@ -1,19 +1,27 @@
 import {get_options, set_options} from './options';
 
+function getInputElement(element_id: string): HTMLInputElement {
+    return ((document.getElementById(element_id): any): HTMLInputElement);
+}
+
 function getHost(): HTMLInputElement {
-    return ((document.getElementById('host_id'): any): HTMLInputElement);
+    return getInputElement('host_id');
 }
 
 function getToken(): HTMLInputElement {
-    return ((document.getElementById('token_id'): any): HTMLInputElement);
+    return getInputElement('token_id');
 }
 
 function getDots(): HTMLInputElement {
-    return ((document.getElementById('dots_id'): any): HTMLInputElement);
+    return getInputElement('dots_id');
 }
 
 function getBlackList(): HTMLInputElement {
-    return ((document.getElementById('blacklist_id'): any): HTMLInputElement);
+    return getInputElement('blacklist_id');
+}
+
+function getTagMap(): HTMLInputElement {
+    return getInputElement('tag_map_id');
 }
 
 // TODO display it floating
@@ -24,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getDots().checked    = opts.dots;
         getToken().value     = opts.token;
         getBlackList().value = opts.blacklist.join('\n');
+        getTagMap().value    = JSON.stringify(opts.tag_map);
     });
 });
 document.getElementById('save_id').addEventListener('click', () => {
@@ -32,6 +41,7 @@ document.getElementById('save_id').addEventListener('click', () => {
         dots      : getDots().checked,
         token     : getToken().value,
         blacklist : getBlackList().value.split(/\n/),
+        tag_map   : JSON.parse(getTagMap().value),
     };
     set_options(opts, () => { alert("Saved!"); });
 });

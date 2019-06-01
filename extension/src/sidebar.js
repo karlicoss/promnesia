@@ -1,6 +1,7 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_dt} from './common';
 import type {Tag} from './common';
+import {get_options} from './options';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -44,6 +45,11 @@ function getSidebarNode(): ?HTMLElement {
     // return (cont: HTMLElement);
 }
 
+function get_or_default(obj, key, def) {
+    const res = obj[key];
+    return res === undefined ? def : res;
+}
+
 // This is pretty insane... but it's the only sidebar lib I found :(
 function clearSidebar() {
     const cont = unwrap(getSidebarNode());
@@ -62,6 +68,10 @@ function _fmt(dt: Date): [string, string] {
 }
 
 function bindSidebarData(response) {
+    get_options(opts => bindSidebarDataAux(response, opts));
+}
+
+function bindSidebarDataAux(response, opts) {
     const cont = getSidebarNode();
     if (cont == null) {
         console.log('no sidebar, so not binding anything');
@@ -169,6 +179,7 @@ function bindSidebarData(response) {
     }
     dump_group();
 
+    const tag_map = opts.tag_map;
     // TODO group ones with no ctx..
     for (const group of groups) {
         const first = group[0];
@@ -180,7 +191,8 @@ function bindSidebarData(response) {
         const tset = new Set();
         for (const v of group) {
             for (const tag of v.tags) {
-                tset.add(tag);
+                const mapped_tag = get_or_default(tag_map, tag, tag);
+                tset.add(mapped_tag);
             }
         }
         const tags = [...tset];
