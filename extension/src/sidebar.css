@@ -23,6 +23,7 @@ td:nth-child(2) {
 #visits {
     /* handles line breaks */
     white-space: pre-wrap;
+    width: 100%;
 }
 
 #visits .context {

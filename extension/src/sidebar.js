@@ -131,11 +131,12 @@ function bindSidebarDataAux(response, opts) {
             ccell.setAttribute('colspan', '3');
 
             const loc = unwrap(locator);
-            const loc_elem = doc.createElement('div');
+            const loc_elem = doc.createElement('span');
             loc_elem.classList.add('locator');
             // loc_elem.appendChild(doc.createTextNode(loc));
             // TODO depending on whether it's local or href, generate link..
             // TODO pehaps it's better if backend sends us proper mime handler
+            // TODO yep, definitely backend needs to give us text and href
             loc_elem.innerHTML = `<a href='emacs:${loc}'>${loc}</a>`;
 
 
@@ -146,8 +147,10 @@ function bindSidebarDataAux(response, opts) {
             const det = doc.createElement('details'); ccell.appendChild(det);
             const summ = doc.createElement('summary'); det.appendChild(summ);
 
-            summ.appendChild(firstline_elem);
             summ.appendChild(loc_elem);
+            // TODO not sure if we want to do anything if we have trimmed locator...
+            // TODO at least add some space?
+            summ.appendChild(firstline_elem);
             det.appendChild(doc.createTextNode(context));
         }
     }
