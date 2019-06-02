@@ -52,27 +52,27 @@ def load_config() -> Config:
     #         if dt.tzinfo is None:
     #             dt = config.FALLBACK_TIMEZONE.localize(dt)
 
-    #         ld = vis['locator']
-    #         loc = Loc(file=ld['file'], line=ld['line'])
-
 
 # TODO how to return exception in error?
 
 def as_json(v: DbVisit) -> Dict:
+    # TODO check utc
    #  "09 Aug 2018 19:48",
    #  "06 Aug 2018 21:36--21:37",
     # TODO perhaps tag merging should be done by browser as well?
     # TODO also local should be suppressed if any other tag with this timestamp is present
     dts = v.dt.strftime('%d %b %Y %H:%M')
     loc = v.locator
-    # TODO is locator always present??
-    locs = loc.file + (':' + str(loc.line) if loc.line is not None else '')
+    # # TODO is locator always present??
     return {
         # TODO do not display year if it's current year??
         'dt': dts,
         'tags': [v.tag],
         'context': v.context,
-        'locator': locs,
+        'locator': {
+            'title': loc.title,
+            'href' : loc.href,
+        },
     }
 
 @lru_cache(1)

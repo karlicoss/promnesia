@@ -264,7 +264,7 @@ function updateState () {
             });
 
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
-            const locs = visits.contexts();
+            const locs = visits.contexts().map(l => l == null ? null : l.title);
             if (locs.length !== 0) {
                 showTabNotification(tabId, `${locs.length} contexts!\n${locs.join('\n')}`);
             }

@@ -25,13 +25,27 @@ Second = int
 # TODO hmm. arguably, source and context are almost same things...
 # locator? source then context within file
 class Loc(NamedTuple):
-    file: str
-    line: Optional[int]=None
+    # file: str
+    # line: Optional[int]=None
+    title: str
+    href: Optional[str]=None
+
+    # @classmethod
+    # def file(cls, fname: PathIsh, **kwargs):
+    #     return cls(file=str(fname), **kwargs)
 
     @classmethod
-    def make(cls, fname: PathIsh, **kwargs):
+    def make(cls, title, href=None):
+        return cls(title=title, href=href)
 
-        return cls(file=str(fname), **kwargs)
+    @classmethod
+    def file(cls, path: PathIsh, line: Optional[int]=None):
+        ll = '' if line is None else f':{line}'
+        loc = f'{path}{ll}'
+        return cls.make(
+            title=loc,
+            href=f'emacs:{loc}'
+        )
 
     # TODO need some uniform way of string conversion
     # but generally, it would be
@@ -216,6 +230,7 @@ def sanitize(url: str) -> str:
     return url
 
 
+# TODO sort just in case? not sure..
 def extract_urls(s: str) -> List[str]:
     # TODO unit test for escaped urls.. or should it be in normalise instead?
     if len(s.strip()) == 0:

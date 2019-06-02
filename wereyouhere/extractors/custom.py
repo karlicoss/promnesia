@@ -18,6 +18,7 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
     output = check_output(command, shell=True)
     lines = [line.decode('utf-8') for line in output.splitlines()]
     for line in lines:
+        # TODO wtf is that??? use extract_url??
         protocols = ['file', 'ftp', 'http', 'https']
         for p in protocols:
             split_by = ':' + p + '://'
@@ -28,7 +29,7 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
             parts = [line]
 
         fname: Optional[str]
-        lineno: Optional[str]
+        lineno: Optional[int]
         url: str
         if len(parts) == 1:
             fname = None
@@ -44,16 +45,19 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
         url = unquote(url)
 
         ts: datetime
-        if fname:
+        loc: Loc
+        if fname is not None:
             ts = datetime.fromtimestamp(stat(fname).st_mtime)
+            loc = Loc.file(fname, line=lineno)
         else:
             ts = datetime.utcnow().replace(tzinfo=pytz.utc)
+            loc = Loc.make(command)
         # TODO !1 extract org notes properly...
         yield PreVisit(
             url=url,
             dt=ts,
             tag=tag,
-            locator=Loc.make(fname, line=lineno),
+            locator=loc,
             context=context,
         )
 
@@ -67,7 +71,7 @@ class EUrl(NamedTuple):
 
 def _collect(thing, path: List[str], result: List[EUrl]):
     if isinstance(thing, str):
-        ctx: CtxPath = tuple(path) # type: ignore
+        ctx: Ctx = tuple(path) # type: ignore
         result.extend([EUrl(url=u, ctx=ctx) for u in extract_urls(thing)])
     elif isinstance(thing, list):
         path.append('[]')

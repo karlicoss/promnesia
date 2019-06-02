@@ -2,7 +2,10 @@
 
 export type Url = string;
 export type Tag = string;
-export type Locator = string;
+export type Locator = {
+    title: string,
+    href: ?string,
+};
 export type VisitsMap = {[Url]: Visits};
 export type Dt = Date;
 
@@ -35,10 +38,10 @@ export class Visit {
     time: Dt;
     tags: Array<Tag>;
     context: ?string;
-    locator: ?string;
+    locator: ?Locator;
 
 
-    constructor(time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?string=null) {
+    constructor(time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?Locator=null) {
         this.time = time;
         this.tags = tags;
         this.context = context;

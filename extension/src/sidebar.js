@@ -1,6 +1,6 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_dt} from './common';
-import type {Tag} from './common';
+import type {Tag, Locator} from './common';
 import {get_options} from './options';
 
 import React from 'react';
@@ -33,11 +33,18 @@ function getSidebarNode(): ?HTMLElement {
     frame.style.background = "rgba(236, 236, 236, 0.4)";
 
     const cdoc = frame.contentDocument;
-    var link = cdoc.createElement("link");
+    const link = cdoc.createElement("link");
     link.href = chrome.extension.getURL("sidebar.css");
     link.type = "text/css";
     link.rel = "stylesheet";
-    cdoc.getElementsByTagName("head")[0].appendChild(link); // TODO why [0]??
+    const head  = cdoc.getElementsByTagName("head")[0]; // TODO why [0]??
+    head.appendChild(link);
+
+    // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
+    const base = cdoc.createElement('base');
+    base.setAttribute('target', '_blank');
+    head.appendChild(base);
+
     return cdoc.body;
     // right, iframe is pretty convenient for scrolling...
 
@@ -113,7 +120,7 @@ function bindSidebarDataAux(response, opts) {
         times: string,
         tags: Array<Tag>,
         context: ?string=null,
-        locator: ?string=null
+        locator: ?Locator=null
     ) {
         const tr = tbl.insertRow(-1);
         const tdd = tr.insertCell(-1);
@@ -137,7 +144,9 @@ function bindSidebarDataAux(response, opts) {
             // TODO depending on whether it's local or href, generate link..
             // TODO pehaps it's better if backend sends us proper mime handler
             // TODO yep, definitely backend needs to give us text and href
-            loc_elem.innerHTML = `<a href='emacs:${loc}'>${loc}</a>`;
+            // TODO dispatch depending on having href
+            // TODO need escaping?
+            loc_elem.innerHTML = loc.href == null ? loc.title : `<a href='${loc.href}'>${loc.title}</a>`;
 
 
             const trim_till = Math.min(context.indexOf('\n'), 100);

@@ -14,7 +14,6 @@ def extract(database: PathIsh, tag: str) -> Iterable[PreVisit]:
     logger = get_logger()
 
     db = dataset.connect(f'sqlite:///{str(database)}')
-    # TODO source_id??
     query = """
 SELECT coalesce(U.first_name || " " || U.last_name, U.username) AS sender
      , coalesce(C.first_name || " " || C.last_name, C.username) AS chatname
@@ -27,12 +26,9 @@ JOIN users AS U ON U.id == M.sender_id
 JOIN users AS C ON C.id == M.source_id
 WHERE has_media == 1 or (text like '%http%');
     """.strip()
-    # TODO eh. filter out ntfy bot?
     for row in db.query(query):
-        # TODO FIXME careful, check that extraction is reasonable..
-        # TODO multiprocessing??
         text = row['text']
-        urls = extract_urls(text) # TODO sort just in case? not sure..
+        urls = extract_urls(text)
         if len(urls) == 0:
             continue
         sender   = row['sender']
@@ -48,12 +44,10 @@ WHERE has_media == 1 or (text like '%http%');
             yield PreVisit(
                 url=unquote(u),
                 dt=dt,
-                context=f"{sender}: {text}\n{in_context}", # TODO remove in_context from here once url suggestion is implemented
-                # TODO not sure if there is a better way... would be great to jump to the message though
-                # locator=Loc.make(database),
-
-                # TODO perhaps locator should be more abstract and we don't want to interpret location? or distinguish active and inactive locators?
-                # TODO locator should contain text and url, yep...
-                locator=Loc.make(f"chat with {chatname}"),
+                context=f"{sender}: {text}",
+                locator=Loc.make(
+                    title=f"chat with {chatname}",
+                    href=in_context,
+                ),
                 tag=tag,
             )

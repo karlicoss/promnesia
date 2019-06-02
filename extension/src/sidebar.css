@@ -23,6 +23,8 @@ td:nth-child(2) {
 #visits {
     /* handles line breaks */
     white-space: pre-wrap;
+
+    /* make table occupy whole sidebar */
     width: 100%;
 }
 
