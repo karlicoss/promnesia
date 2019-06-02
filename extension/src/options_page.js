@@ -24,6 +24,10 @@ function getTagMap(): HTMLInputElement {
     return getInputElement('tag_map_id');
 }
 
+function getExtraCss(): HTMLInputElement {
+    return getInputElement('extra_css_id');
+}
+
 // TODO display it floating
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getToken().value     = opts.token;
         getBlackList().value = opts.blacklist.join('\n');
         getTagMap().value    = JSON.stringify(opts.tag_map);
+        getExtraCss().value  = opts.extra_css;
     });
 });
 document.getElementById('save_id').addEventListener('click', () => {
@@ -42,6 +47,7 @@ document.getElementById('save_id').addEventListener('click', () => {
         token     : getToken().value,
         blacklist : getBlackList().value.split(/\n/),
         tag_map   : JSON.parse(getTagMap().value),
+        extra_css : getExtraCss().value,
     };
     set_options(opts, () => { alert("Saved!"); });
 });

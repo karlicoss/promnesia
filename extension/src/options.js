@@ -1,7 +1,9 @@
 /* @flow */
 
+type Tag = string;
+
 type TagMap = {
-    [string]: string
+    [Tag]: Tag
 };
 
 export type Options = {
@@ -10,6 +12,7 @@ export type Options = {
     token: string;
     blacklist: Array<string>;
     tag_map: TagMap;
+    extra_css: string;
 }
 
 // TODO how to export settings?? seriously need some standard package for settings
@@ -20,6 +23,7 @@ function default_options(): Options {
         token: "",
         blacklist: [],
         tag_map: {},
+        extra_css: "",
     };
 }
 

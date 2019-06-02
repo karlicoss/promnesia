@@ -2,6 +2,7 @@
 import {Visits, Visit, unwrap, format_dt} from './common';
 import type {Tag, Locator} from './common';
 import {get_options} from './options';
+import type {Options} from './options';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -23,7 +24,9 @@ function toggleSidebar() {
 window.toggleSidebar = toggleSidebar;
 
 
-function getSidebarNode(): ?HTMLElement {
+function getSidebarNode(opts: Options): ?HTMLElement {
+    const extra_css = opts.extra_css;
+
     const root = document.getElementById(SIDEBAR_ID);
     // $FlowFixMe
     if (root == null) {
@@ -39,6 +42,10 @@ function getSidebarNode(): ?HTMLElement {
     link.rel = "stylesheet";
     const head  = cdoc.getElementsByTagName("head")[0]; // TODO why [0]??
     head.appendChild(link);
+
+    const style = cdoc.createElement('style');
+    style.innerHTML = extra_css;
+    head.appendChild(style);
 
     // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
     const base = cdoc.createElement('base');
@@ -58,8 +65,8 @@ function get_or_default(obj, key, def) {
 }
 
 // This is pretty insane... but it's the only sidebar lib I found :(
-function clearSidebar() {
-    const cont = unwrap(getSidebarNode());
+function clearSidebar(opts: Options) {
+    const cont = unwrap(getSidebarNode(opts));
     while (cont.firstChild) {
         cont.removeChild(cont.firstChild);
     }
@@ -78,13 +85,13 @@ function bindSidebarData(response) {
     get_options(opts => bindSidebarDataAux(response, opts));
 }
 
-function bindSidebarDataAux(response, opts) {
-    const cont = getSidebarNode();
+function bindSidebarDataAux(response, opts: Options) {
+    const cont = getSidebarNode(opts);
     if (cont == null) {
         console.log('no sidebar, so not binding anything');
         return;
     }
-    clearSidebar();
+    clearSidebar(opts);
     console.log(response);
 
     const doc = document;
