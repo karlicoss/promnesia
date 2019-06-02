@@ -18,6 +18,9 @@ def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
         assert tg['source'] == x['uri'] # why would they not be equal???
         url = tg['source']
 
+
+        in_context = x['links']['incontext']
+
         # TODO ok, it might not have selector if it's a page annotation
         sel = tg.get('selector', None)
         cparts = []
@@ -39,8 +42,10 @@ def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
             url=tg['source'],
             dt=x['created'], # TODO 'updated'? # 2019-02-15T18:24:16.874113+00:00
             context='\n\n'.join(cparts),
-            # TODO use proper link?
-            locator=Loc.file(json_path),
+            locator=Loc.make(
+                title='hypothesis',
+                href=in_context,
+            ),
             tag=tag,
         )
         yield v
