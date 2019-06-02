@@ -137,6 +137,8 @@ function getDelayMs(/*url*/) {
     return 10 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
 }
 
+const LOCAL_TAG = 'local';
+
 function getChromeVisits(url: Url, cb: (Visits) => void) {
     // $FlowFixMe
     chrome.history.getVisits(
@@ -150,7 +152,7 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
             // ok, visitTime returns epoch which gives the correct time combined with new Date
 
             const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
-            const visits = times.map(t => new Visit(t, ['local']));
+            const visits = times.map(t => new Visit(t, [LOCAL_TAG]));
             cb(new Visits(visits));
         }
     );
@@ -160,6 +162,7 @@ function getMapVisits(url: Url, cb: (Visits) => void) {
     var nurl = normalise_url(url);
     log("original: %s -> normalised %s", url, nurl);
     get_options(opts => {
+        // TODO hmm. it's confusing since blacklisting only results in not querying on server, so not sure if only local visits are of any use?
         if (opts.blacklist.includes(nurl)) {
             log('%s is blacklisted! ignoring it', nurl);
             return;
@@ -226,14 +229,18 @@ function getVisits(url: Url, cb: (Visits) => void) {
 
 function getIconAndTitle (visits: Visits) {
     if (visits.visits.length === 0) {
-        return ["images/ic_not_visited_48.png", "Was not visited"];
+        return ['images/ic_not_visited_48.png', 'Was not visited'];
+    }
+    const contexts = visits.contexts();
+    if (contexts.length > 0) {
+        return ['images/ic_visited_48.png'    , 'Was visited (has contexts)'];
     }
     // TODO a bit ugly, but ok for now.. maybe cut off by time?
-    const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == "chr");
+    const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
     if (boring) {
         return ["images/ic_boring_48.png"     , "Was visited (boring)"];
     } else {
-        return ["images/ic_visited_48.png"    , "Was visited!"];
+        return ["images/ic_blue_48.png"       , "Was visited"];
     }
 }
 
