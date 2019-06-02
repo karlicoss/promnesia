@@ -25,8 +25,10 @@ def history(*args, **kwargs):
     from wereyouhere.generator.smart import previsits_to_history
     return previsits_to_history(*args, **kwargs)[0] # TODO meh
 
-import imp
-backup_db = imp.load_source('hdb', 'scripts/backup-history-db.py')
+from kython import import_file
+
+backup_db = import_file('scripts/browser_history.py')
+populate_db = import_file('scripts/populate-browser-history.py')
 
 def assert_got_tzinfo(h: History):
     for v in h.visits:
@@ -91,12 +93,14 @@ def test_takeout_new_zip():
 # TODO run condition?? and flag to force all
 
 def test_chrome(tmp_path):
-    import wereyouhere.extractors.chrome as chrome_ex
+    from wereyouhere.extractors.browser import chrome
     tdir = Path(tmp_path)
 
-    path = backup_db.backup_to(tdir, 'chrome')
+    path = tdir / 'history'
+    populate_db.merge_from('chrome', from_=None, to=path)
+    # TODO hmm, it actually should be from merged db....
 
-    hist = history(W(chrome_ex.extract, path))
+    hist = history(W(chrome, path))
     assert len(hist) > 10 # kinda random sanity check
 
     dump(hist)
@@ -105,7 +109,7 @@ def test_chrome(tmp_path):
 
 def test_firefox(tmp_path):
     tdir = Path(tmp_path)
-    path = backup_db.backup_to(tdir, 'firefox')
+    path = backup_db.backup_history('firefox', to=tdir)
     # shouldn't fail at least
 
         # [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
@@ -173,6 +177,7 @@ TESTDATA_CHROME_HISTORY = "/L/data/wereyouhere/testdata/chrome-history"
 def get_chrome_history_backup(td: str):
     copytree(TESTDATA_CHROME_HISTORY, join(td, 'backup'))
 
+@skip("TODO move this to populate script instead")
 def test_merge():
     merge = backup_db.merge
 
@@ -208,10 +213,9 @@ def test_merge():
 
         assert ssize_2 == ssize
 
-merge_all_from = backup_db.merge_all_from # type: ignore
-
 
 def _test_merge_all_from(tdir):
+    merge_all_from = backup_db.merge_all_from # type: ignore
     mdir = join(tdir, 'merged')
     mkdir(mdir)
     mfile = join(mdir, 'merged.sql')
@@ -243,6 +247,7 @@ def _test_merge_all_from(tdir):
     newest = hist['feedly.com/i/discover']
     assert any(v.dt.date() >= date(year=2018, month=9, day=27) for v in newest)
 
+@skip("TODO move this to populate script")
 def test_merge_all_from(tmp_path):
     tdir = Path(tmp_path)
     _test_merge_all_from(tdir)
