@@ -35,3 +35,8 @@ td:nth-child(2) {
 #visits .locator {
     padding-left: 1em;
 }
+
+
+#visits .tag {
+    margin-right: 0.2em;
+}

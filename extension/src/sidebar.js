@@ -127,9 +127,18 @@ function bindSidebarDataAux(response, opts) {
         tdd.appendChild(doc.createTextNode(dates));
         const tdt = tr.insertCell(-1);
         tdt.appendChild(doc.createTextNode(times));
-        const tds = tr.insertCell(-1);
-        const tagss = tags.join(':');
-        tds.appendChild(doc.createTextNode(tagss));
+        const tds = tr.insertCell(-1); // TODO add class??
+
+        const tag_elems = tags.map(t => {
+            const tag_elem = doc.createElement('span');
+            tag_elem.classList.add('tag');
+            tag_elem.classList.add(t);
+            tag_elem.appendChild(doc.createTextNode(t));
+            return tag_elem;
+        });
+        for (const tag_elem of tag_elems) {
+            tds.appendChild(tag_elem);
+        }
 
         if (context != null) {
             const crow = tbl.insertRow(-1);
@@ -140,11 +149,6 @@ function bindSidebarDataAux(response, opts) {
             const loc = unwrap(locator);
             const loc_elem = doc.createElement('span');
             loc_elem.classList.add('locator');
-            // loc_elem.appendChild(doc.createTextNode(loc));
-            // TODO depending on whether it's local or href, generate link..
-            // TODO pehaps it's better if backend sends us proper mime handler
-            // TODO yep, definitely backend needs to give us text and href
-            // TODO dispatch depending on having href
             // TODO need escaping?
             loc_elem.innerHTML = loc.href == null ? loc.title : `<a href='${loc.href}'>${loc.title}</a>`;
 
