@@ -41,7 +41,7 @@ Toastify({
 }
 
 function rawToVisits(vis): Visits {
-    // TODO not sure, maybe we want to distinguish..
+    // TODO not sure, maybe we want to distinguish these situations..
     if (vis == null) {
         return new Visits([]);
     }
@@ -76,10 +76,7 @@ const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
-// TODO better name?
-function getJsonVisits(u: Url, opts: Options, cb: (Visits) => void) {
-    // TODO ok, here we want to do an async request
-
+function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
     const data = JSON.stringify({
         'url': u,
     });
@@ -158,71 +155,24 @@ function getChromeVisits(url: Url, cb: (Visits) => void) {
     );
 }
 
-function getMapVisits(url: Url, cb: (Visits) => void) {
-    var nurl = normalise_url(url);
-    log("original: %s -> normalised %s", url, nurl);
-    get_options(opts => {
-        // TODO hmm. it's confusing since blacklisting only results in not querying on server, so not sure if only local visits are of any use?
-        if (opts.blacklist.includes(nurl)) {
-            log('%s is blacklisted! ignoring it', nurl);
-            return;
-        }
-        getJsonVisits(nurl, opts, v => {
-            if (v) {
-                cb(v);
-            } else {
-                cb(new Visits([]));
-            }
-        });
-    });
-}
-
-const _monmap = {
-    Jan: '01',
-    Feb: '02',
-    Mar: '03',
-    Apr: '04',
-    May: '05',
-    Jun: '06',
-    Jul: '07',
-    Aug: '08',
-    Sep: '09',
-    Oct: '10',
-    Nov: '11',
-    Dec: '12',
-};
-
-function _visitKey(vis: Visit): string {
-    const spl = vis.repr().split(" ");
-    const emm = spl[2] + _monmap[spl[1]] + spl[0] + spl[3];
-    return emm;
-}
-
-function _visitsCmp(visa: Visit, visb: Visit): number {
-    const ka = _visitKey(visa);
-    const kb = _visitKey(visb);
-    if (ka < kb) {
-        return -1;
-    } else if (ka > kb) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 function getVisits(url: Url, cb: (Visits) => void) {
-    getChromeVisits(url, function (chr_visits) {
-        getMapVisits(url, function (map_visits) {
-            var all_visits = map_visits.visits.concat(chr_visits.visits);
-            all_visits.sort(_visitsCmp);
-            all_visits.reverse();
-            cb(new Visits(
-                all_visits
-                // TODO actually, we should sort somehow... but with dates as strings gonna be tedious...
-                // maybe, get range of timestamps from python and convert in JS? If we're doing that anyway...
-                // also need to share domain filters with js...
-                // for now just prefer map visits to chrome visits
-            ));
+    var nurl = normalise_url(url);
+    // TODO allow blacklisting on level of base url, that should be enough.. don't need full scale normalisation for that 
+    log("original: %s -> normalised %s", url, nurl);
+
+    get_options(opts => {
+        // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
+        getChromeVisits(url, chr_visits => {
+            // TODO hmm. it's confusing since blacklisting only results in not querying on server, so not sure if only local visits are of any use?
+            if (opts.blacklist.includes(nurl)) {
+                log('%s is blacklisted! ignoring it', nurl);
+                cb(chr_visits);
+            } else {
+                getBackendVisits(url, opts, backend_visits => {
+                    const all_visits = backend_visits.visits.concat(chr_visits.visits);
+                    cb(new Visits(all_visits));
+                });
+            }
         });
     });
 }
