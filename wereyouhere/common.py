@@ -23,19 +23,12 @@ Context = str
 Second = int
 
 # TODO hmm. arguably, source and context are almost same things...
-# locator? source then context within file
 class Loc(NamedTuple):
-    # file: str
-    # line: Optional[int]=None
     title: str
     href: Optional[str]=None
 
-    # @classmethod
-    # def file(cls, fname: PathIsh, **kwargs):
-    #     return cls(file=str(fname), **kwargs)
-
     @classmethod
-    def make(cls, title, href=None):
+    def make(cls, title: str, href: Optional[str]=None):
         return cls(title=title, href=href)
 
     @classmethod

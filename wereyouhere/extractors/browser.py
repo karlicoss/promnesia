@@ -38,7 +38,7 @@ def _firefox(cols, histfile: PathIsh, tag: str) -> Iterator[PreVisit]:
             url=url,
             dt=dt,
             tag=tag,
-            locator=Loc.make(histfile),
+            locator=Loc.file(histfile),
         )
     yield from browser_extract(
         histfile=histfile,
@@ -70,7 +70,7 @@ def chrome(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
             url=url,
             dt=dt,
             tag=tag,
-            locator=Loc.make(histfile),
+            locator=Loc.file(histfile),
         )
 
     yield from browser_extract(

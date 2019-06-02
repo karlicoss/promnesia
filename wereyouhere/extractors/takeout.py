@@ -55,7 +55,7 @@ class TakeoutHTMLParser(HTMLParser):
         self.visits = []
         self.current = {}
         self.tag = tag
-        self.locator = Loc.make(fpath)
+        self.locator = Loc.file(fpath)
 
     def _reg(self, name, value):
         assert name not in self.current
@@ -190,7 +190,7 @@ def read_browser_history_json(takeout: TakeoutSource) -> Iterable[PreVisit]:
         return
 
     fpath = _path(takeout)
-    locator = Loc.make(fpath)
+    locator = Loc.file(fpath)
 
     j = None
     with _open(takeout, spath) as fo: # TODO iterative parser?

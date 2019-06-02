@@ -145,6 +145,6 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> I
             url=eu.url, # TODO FIXME use ctx?
             dt=dt,
             tag=tag,
-            locator=Loc.make(pp),
+            locator=Loc.file(pp),
         )
 
