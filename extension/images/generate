@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from subprocess import check_call
+
+def main():
+    size = 48
+    source = Path(__file__).parent / f'source_{size}.svg'
+    src_color = '#00ff00'
+    src_svg = source.read_text()
+
+    spec = [
+        (f'ic_visited_{size}.png'    , '#00ff00'),
+        (f'ic_not_visited_{size}.png', '#999999'),
+        (f'ic_boring_{size}.png'     , '#550000'),
+    ]
+    for fname, color in spec:
+        svg = src_svg.replace(src_color, color)
+        out = Path(__file__).parent / fname
+
+        with NamedTemporaryFile(suffix='.svg') as ntf:
+            path = Path(ntf.name)
+            path.write_text(svg)
+
+            check_call(['inkscape', '-z', '-e', str(out), str(path)])
+
+if __name__ == '__main__':
+    main()
