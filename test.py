@@ -131,6 +131,7 @@ def test_plaintext_path_extractor():
     ))
     assert len(hist) == 3
 
+# TODO perhaps it belongs to canonify?
 def test_normalise():
     import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
@@ -138,7 +139,7 @@ def test_normalise():
     hist = history(W(custom_gen.extract,
         extract_from_path('testdata/normalise'),
     ))
-    assert len(hist) == 5
+    assert len(hist) == 7
 
 
 def test_normalise_weird():
@@ -148,7 +149,8 @@ def test_normalise_weird():
     hist = history(W(custom_gen.extract,
         extract_from_path('testdata/weird.txt'),
     ))
-    assert "urbandictionary.com/define.php?term=Belgian Whistle" in hist
+    # TODO assert there are no spaces in the database?
+    assert "urbandictionary.com/define.php?term=Belgian+Whistle" in hist
     assert "en.wikipedia.org/wiki/Dinic's_algorithm" in hist
 
 

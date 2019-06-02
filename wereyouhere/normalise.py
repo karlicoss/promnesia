@@ -1,7 +1,9 @@
 from typing import List, Any
 from re import compile as R
+from kython.canonify import canonify
 
 
+# TODO make sure we are consistent with these rules??
 STRIP_RULES: List[List[Any]] = [
     [R('.*')                     , R('^\\w+://'         )],
     [R('.*')                     , R('(www|ww|amp)\\.'  )],
@@ -15,6 +17,7 @@ STRIP_RULES: List[List[Any]] = [
 
 
 def normalise_url(url):
+    return canonify(url)
     cur = url
     for thing in STRIP_RULES:
         first = thing[0]

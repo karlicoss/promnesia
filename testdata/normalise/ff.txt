@@ -8,8 +8,6 @@ http://reddit.com/post&stupid_param=whatever
 
 htpp://reddit.com/post?whoops
 
-http://www.reddit.com/post?hi&omg?meeeh
-
 http://www.argos.co.uk/webapp/wcs/stores/servlet/OrderItemDisplay
 
 http://www.argos.co.uk/webapp/wcs/stores/servlet/OrderItemDisplay?storeId=10151&GiftMode=Reset&langId=110&krypto=DfKzD/frV1rz5gXFhfkTSOJ/+Fphcd/Mx/H5+m5Jfbp5UlOUllPqDwFbO94lNbtFaEXhWQ7bVqIl\nbqhTqO1zcQ7FXphHXYAO3bbj07XbbDf40pQX5mQFACOPRF0LPibBG6yqBP0RDWQWUl7vcgTmqA==

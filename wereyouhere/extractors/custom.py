@@ -42,6 +42,7 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
 
         context = f"{fname}:{lineno}" if fname and lineno else None
 
+        # TODO not sure if even necessary? not that I use canonify
         url = unquote(url)
 
         ts: datetime
