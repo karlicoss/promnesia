@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from datetime import datetime
 import json
+import shutil
+import tempfile
 
 from sqlalchemy import create_engine, MetaData # type: ignore
 from sqlalchemy import Column, Table # type: ignore
@@ -62,22 +64,24 @@ def dump_histories(all_histories: List[Tuple[str, History]], config: Config):
 
     db_path = output_dir / 'visits.sqlite'
 
-    engine = create_engine(f'sqlite:///{db_path}')
-    binder = Binder(clazz=DbVisit)
-    meta = MetaData(engine)
-    table = Table('visits', meta, *binder.columns)
-    meta.create_all()
-
     def iter_visits():
         for e, h in all_histories:
             # TODO sort them somehow for determinism?
             yield from h.visits
 
+    ntf = tempfile.NamedTemporaryFile(delete=False)
+    tpath = ntf.name
+    engine = create_engine(f'sqlite:///{tpath}')
+    binder = Binder(clazz=DbVisit)
+    meta = MetaData(engine)
+    table = Table('visits', meta, *binder.columns)
+    meta.create_all()
+
     with engine.begin() as trans:
-        # pylint: disable=no-value-for-parameter
-        engine.execute(table.delete())
         for chunk in ichunks(iter_visits(), n=1000):
             bound = [binder.to_row(x) for x in chunk]
             # pylint: disable=no-value-for-parameter
             engine.execute(table.insert().values(bound))
+    shutil.move(tpath, db_path)
+
     logger.info('saved database to %s', db_path)
