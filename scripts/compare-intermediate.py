@@ -120,17 +120,26 @@ def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
     return errors
 
 
-def collect(jj):
+def collect(fname: str, jj):
     logger = get_logger()
     visits = set()
     for src, data in sorted(jj):
         for v in data:
             loc = v['locator']
-            locs = '{}:{}'.format(loc['href'], loc['title'])
+            # TODO hmm, comparison tends to be same if we just ignore the locator..
+            locs = '' # TODO FIXME '{}:{}'.format(loc['href'], loc['title'])
+
+            tag = v['tag']
+            # # TODO shit, only need to do that first time...
+            # if '20190525074221' in fname:
+            #     # split databases
+            #     if tag.endswith('-old'):
+            #         tag = tag[:-4]
+
             vs = Visit(
                 source=src,
                 url=v['norm_url'],
-                tag=v['tag'],
+                tag=tag,
                 dt=v['dt'],
                 context=v['context'] or '<no context>', # to simplify comparisons...
                 locator=locs,
@@ -153,7 +162,8 @@ def main():
     p = argparse.ArgumentParser()
     # TODO better name?
     p.add_argument('--intermediate-dir', type=Path, required=True)
-    p.add_argument('--all', action='store_true')
+    p.add_argument('--last', type=int, default=2)
+    p.add_argument('--all', action='store_const', const=0, dest='last')
     p.add_argument('paths', nargs='*')
     args = p.parse_args()
     # TODO perhaps get rid of linksdb completely? The server could merge them by itself
@@ -161,12 +171,10 @@ def main():
     assert int_dir.exists()
 
     jsons = list(sorted(int_dir.glob('*.json*')))
-    if not args.all:
-        if len(args.paths) == 0:
-            # only compare last
-            jsons = jsons[-2:]
-        else:
-            jsons = [Path(p) for p in args.paths]
+    if len(args.paths) == 0:
+        jsons = jsons[-args.last:]
+    else:
+        jsons = [Path(p) for p in args.paths]
 
     assert len(jsons) > 0
 
@@ -179,7 +187,7 @@ def main():
         name = f.name
         this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
         with kompress.open(f) as fo:
-            vis = collect(json.load(fo))
+            vis = collect(name, json.load(fo))
         if last is not None:
             between = f'{last_dts}:{this_dts}'
             errs = compare(last, vis, between=between)
