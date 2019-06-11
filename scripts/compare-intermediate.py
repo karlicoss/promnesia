@@ -126,7 +126,7 @@ def collect(jj):
     for src, data in sorted(jj):
         for v in data:
             loc = v['locator']
-            locs = '{}:{}'.format(loc['file'], loc['line'])
+            locs = '{}:{}'.format(loc['href'], loc['title'])
             vs = Visit(
                 source=src,
                 url=v['norm_url'],
