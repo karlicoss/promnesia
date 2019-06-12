@@ -35,6 +35,10 @@
         "default_icon": "images/ic_not_visited_48.png",
         "default_title": "Was not visited"
     },
+    "page_action": {
+        "default_icon": "images/ic_not_visited_48.png",
+        "default_title": "Was not visited"
+    },
     "commands": {
         "_execute_browser_action": {
             "description": "Activate extension",

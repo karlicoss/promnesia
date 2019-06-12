@@ -8,6 +8,8 @@ import {get_options} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
+const ACTIONS = [chrome.browserAction, chrome.pageAction]; // TODO dispatch depending on android/desktop?
+
 // TODO common?
 export function showNotification(text: string, priority: number=0) {
     chrome.notifications.create({
@@ -211,14 +213,20 @@ function updateState () {
             let res = getIconAndTitle(visits);
             let icon = res[0];
             let title = res[1];
-            chrome.browserAction.setIcon({
-                path: icon,
-                tabId: tabId,
-            });
-            chrome.browserAction.setTitle({
-                title: title,
-                tabId: tabId,
-            });
+            for (const action of ACTIONS) {
+                // $FlowFixMe
+                action.setIcon({
+                    path: icon,
+                    tabId: tabId,
+                });
+                // $FlowFixMe
+                action.setTitle({
+                    title: title,
+                    tabId: tabId,
+                });
+            }
+            // TODO if it's part of actions only?
+            chrome.pageAction.show(tabId);
 
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             const locs = visits.contexts().map(l => l == null ? null : l.title);
@@ -435,13 +443,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     return false;
 });
 
-chrome.browserAction.onClicked.addListener(tab => {
-    const url = unwrap(tab.url);
-    if (ignored(url)) {
-        showNotification(`${url} can't be handled`);
-        return;
-    }
-    chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'}, () => {
-        chrome.tabs.executeScript(tab.id, {code: 'toggleSidebar();'});
+for (const action of ACTIONS) {
+    action.onClicked.addListener(tab => {
+        const url = unwrap(tab.url);
+        if (ignored(url)) {
+            showNotification(`${url} can't be handled`);
+            return;
+        }
+        chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'}, () => {
+            chrome.tabs.executeScript(tab.id, {code: 'toggleSidebar();'});
+        });
     });
-});
+}
