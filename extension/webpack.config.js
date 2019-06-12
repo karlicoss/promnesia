@@ -1,10 +1,36 @@
-const path = require('path');
-const webpack = require('webpack');
-const CopyWebpackPlugin = require('copy-webpack-plugin'),
+const path = require('path'),
+      webpack = require('webpack'),
+      CopyWebpackPlugin = require('copy-webpack-plugin'),
       CleanWebpackPlugin = require("clean-webpack-plugin"),
       WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+
+const env = {
+    // NODE_ENV: (process.env.NODE_ENV || "development"),
+    // PORT: (process.env.PORT || 3000),
+    // ANY_HOST: (process.env.ANY_HOST ? true : false),
+    TARGET: process.env.TARGET,
+};
+
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
+
+const target = env.TARGET;
+
+
+const manifestExtra = {
+    version: pkg.version,
+};
+
+if (target == 'chrome') {
+    manifestExtra.options_ui = {chrome_style: true};
+} else if (target == 'firefox') {
+    manifestExtra.options_ui = {browser_style: true};
+    manifestExtra.browser_action = {browser_style: true};
+} else {
+    throw new Error("unknown target " + target);
+}
+
+const buildPath = path.join(__dirname, 'dist', target);
 
 const options = {
   mode: 'development',
@@ -16,7 +42,7 @@ const options = {
     sidebar      : path.join(__dirname, './src/sidebar'),
   },
   output: {
-    path: path.join(__dirname, './dist'),
+    path: buildPath,
     filename: '[name].js',
   },
   module: {
@@ -32,11 +58,6 @@ const options = {
           loader: "style-loader!css-loader",
           exclude: /node_modules/
       },
-      // {
-      //     test: new RegExp('\.(' + fileExtensions.join('|') + ')$'),
-      //     loader: "file-loader?name=[name].[ext]",
-      //     exclude: /node_modules/
-      // },
       {
           test: /\.html$/,
           loader: "html-loader",
@@ -45,7 +66,7 @@ const options = {
     ]
   },
   plugins: [
-   new CleanWebpackPlugin(["dist/*"]),
+   new CleanWebpackPlugin([buildPath + "/*"]),
    new CopyWebpackPlugin([
       { from: 'images/*' },
       { from: 'src/*.html' , flatten: true},
@@ -55,14 +76,10 @@ const options = {
     new WebpackExtensionManifestPlugin({
         config: {
             base: baseManifest,
-            extend: {version: pkg.version}
+            extend: manifestExtra,
         }
     }),
   ]
-    //TODO??
-  // resolve: {
-  //   extensions: ['.js']
-  // },
 };
 
 

@@ -35,6 +35,15 @@
         "default_icon": "images/ic_not_visited_48.png",
         "default_title": "Was not visited"
     },
+    "commands": {
+        "_execute_browser_action": {
+            "description": "Activate extension",
+            "suggested_key": {
+                "default": "Ctrl+Alt+W",
+                "mac"    : "Command+Alt+W"
+            }
+        }
+    },
     "manifest_version": 2,
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

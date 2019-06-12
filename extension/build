@@ -1,5 +1,20 @@
-#!/bin/bash
-set -eu
-cd "$(dirname "$0")"
+#!/usr/bin/env python3
+import argparse
+import os
+from subprocess import check_call
 
-npm run-script build
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--target', type=str)
+    for b in ['chrome', 'firefox']:
+        p.add_argument('--' + b, action='store_const', const=b, dest='target')
+    args = p.parse_args()
+    assert args.target is not None
+
+    env = {'TARGET': args.target, **os.environ}
+    check_call([
+        'npm', 'run-script', 'build',
+    ], env=env)
+
+if __name__ == '__main__':
+    main()
