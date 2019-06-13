@@ -23,7 +23,8 @@ const manifestExtra = {
 
 if (target == 'chrome') {
     manifestExtra.options_ui = {chrome_style: true};
-} else if (target == 'firefox') {
+} else if (target.includes('firefox')) {
+    // TODO not sure if should do anything special for mobile
     manifestExtra.options_ui = {browser_style: true};
     manifestExtra.browser_action = {browser_style: true};
 } else {

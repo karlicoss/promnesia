@@ -6,7 +6,7 @@ from subprocess import check_call
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--target', type=str)
-    for b in ['chrome', 'firefox']:
+    for b in ['chrome', 'firefox', 'firefox-mobile']:
         p.add_argument('--' + b, action='store_const', const=b, dest='target')
     args = p.parse_args()
     assert args.target is not None
