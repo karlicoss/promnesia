@@ -16,7 +16,7 @@ from kython.kcache import Binder
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData # type: ignore
+from sqlalchemy import create_engine, MetaData, exists # type: ignore
 from sqlalchemy import Column, Table # type: ignore
 
 
@@ -134,14 +134,20 @@ def visited(
 ):
     logger = get_logger()
 
+    logger.debug(urls)
     nurls = list(map(normalise_url, urls))
-    logger.debug(nurls)
+    logger.debug('normalised: %s', nurls)
 
-    raise RuntimeError("TODO FIXME")
-    # vmap = get_state()
-    # return [
-    #     u in vmap for u in nurls
-    # ]
+    engine, binder, table = get_stuff()
+
+    results = []
+    # TODO optimize and implement properly..
+    with engine.connect() as conn:
+        for nurl in nurls:
+            query = exists(table.select().where(table.c.norm_url == nurl)).select()
+            [res] = conn.execute(query)
+            results.append(res[0])
+    return results
 
 
 def run(port: str, config: Path):
@@ -161,8 +167,16 @@ def run(port: str, config: Path):
 
 _DEFAULT_CONFIG = Path('config.py')
 
+from contextlib import contextmanager
+import json
+from subprocess import Popen, PIPE
+from subprocess import check_output, check_call
+import time
 
-def test_query(tmp_path):
+TEST_PORT = "16556" # TODO random?
+
+@contextmanager
+def _test_helper(tmp_path):
     tdir = Path(tmp_path)
     # TODO ugh. quite hacky...
     from shutil import copy
@@ -173,33 +187,42 @@ def test_query(tmp_path):
         fo.write(f"OUTPUT_DIR = '{tdir}'")
 
     path = (Path(__file__).parent.parent / 'run').absolute()
-    from subprocess import Popen, PIPE
-    from subprocess import check_output, check_call
-    import time
-    import json
 
 
     check_call([str(path), 'extract', '--config', config])
 
-    PORT = "16555" # TODO random?
-    cmd = [str(path), 'serve', '--port', PORT, '--config', config]
-    with Popen(cmd, stdout=PIPE, stderr=PIPE) as server: # type: ignore
+    cmd = [str(path), 'serve', '--port', TEST_PORT, '--config', config]
+    with Popen(cmd) as server: # type: ignore
         print("Giving few secs to start server up")
-        time.sleep(2)
+        time.sleep(3)
         print("Started server up")
         # TODO which url??
 
-        for q in range(3):
-            print(f"querying {q}")
-            test_url = 'https://takeout.google.com/settings/takeout'
-            response = json.loads(check_output([
-                'http', 'post', f'http://localhost:{PORT}/visits', f'url={test_url}',
-            ]).decode('utf8'))
-            assert len(response) > 0
+        yield
+
         print("DONE!!!!")
         server.kill()
 
 
+def test_query(tmp_path):
+    test_url = 'https://takeout.google.com/settings/takeout'
+    with _test_helper(tmp_path):
+        for q in range(3):
+            print(f"querying {q}")
+            cmd = [
+                'http', 'post', f'http://localhost:{TEST_PORT}/visits', f'url={test_url}',
+            ]
+            response = json.loads(check_output(cmd).decode('utf8'))
+            assert len(response) > 0
+
+def test_visited(tmp_path):
+    test_url = 'https://takeout.google.com/settings/takeout'
+    with _test_helper(tmp_path):
+        cmd = [
+            'http', 'post',  f'http://localhost:{TEST_PORT}/visited', f"""urls:=["{test_url}","http://badurl.org"]""",
+        ]
+        response = json.loads(check_output(cmd))
+        assert response == [True, False]
 
 
 def setup_parser(p):
