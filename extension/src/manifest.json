@@ -46,6 +46,13 @@
                 "default": "Ctrl+Alt+W",
                 "mac"    : "Command+Alt+W"
             }
+        },
+        "show_dots": {
+            "description": "Activate dots for visited urls",
+            "suggested_key": {
+                "default": "Ctrl+Alt+V",
+                "mac"    : "Command+Alt+V"
+            }
         }
     },
     "manifest_version": 2,

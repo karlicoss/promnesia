@@ -359,6 +359,7 @@ function ignored(url: string): boolean {
     return false;
 }
 
+/*
 // TODO ehh... not even sure that this is correct thing to do...
 // $FlowFixMe
 chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
@@ -383,6 +384,8 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
         // updateState();
     });
 });
+*/
+
 // chrome.tabs.onReplaced.addListener(updateState);
 
 chrome.tabs.onCreated.addListener((tab) => {
@@ -423,18 +426,26 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     }
 });
 
-// $FlowFixMe
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.method == 'getActiveTabVisits') {
-        chrome.tabs.query({'active': true}, function (tabs) {
-            var url = unwrap(tabs[0].url);
-            // TODO ugh duplication
-            if (ignored(url)) {
-                log("ignoring %s", url);
-                return;
-            }
+type Tab = any;
 
-            getVisits(url, function (visits) {
+function getActiveTab(cb: (Tab) => void) {
+    chrome.tabs.query({'active': true}, tabs => {
+        const tab = tabs[0];
+        const url = unwrap(tab.url);
+        // TODO ugh duplication
+        if (ignored(url)) {
+            log("ignoring %s", url);
+            return;
+        }
+        cb(tab);
+    });
+}
+
+// $FlowFixMe
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.method == 'getActiveTabVisits') {
+        getActiveTab(tab => {
+            getVisits(tab.url, function (visits) {
                 sendResponse(visits);
             });
         });
@@ -455,3 +466,13 @@ for (const action of ACTIONS) {
         });
     });
 }
+
+chrome.commands.onCommand.addListener(cmd => {
+    if (cmd === 'show_dots') {
+        getActiveTab(tab => {
+            get_options(opts => {
+                showDots(tab.tabId, opts);
+            });
+        });
+    }
+});
