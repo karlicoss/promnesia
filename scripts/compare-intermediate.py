@@ -12,6 +12,7 @@ from hashlib import sha1
 
 from kython.klogging import setup_logzero
 from kython import kompress
+from kython.canonify import canonify
 
 # TODO include latest too?
 from cconfig import ignore, filtered
@@ -138,7 +139,8 @@ def collect(fname: str, jj):
 
             vs = Visit(
                 source=src,
-                url=v['norm_url'],
+                # canonify once again to compare against changes in normalising as well
+                url=canonify(v['norm_url']),
                 tag=tag,
                 dt=v['dt'],
                 context=v['context'] or '<no context>', # to simplify comparisons...
