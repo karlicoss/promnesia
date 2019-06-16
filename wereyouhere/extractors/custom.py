@@ -88,6 +88,8 @@ def _collect(thing, path: List[str], result: List[EUrl]):
     else:
         pass
 
+
+# TOOD mm. okay, I suppose could use kython consuming thingy?..
 def collect_from(thing) -> List[EUrl]:
     uuu: List[EUrl] = []
     path: List[str] = []

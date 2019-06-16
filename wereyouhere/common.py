@@ -167,6 +167,7 @@ class History(Sized):
         if History.filtered(v.url):
             return None
 
+        # TODO perhaps take normalised into account here??
         if v in self.vmap:
             return None
 
