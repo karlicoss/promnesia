@@ -11,6 +11,7 @@ from .normalise import normalise_url
 
 from kython.ktyping import PathIsh
 from kython.kerror import Res, unwrap
+from kython.canonify import CanonifyException
 
 import dateparser # type: ignore
 from typing_extensions import Protocol
@@ -109,6 +110,10 @@ def make_filter(thing) -> Filter:
     else: # must be predicate
         return thing
 
+
+def get_logger():
+    return logging.getLogger("WereYouHere")
+
 # TODO do i really need to inherit this??
 class History(Sized):
     FILTERS: List[Filter] = [
@@ -141,6 +146,7 @@ class History(Sized):
 
     def __init__(self):
         self.vmap: Dict[PreVisit, DbVisit] = {}
+        self.logger = get_logger()
 
     # TODO mm. maybe history should get filters from some global config?
     # wonder how okay is it to set class attribute..
@@ -167,6 +173,10 @@ class History(Sized):
         try:
             # TODO if we do it as unwrap(DbVisit.make, v), then we can access make return type and properly handle error type?
             db_visit = unwrap(DbVisit.make(v))
+        except CanonifyException as ce:
+            self.logger.error('error while canonnifying %s... ignoring', v)
+            self.logger.exception(ce)
+            return None
         except Exception as e:
             return e
 
@@ -190,10 +200,6 @@ class History(Sized):
 
     def __repr__(self):
         return 'History{' + repr(self.visits) + '}'
-
-
-def get_logger():
-    return logging.getLogger("WereYouHere")
 
 
 # kinda singleton
