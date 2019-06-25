@@ -3,6 +3,7 @@ from datetime import datetime, date
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection
 from pathlib import Path
+import itertools
 import logging
 from functools import lru_cache
 import pytz
@@ -231,7 +232,7 @@ def sanitize(url: str) -> str:
 
 
 # TODO sort just in case? not sure..
-def extract_urls(s: str) -> List[str]:
+def _extract_urls(s: str) -> List[str]:
     # TODO unit test for escaped urls.. or should it be in normalise instead?
     if len(s.strip()) == 0:
         return [] # optimize just in case..
@@ -247,6 +248,10 @@ def extract_urls(s: str) -> List[str]:
         urls.extend(extractor.find_urls(x))
 
     return [sanitize(u) for u in urls]
+
+
+def extract_urls(s: str) -> List[str]:
+    return list(itertools.chain.from_iterable(map(_extract_urls)))
 
 
 def from_epoch(ts: int) -> datetime:
