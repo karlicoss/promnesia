@@ -251,7 +251,7 @@ def _extract_urls(s: str) -> List[str]:
 
 
 def extract_urls(s: str) -> List[str]:
-    return list(itertools.chain.from_iterable(map(_extract_urls)))
+    return list(itertools.chain.from_iterable(map(_extract_urls, s.splitlines())))
 
 
 def from_epoch(ts: int) -> datetime:
