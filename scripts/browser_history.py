@@ -2,6 +2,7 @@
 from datetime import datetime
 from pathlib import Path
 from subprocess import check_output
+from typing import Optional
 import filecmp
 import logging
 
@@ -17,23 +18,33 @@ def get_logger():
 
 
 # TODO kython?
+# TODO the with key?
 def only(it):
     values = list(it)
-    assert len(values) == 1
-    return values[0]
+    if len(values) == 1:
+        return values[0]
+    raise RuntimeError(f'Expected a single value: {values}')
 
 
-def get_path(browser: str) -> Path:
+def get_path(browser: Browser, profile: str='*') -> Path:
     if browser == 'chrome':
-        return Path('~/.config/google-chrome/Default/History').expanduser()
+        bpath = Path('~/.config/google-chrome').expanduser()
+        dbs = bpath.glob(profile + '/History')
     elif browser == 'firefox':
-        return only(Path('~/.mozilla/firefox/').expanduser().glob('*/places.sqlite'))
+        bpath = Path('~/.mozilla/firefox/').expanduser()
+        dbs = bpath.glob(profile + '/places.sqlite')
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
+    ldbs = list(dbs)
+    if len(ldbs) == 1:
+        return ldbs[0]
+    raise RuntimeError(f'Expected single database, got {ldbs}. Perhaps you want to use --profile argument?')
+
+
 
 def test_get_path():
     get_path('chrome')
-    get_path('firefox')
+    get_path('firefox', profile='*-release')
 
 
 def atomic_copy(src: Path, dest: Path):
@@ -52,13 +63,13 @@ def format_dt(dt: datetime) -> str:
     return dt.strftime('%Y%m%d%H%M%S')
 
 
-def backup_history(browser: Browser, to: Path, pattern=None) -> Path:
+def backup_history(browser: Browser, to: Path, profile: str='*', pattern=None) -> Path:
     assert to.is_dir()
     logger = get_logger()
 
     now = format_dt(datetime.utcnow())
 
-    path = get_path(browser)
+    path = get_path(browser, profile=profile)
 
     pattern = path.stem + '-{}' + path.suffix if pattern is None else pattern
     fname = pattern.format(now)
@@ -76,7 +87,7 @@ def backup_history(browser: Browser, to: Path, pattern=None) -> Path:
 def test_backup_history(tmp_path):
     tdir = Path(tmp_path)
     backup_history(CHROME, tdir)
-    backup_history(FIREFOX, tdir)
+    backup_history(FIREFOX, tdir, profile='*-release')
 
 
 def guess_db_date(db: Path) -> str:
@@ -101,11 +112,12 @@ def main():
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument('--browser', type=Browser, required=True)
+    p.add_argument('--profile', type=str, default='*', help='Use to pick the correct profile to back up. If unspecified, will assume a single profile')
     p.add_argument('--to', type=Path, required=True)
     args = p.parse_args()
 
     # TODO do I need pattern??
-    backup_history(browser=args.browser, to=args.to)
+    backup_history(browser=args.browser, to=args.to, profile=args.profile)
 
 
 if __name__ == '__main__':

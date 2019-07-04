@@ -192,7 +192,7 @@ def merge(merged: Path, chunk: Path):
     logger.info("DB size after : %s items %d bytes", entries(merged), merged.stat().st_size)
 
 
-def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path):
+def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path, profile='*'):
     assert not to.is_dir()
 
     logger = get_logger()
@@ -201,7 +201,7 @@ def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path):
 
         if from_ is None:
             assert browser is not None
-            backup_history(browser, tdir)
+            backup_history(browser, tdir, profile=profile)
             from_ = tdir
 
         for dbfile in sorted(x for x in from_.rglob('*') if x.is_file() and mime.from_file(str(x)) in ['application/x-sqlite3']):
@@ -210,7 +210,7 @@ def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path):
             merge(merged=to, chunk=dbfile)
 
 
-def _helper(tmp_path, browser):
+def _helper(tmp_path, browser, profile='*'):
     logger = get_logger()
     setup_logzero(logger, level=logging.DEBUG)
 
@@ -220,8 +220,8 @@ def _helper(tmp_path, browser):
     entr = entries(merged)
     assert entr is None
 
-    merge_from(browser, None, merged)
-    merge_from(browser, None, merged)
+    merge_from(browser, None, merged, profile=profile)
+    merge_from(browser, None, merged, profile=profile)
 
     entr = entries(merged)
     assert entr is not None
@@ -231,7 +231,7 @@ def test_merge_chrome(tmp_path):
     _helper(tmp_path, CHROME)
 
 def test_merge_firefox(tmp_path):
-    _helper(tmp_path, FIREFOX)
+    _helper(tmp_path, FIREFOX, profile='*release')
 
 
 def main():
@@ -242,13 +242,14 @@ def main():
     p.add_argument('--browser', type=Browser, required=False)
     p.add_argument('--to', type=Path, required=True)
     p.add_argument('--from', type=Path, default=None)
+    p.add_argument('--profile', default='*')
     args = p.parse_args()
 
     from_ = getattr(args, 'from')
 
     # TODO need to mark already handled? although it's farily quick as it s
     # maybe should use the DB thing to handle merged??
-    merge_from(browser=args.browser, from_=from_, to=args.to)
+    merge_from(browser=args.browser, from_=from_, to=args.to, profile=args.profile)
 
 
 if __name__ == '__main__':
