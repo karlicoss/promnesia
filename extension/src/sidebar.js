@@ -131,8 +131,10 @@ function bindSidebarDataAux(response, opts: Options) {
     ) {
         const tr = tbl.insertRow(-1);
         const tdd = tr.insertCell(-1);
+        tdd.classList.add('date');
         tdd.appendChild(doc.createTextNode(dates));
         const tdt = tr.insertCell(-1);
+        tdt.classList.add('time');
         tdt.appendChild(doc.createTextNode(times));
         const tds = tr.insertCell(-1); // TODO add class??
 

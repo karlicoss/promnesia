@@ -8,35 +8,37 @@ a {
     text-decoration: none;
 }
 
-/* TODO not great, but quickest way to render it neatly */
-/* date */
-td:nth-child(1) {
-    width: 11ch;
-}
-
-/* time */
-td:nth-child(2) {
-    width: 11ch;
-}
-
 /* meh, but ok for now */
 #visits {
-    /* handles line breaks */
-    white-space: pre-wrap;
-
     /* make table occupy whole sidebar */
     width: 100%;
 }
 
-#visits .context {
-    padding-left: 1em;
+
+#visits .date {
+    /* color: red; */
+    white-space: nowrap;
+    /* TODO not great, but quickest way to render it neatly */
+    width: 11ch;
 }
 
-#visits .locator {
-    padding-left: 1em;
+#visits .time {
+    /* color: blue; */
+    white-space: nowrap;
+    width: 11ch;
 }
 
-
-#visits .tag {
+#visits  .tag {
     margin-right: 0.2em;
 }
+
+#visits  .context {
+    padding-left: 1em;
+}
+
+#visits  .locator {
+    padding-left: 1em;
+}
+
+
+
