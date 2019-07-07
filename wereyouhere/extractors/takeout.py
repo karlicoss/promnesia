@@ -150,11 +150,15 @@ def _open(thing: TakeoutSource, path):
     else:
         return thing.joinpath(path).open('rb')
 
+def _get_cache_dir() -> Path:
+    # TODO FIXME instead this should be a parameter of takeout provider?
+    return Path('/L/data/wereyouhere/dbcache/')
 
 def cacheme(ident: str):
+    # doesn't even need a nontrivial hash function, timestsamp is encoded in name
     def db_pathf(takeout: TakeoutSource) -> Path:
         tpath = _path(takeout)
-        cache_dir = Path('/L/data/wereyouhere/dbcache/')
+        cache_dir = _get_cache_dir()
         return cache_dir / (tpath.name + '_' + ident + '.cache')
     return make_dbcache(db_pathf, type_=PreVisit, logger=get_logger())
 
@@ -249,11 +253,6 @@ def _merge(current: _Map, new: Iterable[PreVisit], tag=''):
             current[key] = pv
     logger.debug('after merging %s: %d', tag, len(current))
 
-
-# doesn't even need a nontrivial hash function, timestsamp is encoded in name
-def db_pathf(tpath: PathIsh, tag: Tag) -> Path:
-    cache_dir = Path('/L/data/wereyouhere/dbcache/')
-    return cache_dir / (Path(tpath).name + '.cache')
 
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?

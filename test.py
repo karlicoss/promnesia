@@ -50,10 +50,16 @@ def dump(hist: History):
             OUTPUT_DIR = tdir
         dump_histories([('test', hist)], config=Cfg()) # type: ignore
 
+# TODO I guess global get_config methods is ok? command line can populate it, also easy to hack in code?
+# TODO cache should be in the configuration I suppose?
 
-def test_takeout():
+def test_takeout(tmp_path):
+    tdir = Path(tmp_path)
+
     test_takeout_path = "testdata/takeout"
     import wereyouhere.extractors.takeout as tex
+    tex._get_cache_dir = lambda: tdir
+
     hist = history(W(tex.extract, test_takeout_path))
     assert len(hist) > 0 # kinda arbitrary?
 
