@@ -8,3 +8,13 @@ python-magic
 dateparser
 
 urlextract
+
+# database cache
+sqlalchemy
+
+# for extractors
+# TODO get rid of this one..
+dataset
+
+# server bit
+hug

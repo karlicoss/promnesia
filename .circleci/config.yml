@@ -21,6 +21,7 @@ jobs:
             . venv/bin/activate
             pip install -r wereyouhere/requirements.txt
             pip install -r wereyouhere/requirements-dev.txt
+            pip install 'kython@git+https://github.com/karlicoss/kython.git@master' dateparser typing_extensions
 
       - save_cache:
           paths:
@@ -34,19 +35,20 @@ jobs:
             . venv/bin/activate
             pytest test.py
 
-      - run:
-          name: run mypy
-          when: always
-          command: |
-            . venv/bin/activate
-            mypy wereyouhere scripts/**.py
+      # TODO enable these later
+      # - run:
+      #     name: run mypy
+      #     when: always
+      #     command: |
+      #       . venv/bin/activate
+      #       mypy wereyouhere scripts/**.py
 
-      - run:
-          name: run pylint
-          when: always
-          command: |
-            . venv/bin/activate
-            pylint -E wereyouhere scripts/**.py
+      # - run:
+      #     name: run pylint
+      #     when: always
+      #     command: |
+      #       . venv/bin/activate
+      #       pylint -E wereyouhere scripts/**.py
 
       - store_artifacts:
           path: test-reports
