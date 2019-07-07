@@ -8,7 +8,7 @@ from subprocess import check_output, check_call, Popen, PIPE
 import time
 from typing import NamedTuple
 
-
+from common import skip_if_ci
 
 class Helper(NamedTuple):
     port: str
@@ -16,6 +16,15 @@ class Helper(NamedTuple):
 TEST_PORT = 16556 # TODO FIXME use proper random port
 # search for Serving on :16556
 
+
+@contextmanager
+def tmp_popen(*args, **kwargs):
+    with Popen(*args, **kwargs, preexec_fn=os.setsid) as p:
+        try:
+            yield p
+        finally:
+            # ugh. otherwise was getting orphaned children...
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
 
 
 @contextmanager
@@ -37,7 +46,7 @@ def _test_helper(tmp_path):
     check_call([str(path), 'extract', '--config', config])
 
     cmd = [str(path), 'serve', '--port', str(TEST_PORT), '--config', config]
-    with Popen(cmd, preexec_fn=os.setsid) as server: # type: ignore
+    with tmp_popen(cmd) as server:
         print("Giving few secs to start server up")
         time.sleep(3)
         print("Started server up")
@@ -46,11 +55,9 @@ def _test_helper(tmp_path):
 
         print("DONE!!!!")
 
-        # ugh. otherwise was getting orphaned children...
-        # TODO extract that in a decorator?
-        os.killpg(os.getpgid(server.pid), signal.SIGTERM)
 
 
+@skip_if_ci("TODO dbcache")
 def test_query(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
@@ -62,6 +69,8 @@ def test_query(tmp_path):
             response = json.loads(check_output(cmd).decode('utf8'))
             assert len(response) > 0
 
+
+@skip_if_ci("TODO dbcache")
 def test_visited(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
