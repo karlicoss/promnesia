@@ -1,23 +1,26 @@
 module.exports = {
-    'plugins': [
-        "flowtype",
-        "react",
+    "parser": "babel-eslint",
+    "plugins": [
+        'flowtype',
+        'react',
     ],
     'extends': [
-        "eslint:recommended",
-        "plugin:react/recommended",
-        "plugin:flowtype/recommended",
+        // "google",
+        'eslint:recommended',
+        'plugin:flowtype/recommended',
+        'plugin:react/recommended',
     ],
-    'settings': {
-        'react': {
-            'version': "detect"
-        }
-    },
     'env': {
         'browser': true,
         'webextensions': true,
         'node': true,
         'es6': true,
+    },
+
+    'settings': {
+        'react': {
+            'version': 'detect'
+        }
     },
 
     "parserOptions": {

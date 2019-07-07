@@ -68,6 +68,10 @@ jobs:
           name: js flow
           command: npm run flow # TODO use flow discovery or something??
           when: always 
+      - run:
+          name: js eslint
+          command: npm run eslint
+          when: always 
       # TODO pack?
 
 
