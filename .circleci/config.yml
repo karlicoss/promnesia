@@ -1,4 +1,5 @@
-version: 2
+version: 2.1
+
 jobs:
   server_build_and_check:
     docker:
