@@ -36,5 +36,6 @@ module.exports = {
         "comma-dangle": "off",
         "no-console": "off",
     }
+    // https://github.com/gajus/eslint-plugin-flowtype
     // TODO use flow?
 };

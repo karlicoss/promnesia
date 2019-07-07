@@ -1,3 +1,5 @@
+/* @flow */
+import {unwrap} from './common';
 import {get_options, set_options} from './options';
 
 function getInputElement(element_id: string): HTMLInputElement {
@@ -30,6 +32,7 @@ function getExtraCss(): HTMLInputElement {
 
 // TODO display it floating
 
+
 document.addEventListener('DOMContentLoaded', () => {
     get_options(opts => {
         getHost().value      = opts.host;
@@ -40,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getExtraCss().value  = opts.extra_css;
     });
 });
-document.getElementById('save_id').addEventListener('click', () => {
+unwrap(document.getElementById('save_id')).addEventListener('click', () => {
     const opts = {
         host      : getHost().value,
         dots      : getDots().checked,

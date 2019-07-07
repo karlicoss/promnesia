@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit} from './common';
+// import {Visits, Visit} from './common';
 
 // ok, this isn't even used ATM
 // commented in case it would be revived

@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Locator, Tag, Url, VisitsMap} from './common';
+import type {Locator, Tag, Url} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import type {Options} from './options';
@@ -74,6 +74,7 @@ function log() {
 
 const ldebug = log; // TODO
 const linfo = log; // TODO
+// eslint-disable-next-line no-unused-vars
 const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
@@ -445,7 +446,7 @@ function getActiveTab(cb: (Tab) => void) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.method == 'getActiveTabVisits') {
         getActiveTab(tab => {
-            getVisits(tab.url, function (visits) {
+            getVisits(tab.url, visits => {
                 sendResponse(visits);
             });
         });

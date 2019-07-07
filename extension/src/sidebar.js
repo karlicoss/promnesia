@@ -159,7 +159,7 @@ function bindSidebarDataAux(response, opts: Options) {
         if (tag === null) {
             // meh
             tag = 'all';
-            predicate = t => true;
+            predicate = () => true;
         } else {
             predicate = t => t == tag;
         }
@@ -274,6 +274,7 @@ function bindSidebarDataAux(response, opts: Options) {
     for (const group of groups) {
         const first = group[0];
         const last  = group[group.length - 1];
+        // eslint-disable-next-line no-unused-vars
         const [fdates, ftimes] = _fmt(first.time);
         const [ldates, ltimes] = _fmt(last.time);
         const dates = ldates;
@@ -295,7 +296,7 @@ window.bindSidebarData = bindSidebarData;
 function requestVisits() {
     chrome.runtime.sendMessage({
         method: 'getActiveTabVisits'
-    }, (response)  => {
+    }, (response: ?Visits)  => {
         if (response == null) {
             console.log("No visits for this url");
             return;
