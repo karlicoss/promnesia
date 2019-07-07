@@ -53,10 +53,13 @@ function getSidebarNode(opts: Options): ?HTMLElement {
     base.setAttribute('target', '_blank');
     head.appendChild(base);
 
+
+    const cont = root.children[0].children[1]; // TODO very fragile... div data-reactroot -> some other thing that is an actual container
+    cont.style.cssText = "max-width: 500px !important;"; // override CSS enforced 400px thing https://github.com/segmentio/chrome-sidebar/blob/ae9f07e97bb08927631d1f2eb5fb31e965959bde/src/frame.js#L36
+
     return cdoc.body;
     // right, iframe is pretty convenient for scrolling...
 
-    // const cont = root.children[0].children[1]; // TODO very fragile... div data-reactroot -> some other thing that is an actual container
     // return (cont: HTMLElement);
 }
 
