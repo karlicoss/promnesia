@@ -35,14 +35,14 @@ jobs:
           when: always
           command: |
             . venv/bin/activate
-            pytest -s test.py
+            python3 -m pytest -s test.py
 
       - run:
           name: integration tests
           when: always
           command: |
             . venv/bin/activate
-            pytest -s tests/integration_test.py
+            python3 -m pytest -s tests/integration_test.py
 
 
       # TODO enable these later

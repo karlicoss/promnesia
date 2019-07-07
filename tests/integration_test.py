@@ -34,6 +34,28 @@ OUTPUT_DIR = '{tdir}'
     index(cfg)
 
 
+from sqlalchemy import create_engine, MetaData, exists # type: ignore
+from sqlalchemy import Column, Table # type: ignore
+from kython.kcache import Binder
+from wereyouhere.common import DbVisit # TODO ugh. figure out pythonpath
+
+
+def _get_stuff(outdir: Path):
+    db_path = outdir / 'visits.sqlite'
+    assert db_path.exists()
+
+    engine = create_engine(f'sqlite:///{db_path}')
+
+    # TODO ugh. 
+    import sys
+    print(sys.path)
+    binder = Binder(clazz=DbVisit)
+
+    meta = MetaData(engine)
+    table = Table('visits', meta, *binder.columns)
+
+    return engine, binder, table
+
 def test_hypothesis(tmp_path):
     tdir = Path(tmp_path)
     cfg = tdir / 'test_config.py'
@@ -43,8 +65,24 @@ OUTPUT_DIR = '{tdir}'
 from wereyouhere.generator.smart import Wrapper as W
 import wereyouhere.extractors.hypothesis as hypothesis
 
-hyp_extractor = W(hypothesis.extract, '{testdata}/hypothesis/netrights-dashboards-mockup/_data/annotations.json')
+hyp_extractor = W(hypothesis.extract, '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json')
 
 EXTRACTORS = [hyp_extractor]
     """)
     index(cfg)
+
+
+    # TODO copy pasting from server; need to unify
+    engine, binder, table = _get_stuff(tdir)
+    query = table.select()
+    with engine.connect() as conn:
+        visits = [binder.from_row(row) for row in conn.execute(query)]
+
+    assert len(visits) > 100
+
+    [vis] = [x for x in visits if 'fundamental fact of evolution' in x.context]
+
+    assert vis.norm_url == 'wired.com/2017/04/the-myth-of-a-superhuman-ai'
+    assert vis.orig_url == 'https://www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
+    assert vis.locator.href == 'https://hyp.is/_Z9ccmVZEeexBOO7mToqdg/www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
+    assert 'misconception about evolution is fueling misconception about AI' in vis.context # contains notes as well
