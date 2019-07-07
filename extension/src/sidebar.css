@@ -1,6 +1,6 @@
 /* sup */
 body {
-    font-size: 13px;
+    font-size: 15px;
     color: black;
 }
 
@@ -15,23 +15,6 @@ a {
 }
 
 
-#visits .date {
-    /* color: red; */
-    white-space: nowrap;
-    /* TODO not great, but quickest way to render it neatly */
-    width: 11ch;
-}
-
-#visits .time {
-    /* color: blue; */
-    white-space: nowrap;
-    width: 11ch;
-}
-
-#visits  .tag {
-    margin-right: 0.2em;
-}
-
 #visits  .context {
     padding-left: 1em;
 }
@@ -40,5 +23,42 @@ a {
     padding-left: 1em;
 }
 
+
+
+#visits {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#visits li {
+    background: #e6e6e6cc;
+
+    margin-top: 1em;
+
+    padding: 0.2em;
+}
+
+#visits .tag {
+    color: orange; /* TODO monospace font or smth? */
+    margin-right: 0.2em;
+    white-space: nowrap;
+}
+
+#visits .datetime {
+    white-space: nowrap;
+    float: right;
+}
+
+
+/* TODO not great, but quickest way to render it neatly */
+/* TODO not sure which order users expect first? */
+#visits .time {
+    color: blue;
+    margin-right: 1em;
+}
+#visits .date {
+    color: red;
+}
 
 

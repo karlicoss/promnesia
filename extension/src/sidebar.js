@@ -33,6 +33,7 @@ function getSidebarNode(opts: Options): ?HTMLElement {
         return null;
     }
     const frame = root.getElementsByTagName('iframe')[0];
+    // TODO this should be configured..
     frame.style.background = "rgba(236, 236, 236, 0.4)";
 
     const cdoc = frame.contentDocument;
@@ -95,10 +96,8 @@ function bindSidebarDataAux(response, opts: Options) {
     console.log(response);
 
     const doc = document;
-
-    const tbl = doc.createElement('table'); cont.appendChild(tbl);
-    tbl.id = 'visits';
-    const tbody = doc.createElement('tbody'); tbl.appendChild(tbody);
+    const items = doc.createElement('ul'); cont.appendChild(items);
+    items.id = 'visits';
 
     // TODO why has this ended up serialised??
     const visits = response.visits.map(rvisit =>
@@ -122,6 +121,23 @@ function bindSidebarDataAux(response, opts: Options) {
         }
     }
 
+    function child(parent, name: string, classes: ?Array<string> = null) {
+        const res = doc.createElement(name);
+        if (classes != null) {
+            for (const cls of classes) {
+                res.classList.add(cls);
+            }
+        }
+        parent.appendChild(res);
+        return res;
+    }
+
+    function tchild(parent, text: string) {
+        const res = doc.createTextNode(text);
+        parent.appendChild(res);
+        return res;
+    }
+
     function handle(
         dates: string,
         times: string,
@@ -129,41 +145,44 @@ function bindSidebarDataAux(response, opts: Options) {
         context: ?string=null,
         locator: ?Locator=null
     ) {
-        const tr = tbl.insertRow(-1);
-        const tdd = tr.insertCell(-1);
-        tdd.classList.add('date');
-        tdd.appendChild(doc.createTextNode(dates));
-        const tdt = tr.insertCell(-1);
-        tdt.classList.add('time');
-        tdt.appendChild(doc.createTextNode(times));
-        const tds = tr.insertCell(-1); // TODO add class??
 
-        const tag_elems = tags.map(t => {
-            const tag_elem = doc.createElement('span');
-            tag_elem.classList.add('tag');
-            tag_elem.classList.add(t);
-            tag_elem.appendChild(doc.createTextNode(t));
-            return tag_elem;
-        });
-        for (const tag_elem of tag_elems) {
-            tds.appendChild(tag_elem);
+        const item = child(items, 'li');
+        const header = child(item, 'div');
+        const tags_c = child(header, 'span');
+        const dt_c = child(header, 'span', ['datetime']);
+        const time_c = child(dt_c, 'span', ['time']);
+        const date_c = child(dt_c, 'span', ['date']);
+
+        for (const tag of tags) {
+            const tag_c = child(tags_c, 'span', ['tag']);
+            tchild(tag_c, tag);
         }
+        tchild(date_c, dates);
+        tchild(time_c, times);
 
+        /* TODO locator could jump into the file? */
         if (context != null) {
-            const crow = tbl.insertRow(-1);
-            crow.classList.add('context');
-            const ccell = crow.insertCell(-1);
-            ccell.setAttribute('colspan', '3');
+            const ctx_c = child(item, 'div', ['context']);
+            tchild(ctx_c, context);
 
             const loc = unwrap(locator);
-            const loc_elem = doc.createElement('span');
-            loc_elem.classList.add('locator');
-            // TODO need escaping?
-            loc_elem.innerHTML = loc.href == null ? loc.title : `<a href='${loc.href}'>${loc.title}</a>`;
+            const loc_c = child(item, 'div', ['locator']);
 
+            if (loc.href === null) {
+                tchild(loc_c, loc.title);
+            } else {
+                const link = child(loc_c, 'a');
+                // $FlowFixMe
+                link.href = loc.href;
+                tchild(link, loc.title);
 
+            }
+
+            /*
             const trim_till = Math.min(context.indexOf('\n'), 100);
             const firstline = context.substring(0, trim_till);
+
+            // TODO do not throw this away?
             const firstline_elem = doc.createTextNode(firstline);
 
             const det = doc.createElement('details'); ccell.appendChild(det);
@@ -174,6 +193,7 @@ function bindSidebarDataAux(response, opts: Options) {
             // TODO at least add some space?
             summ.appendChild(firstline_elem);
             det.appendChild(doc.createTextNode(context));
+            */
         }
     }
 
