@@ -167,63 +167,6 @@ def run(port: str, config: Path):
 
 _DEFAULT_CONFIG = Path('config.py')
 
-from contextlib import contextmanager
-import json
-from subprocess import Popen, PIPE
-from subprocess import check_output, check_call
-import time
-
-TEST_PORT = "16556" # TODO random?
-
-@contextmanager
-def _test_helper(tmp_path):
-    tdir = Path(tmp_path)
-    # TODO ugh. quite hacky...
-    from shutil import copy
-    template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
-    copy(template_config, tdir)
-    config = tdir / 'test_config.py'
-    with config.open('a') as fo:
-        fo.write(f"OUTPUT_DIR = '{tdir}'")
-
-    path = (Path(__file__).parent.parent / 'run').absolute()
-
-
-    check_call([str(path), 'extract', '--config', config])
-
-    cmd = [str(path), 'serve', '--port', TEST_PORT, '--config', config]
-    with Popen(cmd) as server: # type: ignore
-        print("Giving few secs to start server up")
-        time.sleep(3)
-        print("Started server up")
-        # TODO which url??
-
-        yield
-
-        print("DONE!!!!")
-        server.kill()
-
-
-def test_query(tmp_path):
-    test_url = 'https://takeout.google.com/settings/takeout'
-    with _test_helper(tmp_path):
-        for q in range(3):
-            print(f"querying {q}")
-            cmd = [
-                'http', 'post', f'http://localhost:{TEST_PORT}/visits', f'url={test_url}',
-            ]
-            response = json.loads(check_output(cmd).decode('utf8'))
-            assert len(response) > 0
-
-def test_visited(tmp_path):
-    test_url = 'https://takeout.google.com/settings/takeout'
-    with _test_helper(tmp_path):
-        cmd = [
-            'http', 'post',  f'http://localhost:{TEST_PORT}/visited', f"""urls:=["{test_url}","http://badurl.org"]""",
-        ]
-        response = json.loads(check_output(cmd))
-        assert response == [True, False]
-
 
 def setup_parser(p):
     p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension')
