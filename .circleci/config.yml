@@ -1,4 +1,5 @@
 version: 2
+
 jobs:
   server_build_and_check:
     docker:
@@ -83,7 +84,6 @@ jobs:
 
 workflows:
   version: 2
-
   build_and_test:
     jobs:
       - client_build_and_check
