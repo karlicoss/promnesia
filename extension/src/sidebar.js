@@ -166,7 +166,10 @@ function bindSidebarDataAux(response, opts: Options) {
         /* TODO locator could jump into the file? */
         if (context != null) {
             const ctx_c = child(item, 'div', ['context']);
-            tchild(ctx_c, context);
+            for (const line of context.split('\n')) {
+                tchild(ctx_c, line);
+                child(ctx_c, 'br');
+            }
 
             const loc = unwrap(locator);
             const loc_c = child(item, 'div', ['locator']);
@@ -178,7 +181,6 @@ function bindSidebarDataAux(response, opts: Options) {
                 // $FlowFixMe
                 link.href = loc.href;
                 tchild(link, loc.title);
-
             }
 
             /*
