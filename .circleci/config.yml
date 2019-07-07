@@ -8,6 +8,7 @@ jobs:
 
     steps:
       - checkout
+      - run: git submodule update --init # TODO eh, this is only needed for integration tests...
 
       - restore_cache:
           keys:
@@ -30,11 +31,19 @@ jobs:
           key: v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
         
       - run:
-          name: run tests
+          name: tests
           when: always
           command: |
             . venv/bin/activate
-            pytest test.py
+            pytest -s test.py
+
+      - run:
+          name: integration tests
+          when: always
+          command: |
+            . venv/bin/activate
+            pytest -s tests/integration_test.py
+
 
       # TODO enable these later
       # - run:
