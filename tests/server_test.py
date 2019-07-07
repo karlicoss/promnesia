@@ -1,7 +1,9 @@
 from contextlib import contextmanager
 import json
+import os
 from pathlib import Path
 from shutil import copy
+import signal
 from subprocess import check_output, check_call, Popen, PIPE
 import time
 from typing import NamedTuple
@@ -35,7 +37,7 @@ def _test_helper(tmp_path):
     check_call([str(path), 'extract', '--config', config])
 
     cmd = [str(path), 'serve', '--port', str(TEST_PORT), '--config', config]
-    with Popen(cmd) as server: # type: ignore
+    with Popen(cmd, preexec_fn=os.setsid) as server: # type: ignore
         print("Giving few secs to start server up")
         time.sleep(3)
         print("Started server up")
@@ -43,8 +45,10 @@ def _test_helper(tmp_path):
         yield Helper(port=TEST_PORT)
 
         print("DONE!!!!")
-        # TODO ugh. looks like they are keeping turds
-        server.kill()
+
+        # ugh. otherwise was getting orphaned children...
+        # TODO extract that in a decorator?
+        os.killpg(os.getpgid(server.pid), signal.SIGTERM)
 
 
 def test_query(tmp_path):
