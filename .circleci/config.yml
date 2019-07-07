@@ -72,6 +72,10 @@ jobs:
           name: js eslint
           command: npm run eslint
           when: always 
+      - run:
+          name: tests
+          command: npm run test
+          when: always
       # TODO pack?
 
 
