@@ -5,11 +5,12 @@ from pathlib import Path
 from firefox_dev_secrets import API_KEY, API_SECRET
 
 dist_dir = Path(__file__).absolute().parent / 'dist'
+src_dir = dist_dir / 'firefox'
 
 def main():
     subprocess.check_call([
         'web-ext',
-        '--source-dir'   , str(ext_dir / 'firefox'),
+        '--source-dir'   , str(src_dir),
         '--artifacts-dir', str(dist_dir),
         '--api-key'      , API_KEY,
         '--api-secret'   , API_SECRET,

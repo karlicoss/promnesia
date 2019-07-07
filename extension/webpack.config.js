@@ -12,7 +12,7 @@ const env = {
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
 
-const target = env.TARGET;
+const target = env.TARGET; assert(target != null);
 const release = env.RELEASE == 'YES' ? true : false;
 
 
