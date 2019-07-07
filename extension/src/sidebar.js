@@ -99,8 +99,29 @@ function bindSidebarDataAux(response, opts: Options) {
     console.log(response);
 
     const doc = document;
-    const items = doc.createElement('ul'); cont.appendChild(items);
+
+    function child(parent, name: string, classes: ?Array<string> = null) {
+        const res = doc.createElement(name);
+        if (classes != null) {
+            for (const cls of classes) {
+                res.classList.add(cls);
+            }
+        }
+        parent.appendChild(res);
+        return res;
+    }
+
+    function tchild(parent, text: string) {
+        const res = doc.createTextNode(text);
+        parent.appendChild(res);
+        return res;
+    }
+
+
+    const all_tags_c = child(cont, 'div');
+    const items = child(cont, 'ul');
     items.id = 'visits';
+
 
     // TODO why has this ended up serialised??
     const visits = response.visits.map(rvisit =>
@@ -124,22 +145,39 @@ function bindSidebarDataAux(response, opts: Options) {
         }
     }
 
-    function child(parent, name: string, classes: ?Array<string> = null) {
-        const res = doc.createElement(name);
-        if (classes != null) {
-            for (const cls of classes) {
-                res.classList.add(cls);
-            }
+    // TODO FIXME instead, use checkboxes and get checked values
+    // TODO not sure if should ignore things without contexts here... how to fit everything?
+    const all_tags = new Set();
+    for (const v of with_ctx) {
+        for (const t of v.tags) {
+            all_tags.add(t);
         }
-        parent.appendChild(res);
-        return res;
     }
 
-    function tchild(parent, text: string) {
-        const res = doc.createTextNode(text);
-        parent.appendChild(res);
-        return res;
+    for (let tag of [null, ...Array.from(all_tags).sort()]) {
+        let predicate: ((string) => boolean);
+        if (tag === null) {
+            // meh
+            tag = 'all';
+            predicate = t => true;
+        } else {
+            predicate = t => t == tag;
+        }
+
+        // TODO show total counts?
+        // TODO if too many tags, just overlap on the seconds line
+        const tag_c = child(all_tags_c, 'span', ['tag', tag]);
+        tchild(tag_c, tag);
+        // TODO checkbox??
+        tag_c.addEventListener('click', () => {
+            for (const x of items.children) {
+                const tt = unwrap(x.getAttribute('tags')).split(' ');
+                const found = tt.some(predicate);
+                x.style.display = found ? 'block' : 'none';
+            }
+        });
     }
+
 
     function handle(
         dates: string,
@@ -155,6 +193,8 @@ function bindSidebarDataAux(response, opts: Options) {
         const dt_c = child(header, 'span', ['datetime']);
         const time_c = child(dt_c, 'span', ['time']);
         const date_c = child(dt_c, 'span', ['date']);
+
+        item.setAttribute('tags', tags.join(" "));
 
         for (const tag of tags) {
             const tag_c = child(tags_c, 'span', ['tag', tag]);

@@ -8,6 +8,13 @@ a {
     text-decoration: none;
 }
 
+
+.tag {
+    /* color: orange; /\* TODO monospace font or smth? *\/ */
+    margin-right: 0.2em;
+    white-space: nowrap;
+}
+
 /* meh, but ok for now */
 #visits {
     /* make table occupy whole sidebar */
@@ -39,11 +46,6 @@ a {
     padding: 0.2em;
 }
 
-#visits .tag {
-    /* color: orange; /\* TODO monospace font or smth? *\/ */
-    margin-right: 0.2em;
-    white-space: nowrap;
-}
 
 #visits .datetime {
     white-space: nowrap;
