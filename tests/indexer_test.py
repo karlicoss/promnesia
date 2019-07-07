@@ -12,16 +12,16 @@ from os.path import lexists
 import pytest # type: ignore
 from pytest import mark # type: ignore
 
+
+from common import skip_if_ci
+
 from wereyouhere.dump import dump_histories
 from wereyouhere.common import History, PreVisit
 from wereyouhere.generator.smart import Wrapper
 
 # TODO need to expire dbcache in tests..
 
-
 skip = mark.skip
-def skip_if_ci(reason):
-    return pytest.mark.skipif('CI' in os.environ, reason=reason)
 
 
 def W(*args, **kwargs):

@@ -30,15 +30,9 @@ jobs:
             - ./venv
           key: v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
         
+      # TODO not sure if should split integration and other?
       - run:
-          name: tests
-          when: always
-          command: |
-            . venv/bin/activate
-            python3 -m pytest -s test.py
-
-      - run:
-          name: integration tests
+          name: run tests
           when: always
           command: |
             . venv/bin/activate
