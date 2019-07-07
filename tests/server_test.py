@@ -8,7 +8,10 @@ from subprocess import check_output, check_call, Popen, PIPE
 import time
 from typing import NamedTuple
 
+
 from common import skip_if_ci
+from integration_test import index_instapaper
+
 
 class Helper(NamedTuple):
     port: str
@@ -34,22 +37,10 @@ def tmp_popen(*args, **kwargs):
 
 
 @contextmanager
-def _test_helper(tmp_path):
-    tdir = Path(tmp_path)
-    # TODO ugh. quite hacky...
-    template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
-    copy(template_config, tdir)
-    config = tdir / 'test_config.py'
-    with config.open('a') as fo:
-        fo.write(f"OUTPUT_DIR = '{tdir}'")
-
-    path = (Path(__file__).parent.parent / 'run').absolute()
-
-
-    check_call([str(path), 'extract', '--config', config])
-
+def wserver(config: Path) -> Helper:
     port = str(next_port())
-    cmd = [str(path), 'serve', '--port', port, '--config', config]
+    path = (Path(__file__).parent.parent / 'run').absolute()
+    cmd = [str(path), 'serve', '--port', port, '--config', str(config)]
     with tmp_popen(cmd) as server:
         print("Giving few secs to start server up")
         time.sleep(3)
@@ -59,6 +50,36 @@ def _test_helper(tmp_path):
 
         print("DONE!!!!")
 
+
+@contextmanager
+def _test_helper(tmp_path):
+    tdir = Path(tmp_path)
+    # TODO extract that into index_takeout?
+    # TODO ugh. quite hacky...
+    template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
+    copy(template_config, tdir)
+    config = tdir / 'test_config.py'
+    with config.open('a') as fo:
+        fo.write(f"OUTPUT_DIR = '{tdir}'")
+
+    path = (Path(__file__).parent.parent / 'run').absolute()
+    check_call([str(path), 'extract', '--config', config])
+
+    with wserver(config=config) as srv:
+        yield srv
+
+
+def test_query_instapaper(tmp_path):
+    tdir = Path(tmp_path)
+    index_instapaper(tdir)
+    test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
+    with wserver(config=tdir / 'test_config.py') as helper:
+        cmd = [
+            'http', 'post', f'http://localhost:{helper.port}/visits', f'url={test_url}',
+        ]
+        response = json.loads(check_output(cmd).decode('utf8'))
+        assert len(response) > 5
+        # TODO actually test response?
 
 
 @skip_if_ci("TODO dbcache")

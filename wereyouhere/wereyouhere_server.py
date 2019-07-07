@@ -155,7 +155,7 @@ def run(port: str, config: Path):
     # # not sure if there is a simpler way to communicate with the server...
     env[_ENV_CONFIG] = str(config)
     os.execvpe(
-        '/home/karlicos/.local/bin/hug',
+        'hug',
         [
             'wereyouhere-server',
             '-p', port,

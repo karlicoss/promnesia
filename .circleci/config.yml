@@ -22,8 +22,14 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r wereyouhere/requirements.txt
+            pip install 'kython@git+https://github.com/karlicoss/kython.git@master' dateparser typing_extensions logzero
+
+      # ugh, hug is involved as subprocess and doesn't see virtualenv I gues??
+      - run:
+          name: install test deps
+          command: |
+            . venv/bin/activate
             pip install -r wereyouhere/requirements-dev.txt
-            pip install 'kython@git+https://github.com/karlicoss/kython.git@master' dateparser typing_extensions
 
       - save_cache:
           paths:

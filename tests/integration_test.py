@@ -56,8 +56,8 @@ def _get_stuff(outdir: Path):
 
     return engine, binder, table
 
-def test_hypothesis(tmp_path):
-    tdir = Path(tmp_path)
+
+def index_instapaper(tdir: Path):
     cfg = tdir / 'test_config.py'
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
@@ -71,6 +71,10 @@ EXTRACTORS = [hyp_extractor]
     """)
     index(cfg)
 
+
+def test_hypothesis(tmp_path):
+    tdir = Path(tmp_path)
+    index_instapaper(tdir)
 
     # TODO copy pasting from server; need to unify
     engine, binder, table = _get_stuff(tdir)

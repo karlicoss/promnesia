@@ -2,13 +2,18 @@
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from subprocess import check_call
 from time import sleep
 
 import pytest
 from selenium import webdriver
 
+
+from kython.tui import getch_or_fail
+
 from common import skip_if_ci
-from server_test import _test_helper as server
+from integration_test import index_instapaper
+from server_test import wserver
 from firefox_helper import open_extension_page
 
 
@@ -65,19 +70,26 @@ def test_visits(tmp_path):
     # TODO reuse same index as in hypothesis
     # TODO rerun server
 
-    with server(tdir) as srv, get_webdriver() as driver:
+    index_instapaper(tdir)
+    config = tdir / 'test_config.py'
+
+    test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
+    with wserver(config=config) as srv, get_webdriver() as driver:
         port = srv.port
         configure_extension(driver, port=port)
         sleep(0.5)
 
-        driver.get('https://takeout.google.com/settings/takeout')
-        sleep(1)
+        driver.get(test_url)
+        sleep(3)
 
         trigger_hotkey()
 
-        # TODO log what one is exptected to see?
-
+        # TODO log what one is expected to see?
+        print("Press any key to finish")
+        getch_or_fail()
 
 
 if __name__ == '__main__':
+    # TODO ugh need to figure out PATH
+    # python3 -m pytest -s tests/server_test.py::test_query 
     pytest.main(['-s', __file__])

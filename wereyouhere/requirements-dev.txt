@@ -1,4 +1,10 @@
 mypy
 pylint
 pytest
+
+# for integration test
+httpie
+
+# for end2end test
 selenium
+getch
