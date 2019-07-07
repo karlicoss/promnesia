@@ -1,5 +1,5 @@
 {
-    "name": "Were you here?",
+    "name": "<webpack managed>",
     "version": "<webpack managed>",
     "description": "Indicates whether and when the page was visited (and more!)",
     "web_accessible_resources": ["sidebar.js", "sidebar.css"],

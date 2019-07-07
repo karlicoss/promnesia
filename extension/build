@@ -6,12 +6,17 @@ from subprocess import check_call
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--target', type=str)
+    p.add_argument('--release', action='store_true')
     for b in ['chrome', 'firefox', 'firefox-mobile']:
         p.add_argument('--' + b, action='store_const', const=b, dest='target')
     args = p.parse_args()
     assert args.target is not None
 
-    env = {'TARGET': args.target, **os.environ}
+    env = {
+        'TARGET': args.target,
+        'RELEASE': 'YES' if args.release else 'NO',
+        **os.environ,
+    }
     check_call([
         'npm', 'run-script', 'build',
     ], env=env)

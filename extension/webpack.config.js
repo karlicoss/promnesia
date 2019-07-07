@@ -5,20 +5,20 @@ const path = require('path'),
       WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 
 const env = {
-    // NODE_ENV: (process.env.NODE_ENV || "development"),
-    // PORT: (process.env.PORT || 3000),
-    // ANY_HOST: (process.env.ANY_HOST ? true : false),
-    TARGET: process.env.TARGET,
+    TARGET : process.env.TARGET,
+    RELEASE: process.env.RELEASE,
 };
 
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
 
 const target = env.TARGET;
+const release = env.RELEASE == 'YES' ? true : false;
 
 
 const manifestExtra = {
     version: pkg.version,
+    name: release ? "Were you here?" : "Were you here? (dev)",
 };
 
 if (target == 'chrome') {
