@@ -17,6 +17,12 @@ TEST_PORT = 16556 # TODO FIXME use proper random port
 # search for Serving on :16556
 
 
+def next_port():
+    global TEST_PORT
+    TEST_PORT += 1
+    return TEST_PORT
+
+
 @contextmanager
 def tmp_popen(*args, **kwargs):
     with Popen(*args, **kwargs, preexec_fn=os.setsid) as p:
@@ -29,9 +35,6 @@ def tmp_popen(*args, **kwargs):
 
 @contextmanager
 def _test_helper(tmp_path):
-    global TEST_PORT
-    TEST_PORT += 1
-
     tdir = Path(tmp_path)
     # TODO ugh. quite hacky...
     template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
@@ -45,13 +48,14 @@ def _test_helper(tmp_path):
 
     check_call([str(path), 'extract', '--config', config])
 
-    cmd = [str(path), 'serve', '--port', str(TEST_PORT), '--config', config]
+    port = str(next_port())
+    cmd = [str(path), 'serve', '--port', port, '--config', config]
     with tmp_popen(cmd) as server:
         print("Giving few secs to start server up")
         time.sleep(3)
         print("Started server up")
 
-        yield Helper(port=TEST_PORT)
+        yield Helper(port=port)
 
         print("DONE!!!!")
 
