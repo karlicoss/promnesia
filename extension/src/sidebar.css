@@ -40,7 +40,7 @@ a {
 }
 
 #visits .tag {
-    color: orange; /* TODO monospace font or smth? */
+    /* color: orange; /\* TODO monospace font or smth? *\/ */
     margin-right: 0.2em;
     white-space: nowrap;
 }

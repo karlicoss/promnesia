@@ -157,7 +157,7 @@ function bindSidebarDataAux(response, opts: Options) {
         const date_c = child(dt_c, 'span', ['date']);
 
         for (const tag of tags) {
-            const tag_c = child(tags_c, 'span', ['tag']);
+            const tag_c = child(tags_c, 'span', ['tag', tag]);
             tchild(tag_c, tag);
         }
         tchild(date_c, dates);
