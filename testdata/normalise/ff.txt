@@ -6,6 +6,7 @@ http://reddit.com/post
 http://reddit.com/post&stupid_param=whatever
 
 
+# this v isn't detected at the moment because of the typo in http. Not sure if it ever will be?
 htpp://reddit.com/post?whoops
 
 http://www.argos.co.uk/webapp/wcs/stores/servlet/OrderItemDisplay

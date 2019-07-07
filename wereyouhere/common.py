@@ -147,6 +147,7 @@ class History(Sized):
 
     def __init__(self):
         self.vmap: Dict[PreVisit, DbVisit] = {}
+        # TODO err... why does it map from previsit???
         self.logger = get_logger()
 
     # TODO mm. maybe history should get filters from some global config?

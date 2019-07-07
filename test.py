@@ -5,18 +5,24 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import pytz
 from shutil import copytree
+import os
 from os import mkdir
 from os.path import lexists
 
 import pytest # type: ignore
 from pytest import mark # type: ignore
-skip = mark.skip
 
 from wereyouhere.dump import dump_histories
 from wereyouhere.common import History, PreVisit
 from wereyouhere.generator.smart import Wrapper
 
 # TODO need to expire dbcache in tests..
+
+
+skip = mark.skip
+def skip_if_ci(reason):
+    return pytest.mark.skipif('CI' in os.environ, reason=reason)
+
 
 def W(*args, **kwargs):
     if 'tag' not in kwargs:
@@ -93,7 +99,7 @@ def test_takeout_new_zip():
 
 
 # TODO run condition?? and flag to force all
-
+@skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_chrome(tmp_path):
     from wereyouhere.extractors.browser import chrome
     tdir = Path(tmp_path)
@@ -109,6 +115,8 @@ def test_chrome(tmp_path):
 
     assert_got_tzinfo(hist)
 
+
+@skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_firefox(tmp_path):
     tdir = Path(tmp_path)
     path = backup_db.backup_history('firefox', to=tdir)
@@ -129,7 +137,15 @@ def test_plaintext_path_extractor():
     hist = history(W(custom_gen.extract,
         extract_from_path('testdata/custom'),
     ))
-    assert len(hist) == 3
+    assert {
+        v.orig_url for v in hist.visits
+    } == {
+        'http://google.com',
+        'http://google.com/',
+        'http://some-weird-domain/whatever',
+        'https://google.com',
+        'http://what.about.this.link',
+    }
 
 # TODO perhaps it belongs to canonify?
 def test_normalise():
@@ -139,7 +155,16 @@ def test_normalise():
     hist = history(W(custom_gen.extract,
         extract_from_path('testdata/normalise'),
     ))
-    assert len(hist) == 7
+    assert {
+        v.norm_url for v in hist.visits
+    } == {
+        'hi.com',
+        'reddit.com/post',
+        'argos.co.uk/webapp/wcs/stores/servlet/OrderItemDisplay',
+        'youtube.com/watch?v=XXlZfc1TrD0',
+        'youtube.com/watch?v=XXlZfc1Tr11',
+    }
+    assert len(hist) == 5
 
 
 def test_normalise_weird():
@@ -149,9 +174,11 @@ def test_normalise_weird():
     hist = history(W(custom_gen.extract,
         extract_from_path('testdata/weird.txt'),
     ))
+    norms = {v.norm_url for v in hist.visits}
+
     # TODO assert there are no spaces in the database?
-    assert "urbandictionary.com/define.php?term=Belgian+Whistle" in hist
-    assert "en.wikipedia.org/wiki/Dinic's_algorithm" in hist
+    assert "urbandictionary.com/define.php?term=Belgian%20Whistle" in norms
+    assert "en.wikipedia.org/wiki/Dinic%27s_algorithm" in norms
 
 
 @skip("use a different way to specify filter other than class variable..")
