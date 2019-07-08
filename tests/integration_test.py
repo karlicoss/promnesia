@@ -76,10 +76,12 @@ EXTRACTORS = [hyp_extractor]
 
 
 def index_local_chrome(tdir: Path):
-    # TODO eh, trigger extraction first?
-    inp = Path('/L/data/wereyouhere/testdata/chrome-history/History') # TODO make it accessible to the repository
-    merged = tdir / 'chrome-merged.sqlite'
-    populate_db.merge_from('chrome', from_=inp, to=merged)
+    # TODO mm, would be good to keep that for proper end2end
+    # inp = Path('/L/data/wereyouhere/testdata/chrome-history/History') # TODO make it accessible to the repository
+    # merged = tdir / 'chrome-merged.sqlite'
+    # populate_db.merge_from('chrome', from_=inp, to=merged)
+
+    merged = Path('/L/data/wereyouhere/testdata/chrome.sqlite')
 
     cfg = tdir / 'test_config.py'
     cfg.write_text(base_config + f"""

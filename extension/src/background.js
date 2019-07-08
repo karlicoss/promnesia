@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Locator, Tag, Url} from './common';
+import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import type {Options} from './options';
@@ -58,7 +58,8 @@ function rawToVisits(vis): Visits {
         const vtags: Array<Tag> = v['tags']; // TODO hmm. backend is responsible for tag merging?
         const vctx: ?string = v['context'];
         const vloc: ?Locator = v['locator']
-        return new Visit(dt, vtags, vctx, vloc);
+        const vdur: ?Second = v['duration'];
+        return new Visit(dt, vtags, vctx, vloc, vdur);
     }));
 }
 

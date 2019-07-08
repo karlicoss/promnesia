@@ -2,6 +2,7 @@
 
 export type Url = string;
 export type Tag = string;
+export type Second = number;
 export type Locator = {
     title: string,
     href: ?string,
@@ -34,18 +35,37 @@ export function format_dt(dt: Date): string {
     return dts.replace(',', '');
 }
 
+export function format_duration(seconds: Second): string {
+    let s = seconds;
+    if (s < 60) {
+        return `${s} seconds`
+    }
+    // forget seconds otherwise and just use days/hours/minutes
+    s = Math.floor(s / 60);
+    let parts = [];
+    const hours = Math.floor(s / 60);
+    s %= 60;
+    if (hours > 0) {
+        parts.push(`${hours} hours`);
+    }
+    parts.push(`${s} minutes`);
+    return parts.join(" ");
+}
+
 export class Visit {
     time: Dt;
     tags: Array<Tag>;
     context: ?string;
     locator: ?Locator;
+    duration: ?Second;
 
 
-    constructor(time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?Locator=null) {
+    constructor(time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
         this.time = time;
         this.tags = tags;
         this.context = context;
         this.locator = locator;
+        this.duration = duration;
     }
 
     repr(): string {

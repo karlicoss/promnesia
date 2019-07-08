@@ -1,6 +1,6 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_dt} from './common';
-import type {Tag, Locator} from './common';
+import {Visits, Visit, unwrap, format_dt, format_duration} from './common';
+import type {Tag, Locator, Second} from './common';
 import {get_options} from './options';
 import type {Options} from './options';
 
@@ -130,6 +130,7 @@ function bindSidebarDataAux(response, opts: Options) {
             rvisit.tags,
             rvisit.context,
             rvisit.locator,
+            rvisit.duration,
         ) // TODO ugh ugly..
     );
     visits.sort((f, s) => (s.time - f.time));
@@ -184,9 +185,8 @@ function bindSidebarDataAux(response, opts: Options) {
         times: string,
         tags: Array<Tag>,
         context: ?string=null,
-        locator: ?Locator=null
+        locator: ?Locator=null,
     ) {
-
         const item = child(items, 'li');
         const header = child(item, 'div');
         const tags_c = child(header, 'span');
@@ -210,8 +210,10 @@ function bindSidebarDataAux(response, opts: Options) {
                 tchild(ctx_c, line);
                 child(ctx_c, 'br');
             }
+        }
 
-            const loc = unwrap(locator);
+        if (locator != null) {
+            const loc = locator;
             const loc_c = child(item, 'div', ['locator']);
 
             if (loc.href === null) {
@@ -242,7 +244,6 @@ function bindSidebarDataAux(response, opts: Options) {
         }
     }
 
-    // TODO colors for sources would be nice... not sure if server or client provided
     for (const v of with_ctx) {
         const [dates, times] = _fmt(v.time);
         handle(dates, times, v.tags, v.context, v.locator);
@@ -280,14 +281,22 @@ function bindSidebarDataAux(response, opts: Options) {
         const dates = ldates;
         const times = ltimes == ftimes ? ltimes : ltimes + "-" + ftimes;
         const tset = new Set();
+        let total_dur: ?Second = null;
         for (const v of group) {
+            if (v.duration !== null) {
+                if (total_dur === null) {
+                    total_dur = 0;
+                }
+                total_dur += v.duration;
+            }
             for (const tag of v.tags) {
                 const mapped_tag = get_or_default(tag_map, tag, tag);
                 tset.add(mapped_tag);
             }
         }
-        const tags = [...tset];
-        handle(dates, times, tags);
+        const tags = [...tset].sort();
+        const ctx = total_dur == null ? null : `Time spent: ${format_duration(total_dur)}`;
+        handle(dates, times, tags, ctx);
     }
 }
 window.bindSidebarData = bindSidebarData;

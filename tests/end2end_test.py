@@ -94,6 +94,7 @@ def test_visits(tmp_path):
 @skip_if_ci("uses X server")
 def test_chrome_visits(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
+    test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     _test_helper(tmp_path, index_local_chrome, test_url)
 
 
