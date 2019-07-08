@@ -1,18 +1,38 @@
-from datetime import datetime
 import json
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List
 
+import pyjq
 import pytz
-import pyjq  # type: ignore
-
 from kython import kompress
 from kython.kjq import jdel, jq_del_all, pipe
 from kython.kjson import JDict, JPath, JsonProcessor
 from kython.ktyping import PathIsh
 
-from wereyouhere.common import Extraction, Loc, PathIsh, PreVisit, get_logger, extract_urls
+from wereyouhere.common import (Extraction, Loc, PathIsh, PreVisit,
+    extract_urls, get_logger)
 from wereyouhere.normalise import normalise_url
+
+
+Query = str
+
+# TODO move to kython?
+def jq_drop_keys(keys: List[str]) -> Query:
+    return """
+def walk(f):
+  . as $in
+  | if type == "object" then
+      reduce keys_unsorted[] as $key
+        ( {}; . + { ($key):  ($in[$key] | walk(f)) } ) | f
+  elif type == "array" then map( walk(f) ) | f
+  else f
+  end;
+""" + f"""
+walk(if type == "object" then with_entries(select(.key | test("{'|'.join(keys)}") | not)) else . end)
+"""
+# TODO figure out how to check array membership instead of abusing regex
+
 
 
 def reddit_indexer(p: PathIsh, tag: str) -> Iterable[Extraction]:
@@ -20,12 +40,8 @@ def reddit_indexer(p: PathIsh, tag: str) -> Iterable[Extraction]:
     p = Path(p)
     with kompress.open(p, 'r') as fo:
         jj = json.load(fo)
-    # TODO handle rest by jq as well??
-    filt = pipe(
-        jdel('.profile'),
-        jdel('.subreddits[] | .description'),
-        # TODO icon_img; banner_img
-        jq_del_all(
+    # TODO eh, this is kinda experimental, not sure if should rely on jq for that or handle everything in JsonProcessor
+    jq_filter = jq_drop_keys([
             'resized_icons',
             'icon_url',
             'thumbnail',
@@ -34,13 +50,12 @@ def reddit_indexer(p: PathIsh, tag: str) -> Iterable[Extraction]:
             'banner_img',
             'community_icon',
             'banner_background_image',
-        )
-    )
-    logger.info('extracting via jq: %s', filt)
+    ])
+    logger.info('extracting via jq: %s', jq_filter)
     try:
-        jj = pyjq.one(filt, jj)
+        jj = pyjq.one(jq_filter, jj)
     except Exception as ee:
-        logger.error('exception while querying. Reproduce via xzcat "%s" | jq "%s"', p, filt)
+        logger.error('exception while querying. Reproduce via xzcat "%s" | jq "%s"', p, jq_filter)
         raise ee
     urls = collect_reddit(jj)
     for url, ctx, loc, dt in urls:
