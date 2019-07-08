@@ -69,6 +69,7 @@ def as_json(v: DbVisit) -> Dict:
         'dt': dts,
         'tags': [v.tag],
         'context': v.context,
+        'duration': v.duration,
         'locator': {
             'title': loc.title,
             'href' : loc.href,

@@ -1,15 +1,15 @@
 import csv
+import sqlite3
 from datetime import datetime
 from subprocess import check_output
-from typing import List, Dict, Set, NamedTuple, Iterator
-import pytz
+from typing import Dict, Iterator, List, NamedTuple, Optional, Set
 from urllib.parse import unquote
-import sqlite3
 
-from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
+import pytz
+from sqlalchemy import Column, MetaData, Table, create_engine
 
-from sqlalchemy import create_engine, MetaData # type: ignore
-from sqlalchemy import Column, Table # type: ignore
+from wereyouhere.common import Loc, PathIsh, PreVisit, get_logger
+
 
 def browser_extract(histfile: PathIsh, tag: str, cols, row_handler) -> Iterator[PreVisit]:
     logger = get_logger()
@@ -19,6 +19,7 @@ def browser_extract(histfile: PathIsh, tag: str, cols, row_handler) -> Iterator[
     # engine = create_engine('sqlite:///{histfile}', echo=True)
     # meta = MetaData()
     # visits = Table('visits', meta, autoload=True, autoload_with=engine)
+    # TODO FIXME contextmanager
     conn = sqlite3.connect(str(histfile))
 
     for row in conn.execute(f"SELECT {', '.join(cols)} FROM visits"):
@@ -63,19 +64,25 @@ def chrome_time_to_utc(chrome_time: int) -> datetime:
 
 # TODO could use sqlite3 module I guess... but it's quick enough to extract as it is
 def chrome(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
-    def row_handler(url, ts):
+    def row_handler(url, ts, durs):
         dt = chrome_time_to_utc(int(ts))
-        url = unquote(url) # chrome urls are all quoted
+        url = unquote(url) # chrome urls are all quoted # TODO not sure if we want it here?
+        dur: Optional[int] = int(durs)
+        if dur == 0:
+            dur = None
+        else:
+            dur //= 1_000_000
         return PreVisit(
             url=url,
             dt=dt,
             tag=tag,
             locator=Loc.file(histfile),
+            duration=dur,
         )
 
     yield from browser_extract(
         histfile=histfile,
         tag=tag,
-        cols=('url', 'visit_time'),
+        cols=('url', 'visit_time', 'visit_duration'),
         row_handler=row_handler,
     )

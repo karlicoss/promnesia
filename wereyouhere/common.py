@@ -55,6 +55,7 @@ class PreVisit(NamedTuple):
     locator: Loc
     context: Optional[Context] = None
     tag: Optional[Tag] = None
+    duration: Optional[Second] = None
     # TODO shit. I need to insert it in chrome db....
     # TODO gonna be hard to fill retroactively.
     # spent: Optional[Second] = None
@@ -69,6 +70,7 @@ class DbVisit(NamedTuple):
     locator: Loc
     tag: Optional[Tag] = None
     context: Optional[Context] = None
+    duration: Optional[Second] = None
 
     @staticmethod
     def make(p: PreVisit) -> Res['DbVisit']:
@@ -97,6 +99,7 @@ class DbVisit(NamedTuple):
             locator=p.locator,
             tag=p.tag,
             context=p.context,
+            duration=p.duration,
         )
 
 
