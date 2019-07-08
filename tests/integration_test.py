@@ -72,6 +72,21 @@ EXTRACTORS = [hyp_extractor]
     index(cfg)
 
 
+def index_local_chrome(tdir: Path):
+    cfg = tdir / 'test_config.py'
+    cfg.write_text(base_config + f"""
+OUTPUT_DIR = '{tdir}'
+
+from wereyouhere.generator.smart import Wrapper as W # TODO make it easier to use or get rid of whatsoever..
+from wereyouhere.extractors.browser import chrome
+
+chrome_extractor = W(chrome, '/L/data/wereyouhere/testdata/chrome.sqlite')
+
+EXTRACTORS = [chrome_extractor]
+""")
+    index(cfg)
+
+
 def test_hypothesis(tmp_path):
     tdir = Path(tmp_path)
     index_instapaper(tdir)

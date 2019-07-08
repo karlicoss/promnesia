@@ -12,7 +12,7 @@ from selenium import webdriver
 from kython.tui import getch_or_fail
 
 from common import skip_if_ci
-from integration_test import index_instapaper
+from integration_test import index_instapaper, index_local_chrome
 from server_test import wserver
 from firefox_helper import open_extension_page
 
@@ -64,16 +64,11 @@ def trigger_hotkey():
     pyautogui.hotkey('ctrl', 'alt', 'w')
 
 
-@skip_if_ci("uses X server ")
-def test_visits(tmp_path):
+def _test_helper(tmp_path, indexer, test_url: str):
     tdir = Path(tmp_path)
-    # TODO reuse same index as in hypothesis
-    # TODO rerun server
 
-    index_instapaper(tdir)
+    indexer(tdir)
     config = tdir / 'test_config.py'
-
-    test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     with wserver(config=config) as srv, get_webdriver() as driver:
         port = srv.port
         configure_extension(driver, port=port)
@@ -87,6 +82,19 @@ def test_visits(tmp_path):
         # TODO log what one is expected to see?
         print("Press any key to finish")
         getch_or_fail()
+
+
+@skip_if_ci("uses X server ")
+def test_visits(tmp_path):
+    test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
+    _test_helper(tmp_path, index_instapaper, test_url)
+
+
+# TODO skip if not my hostname
+@skip_if_ci("uses X server")
+def test_chrome_visits(tmp_path):
+    test_url = "https://en.wikipedia.org/wiki/Grammatical_conjugation#Examples"
+    _test_helper(tmp_path, index_local_chrome, test_url)
 
 
 if __name__ == '__main__':
