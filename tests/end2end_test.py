@@ -93,7 +93,7 @@ def test_visits(tmp_path):
 # TODO skip if not my hostname
 @skip_if_ci("uses X server")
 def test_chrome_visits(tmp_path):
-    test_url = "https://en.wikipedia.org/wiki/Grammatical_conjugation#Examples"
+    test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     _test_helper(tmp_path, index_local_chrome, test_url)
 
 

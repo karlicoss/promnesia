@@ -1,6 +1,9 @@
 from pathlib import Path
 from subprocess import check_call
 
+from indexer_test import populate_db
+
+
 testdata = Path(__file__).absolute().parent.parent / 'testdata'
 
 
@@ -73,6 +76,11 @@ EXTRACTORS = [hyp_extractor]
 
 
 def index_local_chrome(tdir: Path):
+    # TODO eh, trigger extraction first?
+    inp = Path('/L/data/wereyouhere/testdata/chrome-history/History') # TODO make it accessible to the repository
+    merged = tdir / 'chrome-merged.sqlite'
+    populate_db.merge_from('chrome', from_=inp, to=merged)
+
     cfg = tdir / 'test_config.py'
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
@@ -80,7 +88,7 @@ OUTPUT_DIR = '{tdir}'
 from wereyouhere.generator.smart import Wrapper as W # TODO make it easier to use or get rid of whatsoever..
 from wereyouhere.extractors.browser import chrome
 
-chrome_extractor = W(chrome, '/L/data/wereyouhere/testdata/chrome.sqlite')
+chrome_extractor = W(chrome, '{merged}')
 
 EXTRACTORS = [chrome_extractor]
 """)

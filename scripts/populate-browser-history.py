@@ -203,8 +203,17 @@ def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path, prof
             assert browser is not None
             backup_history(browser, tdir, profile=profile)
             from_ = tdir
+        else:
+            assert from_.exists()
 
-        for dbfile in sorted(x for x in from_.rglob('*') if x.is_file() and mime.from_file(str(x)) in ['application/x-sqlite3']):
+        is_db = lambda x: x.is_file() and mime.from_file(str(x)) in ['application/x-sqlite3']
+
+        if is_db(from_):
+            files = [from_]
+        else:
+            files = sorted(x for x in from_.rglob('*') if is_db(x))
+
+        for dbfile in files:
             # TODO maybe, assert they all of the same type?
             logger.info('merging %s', dbfile)
             merge(merged=to, chunk=dbfile)
