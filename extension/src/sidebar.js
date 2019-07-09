@@ -148,14 +148,15 @@ function bindSidebarDataAux(response, opts: Options) {
 
     // TODO FIXME instead, use checkboxes and get checked values
     // TODO not sure if should ignore things without contexts here... how to fit everything?
-    const all_tags = new Set();
+    const all_tags = new Map();
     for (const v of with_ctx) {
         for (const t of v.tags) {
-            all_tags.add(t);
+            const pv = (all_tags.has(t) ? all_tags.get(t) : 0) + 1;
+            all_tags.set(t, pv);
         }
     }
 
-    for (let tag of [null, ...Array.from(all_tags).sort()]) {
+    for (let [tag, count] of [[null, with_ctx.length], ...Array.from(all_tags).sort()]) {
         let predicate: ((string) => boolean);
         if (tag === null) {
             // meh
@@ -168,7 +169,7 @@ function bindSidebarDataAux(response, opts: Options) {
         // TODO show total counts?
         // TODO if too many tags, just overlap on the seconds line
         const tag_c = child(all_tags_c, 'span', ['tag', tag]);
-        tchild(tag_c, tag);
+        tchild(tag_c, `${tag} (${count})`);
         // TODO checkbox??
         tag_c.addEventListener('click', () => {
             for (const x of items.children) {
