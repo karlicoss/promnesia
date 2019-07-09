@@ -11,6 +11,8 @@ a {
 
 .tag {
     /* color: orange; /\* TODO monospace font or smth? *\/ */
+    color: #b26628;
+
     margin-right: 0.2em;
     white-space: nowrap;
 }
@@ -39,28 +41,38 @@ a {
 }
 
 #visits li {
-    background: #e6e6e6cc;
-
     margin-top: 1em;
 
     padding: 0.2em;
-}
 
+    background: #e6e6e6cc;
+    border: 3px solid;
+    border-color: transparent;
+}
+#visits li:hover {
+    border-color: #ddd;
+}
 
 #visits .datetime {
     white-space: nowrap;
     float: right;
+
+    color: #666;
 }
 
 
 /* TODO not great, but quickest way to render it neatly */
 /* TODO not sure which order users expect first? */
 #visits .time {
-    color: blue;
+    /* color: blue; */
     margin-right: 1em;
 }
 #visits .date {
-    color: red;
+    /* color: red; */
+    width: 11ch; /* TODO not sure how to alighn them properly across all of boxes... */
+    display: inline-block; /* otherwise width doesn't work on span */
+    text-align: end;
+
 }
 
 
