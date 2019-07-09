@@ -6,9 +6,9 @@ from typing import Dict, Iterator, List, NamedTuple, Optional, Set
 from urllib.parse import unquote
 
 import pytz
-from sqlalchemy import Column, MetaData, Table, create_engine
+from sqlalchemy import Column, MetaData, Table, create_engine # type: ignore
 
-from wereyouhere.common import Loc, PathIsh, PreVisit, get_logger
+from wereyouhere.common import Loc, PathIsh, PreVisit, get_logger, Second
 
 
 def browser_extract(histfile: PathIsh, tag: str, cols, row_handler) -> Iterator[PreVisit]:
@@ -67,11 +67,12 @@ def chrome(histfile: PathIsh, tag: str='chrome') -> Iterator[PreVisit]:
     def row_handler(url, ts, durs):
         dt = chrome_time_to_utc(int(ts))
         url = unquote(url) # chrome urls are all quoted # TODO not sure if we want it here?
-        dur: Optional[int] = int(durs)
-        if dur == 0:
+        dd = int(durs)
+        dur: Optional[Second]
+        if dd == 0:
             dur = None
         else:
-            dur //= 1_000_000
+            dur = dd // 1_000_000
         return PreVisit(
             url=url,
             dt=dt,

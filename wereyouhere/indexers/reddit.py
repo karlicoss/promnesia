@@ -3,8 +3,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, List
 
-import pyjq
 import pytz
+
+import pyjq # type: ignore
+
 from kython import kompress
 from kython.kjq import jdel, jq_del_all, pipe
 from kython.kjson import JDict, JPath, JsonProcessor
@@ -93,7 +95,7 @@ def reddit_link(rest: str) -> str:
 class Proc(JsonProcessor):
     def __init__(self) -> None:
         self.logger = get_logger()
-        self.items = []
+        self.items = [] # type: ignore
 
     def handle_dict(self, value: JDict, path: JPath):
         kp = self.kpath(path)
@@ -181,7 +183,8 @@ def collect_reddit(js):
     def reddit_link(rest: str) -> str:
         return f'https://reddit.com{rest}'
 
-    items = [] # TODO need to collect errors here as well?
+    # TODO need to collect errors here as well? 
+    items = [] # type: ignore
 
     p = Proc()
     p.run(js)
