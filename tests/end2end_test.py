@@ -40,7 +40,7 @@ def get_webdriver():
             driver.close()
 
 
-def configure_extension(driver, port: str):
+def configure_extension(driver, port: str, show_dots: bool):
     open_extension_page(driver, page='options_page.html')
 
     ep = driver.find_element_by_id('host_id') # TODO rename to 'endpoint'?
@@ -48,9 +48,9 @@ def configure_extension(driver, port: str):
     ep.send_keys(f'http://localhost:{port}')
 
     dots = driver.find_element_by_id('dots_id')
-    if dots.is_selected():
+    if dots.is_selected() != show_dots:
         dots.click()
-        assert not dots.is_selected()
+    assert dots.is_selected() == show_dots
 
     se = driver.find_element_by_id('save_id')
     se.click()
@@ -58,36 +58,44 @@ def configure_extension(driver, port: str):
     driver.switch_to.alert.accept()
 
 
-def trigger_hotkey():
+def trigger_hotkey(hotkey):
     print("sending hotkey!")
     import pyautogui # type: ignore
-    pyautogui.hotkey('ctrl', 'alt', 'w')
+    pyautogui.hotkey(*hotkey)
 
 
-def _test_helper(tmp_path, indexer, test_url: str):
+@contextmanager
+def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
     tdir = Path(tmp_path)
 
     indexer(tdir)
     config = tdir / 'test_config.py'
     with wserver(config=config) as srv, get_webdriver() as driver:
         port = srv.port
-        configure_extension(driver, port=port)
+        configure_extension(driver, port=port, show_dots=show_dots)
         sleep(0.5)
 
         driver.get(test_url)
         sleep(3)
 
-        trigger_hotkey()
+        yield
 
         # TODO log what one is expected to see?
         print("Press any key to finish")
         getch_or_fail()
 
 
+class Hotkey:
+    ACTIVATE = ('ctrl', 'alt', 'w')
+    DOTS     = ('ctrl', 'alt', 'v')
+
+
 @skip_if_ci("uses X server ")
 def test_visits(tmp_path):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
-    _test_helper(tmp_path, index_instapaper, test_url)
+    with _test_helper(tmp_path, index_instapaper, test_url):
+        trigger_hotkey(hotkey=Hotkey.ACTIVATE)
+        print("You shoud see hypothesis contexts now")
 
 
 # TODO skip if not my hostname
@@ -95,7 +103,17 @@ def test_visits(tmp_path):
 def test_chrome_visits(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    _test_helper(tmp_path, index_local_chrome, test_url)
+    with _test_helper(tmp_path, index_local_chrome, test_url):
+        trigger_hotkey(hotkey=Hotkey.ACTIVATE)
+        print("You shoud see chrome visits now; with time spent")
+
+
+@skip_if_ci("uses X server")
+def test_show_dots(tmp_path):
+    test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
+    with _test_helper(tmp_path, index_local_chrome, test_url):
+        trigger_hotkey(hotkey=Hotkey.DOTS)
+        print("You should see dots now near SL group, U group, Representation theory")
 
 
 if __name__ == '__main__':
