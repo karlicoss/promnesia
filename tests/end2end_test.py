@@ -17,8 +17,14 @@ from server_test import wserver
 from firefox_helper import open_extension_page
 
 
-def get_addon_path() -> Path:
-    addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / 'firefox').absolute()
+class Browser:
+    FF = 'firefox'
+    CH = 'chrome'
+B = Browser
+
+def get_addon_path(browser: str) -> Path:
+    # TODO compile first?
+    addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / browser).absolute()
     # TODO assert manifest or smth?
     assert addon_path.exists()
     assert (addon_path / 'manifest.json').exists()
@@ -27,14 +33,23 @@ def get_addon_path() -> Path:
 
 # TODO copy paste from grasp
 @contextmanager
-def get_webdriver():
-    addon = get_addon_path()
+def get_webdriver(browser: str=B.FF):
+    addon = get_addon_path(browser=browser)
     with TemporaryDirectory() as td:
-        profile = webdriver.FirefoxProfile(td)
-        # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
-        driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox')
-        try:
+        if browser == B.FF:
+            profile = webdriver.FirefoxProfile(td)
+            # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
+            driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox')
+            # TODO this should be under with...
             driver.install_addon(str(addon), temporary=True)
+        elif browser == B.CH:
+            # looks like chrome uses temporary dir for data anyway
+            options = webdriver.ChromeOptions()
+            options.add_extension(addon / 'manifest.json')
+            driver = webdriver.Chrome(options=options)
+        else:
+            raise RuntimeError(f'Unexpected browser {browser}')
+        try:
             yield driver
         finally:
             driver.close()
@@ -88,6 +103,15 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
 class Hotkey:
     ACTIVATE = ('ctrl', 'alt', 'w')
     DOTS     = ('ctrl', 'alt', 'v')
+
+
+# TODO could be headless?
+@skip_if_ci("uses X")
+@pytest.mark.parametrize("browser", [B.FF])
+def test_installs(tmp_path, browser):
+    with get_webdriver(browser=browser):
+        # just shouldn't crash
+        pass
 
 
 @skip_if_ci("uses X server ")
