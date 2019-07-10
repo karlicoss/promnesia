@@ -41,6 +41,14 @@ To generate the URL database, run:
     
 To use chrome extension, just 'load unpacked' on chrome://extensions/
 
+# Dev dependencies
+
+ * `npm install -g web-ext` for extension signing and Android testing
+  * firefox dev edition (standard wouldn't let you install unsigned extensions)
+  * `gechodriver`
+ * `pip3 install pyautogui` for end to end tests
+
+
 # TODOs
 * [in progress] be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
   * maybe icons for mobile/desktop?

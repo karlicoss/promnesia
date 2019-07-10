@@ -6,12 +6,15 @@ from time import sleep
 # copy pasted from grasp
 
 def open_extension_page(driver, page: str):
-    # necessary to trigger prefs.js initialisation..
-    driver.get('http://example.com')
-    sleep(1)
-
     moz_profile = Path(driver.capabilities['moz:profile'])
     prefs_file = moz_profile / 'prefs.js'
+
+    # doesn't appear immediately after installing somehow, so need to wait for a bit..
+    for _ in range(10):
+        if prefs_file.exists():
+            break
+        sleep(0.5)
+
     addon_id = None
     for line in prefs_file.read_text().splitlines():
         # temporary-addon\":\"53104c22-acd0-4d44-904c-22d11d31559a\"}")

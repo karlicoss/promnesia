@@ -120,3 +120,5 @@ if __name__ == '__main__':
     # TODO ugh need to figure out PATH
     # python3 -m pytest -s tests/server_test.py::test_query 
     pytest.main(['-s', __file__])
+
+# TODO perhaps make them independent of network? Although useful for demos
