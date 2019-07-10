@@ -31,28 +31,12 @@
     "icons": {
         "48": "images/ic_not_visited_48.png"
     },
-    "browser_action": {
-        "default_icon": "images/ic_not_visited_48.png",
-        "default_title": "Was not visited"
-    },
-    "page_action": {
-        "default_icon": "images/ic_not_visited_48.png",
-        "default_title": "Was not visited"
-    },
     "commands": {
         "_execute_browser_action": {
-            "description": "Activate extension",
-            "suggested_key": {
-                "default": "Ctrl+Alt+W",
-                "mac"    : "Command+Alt+W"
-            }
+            "description": "Activate extension"
         },
         "show_dots": {
-            "description": "Activate dots for visited urls",
-            "suggested_key": {
-                "default": "Ctrl+Alt+V",
-                "mac"    : "Command+Alt+V"
-            }
+            "description": "Activate dots for visited urls"
         }
     },
     "manifest_version": 2,

@@ -16,12 +16,46 @@ const target = env.TARGET; // TODO erm didn't work?? assert(target != null);
 const release = env.RELEASE == 'YES' ? true : false;
 
 
+// Firefox wouldn't let you rebind its default shortcuts most of which use Shift
+// On the other hand, Chrome wouldn't let you use Alt
+const modifier = target === 'chrome' ? 'Shift' : 'Alt';
+
+// ugh. declarative formats are shit.
+const commandsExtra = {
+    "show_dots": {
+        "suggested_key": {
+            "default": `Ctrl+${modifier}+V`,
+            "mac":  `Command+${modifier}+V`
+        }
+    },
+    "_execute_browser_action": {
+        "suggested_key": {
+            "default": `Ctrl+${modifier}+W`,
+            "mac":  `Command+${modifier}+W`
+        }
+    },
+};
+
+
+// TODO ugh it's getting messy...
+const action = {
+    "default_icon": "images/ic_not_visited_48.png",
+    "default_title": "Was not visited"
+};
+
 const manifestExtra = {
     version: pkg.version,
     name: release ? "Were you here?" : "Were you here? (dev)",
+    commands: commandsExtra,
+    browser_action: action,
 };
 
-if (target == 'chrome') {
+if (target !== 'chrome') {
+    // TODO think if we want page action for desktop Firefox?
+    manifestExtra.page_action = action;
+}
+
+if (target === 'chrome') {
     manifestExtra.options_ui = {chrome_style: true};
 } else if (target.includes('firefox')) {
     // TODO not sure if should do anything special for mobile
@@ -30,6 +64,7 @@ if (target == 'chrome') {
 } else {
     throw new Error("unknown target " + target);
 }
+
 
 const buildPath = path.join(__dirname, 'dist', target);
 
