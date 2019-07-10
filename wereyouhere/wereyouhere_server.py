@@ -141,13 +141,21 @@ def visited(
 
     engine, binder, table = get_stuff()
 
-    results = []
-    # TODO optimize and implement properly..
+    # sqlalchemy doesn't seem to support SELECT FROM (VALUES (...)) in its api
+    # also doesn't support array binding...
+    # https://stackoverflow.com/questions/13190392/how-can-i-bind-a-list-to-a-parameter-in-a-custom-query-in-sqlalchemy
+    bstring = ','.join(f'(:b{i})'   for i, _ in enumerate(nurls))
+    bdict = {            f'b{i}': v for i, v in enumerate(nurls)}
+
+    query = f"""
+WITH cte(queried) AS (SELECT * FROM (values {bstring}))
+SELECT visits.norm_url
+    FROM cte LEFT JOIN visits
+    ON visits.norm_url = queried
+    """
     with engine.connect() as conn:
-        for nurl in nurls:
-            query = exists(table.select().where(table.c.norm_url == nurl)).select()
-            [res] = conn.execute(query)
-            results.append(res[0])
+        res = list(conn.execute(query, bdict))
+        results = [x[0] is not None for x in res]
     return results
 
 

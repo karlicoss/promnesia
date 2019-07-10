@@ -100,7 +100,9 @@ def test_visited(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
         cmd = [
-            'http', 'post',  f'http://localhost:{helper.port}/visited', f"""urls:=["{test_url}","http://badurl.org"]""",
+            'http',
+            # '--timeout', '10000', # useful for debugging
+            'post',  f'http://localhost:{helper.port}/visited', f"""urls:=["{test_url}","http://badurl.org"]""",
         ]
         response = json.loads(check_output(cmd))
         assert response == [True, False]
