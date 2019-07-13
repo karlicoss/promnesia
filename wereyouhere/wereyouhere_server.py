@@ -119,6 +119,8 @@ def visits(
     for vis in visits:
         dt = vis.dt
         if dt.tzinfo is None:
+            # TODO hmm. I guess server and indexer should better agree on timezone...
+            # TODO use lazy property in cofig for extractors?
             dt = config.FALLBACK_TIMEZONE.localize(dt)
             vis = vis._replace(dt=dt)
         vlist.append(vis)

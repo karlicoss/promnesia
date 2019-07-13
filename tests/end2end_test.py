@@ -5,14 +5,14 @@ from tempfile import TemporaryDirectory
 from subprocess import check_call
 from time import sleep
 
-import pytest
-from selenium import webdriver
+import pytest # type: ignore
+from selenium import webdriver # type: ignore
 
 
 from kython.tui import getch_or_fail
 
 from common import skip_if_ci
-from integration_test import index_instapaper, index_local_chrome
+from integration_test import index_hypothesis, index_local_chrome
 from server_test import wserver
 from firefox_helper import open_extension_page
 
@@ -134,7 +134,8 @@ def test_installs(tmp_path, browser):
 @skip_if_ci("uses X server ")
 def test_visits(tmp_path):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
-    with _test_helper(tmp_path, index_instapaper, test_url):
+    # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
+    with _test_helper(tmp_path, index_hypothesis, test_url):
         trigger_hotkey(hotkey=Hotkey.ACTIVATE)
         print("You shoud see hypothesis contexts now")
 

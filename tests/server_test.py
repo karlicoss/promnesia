@@ -6,11 +6,11 @@ from shutil import copy
 import signal
 from subprocess import check_output, check_call, Popen, PIPE
 import time
-from typing import NamedTuple
+from typing import NamedTuple, ContextManager
 
 
 from common import skip_if_ci
-from integration_test import index_instapaper
+from integration_test import index_hypothesis
 
 
 class Helper(NamedTuple):
@@ -37,7 +37,7 @@ def tmp_popen(*args, **kwargs):
 
 
 @contextmanager
-def wserver(config: Path) -> Helper:
+def wserver(config: Path): # TODO err not sure what type should it be... -> ContextManager[Helper]:
     port = str(next_port())
     path = (Path(__file__).parent.parent / 'run').absolute()
     cmd = [
@@ -76,7 +76,7 @@ def _test_helper(tmp_path):
 
 def test_query_instapaper(tmp_path):
     tdir = Path(tmp_path)
-    index_instapaper(tdir)
+    index_hypothesis(tdir)
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     with wserver(config=tdir / 'test_config.py') as helper:
         cmd = [
