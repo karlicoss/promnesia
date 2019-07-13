@@ -40,7 +40,12 @@ def tmp_popen(*args, **kwargs):
 def wserver(config: Path) -> Helper:
     port = str(next_port())
     path = (Path(__file__).parent.parent / 'run').absolute()
-    cmd = [str(path), 'serve', '--port', port, '--config', str(config)]
+    cmd = [
+        str(path), 'serve',
+        '--quiet',
+        '--port', port,
+        '--config', str(config),
+    ]
     with tmp_popen(cmd) as server:
         print("Giving few secs to start server up")
         time.sleep(3)

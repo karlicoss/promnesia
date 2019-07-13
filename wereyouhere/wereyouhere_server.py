@@ -159,19 +159,19 @@ SELECT visits.norm_url
     return results
 
 
-def run(port: str, config: Path):
+def run(port: str, config: Path, quiet: bool):
+    logger = get_logger()
     env = os.environ.copy()
     # # not sure if there is a simpler way to communicate with the server...
     env[_ENV_CONFIG] = str(config)
-    os.execvpe(
-        'hug',
-        [
-            'wereyouhere-server',
-            '-p', port,
-            '-f', __file__,
-        ],
-        env,
-    )
+    args = [
+        'wereyouhere-server',
+        *(['--silent'] if quiet else []),
+        '-p', port,
+        '-f', __file__,
+    ]
+    logger.info('Running server: %s', args)
+    os.execvpe('hug', args, env)
 
 
 _DEFAULT_CONFIG = Path('config.py')
@@ -180,6 +180,7 @@ _DEFAULT_CONFIG = Path('config.py')
 def setup_parser(p):
     p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension')
     p.add_argument('--config', type=Path, default=_DEFAULT_CONFIG, help='Path to config')
+    p.add_argument('--quiet', action='store_true')
 
 
 def main():
@@ -187,7 +188,7 @@ def main():
     p = argparse.ArgumentParser('wereyouhere server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()
-    run(port=args.port, config=args.config)
+    run(port=args.port, config=args.config, quiet=args.quiet)
 
 
 if __name__ == '__main__':

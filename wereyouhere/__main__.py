@@ -85,7 +85,7 @@ def main():
         if args.mode == 'extract':
             do_extract(config=args.config)
         elif args.mode == 'serve':
-            do_serve(port=args.port, config=args.config)
+            do_serve(port=args.port, config=args.config, quiet=args.quiet)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 
