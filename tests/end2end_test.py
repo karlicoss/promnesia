@@ -36,16 +36,21 @@ def get_addon_path(browser: str) -> Path:
 def get_webdriver(browser: str=B.FF):
     addon = get_addon_path(browser=browser)
     with TemporaryDirectory() as td:
+        tdir = Path(td)
         if browser == B.FF:
-            profile = webdriver.FirefoxProfile(td)
+            profile = webdriver.FirefoxProfile(str(tdir))
             # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
             driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox')
             # TODO this should be under with...
             driver.install_addon(str(addon), temporary=True)
         elif browser == B.CH:
+            # TODO ugh. very hacky...
+            ex = tdir / 'extension.zip'
+            files = [x.name for x in addon.iterdir()]
+            check_call(['apack', '-q', str(ex), *files], cwd=addon)
             # looks like chrome uses temporary dir for data anyway
             options = webdriver.ChromeOptions()
-            options.add_extension(addon / 'manifest.json')
+            options.add_extension(ex)
             driver = webdriver.Chrome(options=options)
         else:
             raise RuntimeError(f'Unexpected browser {browser}')
@@ -107,7 +112,7 @@ class Hotkey:
 
 # TODO could be headless?
 @skip_if_ci("uses X")
-@pytest.mark.parametrize("browser", [B.FF])
+@pytest.mark.parametrize("browser", [B.CH, B.FF])
 def test_installs(tmp_path, browser):
     with get_webdriver(browser=browser):
         # just shouldn't crash
