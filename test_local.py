@@ -7,24 +7,6 @@ from pytest import mark # type: ignore
 skip = mark.skip
 
 
-def assert_has_in_context(thing: str, hist):
-    for v in hist.visits:
-        if thing in v.context:
-            return
-    raise AssertionError(f"haven't found {thing} in context")
-
-def history(*args, **kwargs):
-    from wereyouhere.generator.smart import previsits_to_history
-    return previsits_to_history(*args, **kwargs)[0] # TODO meh
-
-def test_hypothesis():
-    from config import Extractors
-    ex = Extractors.HYPOTHESIS
-    hist = history(ex)
-    assert len(hist) > 100
-    assert_has_in_context('blindfolded people can use sound to distinguish', hist)
-
-
 def test_org():
     from config import Extractors
     from private import notes_extractor
