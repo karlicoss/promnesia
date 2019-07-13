@@ -61,7 +61,11 @@ def get_webdriver(browser: str=B.FF):
 
 
 def configure_extension(driver, port: str, show_dots: bool):
+    # TODO log properly
+    print(f"Setting: port {port}, show_dots {show_dots}")
+
     open_extension_page(driver, page='options_page.html')
+    sleep(1) # err, wtf? otherwise not always interacts with the elements correctly
 
     ep = driver.find_element_by_id('host_id') # TODO rename to 'endpoint'?
     ep.clear()

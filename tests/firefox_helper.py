@@ -11,9 +11,9 @@ def open_extension_page(driver, page: str):
 
     # doesn't appear immediately after installing somehow, so need to wait for a bit..
     for _ in range(10):
+        sleep(0.5)
         if prefs_file.exists():
             break
-        sleep(0.5)
 
     addon_id = None
     for line in prefs_file.read_text().splitlines():
