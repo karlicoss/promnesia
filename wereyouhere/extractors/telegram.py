@@ -14,6 +14,24 @@ def extract(database: PathIsh, tag: str) -> Iterable[PreVisit]:
     logger = get_logger()
 
     db = dataset.connect(f'sqlite:///{str(database)}')
+    # TODO hmm, this up doesn't save channel handles in database??
+    # TODO sender id is always user?
+    # ok, that would make a little more sense
+    """
+    SELECT S.display_name
+        , M.time
+        , M.text
+        , M.id
+    FROM messages AS M
+    LEFT JOIN (
+    SELECT type, id, coalesce(username, id) as handle, coalesce(first_name || " " || last_name, username, id) as display_name FROM users
+    UNION
+    SELECT type, id, id as handle                    , coalesce(name, id) as display_name FROM chats
+    ) as S
+    ON /* M.source_type = S.type AND */ M.source_id = S.id
+    WHERE (text like '%zdx4%') ORDER BY S.display_name;
+    """
+
     query = """
 SELECT coalesce(U.first_name || " " || U.last_name, U.username) AS sender
      , coalesce(C.first_name || " " || C.last_name, C.username) AS chatname
