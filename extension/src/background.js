@@ -4,7 +4,7 @@ import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import type {Options} from './options';
-import {get_options, get_options_async} from './options';
+import {get_options_async} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
@@ -140,50 +140,43 @@ function getDelayMs(/*url*/) {
 
 const LOCAL_TAG = 'local';
 
-function getChromeVisits(url: Url, cb: (Visits) => void) {
+
+async function getChromeVisits(url: Url): Promise<Visits> {
     // $FlowFixMe
-    chrome.history.getVisits(
-        {url: url},
-        function (results) {
-            // without delay you will always be seeing it as visited
-            // but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
-            const delay = getDelayMs();
-            const current = new Date();
+    const results = await new Promise((cb) => chrome.history.getVisits({url: url}, cb));
 
-            // ok, visitTime returns epoch which gives the correct time combined with new Date
+    // without delay you will always be seeing it as visited
+    // but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
+    const delay = getDelayMs();
+    const current = new Date();
 
-            const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
-            const visits = times.map(t => new Visit(t, [LOCAL_TAG]));
-            cb(new Visits(visits));
-        }
-    );
+    // ok, visitTime returns epoch which gives the correct time combined with new Date
+
+    const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
+    const visits = times.map(t => new Visit(t, [LOCAL_TAG]));
+    return new Visits(visits);
 }
 
-function getVisits(url: Url, cb: (Visits) => void) {
-    var nurl = normalise_url(url);
+async function getVisitsA(url: Url): Promise<Visits> {
+    const nurl = normalise_url(url);
     // TODO allow blacklisting on level of base url, that should be enough.. don't need full scale normalisation for that 
     log("original: %s -> normalised %s", url, nurl);
 
-    get_options(opts => {
-        // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
-        getChromeVisits(url, chr_visits => {
-            // TODO hmm. it's confusing since blacklisting only results in not querying on server, so not sure if only local visits are of any use?
-            if (opts.blacklist.includes(nurl)) {
-                log('%s is blacklisted! ignoring it', nurl);
-                cb(chr_visits);
-            } else {
-                getBackendVisits(url, opts, backend_visits => {
-                    const all_visits = backend_visits.visits.concat(chr_visits.visits);
-                    cb(new Visits(all_visits));
-                });
-            }
-        });
-    });
+    const opts = await get_options_async();
+
+    // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
+    const chromeVisits = await getChromeVisits(url);
+    // TODO hmm. it's confusing since blacklisting only results in not querying on server, so not sure if only local visits are of any use?
+    if (opts.blacklist.includes(nurl)) {
+        log('%s is blacklisted! ignoring it', nurl);
+        // TODO not sure if should query chrome at all
+        return chromeVisits;
+    }
+    const backendVisits = await new Promise(cb => getBackendVisits(url, opts, cb));
+    const allVisits = backendVisits.visits.concat(chromeVisits.visits);
+    return new Visits(allVisits);
 }
 
-function getVisitsA(url: Url): Promise<Visits> {
-    return new Promise((cb) => getVisits(url, cb));
-}
 
 function getIconAndTitle (visits: Visits) {
     if (visits.visits.length === 0) {
