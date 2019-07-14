@@ -1,3 +1,6 @@
 [submodule "testdata/hypothesis/netrights-dashboards-mockup"]
 	path = testdata/hypothesis/netrights-dashboards-mockup
 	url = git@github.com:taniki/netrights-dashboard-mockup.git
+[submodule "extension/shallalist"]
+	path = extension/shallalist
+	url = git@github.com:cbuijs/shallalist.git
