@@ -181,6 +181,10 @@ function getVisits(url: Url, cb: (Visits) => void) {
     });
 }
 
+function getVisitsA(url: Url): Promise<Visits> {
+    return new Promise((cb) => getVisits(url, cb));
+}
+
 function getIconAndTitle (visits: Visits) {
     if (visits.visits.length === 0) {
         return ['images/ic_not_visited_48.png', 'Was not visited'];
@@ -430,7 +434,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 
 type Tab = any;
 
-function getActiveTab(cb: (Tab) => void) {
+function _getActiveTab(cb: (Tab) => void) {
     chrome.tabs.query({'active': true}, tabs => {
         const tab = tabs[0];
         const url = unwrap(tab.url);
@@ -443,20 +447,23 @@ function getActiveTab(cb: (Tab) => void) {
     });
 }
 
-function getActiveTabAsync(): Promise<Tab> {
+function getActiveTab(): Promise<Tab> {
     // TODO FIXME reject
-    return new Promise((cb) => getActiveTab(cb));
+    return new Promise((cb) => _getActiveTab(cb));
 }
 
 // $FlowFixMe
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request) => {
     if (request.method == 'getActiveTabVisits') {
-        getActiveTab(tab => {
-            getVisits(tab.url, visits => {
-                sendResponse(visits);
-            });
-        });
-        return true; // this is important!! otherwise message will not be sent?
+        const atab = await getActiveTab();
+        const visits = await getVisitsA(atab.url);
+        // sendResponse(visits);
+        // TODO err. not sure what's happening here...
+        // if i'm using await in return type, it expects me to return visits instead of true/false??
+        // is it automatically detecting whether it's a promise or not??
+        // perhaps async automatically uncurries last argument?
+        return visits;
+        // return true; // this is important!! otherwise message will not be sent?
     }
     return false;
 });
@@ -479,7 +486,7 @@ chrome.commands.onCommand.addListener(async cmd => {
     if (cmd === 'show_dots') {
         // TODO actually use show dots setting?
         const opts = await get_options_async();
-        const atab = await getActiveTabAsync();
+        const atab = await getActiveTab();
         showDots(atab.tabId, opts);
     }
 });
