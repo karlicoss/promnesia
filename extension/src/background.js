@@ -8,7 +8,7 @@ import {get_options, get_options_async} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
-const ACTIONS = [chrome.browserAction, chrome.pageAction]; // TODO dispatch depending on android/desktop?
+const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [chrome.browserAction, chrome.pageAction]; // TODO dispatch depending on android/desktop?
 
 // TODO common?
 export function showNotification(text: string, priority: number=0) {
@@ -206,20 +206,21 @@ function chromeTabsQueryAsync(opts): Promise<Array<chrome$Tab>> {
     return new Promise((cb) => chrome.tabs.query(opts, cb));
 }
 
-function updateState () {
-    // TODO ugh no simpler way??
-    chrome.tabs.query({'active': true}, function (tabs) {
-        // TODO why am I getting multiple results???
-        let atab = tabs[0];
-        let url = unwrap(atab.url);
-        let tabId = unwrap(atab.id);
+async function updateState () {
+    const tabs = await chromeTabsQueryAsync({'active': true});
+    // TODO why am I getting multiple results???
+    const atab = tabs[0];
+    const url = unwrap(atab.url);
+    const tabId = unwrap(atab.id);
 
-        if (ignored(url)) {
-            log("ignoring %s", url);
-            return;
-        }
+    if (ignored(url)) {
+        log("ignoring %s", url);
+        return;
+    }
 
-        getVisits(url, visits => {
+    const visits = await getVisitsA(url);
+
+    // tabulation preserved from pre-async times for git history
             let res = getIconAndTitle(visits);
             let icon = res[0];
             let title = res[1];
@@ -251,8 +252,6 @@ function updateState () {
                     code: `bindSidebarData(${JSON.stringify(visits)})`
                 });
             });
-        });
-    });
 }
 
 function showDots(tabId, options: Options) {
@@ -402,7 +401,9 @@ chrome.tabs.onCreated.addListener((tab) => {
     ldebug("!!!!!! CREATED %s", tab);
 });
 
-chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+
+// $FlowFixMe
+chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
     ldebug("!!!!!! UPDATED %s %s", tab, info);
 
     const url = tab.url;
@@ -432,7 +433,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 
     if (info['status'] === 'complete') {
         linfo('requesting! %s', url);
-        updateState();
+        await updateState();
     }
 });
 
