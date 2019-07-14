@@ -202,6 +202,10 @@ function getIconAndTitle (visits: Visits) {
     }
 }
 
+function chromeTabsQueryAsync(opts): Promise<Array<chrome$Tab>> {
+    return new Promise((cb) => chrome.tabs.query(opts, cb));
+}
+
 function updateState () {
     // TODO ugh no simpler way??
     chrome.tabs.query({'active': true}, function (tabs) {
@@ -432,36 +436,33 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     }
 });
 
-function _getActiveTab(cb: (chrome$Tab) => void) {
-    chrome.tabs.query({'active': true}, tabs => {
-        const tab = tabs[0];
-        const url = unwrap(tab.url);
-        // TODO ugh duplication
-        if (ignored(url)) {
-            log("ignoring %s", url);
-            return;
-        }
-        cb(tab);
-    });
-}
 
-function getActiveTab(): Promise<chrome$Tab> {
-    // TODO FIXME reject
-    return new Promise((cb) => _getActiveTab(cb));
+async function getActiveTab(): Promise<?chrome$Tab> {
+    const tabs = await chromeTabsQueryAsync({'active': true});
+    const tab = tabs[0];
+    const url = unwrap(tab.url);
+    // TODO ugh duplication
+    if (ignored(url)) {
+        log("ignoring %s", url); // TODO not sure when it should be handled...
+        return null;
+    }
+    return tab;
 }
 
 // $FlowFixMe
 chrome.runtime.onMessage.addListener(async (request) => {
     if (request.method == 'getActiveTabVisits') {
         const atab = await getActiveTab();
-        const visits = await getVisitsA(unwrap(atab.url));
-        // sendResponse(visits);
+        if (atab != null) { // means it's ignored
+            const visits = await getVisitsA(unwrap(atab.url));
+            return visits;
+        }
         // TODO err. not sure what's happening here...
         // if i'm using await in return type, it expects me to return visits instead of true/false??
         // is it automatically detecting whether it's a promise or not??
         // perhaps async automatically uncurries last argument?
         // could be Firefox only?
-        return visits;
+        // sendResponse(visits);
         // return true; // this is important!! otherwise message will not be sent?
     }
     return false;
@@ -486,6 +487,8 @@ chrome.commands.onCommand.addListener(async cmd => {
         // TODO actually use show dots setting?
         const opts = await get_options_async();
         const atab = await getActiveTab();
-        showDots(unwrap(atab.id), opts);
+        if (atab != null) { // means it's ignored
+            showDots(unwrap(atab.id), opts);
+        }
     }
 });
