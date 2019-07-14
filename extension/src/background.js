@@ -4,7 +4,7 @@ import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, unwrap} from './common';
 import {normalise_url} from './normalise';
 import type {Options} from './options';
-import {get_options} from './options';
+import {get_options, get_options_async} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
@@ -443,6 +443,11 @@ function getActiveTab(cb: (Tab) => void) {
     });
 }
 
+function getActiveTabAsync(): Promise<Tab> {
+    // TODO FIXME reject
+    return new Promise((cb) => getActiveTab(cb));
+}
+
 // $FlowFixMe
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.method == 'getActiveTabVisits') {
@@ -469,12 +474,12 @@ for (const action of ACTIONS) {
     });
 }
 
-chrome.commands.onCommand.addListener(cmd => {
+// $FlowFixMe // err, complains at Promise but nevertheless works
+chrome.commands.onCommand.addListener(async cmd => {
     if (cmd === 'show_dots') {
-        getActiveTab(tab => {
-            get_options(opts => {
-                showDots(tab.tabId, opts);
-            });
-        });
+        // TODO actually use show dots setting?
+        const opts = await get_options_async();
+        const atab = await getActiveTabAsync();
+        showDots(atab.tabId, opts);
     }
 });

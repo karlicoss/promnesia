@@ -166,7 +166,7 @@ def test_chrome_visits(tmp_path):
 @skip_if_ci("uses X server")
 def test_show_dots(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
-    with _test_helper(tmp_path, index_local_chrome, test_url):
+    with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True):
         trigger_hotkey(hotkey=Hotkey.DOTS)
         print("You should see dots now near SL group, U group, Representation theory")
 
