@@ -28,12 +28,29 @@ function default_options(): Options {
 }
 
 export function get_options(cb: (Options) => void)  {
+    // TODO make it as minimal as possible; rest should be async
     chrome.storage.local.get(null, res => {
         const optss = res.options || '{}';
         const saved_opts = JSON.parse(optss);
         const opts = {...default_options(), ...saved_opts};
         cb(opts);
     });
+}
+
+
+function create_promise<T>(provider: ((T) => void) => void): Promise<T> {
+    return new Promise((resolve, reject) => {
+        try {
+            provider(resolve);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+// TODO later rename to just get_options
+export async function get_options_async(): Promise<Options> {
+    return await create_promise(get_options);
 }
 
 export function set_options(opts: Options, cb: () => void) {
@@ -44,4 +61,8 @@ export function set_options(opts: Options, cb: () => void) {
     const optss = JSON.stringify(opts);
     console.log('Saving %s', optss);
     chrome.storage.local.set({'options': optss}, cb);
+}
+
+export async function set_options_async(opts: Options) {
+    return await create_promise(cb => set_options(opts, cb));
 }
