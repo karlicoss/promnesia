@@ -131,6 +131,19 @@ def test_installs(tmp_path, browser):
         pass
 
 
+@skip_if_ci("uses X")
+@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+def test_settings(tmp_path, browser):
+    with get_webdriver(browser=browser, headless=True) as driver:
+        # TODO noalert present exception??
+        configure_extension(driver, port='12345', show_dots=False)
+        # just shouldn't crash
+        driver.get('about:blank')
+        open_extension_page(driver, page='options_page.html')
+        hh = driver.find_element_by_id('host_id')
+        assert hh.get_attribute('value') == 'http://localhost:12345'
+
+
 @skip_if_ci("uses X server ")
 def test_visits(tmp_path):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
