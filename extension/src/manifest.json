@@ -2,7 +2,11 @@
     "name": "<webpack managed>",
     "version": "<webpack managed>",
     "description": "Indicates whether and when the page was visited (and more!)",
-    "web_accessible_resources": ["sidebar.js", "sidebar.css"],
+    "web_accessible_resources": [
+        "sidebar.js",
+        "sidebar.css",
+        "shallalist/*"
+    ],
     "background": {
         "scripts": ["background.js"],
         "persistent": false

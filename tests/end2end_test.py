@@ -148,10 +148,19 @@ def test_settings(tmp_path, browser):
 
 @skip_if_ci("uses X")
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
-def test_blacklist(tmp_path, browser):
+def test_blacklist_user(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
         driver.get('http://stackoverflow.com')
+        print("Should be blacklisted!")
+
+
+@skip_if_ci("uses X")
+@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+def test_blacklist_builtin(tmp_path, browser):
+    with get_webdriver(browser=browser, headless=False) as driver:
+        configure_extension(driver, port='12345')
+        driver.get('https://www.hsbc.co.uk/mortgages/')
         print("Should be blacklisted!")
 
 

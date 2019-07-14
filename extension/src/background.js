@@ -2,6 +2,7 @@
 
 import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap} from './common';
+import {normaliseHostname} from './normalise';
 import type {Options} from './options';
 import {get_options_async} from './options';
 // $FlowFixMe
@@ -164,18 +165,33 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     return new Visits(visits);
 }
 
-async function isBlacklisted(url: Url) {
-    const hostname = new URL(url).hostname;
+type Reason = string;
+
+async function isBlacklisted(url: Url): Promise<?Reason> {
+    // TODO perhaps use binary search?
+    const _hostname = new URL(url).hostname;
+    const hostname = normaliseHostname(_hostname);
     const opts = await get_options_async();
-    // TODO not sure what to do with www, amp etc. maybe we do need some basic normalising here
-    return opts.blacklist.includes(hostname); // for now assumes it's exact domain match domain level
+    // for now assumes it's exact domain match domain level
+    if (opts.blacklist.includes(hostname)) {
+        return "User-defined blacklist";
+    }
+    const domains_url = chrome.runtime.getURL('shallalist/finance/banking/domains');
+    const resp = await fetch(domains_url);
+    const domains = (await resp.text()).split('\n');
+    console.log(domains);
+    if (domains.includes(hostname)) {
+        return "'Banking' blacklist";
+    }
+    return null;
 }
 
 type Result = Visits | Blacklisted;
 
 async function getVisits(url: Url): Promise<Result> {
-    if (await isBlacklisted(url)) {
-        return new Blacklisted(url, "Matched against blacklist"); // TODO use proper reason
+    const bl = await isBlacklisted(url);
+    if (bl != null) {
+        return new Blacklisted(url, bl);
     }
     // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
     const chromeVisits = await getChromeVisits(url);
@@ -290,6 +306,7 @@ function showDots(tabId, options: Options) {
         if (results == null) {
             throw "shouldn't happen";
         }
+        // TODO FIXME filter these by blacklist as well?
         const res = results[0];
         if (res == null) {
             console.error("Weird, res is null. Not doing anything");
@@ -490,9 +507,9 @@ for (const action of ACTIONS) {
             showNotification(`${url} can't be handled`);
             return;
         }
-        const blacklisted = await isBlacklisted(url);
-        if (blacklisted) {
-            showBlackListedNotification(tid, new Blacklisted(url, "TODO REASON"));
+        const bl = await isBlacklisted(url);
+        if (bl != null) {
+            showBlackListedNotification(tid, new Blacklisted(url, bl));
         } else {
             chrome.tabs.executeScript(tid, {file: 'sidebar.js'}, () => {
                 chrome.tabs.executeScript(tid, {code: 'toggleSidebar();'});
@@ -514,8 +531,9 @@ chrome.commands.onCommand.addListener(async cmd => {
         } else {
             const url = unwrap(atab.url);
             const tid = unwrap(atab.id);
-            if (await isBlacklisted(url)) {
-                showBlackListedNotification(tid, new Blacklisted(url, "TODO FIXME"));
+            const bl = await isBlacklisted(url);
+            if (bl != null) {
+                showBlackListedNotification(tid, new Blacklisted(url, bl));
             } else {
                 showDots(tid, opts);
             }

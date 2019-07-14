@@ -39,3 +39,8 @@ export function normalise_url(url) {
     });
     return cur;
 }
+
+const _re = R('^(www|ww|amp)\\.'  );
+export function normaliseHostname(url) {
+    return _re[Symbol.replace](url, '');
+}
