@@ -432,9 +432,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     }
 });
 
-type Tab = any;
-
-function _getActiveTab(cb: (Tab) => void) {
+function _getActiveTab(cb: (chrome$Tab) => void) {
     chrome.tabs.query({'active': true}, tabs => {
         const tab = tabs[0];
         const url = unwrap(tab.url);
@@ -447,7 +445,7 @@ function _getActiveTab(cb: (Tab) => void) {
     });
 }
 
-function getActiveTab(): Promise<Tab> {
+function getActiveTab(): Promise<chrome$Tab> {
     // TODO FIXME reject
     return new Promise((cb) => _getActiveTab(cb));
 }
@@ -456,12 +454,13 @@ function getActiveTab(): Promise<Tab> {
 chrome.runtime.onMessage.addListener(async (request) => {
     if (request.method == 'getActiveTabVisits') {
         const atab = await getActiveTab();
-        const visits = await getVisitsA(atab.url);
+        const visits = await getVisitsA(unwrap(atab.url));
         // sendResponse(visits);
         // TODO err. not sure what's happening here...
         // if i'm using await in return type, it expects me to return visits instead of true/false??
         // is it automatically detecting whether it's a promise or not??
         // perhaps async automatically uncurries last argument?
+        // could be Firefox only?
         return visits;
         // return true; // this is important!! otherwise message will not be sent?
     }
@@ -487,6 +486,6 @@ chrome.commands.onCommand.addListener(async cmd => {
         // TODO actually use show dots setting?
         const opts = await get_options_async();
         const atab = await getActiveTab();
-        showDots(atab.tabId, opts);
+        showDots(unwrap(atab.id), opts);
     }
 });
