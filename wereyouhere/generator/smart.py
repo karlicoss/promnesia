@@ -1,9 +1,10 @@
 # TODO: give a better name...
+from typing import Iterable, List, Optional, Tuple
+
 from kython.kerror import unwrap
 
-from typing import Iterable, List, Tuple
+from wereyouhere.common import History, Loc, PreVisit, get_logger
 
-from wereyouhere.common import History, PreVisit, get_logger, Loc
 
 class Wrapper:
     def __init__(self, ff, *args, **kwargs):
@@ -36,8 +37,19 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
     for p in previsits:
         if isinstance(p, Exception):
             errors.append(p)
-            logger.error('extractor emitted exception!')
-            logger.exception(p)
+
+            # Ok, I guess we can't rely on normal exception logger here because it expects proper traceback
+            # so we can unroll the cause chain manually at least...
+            # TODO at least preserving location would be nice.
+            parts = ['extractor emitted exception']
+            cur: Optional[BaseException] = p
+            while cur is not None:
+                ss = str(cur)
+                if len(parts) >= 2:
+                    ss = 'caused by ' + ss
+                parts.append(ss)
+                cur = cur.__cause__
+            logger.error('\n'.join(parts))
             continue
 
         # TODO check whether it's filtered before construction? probably doesn't really impact
