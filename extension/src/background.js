@@ -1,8 +1,7 @@
 /* @flow */
 
 import type {Locator, Tag, Url, Second} from './common';
-import {Visit, Visits, unwrap} from './common';
-import {normalise_url} from './normalise';
+import {Visit, Visits, Blacklisted, unwrap} from './common';
 import type {Options} from './options';
 import {get_options_async} from './options';
 // $FlowFixMe
@@ -21,7 +20,7 @@ export function showNotification(text: string, priority: number=0) {
     });
 }
 
-export function showTabNotification(tabId: number, text: string) {
+export function showTabNotification(tabId: number, text: string, color: string='green') {
     // TODO can it be remote script?
     text = text.replace(/\n/g, "\\n"); // ....
 
@@ -35,11 +34,19 @@ Toastify({
   close: true,
   gravity: "top",
   positionLeft: false,
-  backgroundColor: "green",
+  backgroundColor: "${color}",
 }).showToast();
     `    });
       });
     });
+}
+
+function showIgnoredNotification(tabId: number, url: Url) {
+    showTabNotification(tabId, `${url} is ignored`, 'red');
+}
+
+function showBlackListedNotification(tabId: number, b: Blacklisted) {
+    showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red');
 }
 
 function rawToVisits(vis): Visits {
@@ -157,28 +164,33 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     return new Visits(visits);
 }
 
-async function getVisitsA(url: Url): Promise<Visits> {
-    const nurl = normalise_url(url);
-    // TODO allow blacklisting on level of base url, that should be enough.. don't need full scale normalisation for that 
-    log("original: %s -> normalised %s", url, nurl);
-
+async function isBlacklisted(url: Url) {
+    const hostname = new URL(url).hostname;
     const opts = await get_options_async();
+    // TODO not sure what to do with www, amp etc. maybe we do need some basic normalising here
+    return opts.blacklist.includes(hostname); // for now assumes it's exact domain match domain level
+}
 
+type Result = Visits | Blacklisted;
+
+async function getVisits(url: Url): Promise<Result> {
+    if (await isBlacklisted(url)) {
+        return new Blacklisted(url, "Matched against blacklist"); // TODO use proper reason
+    }
     // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
     const chromeVisits = await getChromeVisits(url);
-    // TODO hmm. it's confusing since blacklisting only results in not querying on server, so not sure if only local visits are of any use?
-    if (opts.blacklist.includes(nurl)) {
-        log('%s is blacklisted! ignoring it', nurl);
-        // TODO not sure if should query chrome at all
-        return chromeVisits;
-    }
+    const opts = await get_options_async();
     const backendVisits = await new Promise(cb => getBackendVisits(url, opts, cb));
     const allVisits = backendVisits.visits.concat(chromeVisits.visits);
     return new Visits(allVisits);
 }
 
 
-function getIconAndTitle (visits: Visits) {
+function getIconAndTitle(visits: Result) {
+    if (visits instanceof Blacklisted) {
+        return ['images/ic_blacklisted_48.png', `Blacklisted: ${visits.reason}`];
+    }
+
     if (visits.visits.length === 0) {
         return ['images/ic_not_visited_48.png', 'Was not visited'];
     }
@@ -211,8 +223,7 @@ async function updateState () {
         return;
     }
 
-    const visits = await getVisitsA(url);
-
+    const visits = await getVisits(url);
     // tabulation preserved from pre-async times for git history
             let res = getIconAndTitle(visits);
             let icon = res[0];
@@ -232,6 +243,7 @@ async function updateState () {
             // TODO if it's part of actions only?
             chrome.pageAction.show(tabId);
 
+    if (visits instanceof Visits) {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             const locs = visits.contexts().map(l => l == null ? null : l.title);
             if (locs.length !== 0) {
@@ -245,8 +257,10 @@ async function updateState () {
                     code: `bindSidebarData(${JSON.stringify(visits)})`
                 });
             });
+    }
 }
 
+// TODO check for blacklist here as well
 function showDots(tabId, options: Options) {
     chrome.tabs.executeScript(tabId, {
         code: `
@@ -445,11 +459,16 @@ async function getActiveTab(): Promise<?chrome$Tab> {
 
 // $FlowFixMe
 chrome.runtime.onMessage.addListener(async (request) => {
-    if (request.method == 'getActiveTabVisits') {
+    if (request.method == 'getActiveTabVisitsForSidebar') {
         const atab = await getActiveTab();
         if (atab != null) { // means it's ignored
-            const visits = await getVisitsA(unwrap(atab.url));
-            return visits;
+            const visits = await getVisits(unwrap(atab.url));
+            if (visits instanceof Visits) {
+                return visits;
+            } else {
+                // hmm. generally shouldn't happen, since sidebar is not bound on blacklisted urls
+                lerror("Shouldn't have happened! %s", visits);
+            }
         }
         // TODO err. not sure what's happening here...
         // if i'm using await in return type, it expects me to return visits instead of true/false??
@@ -463,15 +482,22 @@ chrome.runtime.onMessage.addListener(async (request) => {
 });
 
 for (const action of ACTIONS) {
-    action.onClicked.addListener(tab => {
+    // $FlowFixMe
+    action.onClicked.addListener(async tab => {
         const url = unwrap(tab.url);
+        const tid = unwrap(tab.id);
         if (ignored(url)) {
             showNotification(`${url} can't be handled`);
             return;
         }
-        chrome.tabs.executeScript(tab.id, {file: 'sidebar.js'}, () => {
-            chrome.tabs.executeScript(tab.id, {code: 'toggleSidebar();'});
-        });
+        const blacklisted = await isBlacklisted(url);
+        if (blacklisted) {
+            showBlackListedNotification(tid, new Blacklisted(url, "TODO REASON"));
+        } else {
+            chrome.tabs.executeScript(tid, {file: 'sidebar.js'}, () => {
+                chrome.tabs.executeScript(tid, {code: 'toggleSidebar();'});
+            });
+        }
     });
 }
 
@@ -481,8 +507,18 @@ chrome.commands.onCommand.addListener(async cmd => {
         // TODO actually use show dots setting?
         const opts = await get_options_async();
         const atab = await getActiveTab();
-        if (atab != null) { // means it's ignored
-            showDots(unwrap(atab.id), opts);
+        if (atab == null) {
+            // means it's ignored
+            // TODO ugh, would be useful to have tab id here
+            showIgnoredNotification(0, 'TODO URL');
+        } else {
+            const url = unwrap(atab.url);
+            const tid = unwrap(atab.id);
+            if (await isBlacklisted(url)) {
+                showBlackListedNotification(tid, new Blacklisted(url, "TODO FIXME"));
+            } else {
+                showDots(tid, opts);
+            }
         }
     }
 });

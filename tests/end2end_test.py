@@ -68,7 +68,7 @@ def get_webdriver(browser: str=B.FF, headless=False):
             driver.close()
 
 
-def configure_extension(driver, port: str, show_dots: bool):
+def configure_extension(driver, port: str, show_dots: bool=True, blacklist=()):
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
@@ -83,6 +83,9 @@ def configure_extension(driver, port: str, show_dots: bool):
     if dots.is_selected() != show_dots:
         dots.click()
     assert dots.is_selected() == show_dots
+
+    bl = driver.find_element_by_id('blacklist_id')
+    bl.send_keys('\n'.join(blacklist))
 
     se = driver.find_element_by_id('save_id')
     se.click()
@@ -135,13 +138,21 @@ def test_installs(tmp_path, browser):
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
 def test_settings(tmp_path, browser):
     with get_webdriver(browser=browser, headless=True) as driver:
-        # TODO noalert present exception??
         configure_extension(driver, port='12345', show_dots=False)
         # just shouldn't crash
         driver.get('about:blank')
         open_extension_page(driver, page='options_page.html')
         hh = driver.find_element_by_id('host_id')
         assert hh.get_attribute('value') == 'http://localhost:12345'
+
+
+@skip_if_ci("uses X")
+@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+def test_blacklist(tmp_path, browser):
+    with get_webdriver(browser=browser, headless=False) as driver:
+        configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
+        driver.get('http://stackoverflow.com')
+        print("Should be blacklisted!")
 
 
 @skip_if_ci("uses X server ")

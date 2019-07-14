@@ -14,6 +14,7 @@ def main():
         (f'ic_not_visited_{size}.png', '#999999'),
         (f'ic_boring_{size}.png'     , '#550000'),
         (f'ic_blue_{size}.png'       , '#6666ff'),
+        (f'ic_blacklisted_{size}.png', '#000000'),
     ]
     for fname, color in spec:
         svg = src_svg.replace(src_color, color)

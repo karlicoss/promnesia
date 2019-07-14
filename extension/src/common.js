@@ -93,3 +93,13 @@ export class Visits {
         return locs;
     }
 }
+
+export class Blacklisted {
+    url: Url;
+    reason: string;
+
+    constructor(url: Url, reason: string) {
+        this.url = url;
+        this.reason = reason;
+    }
+}

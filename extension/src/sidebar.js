@@ -305,7 +305,7 @@ window.bindSidebarData = bindSidebarData;
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 function requestVisits() {
     chrome.runtime.sendMessage({
-        method: 'getActiveTabVisits'
+        method: 'getActiveTabVisitsForSidebar'
     }, (response: ?Visits)  => {
         if (response == null) {
             console.log("No visits for this url");
