@@ -72,6 +72,8 @@ jobs:
       - checkout:
           path: ~/project
 
+      - run: git submodule update --init # TODO maybe only clone the url list submodule here?
+
       - run: npm install
       - run:
           name: build
