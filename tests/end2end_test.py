@@ -164,6 +164,25 @@ def test_blacklist_builtin(tmp_path, browser):
         print("Should be blacklisted!")
 
 
+@skip_if_ci("uses X")
+@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+def test_add_to_blacklist(tmp_path, browser):
+    with get_webdriver(browser=browser, headless=False) as driver:
+        configure_extension(driver, port='12345')
+        driver.get('https://example.com')
+        chain = webdriver.ActionChains(driver)
+        chain.move_to_element(driver.find_element_by_tag_name('h1')).context_click().perform()
+
+        # looks like selenium can't interact with browser context menu...
+        import pyautogui # type: ignore
+        # assumes extension context menu item is last
+        pyautogui.typewrite(['up', 'enter'], interval=0.5)
+
+        driver.get(driver.current_url)
+        print("Should be blacklisted now!")
+
+
+
 @skip_if_ci("uses X server ")
 def test_visits(tmp_path):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"

@@ -28,9 +28,11 @@
 
         "activeTab",
 
-        "notifications",
+        "webNavigation",
 
-        "webNavigation"
+        "contextMenus",
+
+        "notifications"
     ],
     "icons": {
         "48": "images/ic_not_visited_48.png"

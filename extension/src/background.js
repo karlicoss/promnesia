@@ -4,7 +4,7 @@ import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap} from './common';
 import {normaliseHostname} from './normalise';
 import type {Options} from './options';
-import {get_options_async} from './options';
+import {get_options_async, setOptions} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
@@ -167,10 +167,15 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 
 type Reason = string;
 
-async function isBlacklisted(url: Url): Promise<?Reason> {
-    // TODO perhaps use binary search?
+function normalisedHostname(url: Url): string {
     const _hostname = new URL(url).hostname;
     const hostname = normaliseHostname(_hostname);
+    return hostname;
+}
+
+async function isBlacklisted(url: Url): Promise<?Reason> {
+    // TODO perhaps use binary search?
+    const hostname = normalisedHostname(url);
     const opts = await get_options_async();
     // for now assumes it's exact domain match domain level
     if (opts.blacklist.includes(hostname)) {
@@ -474,6 +479,13 @@ async function getActiveTab(): Promise<?chrome$Tab> {
     return tab;
 }
 
+async function showActiveTabNotification(text: string, color: string): Promise<void> {
+    const atab = await getActiveTab();
+    if (atab != null) { // TODO FIXME
+        showTabNotification(unwrap(atab.id), text, color);
+    }
+}
+
 // $FlowFixMe
 chrome.runtime.onMessage.addListener(async (request) => {
     if (request.method == 'getActiveTabVisitsForSidebar') {
@@ -510,6 +522,7 @@ for (const action of ACTIONS) {
         const bl = await isBlacklisted(url);
         if (bl != null) {
             showBlackListedNotification(tid, new Blacklisted(url, bl));
+            // TODO show popup; suggest to whitelist?
         } else {
             chrome.tabs.executeScript(tid, {file: 'sidebar.js'}, () => {
                 chrome.tabs.executeScript(tid, {code: 'toggleSidebar();'});
@@ -540,3 +553,34 @@ chrome.commands.onCommand.addListener(async cmd => {
         }
     }
 });
+
+
+async function blackListDomain(e): Promise<void> {
+    const url = unwrap(e.pageUrl);
+    const hostname = normalisedHostname(url);
+
+    const opts = await get_options_async();
+    opts.blacklist.push(hostname);
+
+    const ll = opts.blacklist.length;
+    await showActiveTabNotification(`Added ${hostname} to blacklist (${ll} items now)`, 'blue');
+    await setOptions(opts);
+}
+
+chrome.contextMenus.create({
+    "title"   : "Blacklist domain",
+    // $FlowFixMe
+    "onclick" : blackListDomain,
+});
+
+// TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
+// chrome.contextMenus.create({
+//     "title"   : "Blacklist page",
+//     // $FlowFixMe
+//     "onclick" : blackListPage,
+// });
+
+// chrome.contextMenus.create({
+//     "title"   : "Whitelist page",
+//     "onclick" : clickHandler,
+// });

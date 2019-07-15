@@ -53,16 +53,12 @@ export async function get_options_async(): Promise<Options> {
     return await create_promise(get_options);
 }
 
-export function set_options(opts: Options, cb: () => void) {
+export async function setOptions(opts: Options) {
     // ugh. making sure every field is a string is too annoying
     // just easier to store on big settings payload?
     // TODO can we even store array in local store???
-
     const optss = JSON.stringify(opts);
     console.log('Saving %s', optss);
-    chrome.storage.local.set({'options': optss}, cb);
-}
 
-export async function set_options_async(opts: Options) {
-    return await create_promise(cb => set_options(opts, cb));
+    await new Promise(cb => chrome.storage.local.set({'options': optss}, cb));
 }

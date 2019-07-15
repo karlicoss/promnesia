@@ -1,6 +1,6 @@
 /* @flow */
 import {unwrap} from './common';
-import {get_options_async, set_options_async} from './options';
+import {get_options_async, setOptions} from './options';
 
 function getInputElement(element_id: string): HTMLInputElement {
     return ((document.getElementById(element_id): any): HTMLInputElement);
@@ -48,10 +48,14 @@ unwrap(document.getElementById('save_id')).addEventListener('click', async () =>
         host      : getHost().value,
         dots      : getDots().checked,
         token     : getToken().value,
+        // this is preserving whitespaces so might end up with '' entries
+        // but perhaps it's ok; lets the user space out blacklist entries
+        // TODO also make sure we don't reorder entries in settings without user's permissions
+        // I guess the real solution is blacklist object which keeps textual repr separately
         blacklist : getBlackList().value.split(/\n/),
         tag_map   : JSON.parse(getTagMap().value),
         extra_css : getExtraCss().value,
     };
-    await set_options_async(opts);
+    await setOptions(opts);
     alert("Saved!");
 });
