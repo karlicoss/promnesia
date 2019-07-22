@@ -1,7 +1,7 @@
 /* @flow */
 
-import {unwrap, Blacklisted} from './common';
-import {getVisits} from './background';
+import {unwrap} from './common';
+import {searchVisits} from './background';
 
 function getInputElement(element_id: string): HTMLInputElement {
     return ((document.getElementById(element_id): any): HTMLInputElement);
@@ -17,15 +17,8 @@ function getResultsContainer(): HTMLElement {
 
 const doc = document;
 
-// doc.addEventListener('DOMContentLoaded', async () => {
-//     // TODO ??
-// });
-
-
 unwrap(doc.getElementById('search_id')).addEventListener('click', async () => {
-    // TODO query shouldn't go through blacklisting...
-    const visits = await getVisits(getQuery().value);
-    // TODO FIXME send proper query to serve
+    const visits = await searchVisits(getQuery().value);
     console.log(visits);
 
     const res = getResultsContainer();
@@ -35,9 +28,6 @@ unwrap(doc.getElementById('search_id')).addEventListener('click', async () => {
     }
 
     // TODO use something more generic for that!
-    if (visits instanceof Blacklisted) {
-        throw "shouldn't happen!";
-    }
     for (const visit of visits.visits) {
         const el = doc.createElement('div'); res.appendChild(el);
         const node = document.createTextNode(JSON.stringify(visit)); el.appendChild(node);

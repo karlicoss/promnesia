@@ -88,14 +88,14 @@ const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
-function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
+function queryBackendCommon(u: Url, opts: Options, endp: string, cb: (Visits) => void) {
     const data = JSON.stringify({
         'url': u,
     });
 
     const request = new XMLHttpRequest();
 
-    const endpoint = `${opts.host}/visits`;
+    const endpoint = `${opts.host}/${endp}`;
     request.open('POST', endpoint, true);
     request.setRequestHeader('Authorization', `Basic ${btoa(opts.token)}`);
     request.onreadystatechange = () => {
@@ -141,6 +141,16 @@ function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
     request.send(data);
 }
 
+function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
+    return queryBackendCommon(u, opts, 'visits', cb);
+}
+
+
+// TODO FIXME include browser too..
+export async function searchVisits(u: Url): Promise<Visits> {
+    const opts = await get_options_async();
+    return new Promise((cb) => queryBackendCommon(u, opts, 'search', cb));
+}
 
 function getDelayMs(/*url*/) {
     return 10 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
