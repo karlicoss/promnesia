@@ -53,6 +53,7 @@ export function format_duration(seconds: Second): string {
 }
 
 export class Visit {
+    nurl: string;
     time: Dt;
     tags: Array<Tag>;
     context: ?string;
@@ -60,7 +61,8 @@ export class Visit {
     duration: ?Second;
 
 
-    constructor(time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
+    constructor(nurl: string, time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
+        this.nurl = nurl;
         this.time = time;
         this.tags = tags;
         this.context = context;

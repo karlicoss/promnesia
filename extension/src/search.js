@@ -47,7 +47,7 @@ async function _doSearch() {
     for (const v of visits) {
         // TODO need url as well?
         const [dates, times] = _fmt(v.time)
-        binder.render(res, dates, times, v.tags, v.context, v.locator);
+        binder.render(res, dates, times, v.tags, {nurl: v.nurl, context: v.context, locator: v.locator});
         // const el = doc.createElement('div'); res.appendChild(el);
         // const node = document.createTextNode(JSON.stringify(visit)); el.appendChild(node);
     }

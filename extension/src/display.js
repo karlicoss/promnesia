@@ -1,5 +1,5 @@
 /* @flow */
-import type {Tag, Locator} from './common';
+import type {Url, Tag, Locator} from './common';
 import {format_dt} from './common';
 
 // TODO need to pass document??
@@ -14,6 +14,11 @@ export function _fmt(dt: Date): [string, string] {
     return [datestr, timestr];
 }
 
+type Params = {
+    nurl: ?Url;
+    context: ?string;
+    locator: ?Locator;
+}
 
 export class Binder {
     doc: Document;
@@ -44,8 +49,11 @@ export class Binder {
         dates: string,
         times: string,
         tags: Array<Tag>,
-        context: ?string=null,
-        locator: ?Locator=null,
+        {
+            nurl,
+            context,
+            locator,
+        }: Params,
     ) {
         const child = this.makeChild.bind(this);
         const tchild = this.makeTchild.bind(this); // TODO still necessary??
@@ -105,6 +113,13 @@ export class Binder {
             summ.appendChild(firstline_elem);
             det.appendChild(doc.createTextNode(context));
             */
+        }
+        if (nurl != null) {
+            const nurl_c = child(item, 'div', ['nurl']);
+            const link = child(nurl_c, 'a');
+            // $FlowFixMe
+            link.href = nurl;
+            tchild(link, nurl);
         }
     }
 }

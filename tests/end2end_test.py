@@ -123,7 +123,7 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
 class Hotkey:
     ACTIVATE = ('ctrl', 'alt', 'w')
     DOTS     = ('ctrl', 'alt', 'v')
-    SEARCH   = ('ctrl', 'alt', 'h')
+    SEARCH   = ('ctrl', 'alt', 'b')
  
 
 # TODO run this test on CI??

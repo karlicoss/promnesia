@@ -64,10 +64,11 @@ function rawToVisits(vis): Visits {
 
         const dt: Date = new Date(dts);
         const vtags: Array<Tag> = v['tags']; // TODO hmm. backend is responsible for tag merging?
+        const vnurl: string = v['nurl'];
         const vctx: ?string = v['context'];
         const vloc: ?Locator = v['locator']
         const vdur: ?Second = v['duration'];
-        return new Visit(dt, vtags, vctx, vloc, vdur);
+        return new Visit(vnurl, dt, vtags, vctx, vloc, vdur);
     }));
 }
 
@@ -171,7 +172,8 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     // ok, visitTime returns epoch which gives the correct time combined with new Date
 
     const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
-    const visits = times.map(t => new Visit(t, [LOCAL_TAG]));
+    // TODO FIXME not sure if need to normalise..
+    const visits = times.map(t => new Visit(url, t, [LOCAL_TAG]));
     return new Visits(visits);
 }
 

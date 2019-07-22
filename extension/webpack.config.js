@@ -38,8 +38,8 @@ const commandsExtra = {
     // need all of that discoverable from menu anyway
     // also dots and browser action too
     "search": {
-        "default": `Ctrl+${modifier}+H`,
-        "mac":  `Command+${modifier}+H`
+        "default": `Ctrl+${modifier}+B`,
+        "mac":  `Command+${modifier}+B`
     }
 };
 
