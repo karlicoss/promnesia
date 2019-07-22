@@ -193,7 +193,7 @@ async function isBlacklisted(url: Url): Promise<?Reason> {
 
 type Result = Visits | Blacklisted;
 
-async function getVisits(url: Url): Promise<Result> {
+export async function getVisits(url: Url): Promise<Result> {
     const bl = await isBlacklisted(url);
     if (bl != null) {
         return new Blacklisted(url, bl);
@@ -551,6 +551,9 @@ chrome.commands.onCommand.addListener(async cmd => {
                 showDots(tid, opts);
             }
         }
+    } else if (cmd == 'search') {
+        // TODO FIXME get current tab url and pass as get parameter?
+        chrome.tabs.create({ url: "search.html" });
     }
 });
 

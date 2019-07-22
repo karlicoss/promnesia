@@ -43,6 +43,9 @@
         },
         "show_dots": {
             "description": "Activate dots for visited urls"
+        },
+        "search": {
+            "description": "Open search page"
         }
     },
     "manifest_version": 2,

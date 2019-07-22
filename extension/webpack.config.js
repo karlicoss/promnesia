@@ -22,18 +22,25 @@ const modifier = target === 'chrome' ? 'Shift' : 'Alt';
 
 // ugh. declarative formats are shit.
 const commandsExtra = {
-    "show_dots": {
-        "suggested_key": {
-            "default": `Ctrl+${modifier}+V`,
-            "mac":  `Command+${modifier}+V`
-        }
-    },
     "_execute_browser_action": {
         "suggested_key": {
             "default": `Ctrl+${modifier}+W`,
             "mac":  `Command+${modifier}+W`
         }
     },
+    "show_dots": {
+        "suggested_key": {
+            "default": `Ctrl+${modifier}+V`,
+            "mac":  `Command+${modifier}+V`
+        }
+    },
+    // right, 'S' interferes with OS hotkey?
+    // need all of that discoverable from menu anyway
+    // also dots and browser action too
+    "search": {
+        "default": `Ctrl+${modifier}+H`,
+        "mac":  `Command+${modifier}+H`
+    }
 };
 
 
@@ -76,6 +83,7 @@ const options = {
     options_page : path.join(__dirname, './src/options_page'),
     popup        : path.join(__dirname, './src/popup'),
     sidebar      : path.join(__dirname, './src/sidebar'),
+    search       : path.join(__dirname, './src/search'),
   },
   output: {
     path: buildPath,

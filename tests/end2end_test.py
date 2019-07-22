@@ -123,7 +123,8 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
 class Hotkey:
     ACTIVATE = ('ctrl', 'alt', 'w')
     DOTS     = ('ctrl', 'alt', 'v')
-
+    SEARCH   = ('ctrl', 'alt', 'h')
+ 
 
 # TODO run this test on CI??
 @skip_if_ci("uses X")
@@ -209,6 +210,14 @@ def test_show_dots(tmp_path):
         trigger_hotkey(hotkey=Hotkey.DOTS)
         print("You should see dots now near SL group, U group, Representation theory")
 
+
+@skip_if_ci("uses X server")
+def test_search(tmp_path):
+    test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
+    with _test_helper(tmp_path, index_local_chrome, test_url):
+        trigger_hotkey(hotkey=Hotkey.SEARCH)
+        print("You shoud see chrome visits now; with time spent")
+        pass
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
