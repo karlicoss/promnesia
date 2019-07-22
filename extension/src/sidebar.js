@@ -1,8 +1,9 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_dt, format_duration} from './common';
-import type {Tag, Locator, Second} from './common';
+import {Visits, Visit, unwrap, format_duration} from './common';
+import type {Second} from './common';
 import {get_options} from './options';
 import type {Options} from './options';
+import {Binder, _fmt} from './display';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -76,15 +77,6 @@ function clearSidebar(opts: Options) {
     }
 }
 
-function _fmt(dt: Date): [string, string] {
-    // TODO if it's this year, do not display year?
-    const dts = format_dt(dt);
-    const parts = dts.split(' ');
-    const datestr = parts.slice(0, 3).join(' ');
-    const timestr = parts.slice(3).join(' ');
-    return [datestr, timestr];
-}
-
 function bindSidebarData(response) {
     get_options(opts => bindSidebarDataAux(response, opts));
 }
@@ -100,26 +92,11 @@ function bindSidebarDataAux(response, opts: Options) {
 
     const doc = document;
 
-    function child(parent, name: string, classes: ?Array<string> = null) {
-        const res = doc.createElement(name);
-        if (classes != null) {
-            for (const cls of classes) {
-                res.classList.add(cls);
-            }
-        }
-        parent.appendChild(res);
-        return res;
-    }
-
-    function tchild(parent, text: string) {
-        const res = doc.createTextNode(text);
-        parent.appendChild(res);
-        return res;
-    }
+    const binder = new Binder(doc);
 
 
-    const all_tags_c = child(cont, 'div');
-    const items = child(cont, 'ul');
+    const all_tags_c = binder.makeChild(cont, 'div');
+    const items = binder.makeChild(cont, 'ul');
     items.id = 'visits';
 
 
@@ -168,8 +145,8 @@ function bindSidebarDataAux(response, opts: Options) {
 
         // TODO show total counts?
         // TODO if too many tags, just overlap on the seconds line
-        const tag_c = child(all_tags_c, 'span', ['tag', tag]);
-        tchild(tag_c, `${tag} (${count})`);
+        const tag_c = binder.makeChild(all_tags_c, 'span', ['tag', tag]);
+        binder.makeTchild(tag_c, `${tag} (${count})`);
         // TODO checkbox??
         tag_c.addEventListener('click', () => {
             for (const x of items.children) {
@@ -181,73 +158,9 @@ function bindSidebarDataAux(response, opts: Options) {
     }
 
 
-    function handle(
-        dates: string,
-        times: string,
-        tags: Array<Tag>,
-        context: ?string=null,
-        locator: ?Locator=null,
-    ) {
-        const item = child(items, 'li');
-        const header = child(item, 'div');
-        const tags_c = child(header, 'span');
-        const dt_c = child(header, 'span', ['datetime']);
-        const time_c = child(dt_c, 'span', ['time']);
-        const date_c = child(dt_c, 'span', ['date']);
-
-        item.setAttribute('tags', tags.join(" "));
-
-        for (const tag of tags) {
-            const tag_c = child(tags_c, 'span', ['tag', tag]);
-            tchild(tag_c, tag);
-        }
-        tchild(date_c, dates);
-        tchild(time_c, times);
-
-        /* TODO locator could jump into the file? */
-        if (context != null) {
-            const ctx_c = child(item, 'div', ['context']);
-            for (const line of context.split('\n')) {
-                tchild(ctx_c, line);
-                child(ctx_c, 'br');
-            }
-        }
-
-        if (locator != null) {
-            const loc = locator;
-            const loc_c = child(item, 'div', ['locator']);
-
-            if (loc.href === null) {
-                tchild(loc_c, loc.title);
-            } else {
-                const link = child(loc_c, 'a');
-                // $FlowFixMe
-                link.href = loc.href;
-                tchild(link, loc.title);
-            }
-
-            /*
-            const trim_till = Math.min(context.indexOf('\n'), 100);
-            const firstline = context.substring(0, trim_till);
-
-            // TODO do not throw this away?
-            const firstline_elem = doc.createTextNode(firstline);
-
-            const det = doc.createElement('details'); ccell.appendChild(det);
-            const summ = doc.createElement('summary'); det.appendChild(summ);
-
-            summ.appendChild(loc_elem);
-            // TODO not sure if we want to do anything if we have trimmed locator...
-            // TODO at least add some space?
-            summ.appendChild(firstline_elem);
-            det.appendChild(doc.createTextNode(context));
-            */
-        }
-    }
-
     for (const v of with_ctx) {
         const [dates, times] = _fmt(v.time);
-        handle(dates, times, v.tags, v.context, v.locator);
+        binder.render(items, dates, times, v.tags, v.context, v.locator);
     }
 
 
@@ -297,7 +210,7 @@ function bindSidebarDataAux(response, opts: Options) {
         }
         const tags = [...tset].sort();
         const ctx = total_dur == null ? null : `Time spent: ${format_duration(total_dur)}`;
-        handle(dates, times, tags, ctx);
+        binder.render(items, dates, times, tags, ctx);
     }
 }
 window.bindSidebarData = bindSidebarData;
