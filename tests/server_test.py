@@ -87,8 +87,8 @@ def test_query_instapaper(tmp_path):
         # TODO actually test response?
 
 
-@skip_if_ci("TODO dbcache")
-def test_query(tmp_path):
+@skip_if_ci("TODO FIXME dbcache")
+def test_visits(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
         for q in range(3):
@@ -97,10 +97,23 @@ def test_query(tmp_path):
                 'http', 'post', f'http://localhost:{helper.port}/visits', f'url={test_url}',
             ]
             response = json.loads(check_output(cmd).decode('utf8'))
-            assert len(response) > 0
+            assert len(response) == 1
 
 
-@skip_if_ci("TODO dbcache")
+@skip_if_ci("TODO FIXME dbcache")
+def test_search(tmp_path):
+    tdir = Path(tmp_path)
+    index_hypothesis(tdir)
+    test_url = "http://www.e-flux.com"
+    with wserver(config=tdir / 'test_config.py') as helper:
+        cmd = [
+            'http', 'post', f'http://localhost:{helper.port}/search', f'url={test_url}',
+        ]
+        response = json.loads(check_output(cmd).decode('utf8'))
+        assert len(response) == 8
+
+
+@skip_if_ci("TODO FIXME dbcache")
 def test_visited(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:

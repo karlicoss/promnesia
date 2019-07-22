@@ -94,11 +94,7 @@ def get_stuff(): # TODO better name
     return engine, binder, table
 
 
-@hug.local()
-@hug.post('/visits')
-def visits(
-        url: T.text,
-):
+def search_common(url: str, where):
     logger = get_logger()
     config = load_config()
 
@@ -108,7 +104,9 @@ def visits(
 
     engine, binder, table = get_stuff()
 
-    query = table.select().where(table.c.norm_url == url)
+    query = table.select().where(where(table=table, url=url))
+
+    logger.info('query: %s', query)
 
     with engine.connect() as conn:
         visits = [binder.from_row(row) for row in conn.execute(query)]
@@ -128,6 +126,29 @@ def visits(
         return None # TODO handle empty list in client?
     else:
         return list(map(as_json, vlist))
+
+
+@hug.local()
+@hug.post('/visits')
+def visits(
+        url: T.text,
+):
+    return search_common(
+        url=url,
+        where=lambda table, url: table.c.norm_url == url,
+    )
+
+
+@hug.local()
+@hug.post('/search')
+def search(
+        url: T.text
+):
+    # TODO rely on hug logger for query
+    return search_common(
+        url=url,
+        where=lambda table, url: table.c.norm_url.like('%' + url + '%'), # TODO FIXME what if url contains %? (and it will!)
+    )
 
 
 @hug.local()
