@@ -11,7 +11,8 @@ from functools import lru_cache
 from typing import Collection, List, NamedTuple, Dict
 
 from kython import setup_logzero
-from kython.kcache import Binder
+
+from cachew import DbBinder
 
 import hug # type: ignore
 import hug.types as T # type: ignore
@@ -88,10 +89,10 @@ def get_stuff(): # TODO better name
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path}')
 
-    binder = Binder(clazz=DbVisit)
+    binder = DbBinder(DbVisit)
 
     meta = MetaData(engine)
-    table = Table('visits', meta, *binder.columns)
+    table = Table('visits', meta, *binder.db_columns)
 
     return engine, binder, table
 

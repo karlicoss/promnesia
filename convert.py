@@ -2,8 +2,7 @@ from datetime import datetime
 from typing import NamedTuple
 from pathlib import Path
 
-# TODO binder thing needs to be extracted?
-from kython.kcache import Binder
+from cachew import DbBinder
 from kython.py37 import fromisoformat
 
 
@@ -67,8 +66,8 @@ db_path = Path('visits.sqlite')
 db = create_engine(f'sqlite:///{db_path}')
 engine = db.connect()
 meta = MetaData(engine)
-binder = Binder(clazz=Visit)
-table = Table('visits', meta, *binder.columns)
+binder = DbBinder(Visit)
+table = Table('visits', meta, *binder.db_columns)
 meta.create_all()
 
 

@@ -39,7 +39,7 @@ OUTPUT_DIR = '{tdir}'
 
 from sqlalchemy import create_engine, MetaData, exists # type: ignore
 from sqlalchemy import Column, Table # type: ignore
-from kython.kcache import Binder
+from cachew import DbBinder
 from wereyouhere.common import DbVisit # TODO ugh. figure out pythonpath
 
 
@@ -52,10 +52,10 @@ def _get_stuff(outdir: Path):
     # TODO ugh. 
     import sys
     print(sys.path)
-    binder = Binder(clazz=DbVisit)
+    binder = DbBinder(DbVisit)
 
     meta = MetaData(engine)
-    table = Table('visits', meta, *binder.columns)
+    table = Table('visits', meta, *binder.db_columns)
 
     return engine, binder, table
 

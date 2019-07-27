@@ -19,8 +19,7 @@ from dateutil import parser
 
 from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
 
-
-from kython.kcache import make_dbcache, mtime_hash
+from cachew import mtime_hash, cachew
 
 # TODO reuse kython, but really, release takeout html parser separately
 
@@ -160,7 +159,7 @@ def cacheme(ident: str):
         tpath = _path(takeout)
         cache_dir = _get_cache_dir()
         return cache_dir / (tpath.name + '_' + ident + '.cache')
-    return make_dbcache(db_pathf, type_=PreVisit, logger=get_logger())
+    return cachew(db_pathf, cls=PreVisit, logger=get_logger())
 
 @cacheme('google_activity')
 def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:

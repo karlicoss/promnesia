@@ -23,6 +23,7 @@ jobs:
             . venv/bin/activate
             pip install -r wereyouhere/requirements.txt
             pip install 'kython@git+https://github.com/karlicoss/kython.git@master' dateparser typing_extensions logzero
+            pip install 'cachew@git+https://github.com/karlicoss/cachew.git@master'
 
       # ugh, hug is involved as subprocess and doesn't see virtualenv I gues??
       - run:
