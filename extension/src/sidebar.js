@@ -163,10 +163,11 @@ function bindSidebarDataAux(response, opts: Options) {
     for (const v of with_ctx) {
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {
+            timestamp     : v.time,
             original_url  : null,
             normalised_url: null,
-            context: v.context,
-            locator: v.locator,
+            context       : v.context,
+            locator       : v.locator,
         });
     }
 
@@ -218,6 +219,7 @@ function bindSidebarDataAux(response, opts: Options) {
         const tags = [...tset].sort();
         const ctx = total_dur == null ? null : `Time spent: ${format_duration(total_dur)}`;
         binder.render(items, dates, times, tags, {
+            timestamp: first.time,
             original_url  : null,
             normalised_url: null,
             context: ctx,

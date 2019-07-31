@@ -15,6 +15,7 @@ export function _fmt(dt: Date): [string, string] {
 }
 
 type Params = {
+    timestamp: Date;
     original_url: ?Url;
     normalised_url: ?Url;
     context: ?string;
@@ -51,6 +52,7 @@ export class Binder {
         times: string,
         tags: Array<Tag>,
         {
+            timestamp,
             original_url,
             normalised_url,
             context,
@@ -79,10 +81,11 @@ export class Binder {
         // TODO style it properly?
         tchild(time_c, times);
         time_c.onclick = function() {
-            const timestamp = 1564604609; // TODO FIXME
+            const ts = timestamp.getTime() / 1000;
             chrome.runtime.sendMessage({
+                // TODO hopefully the timestamp is properly captured??
                 method   : Methods.SEARCH_VISITS_AROUND,
-                timestamp: timestamp,
+                timestamp: ts,
             });
 
             return true;
