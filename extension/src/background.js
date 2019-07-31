@@ -89,10 +89,8 @@ const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
-function queryBackendCommon(u: Url, opts: Options, endp: string, cb: (Visits) => void) {
-    const data = JSON.stringify({
-        'url': u,
-    });
+function queryBackendCommon(params, opts: Options, endp: string, cb: (Visits) => void) {
+    const data = JSON.stringify(params);
 
     const request = new XMLHttpRequest();
 
@@ -143,14 +141,21 @@ function queryBackendCommon(u: Url, opts: Options, endp: string, cb: (Visits) =>
 }
 
 function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
-    return queryBackendCommon(u, opts, 'visits', cb);
+    return queryBackendCommon({url: u}, opts, 'visits', cb);
 }
 
 
 // TODO FIXME include browser too..
 export async function searchVisits(u: Url): Promise<Visits> {
     const opts = await get_options_async();
-    return new Promise((cb) => queryBackendCommon(u, opts, 'search', cb));
+    return new Promise((cb) => queryBackendCommon({url: u}, opts, 'search', cb));
+}
+
+export async function searchAround(timestamp: number): Promise<Visits> {
+    const opts = await get_options_async();
+    return new Promise((cb) => queryBackendCommon({
+        timestamp: timestamp,
+    }, opts, 'search_around', cb));
 }
 
 function getDelayMs(/*url*/) {

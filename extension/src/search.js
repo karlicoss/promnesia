@@ -1,7 +1,8 @@
 /* @flow */
 
 import {unwrap} from './common';
-import {searchVisits} from './background';
+import type {Visits} from './common';
+import {searchVisits, searchAround} from './background';
 import {Binder, _fmt} from './display';
 
 function getInputElement(element_id: string): HTMLInputElement {
@@ -19,8 +20,8 @@ function getResultsContainer(): HTMLElement {
 const doc = document;
 
 
-async function _doSearch() {
-    const bvisits = (await searchVisits(getQuery().value)).visits;
+async function _doSearch(cb: Promise<Visits>) {
+    const bvisits = (await cb).visits;
     bvisits.sort((f, s) => (s.time - f.time));
     // TODO ugh, should do it via sort predicate...
     const with_ctx = [];
@@ -52,13 +53,18 @@ async function _doSearch() {
         // const node = document.createTextNode(JSON.stringify(visit)); el.appendChild(node);
     }
 }
-unwrap(doc.getElementById('search_id')).addEventListener('click', async () => {
+
+async function doSearch (cb: Promise<Visits>) {
     try {
-        await _doSearch();
+        await _doSearch(cb);
     } catch (err) {
         console.error(err);
         alert(err);
     }
+}
+
+unwrap(doc.getElementById('search_id')).addEventListener('click', async () => {
+    await doSearch(searchVisits(getQuery().value));
 });
 
 
@@ -70,8 +76,8 @@ window.onload = async () => {
     }
 
     if (params.has('timestamp')) {
-        const timestamp = unwrap(params.get('timestamp'));
-        alert(`TODO query around timestmap ${timestamp}`);
+        const timestamp = parseInt(unwrap(params.get('timestamp')));
+        await doSearch(searchAround(timestamp));
     }
     // TODO otherwise, error??
 };
