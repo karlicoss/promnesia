@@ -17,7 +17,7 @@ from cachew import DbBinder
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData, exists, literal # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal, between # type: ignore
 from sqlalchemy import Column, Table, func # type: ignore
 
 
@@ -164,13 +164,17 @@ def search(
 def search_around(
         timestamp: T.number,
 ):
-    delta = timedelta(hours=24).total_seconds()
+    delta_back  = timedelta(hours=3).total_seconds()
+    delta_front = timedelta(minutes=5).total_seconds()
+    # TODO not sure about front.. but it also serves as quick hack to accomodate for all the truncations etc
     return search_common(
         url='http://dummy.org', # TODO remove it from search_common
         # TODO no abs?
-        where=lambda table, url: func.abs(
-            func.strftime('%s', func.datetime(table.c.dt)) - literal(timestamp)
-        ) < literal(delta),
+        where=lambda table, url: between(
+            func.strftime('%s', func.datetime(table.c.dt)) - literal(timestamp),
+            literal(-delta_back),
+            literal(delta_front),
+        ),
     )
 
 @hug.local()
