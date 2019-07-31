@@ -65,9 +65,13 @@ async function _doSearch(cb: Promise<Visits>) {
     const binder = new Binder(doc);
     // TODO use something more generic for that!
     for (const v of visits) {
-        // TODO need original url as well!
         const [dates, times] = _fmt(v.time)
-        binder.render(res, dates, times, v.tags, {nurl: v.nurl, context: v.context, locator: v.locator});
+        binder.render(res, dates, times, v.tags, {
+            original_url  : v.original_url,
+            normalised_url: v.normalised_url,
+            context       : v.context,
+            locator       : v.locator,
+        });
         // const el = doc.createElement('div'); res.appendChild(el);
         // const node = document.createTextNode(JSON.stringify(visit)); el.appendChild(node);
     }

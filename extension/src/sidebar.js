@@ -103,7 +103,8 @@ function bindSidebarDataAux(response, opts: Options) {
     // TODO why has this ended up serialised??
     const visits = response.visits.map(rvisit =>
         new Visit(
-            rvisit.nurl,
+            rvisit.original_url,
+            rvisit.normalised_url,
             new Date(rvisit.time),
             rvisit.tags,
             rvisit.context,
@@ -161,7 +162,12 @@ function bindSidebarDataAux(response, opts: Options) {
 
     for (const v of with_ctx) {
         const [dates, times] = _fmt(v.time);
-        binder.render(items, dates, times, v.tags, {nurl: null, context: v.context, locator: v.locator});
+        binder.render(items, dates, times, v.tags, {
+            original_url  : null,
+            normalised_url: null,
+            context: v.context,
+            locator: v.locator,
+        });
     }
 
 
@@ -211,7 +217,12 @@ function bindSidebarDataAux(response, opts: Options) {
         }
         const tags = [...tset].sort();
         const ctx = total_dur == null ? null : `Time spent: ${format_duration(total_dur)}`;
-        binder.render(items, dates, times, tags, {nurl: null, context: ctx, locator: null});
+        binder.render(items, dates, times, tags, {
+            original_url  : null,
+            normalised_url: null,
+            context: ctx,
+            locator: null,
+        });
     }
 }
 window.bindSidebarData = bindSidebarData;

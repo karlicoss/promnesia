@@ -78,8 +78,8 @@ def as_json(v: DbVisit) -> Dict:
             'title': loc.title,
             'href' : loc.href,
         },
-        'orig_url': v.orig_url,
-        'nurl': v.norm_url,
+        'original_url'  : v.orig_url,
+        'normalised_url': v.norm_url,
     }
 
 @lru_cache(1)
