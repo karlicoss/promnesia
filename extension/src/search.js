@@ -5,8 +5,11 @@ import type {Visits} from './common';
 import {searchVisits, searchAround} from './background';
 import {Binder, _fmt} from './display';
 
+
+const doc = document;
+
 function getInputElement(element_id: string): HTMLInputElement {
-    return ((document.getElementById(element_id): any): HTMLInputElement);
+    return ((doc.getElementById(element_id): any): HTMLInputElement);
 }
 
 function getQuery(): HTMLInputElement {
@@ -14,13 +17,29 @@ function getQuery(): HTMLInputElement {
 }
 
 function getResultsContainer(): HTMLElement {
-    return ((document.getElementById('visits'): any): HTMLElement);
+    return ((doc.getElementById('visits'): any): HTMLElement);
 }
 
-const doc = document;
+
+function clearResults() {
+    const res = getResultsContainer();
+    while (res.firstChild) {
+        res.removeChild(res.firstChild);
+    }
+}
+
+function showError(err) {
+    clearResults();
+    const res = getResultsContainer();
+    const err_c = doc.createElement('div'); res.appendChild(err_c);
+    err_c.classList.add('error');
+    const err_text = doc.createTextNode(err); err_c.appendChild(err_text);
+}
 
 
 async function _doSearch(cb: Promise<Visits>) {
+    clearResults();
+
     const bvisits = (await cb).visits;
     bvisits.sort((f, s) => (s.time - f.time));
     // TODO ugh, should do it via sort predicate...
@@ -36,17 +55,17 @@ async function _doSearch(cb: Promise<Visits>) {
     // TODO duplicated code...
     const visits = [].concat(with_ctx).concat(no_ctx);
 
-    const res = getResultsContainer();
 
-    while (res.firstChild) {
-        res.removeChild(res.firstChild);
-    }
-    // TODO FIXME lag before clearing results?
+    const res = getResultsContainer();
+    const cc = doc.createElement('div'); res.appendChild(cc);
+    cc.classList.add('summary');
+    const node = doc.createTextNode(`Found ${visits.length} visits`); cc.appendChild(node);
+
 
     const binder = new Binder(doc);
     // TODO use something more generic for that!
     for (const v of visits) {
-        // TODO need url as well?
+        // TODO need original url as well!
         const [dates, times] = _fmt(v.time)
         binder.render(res, dates, times, v.tags, {nurl: v.nurl, context: v.context, locator: v.locator});
         // const el = doc.createElement('div'); res.appendChild(el);
@@ -59,7 +78,12 @@ async function doSearch (cb: Promise<Visits>) {
         await _doSearch(cb);
     } catch (err) {
         console.error(err);
-        alert(err);
+        try {
+            showError(err);
+        } catch (err_2) {
+            // backup for worst case..
+            alert(err_2);
+        }
     }
 }
 

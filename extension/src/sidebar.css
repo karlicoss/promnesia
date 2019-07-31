@@ -4,6 +4,12 @@ body {
     color: black;
 }
 
+.error {
+    font-size: 16px;
+    color: red;
+    font-weight: bold;
+}
+
 a {
     text-decoration: none;
 }
