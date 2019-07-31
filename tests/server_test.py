@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -87,6 +88,7 @@ def test_query_instapaper(tmp_path):
         # TODO actually test response?
 
 
+# TODO FIXME can use cachew now
 @skip_if_ci("TODO FIXME dbcache")
 def test_visits(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
@@ -124,3 +126,20 @@ def test_visited(tmp_path):
         ]
         response = json.loads(check_output(cmd))
         assert response == [True, False]
+
+
+@skip_if_ci("TODO FIXME dbcache")
+def test_search_around(tmp_path):
+    tdir = Path(tmp_path)
+    index_hypothesis(tdir)
+    test_ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
+    import pytz
+    # test_ts = int(datetime(2016, 12, 13, 12, 31, 4, 229275, tzinfo=pytz.utc).timestamp())
+    # TODO hmm. perhaps it makes more sense to run query in different process and server in main process for testing??
+    with wserver(config=tdir / 'test_config.py') as helper:
+        cmd = [
+            'http', 'post', f'http://localhost:{helper.port}/search_around', f'timestamp={test_ts}',
+        ]
+        response = json.loads(check_output(cmd).decode('utf8'))
+        # TODO highlight original url in extension??
+        assert 5 < len(response) < 20

@@ -17,14 +17,17 @@ from cachew import DbBinder
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData, exists # type: ignore
-from sqlalchemy import Column, Table # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal # type: ignore
+from sqlalchemy import Column, Table, func # type: ignore
 
 
 from .common import PathWithMtime, Config, DbVisit, Url, import_config, Loc
 from .normalise import normalise_url
 
 _ENV_CONFIG = 'WEREYOUHERE_CONFIG'
+
+
+# TODO not sure about utc in database... keep orig timezone?
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
@@ -87,7 +90,7 @@ def get_stuff(): # TODO better name
     assert db_path.exists()
 
     # TODO how to open read only?
-    engine = create_engine(f'sqlite:///{db_path}')
+    engine = create_engine(f'sqlite:///{db_path}') # , echo=True)
 
     binder = DbBinder(DbVisit)
 
@@ -125,6 +128,8 @@ def search_common(url: str, where):
             dt = config.FALLBACK_TIMEZONE.localize(dt)
             vis = vis._replace(dt=dt)
         vlist.append(vis)
+
+    logger.debug('responding with %d visits', len(vlist))
     if len(vlist) is None:
         return None # TODO handle empty list in client?
     else:
@@ -153,6 +158,20 @@ def search(
         where=lambda table, url: table.c.norm_url.like('%' + url + '%'), # TODO FIXME what if url contains %? (and it will!)
     )
 
+
+@hug.local()
+@hug.post('/search_around')
+def search_around(
+        timestamp: T.number,
+):
+    delta = timedelta(hours=24).total_seconds()
+    return search_common(
+        url='http://dummy.org', # TODO remove it from search_common
+        # TODO no abs?
+        where=lambda table, url: func.abs(
+            func.strftime('%s', func.datetime(table.c.dt)) - literal(timestamp)
+        ) < literal(delta),
+    )
 
 @hug.local()
 @hug.post('/visited')
@@ -210,6 +229,7 @@ def setup_parser(p):
 
 
 def main():
+    # setup_logzero(logging.getLogger('sqlalchemy.engine'), level=logging.DEBUG)
     setup_logzero(get_logger(), level=logging.DEBUG)
     p = argparse.ArgumentParser('wereyouhere server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
