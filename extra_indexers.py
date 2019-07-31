@@ -49,3 +49,36 @@ def twitter_indexer(tag: str):
                 locator=loc,
             )
 
+
+def instapaper_indexer(src: str):
+    import my.instapaper
+    logger = get_logger()
+    for p in my.instapaper.get_pages():
+        bm = p.bookmark
+        hls = p.highlights
+
+        def pv(**kwargs):
+            return PreVisit(
+                url=bm.url,
+                tag=src,
+                **kwargs,
+            )
+
+        if len(hls) == 0:
+            yield pv(
+                dt=bm.dt,
+                context=None,
+                locator=Loc.make(title='instapaper', href=bm.instapaper_link),
+            )
+        else:
+            for hl in p.highlights:
+                cparts = [hl.text]
+                if hl.note is not None:
+                    cparts.append('comment: ' + hl.note)
+                yield pv(
+                    dt=hl.dt,
+                    context='\n'.join(cparts),
+                    locator=Loc.make(title='instapaper', href=hl.instapaper_link),
+                )
+
+
