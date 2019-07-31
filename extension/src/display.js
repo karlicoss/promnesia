@@ -1,6 +1,6 @@
 /* @flow */
 import type {Url, Tag, Locator} from './common';
-import {format_dt} from './common';
+import {format_dt, Methods} from './common';
 
 // TODO need to pass document??
 
@@ -73,7 +73,18 @@ export class Binder {
             tchild(tag_c, tag);
         }
         tchild(date_c, dates);
+
+        // TODO style it properly?
         tchild(time_c, times);
+        time_c.onclick = function() {
+            const timestamp = 1564604609; // TODO FIXME
+            chrome.runtime.sendMessage({
+                method   : Methods.SEARCH_VISITS_AROUND,
+                timestamp: timestamp,
+            });
+
+            return true;
+        };
 
         /* TODO locator could jump into the file? */
         if (context != null) {

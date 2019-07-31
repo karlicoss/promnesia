@@ -105,3 +105,8 @@ export class Blacklisted {
         this.reason = reason;
     }
 }
+
+export const Methods = {
+    GET_SIDEBAR_VISITS  : 'getActiveTabVisitsForSidebar',
+    SEARCH_VISITS_AROUND: 'searchVisitsAround',
+};

@@ -62,3 +62,16 @@ unwrap(doc.getElementById('search_id')).addEventListener('click', async () => {
 });
 
 
+window.onload = async () => {
+    const url = new URL(window.location);
+    const params = url.searchParams;
+    if ([...params.keys()].length == 0) {
+        return;
+    }
+
+    if (params.has('timestamp')) {
+        const timestamp = unwrap(params.get('timestamp'));
+        alert(`TODO query around timestmap ${timestamp}`);
+    }
+    // TODO otherwise, error??
+};

@@ -8,7 +8,7 @@
         "shallalist/*"
     ],
     "background": {
-        "scripts": ["background.js"],
+        "scripts": ["background.js", "sidebar.js"],
         "persistent": false
     },
     "options_ui": {

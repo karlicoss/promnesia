@@ -1,7 +1,7 @@
 /* @flow */
 
 import type {Locator, Tag, Url, Second} from './common';
-import {Visit, Visits, Blacklisted, unwrap} from './common';
+import {Visit, Visits, Blacklisted, unwrap, Methods} from './common';
 import {normaliseHostname} from './normalise';
 import type {Options} from './options';
 import {get_options_async, setOptions} from './options';
@@ -499,8 +499,8 @@ async function showActiveTabNotification(text: string, color: string): Promise<v
 }
 
 // $FlowFixMe
-chrome.runtime.onMessage.addListener(async (request) => {
-    if (request.method == 'getActiveTabVisitsForSidebar') {
+chrome.runtime.onMessage.addListener(async (msg) => {
+    if (msg.method == Methods.GET_SIDEBAR_VISITS) {
         const atab = await getActiveTab();
         if (atab != null) { // means it's ignored
             const visits = await getVisits(unwrap(atab.url));
@@ -518,6 +518,13 @@ chrome.runtime.onMessage.addListener(async (request) => {
         // could be Firefox only?
         // sendResponse(visits);
         // return true; // this is important!! otherwise message will not be sent?
+    } else if (msg.method == Methods.SEARCH_VISITS_AROUND) {
+        const timestamp = msg.timestamp; // TODO FIXME epoch?? 
+        const params = new URLSearchParams();
+        // TODO str??
+        params.append('timestamp', timestamp.toString());
+        const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
+        chrome.tabs.create({'url': search_url});
     }
     return false;
 });

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from contextlib import contextmanager
 from pathlib import Path
+from datetime import datetime
 from tempfile import TemporaryDirectory
 from subprocess import check_call
 from time import sleep
+from typing import NamedTuple
 
 import pytest # type: ignore
 from selenium import webdriver # type: ignore
@@ -11,7 +13,7 @@ from selenium import webdriver # type: ignore
 
 from kython.tui import getch_or_fail
 
-from common import skip_if_ci
+from common import skip_if_ci, uses_x
 from integration_test import index_hypothesis, index_local_chrome
 from server_test import wserver
 from firefox_helper import open_extension_page
@@ -99,6 +101,13 @@ def trigger_hotkey(hotkey):
     pyautogui.hotkey(*hotkey)
 
 
+class TestHelper(NamedTuple):
+    driver: webdriver.Remote
+
+    def open_page(self, page: str) -> None:
+        open_extension_page(self.driver, page)
+
+
 @contextmanager
 def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
     tdir = Path(tmp_path)
@@ -113,7 +122,7 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
         driver.get(test_url)
         sleep(3)
 
-        yield
+        yield TestHelper(driver=driver)
 
         # TODO log what one is expected to see?
         print("Press any key to finish")
@@ -183,14 +192,23 @@ def test_add_to_blacklist(tmp_path, browser):
         print("Should be blacklisted now!")
 
 
-
-@skip_if_ci("uses X server ")
+@uses_x
 def test_visits(tmp_path):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
     with _test_helper(tmp_path, index_hypothesis, test_url):
         trigger_hotkey(hotkey=Hotkey.ACTIVATE)
-        print("You shoud see hypothesis contexts now")
+        print("You should see hypothesis contexts now")
+
+
+@uses_x
+def test_around(tmp_path):
+    test_url = "about:blank"
+    with _test_helper(tmp_path, index_hypothesis, test_url) as h:
+        ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
+        h.open_page(f'search.html?timestamp={ts}')
+        import ipdb; ipdb.set_trace()
+        pass
 
 
 # TODO skip if not my hostname
@@ -217,7 +235,6 @@ def test_search(tmp_path):
     with _test_helper(tmp_path, index_local_chrome, test_url):
         trigger_hotkey(hotkey=Hotkey.SEARCH)
         print("You shoud see chrome visits now; with time spent")
-        pass
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH

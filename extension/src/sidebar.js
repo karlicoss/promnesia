@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_duration} from './common';
+import {Visits, Visit, unwrap, format_duration, Methods} from './common';
 import type {Second} from './common';
 import {get_options} from './options';
 import type {Options} from './options';
@@ -219,7 +219,7 @@ window.bindSidebarData = bindSidebarData;
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 function requestVisits() {
     chrome.runtime.sendMessage({
-        method: 'getActiveTabVisitsForSidebar'
+        method: Methods.GET_SIDEBAR_VISITS,
     }, (response: ?Visits)  => {
         if (response == null) {
             console.log("No visits for this url");
