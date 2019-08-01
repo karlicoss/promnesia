@@ -1,96 +1,155 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods} from './common';
 import type {Second} from './common';
-import {get_options} from './options';
+import {get_options_async} from './options';
 import type {Options} from './options';
 import {Binder, _fmt} from './display';
 
-import React from 'react';
-import ReactDOM from 'react-dom';
-// $FlowFixMe
-import { Frame } from 'chrome-sidebar';
-
 // TODO how to prevent sidebar hiding on click??
 
-const SIDEBAR_ID = "wereyouhere-sidebar";
-
-function toggleSidebar() {
-    if (Frame.isReady()) {
-        Frame.toggle();
-    } else {
-        boot();
-    }
-}
-// to make function available for executeScript... gross
-window.toggleSidebar = toggleSidebar;
-
-
-function getSidebarNode(opts: Options): ?HTMLElement {
-    const extra_css = opts.extra_css;
-
-    const root = document.getElementById(SIDEBAR_ID);
-    // $FlowFixMe
-    if (root == null) {
-        return null;
-    }
-    const frame = root.getElementsByTagName('iframe')[0];
-    // TODO this should be configured..
-    frame.style.background = "rgba(236, 236, 236, 0.4)";
-
-    const cdoc = frame.contentDocument;
-    const link = cdoc.createElement("link");
-    link.href = chrome.extension.getURL("sidebar.css");
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    const head  = cdoc.getElementsByTagName("head")[0]; // TODO why [0]??
-    head.appendChild(link);
-
-    const style = cdoc.createElement('style');
-    style.innerHTML = extra_css;
-    head.appendChild(style);
-
-    // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
-    const base = cdoc.createElement('base');
-    base.setAttribute('target', '_blank');
-    head.appendChild(base);
-
-
-    const cont = root.children[0].children[1]; // TODO very fragile... div data-reactroot -> some other thing that is an actual container
-    cont.style.cssText = "max-width: 500px !important;"; // override CSS enforced 400px thing https://github.com/segmentio/chrome-sidebar/blob/ae9f07e97bb08927631d1f2eb5fb31e965959bde/src/frame.js#L36
-
-    return cdoc.body;
-    // right, iframe is pretty convenient for scrolling...
-
-    // return (cont: HTMLElement);
-}
-
+// TODO move to common?
 function get_or_default(obj, key, def) {
     const res = obj[key];
     return res === undefined ? def : res;
 }
 
-// This is pretty insane... but it's the only sidebar lib I found :(
-function clearSidebar(opts: Options) {
-    const cont = unwrap(getSidebarNode(opts));
-    while (cont.firstChild) {
-        cont.removeChild(cont.firstChild);
+
+const SIDEBAR_ID = "wereyouhere-sidebar";
+const sidebar_width = '500px'; // TODO get from settings?
+
+const doc = document;
+
+class Sidebar {
+    body: HTMLBodyElement;
+    opts: Options;
+
+    constructor(opts: Options) {
+        this.body = unwrap(doc.body);
+        this.opts = opts;
     }
+
+    getContainer(): HTMLElement {
+        const frame = unwrap(this.getFrame());
+
+        // TODO wtf?? adding styles didn't work on iframe createion (in ensureFrame method)
+        const cdoc = frame.contentDocument;
+        const head = unwrap(cdoc.head);
+
+        const sidebar_css = chrome.extension.getURL("sidebar.css");
+        const link = cdoc.createElement("link");
+        link.href = sidebar_css;
+        link.type = "text/css";
+        link.rel = "stylesheet";
+        head.appendChild(link);
+
+        const style = cdoc.createElement('style');
+        style.innerHTML = this.opts.extra_css;
+        head.appendChild(style);
+
+        // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
+        const base = cdoc.createElement('base');
+        base.setAttribute('target', '_blank');
+        head.appendChild(base);
+
+        return unwrap(frame.contentDocument.body);
+    }
+
+    clear() {
+        // TODO not sure if that's even necessary?
+        const cont = this.getContainer();
+        while (cont.firstChild) {
+            cont.removeChild(cont.firstChild);
+        }
+    }
+
+    toggle() {
+        if (this.shown()) {
+            this.hide();
+        } else {
+            this.show();
+        }
+    }
+
+    shown(): boolean {
+        const frame = this.getFrame();
+        if (frame == null) {
+            return false;
+        }
+        return frame.style.display === 'block'; // TODO not sure...
+    }
+
+    show() {
+        const frame = this.ensureFrame();
+
+        // TODO FIXME when should we bind data?
+        const original_padding = this.body.style.paddingRight;
+        this.body.setAttribute('original_padding', original_padding);
+        this.body.style.paddingRight = sidebar_width;
+        frame.style.display = 'block';
+    }
+
+    hide() {
+        const frame = this.ensureFrame();
+
+        // const original_padding = unwrap(this.body.getAttribute('original_padding'));
+        // TODO FIXME why that doesn't work??
+        const original_padding = '';
+        this.body.style.paddingRight = original_padding;
+        frame.style.display = 'none';
+    }
+
+    getFrame(): ?HTMLIFrameElement {
+        return ((doc.getElementById(SIDEBAR_ID): any): ?HTMLIFrameElement);
+    }
+
+    ensureFrame(): HTMLIFrameElement {
+        const frame = this.getFrame();
+        if (frame != null) {
+            return frame;
+        }
+
+        const sidebar = doc.createElement('iframe'); this.body.appendChild(sidebar);
+        sidebar.src = '';
+        sidebar.id = SIDEBAR_ID;
+
+        for (let [key, value] of Object.entries({
+            'position'  : 'fixed',
+            'right'     : '0px',
+            'top'       : '0px',
+            'z-index'   : '9999',
+            'width'     : sidebar_width,
+            'height'    : '100%',
+            'background': 'rgba(236, 236, 236, 0.4)',
+        })) {
+            // $FlowFixMe
+            sidebar.style.setProperty(key, value);
+        }
+
+        requestVisits(); // TODO not sure that belongs here...
+        return sidebar;
+    }
+
 }
 
-function bindSidebarData(response) {
-    get_options(opts => bindSidebarDataAux(response, opts));
+async function sidebar(): Promise<Sidebar> {
+    const opts = await get_options_async();
+    return new Sidebar(opts);
 }
 
-function bindSidebarDataAux(response, opts: Options) {
-    const cont = getSidebarNode(opts);
-    if (cont == null) {
-        console.log('no sidebar, so not binding anything');
-        return;
-    }
-    clearSidebar(opts);
+async function toggleSidebar() {
+    (await sidebar()).toggle();
+}
+// to make function available for executeScript... gross
+window.toggleSidebar = toggleSidebar;
+
+
+async function bindSidebarData(response) {
+    const opts = await get_options_async();
+    const sidebar = new Sidebar(opts);
+
+    const cont = sidebar.getContainer();
+    sidebar.clear(); // TODO probably, unnecessary?
     console.log(response);
-
-    const doc = document;
 
     const binder = new Binder(doc);
 
@@ -243,19 +302,9 @@ function requestVisits() {
 }
 
 
-function boot() {
-    const sidebar = document.createElement('div');
-    sidebar.id = SIDEBAR_ID;
-    // $FlowFixMe
-    document.body.appendChild(sidebar);
+// TODO make configurable? or resizable?
 
-    const App = (
-            <Frame/>
-    );
-
-    ReactDOM.render(App, sidebar);
-    requestVisits();
-}
+// TODO shit. if it's not an iframe can't be scrollable?
 
 // TODO hmm maybe I don't need any of this iframe crap??
 // https://stackoverflow.com/questions/5132488/how-to-insert-script-into-html-head-dynamically-using-javascript
