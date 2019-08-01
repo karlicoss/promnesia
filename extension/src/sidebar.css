@@ -23,6 +23,14 @@ a {
     white-space: nowrap;
 }
 
+.tag-filter .tag {
+    cursor: pointer;
+}
+
+.tag-filter .tag:hover {
+    color: red; /* TODO ?? */
+}
+
 /* meh, but ok for now */
 #visits {
     /* make table occupy whole sidebar */
@@ -64,6 +72,8 @@ a {
     float: right;
 
     color: #666;
+
+    cursor: pointer;
 }
 
 

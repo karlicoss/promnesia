@@ -80,7 +80,8 @@ export class Binder {
 
         // TODO style it properly?
         tchild(time_c, times);
-        time_c.onclick = function() {
+        dt_c.setAttribute('title', 'search around');
+        dt_c.onclick = () => {
             const ts = timestamp.getTime() / 1000;
             chrome.runtime.sendMessage({
                 // TODO hopefully the timestamp is properly captured??

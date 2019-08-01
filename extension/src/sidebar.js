@@ -154,7 +154,7 @@ async function bindSidebarData(response) {
     const binder = new Binder(doc);
 
 
-    const all_tags_c = binder.makeChild(cont, 'div');
+    const all_tags_c = binder.makeChild(cont, 'div', ['tag-filter']);
     const items = binder.makeChild(cont, 'ul');
     items.id = 'visits';
 
@@ -194,6 +194,7 @@ async function bindSidebarData(response) {
         }
     }
 
+    binder.makeTchild(all_tags_c, 'filter: ');
     for (let [tag, count] of [[null, with_ctx.length], ...Array.from(all_tags).sort()]) {
         let predicate: ((string) => boolean);
         if (tag === null) {
