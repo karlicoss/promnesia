@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eux
+cd "$(dirname "$0")"
+# it's force updated every now and then so we can't rely on submodules...
+
+rm -rf shallalist
+git clone git@github.com:cbuijs/shallalist.git
+rm -rf shallalist/.git
+
+for f in COPYRIGHT README.md last.updated finance/banking/domains; do
+    git add "shallalist/$f"
+done
+
+git clean -fd shallalist/
