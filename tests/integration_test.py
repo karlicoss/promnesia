@@ -7,11 +7,6 @@ from indexer_test import populate_db
 testdata = Path(__file__).absolute().parent.parent / 'testdata'
 
 
-# TODO need to generate config in the test??
-class BaseConfig:
-    pass
-
-
 def index(cfg: Path):
     wd = Path(__file__).absolute().parent.parent
     check_call([

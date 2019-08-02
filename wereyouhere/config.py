@@ -9,6 +9,7 @@ from kython.ktyping import PathIsh
 
 class Config(Protocol):
     FALLBACK_TIMEZONE: pytz.BaseTzInfo
+    CACHE_DIR: PathIsh # TODO do not use cache if it's none?
     OUTPUT_DIR: PathIsh
     EXTRACTORS: List
     FILTERS: List[str]

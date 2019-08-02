@@ -17,7 +17,8 @@ import json
 
 from dateutil import parser
 
-from wereyouhere.common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
+from ..common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
+from .. import config
 
 from cachew import mtime_hash, cachew
 
@@ -149,15 +150,11 @@ def _open(thing: TakeoutSource, path):
     else:
         return thing.joinpath(path).open('rb')
 
-def _get_cache_dir() -> Path:
-    # TODO FIXME instead this should be a parameter of takeout provider?
-    return Path('/L/data/wereyouhere/dbcache/')
-
 def cacheme(ident: str):
     # doesn't even need a nontrivial hash function, timestsamp is encoded in name
     def db_pathf(takeout: TakeoutSource) -> Path:
         tpath = _path(takeout)
-        cache_dir = _get_cache_dir()
+        cache_dir = Path(config.get().CACHE_DIR)
         return cache_dir / (tpath.name + '_' + ident + '.cache')
     return cachew(db_pathf, cls=PreVisit, logger=get_logger())
 

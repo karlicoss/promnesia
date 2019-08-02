@@ -60,13 +60,19 @@ def wserver(config: Path): # TODO err not sure what type should it be... -> Cont
 @contextmanager
 def _test_helper(tmp_path):
     tdir = Path(tmp_path)
+    cache_dir = tdir / 'cache'
+    cache_dir.mkdir()
+
     # TODO extract that into index_takeout?
     # TODO ugh. quite hacky...
     template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
     copy(template_config, tdir)
     config = tdir / 'test_config.py'
     with config.open('a') as fo:
-        fo.write(f"OUTPUT_DIR = '{tdir}'")
+        fo.write(f"""
+OUTPUT_DIR = '{tdir}'
+CACHE_DIR  = '{cache_dir}'
+""")
 
     path = (Path(__file__).parent.parent / 'run').absolute()
     check_call([str(path), 'extract', '--config', config])

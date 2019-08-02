@@ -53,7 +53,24 @@ def dump(hist: History):
 # TODO I guess global get_config methods is ok? command line can populate it, also easy to hack in code?
 # TODO cache should be in the configuration I suppose?
 
-def test_takeout(tmp_path):
+@pytest.fixture
+def adhoc_config(tmp_path):
+    tdir = Path(tmp_path)
+    cdir = tdir / 'cache'
+    cdir.mkdir()
+
+    from wereyouhere import config
+    class Cfg:
+        CACHE_DIR = cdir
+
+    try:
+        config.instance = Cfg
+        yield
+    finally:
+        config.reset()
+
+
+def test_takeout(adhoc_config, tmp_path):
     tdir = Path(tmp_path)
 
     test_takeout_path = "testdata/takeout"
@@ -66,6 +83,7 @@ def test_takeout(tmp_path):
     assert_got_tzinfo(hist)
 
     dump(hist)
+
 
 def test_with_error():
     class ExtractionError(Exception):
@@ -83,7 +101,8 @@ def test_with_error():
     hist = history(lambda: err_ex())
     assert len(hist) == 2
 
-def test_takeout_new_zip():
+
+def test_takeout_new_zip(adhoc_config):
     test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
     import wereyouhere.extractors.takeout as tex
     hist = history(lambda: tex.extract(test_takeout_path, tag='whatevs'))
