@@ -20,7 +20,7 @@ def main():
     }
     check_call([
         'npm', 'run-script', 'build',
-    ], env=env, cwd=Path(__file__).absolute().parent)
+    ], env=env, cwd=str(Path(__file__).absolute().parent))
 
 if __name__ == '__main__':
     main()

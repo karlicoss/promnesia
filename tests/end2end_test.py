@@ -158,7 +158,7 @@ def test_settings(tmp_path, browser):
         assert hh.get_attribute('value') == 'http://localhost:12345'
 
 
-@skip_if_ci("uses X")
+@uses_x
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
 def test_blacklist_user(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
@@ -167,7 +167,7 @@ def test_blacklist_user(tmp_path, browser):
         print("Should be blacklisted!")
 
 
-@skip_if_ci("uses X")
+@uses_x
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
 def test_blacklist_builtin(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
@@ -176,7 +176,7 @@ def test_blacklist_builtin(tmp_path, browser):
         print("Should be blacklisted!")
 
 
-@skip_if_ci("uses X")
+@uses_x
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
 def test_add_to_blacklist(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
@@ -212,7 +212,7 @@ def test_around(tmp_path):
 
 
 # TODO skip if not my hostname
-@skip_if_ci("uses X server")
+@uses_x
 def test_chrome_visits(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
@@ -221,7 +221,7 @@ def test_chrome_visits(tmp_path):
         print("You shoud see chrome visits now; with time spent")
 
 
-@skip_if_ci("uses X server")
+@uses_x
 def test_show_dots(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
     with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True):
@@ -229,7 +229,7 @@ def test_show_dots(tmp_path):
         print("You should see dots now near SL group, U group, Representation theory")
 
 
-@skip_if_ci("uses X server")
+@uses_x
 def test_search(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_local_chrome, test_url):
