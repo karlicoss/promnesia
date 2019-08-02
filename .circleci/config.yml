@@ -10,56 +10,21 @@ jobs:
       - checkout
       - run: git submodule update --init # TODO eh, this is only needed for integration tests...
 
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      # - restore_cache:
+      #     keys:
+      #     - v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
+      #     # fallback to using the latest cache if no exact match is found
+      #     - v1-dependencies-
 
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r wereyouhere/requirements.txt
-            pip install 'kython@git+https://github.com/karlicoss/kython.git@master' dateparser typing_extensions logzero
-            pip install 'cachew@git+https://github.com/karlicoss/cachew.git@master'
-
+      - run: python3 -m pip install --user tox
       # ugh, hug is involved as subprocess and doesn't see virtualenv I gues??
-      - run:
-          name: install test deps
-          command: |
-            . venv/bin/activate
-            pip install -r wereyouhere/requirements-dev.txt
+      - run: python3 -m tox
 
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
+      # - save_cache:
+      #     paths:
+      #       - ./venv
+      #     key: v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
         
-      # TODO not sure if should split integration and other?
-      - run:
-          name: run tests
-          when: always
-          command: |
-            . venv/bin/activate
-            python3 -m pytest -s tests
-
-
-      # TODO enable these later
-      # - run:
-      #     name: run mypy
-      #     when: always
-      #     command: |
-      #       . venv/bin/activate
-      #       mypy wereyouhere scripts/**.py
-
-      # - run:
-      #     name: run pylint
-      #     when: always
-      #     command: |
-      #       . venv/bin/activate
-      #       pylint -E wereyouhere scripts/**.py
 
       - store_artifacts:
           path: test-reports

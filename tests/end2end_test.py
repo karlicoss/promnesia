@@ -207,8 +207,6 @@ def test_around(tmp_path):
     with _test_helper(tmp_path, index_hypothesis, test_url) as h:
         ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
         h.open_page(f'search.html?timestamp={ts}')
-        import ipdb; ipdb.set_trace()
-        pass
 
 
 # TODO skip if not my hostname
