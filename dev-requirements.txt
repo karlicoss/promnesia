@@ -1,8 +1,0 @@
-pytest
-
-pylint
-
-mypy
-
-# https://stackoverflow.com/a/47716994/706389
-# easier to just install all at once
