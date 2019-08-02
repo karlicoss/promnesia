@@ -21,7 +21,8 @@ from sqlalchemy import create_engine, MetaData, exists, literal, between # type:
 from sqlalchemy import Column, Table, func # type: ignore
 
 
-from .common import PathWithMtime, Config, DbVisit, Url, import_config, Loc
+from .common import PathWithMtime, DbVisit, Url, Loc
+from .config import Config, import_config
 from .normalise import normalise_url
 
 _ENV_CONFIG = 'WEREYOUHERE_CONFIG'

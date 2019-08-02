@@ -11,8 +11,8 @@ from datetime import datetime
 from kython.ktyping import PathIsh
 
 
-from .common import Config, import_config
 from .common import History, Filter, make_filter, get_logger, get_tmpdir
+from . import config
 from .dump import dump_histories
 
 # TODO smart is misleading... perhaps, get rid of it?
@@ -20,8 +20,8 @@ from wereyouhere.generator.smart import previsits_to_history, Wrapper
 
 
 
-def do_extract(config: Path):
-    cfg = import_config(config)
+def _do_extract():
+    cfg = config.get()
 
     logger = get_logger()
 
@@ -61,6 +61,14 @@ def do_extract(config: Path):
         sys.exit(1)
 
 
+def do_extract(config_file: Path):
+    try:
+        config.load_from(config_file)
+        _do_extract()
+    finally:
+        config.reset()
+
+
 from .wereyouhere_server import setup_parser, run as do_serve
 
 def main():
@@ -83,7 +91,7 @@ def main():
 
     with get_tmpdir() as tdir:
         if args.mode == 'extract':
-            do_extract(config=args.config)
+            do_extract(config_file=args.config)
         elif args.mode == 'serve':
             do_serve(port=args.port, config=args.config, quiet=args.quiet)
         else:

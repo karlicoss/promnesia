@@ -10,7 +10,8 @@ from sqlalchemy import Column, Table # type: ignore
 
 from cachew import DbBinder, ichunks
 
-from .common import Config, get_logger, History, DbVisit
+from .common import get_logger, History, DbVisit
+from .config import Config
 
 
 def encoder(o):

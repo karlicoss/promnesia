@@ -15,7 +15,6 @@ from kython.kerror import Res, unwrap
 from kython.canonify import CanonifyException
 
 import dateparser # type: ignore
-from typing_extensions import Protocol
 
 
 Url = str
@@ -275,24 +274,3 @@ class PathWithMtime(NamedTuple):
             path=p,
             mtime=p.stat().st_mtime,
         )
-
-
-class Config(Protocol):
-    FALLBACK_TIMEZONE: pytz.BaseTzInfo
-    OUTPUT_DIR: PathIsh
-    EXTRACTORS: List
-    FILTERS: List[str]
-
-
-
-def import_config(config_file: PathIsh) -> Config:
-    mpath = Path(config_file)
-    import os, sys, importlib
-    sys.path.append(mpath.parent.as_posix())
-    try:
-        res = importlib.import_module(mpath.stem)
-        # TODO hmm. check that config conforms to the protocol?? perhaps even in config itself?
-        return res # type: ignore
-    finally:
-        sys.path.pop()
-
