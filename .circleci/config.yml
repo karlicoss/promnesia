@@ -3,7 +3,6 @@ version: 2
 jobs:
   server_build_and_check:
     docker:
-      # TODO use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
       - image: circleci/python:latest
 
     steps:
@@ -57,6 +56,25 @@ jobs:
           when: always
       # TODO pack?
 
+  end2end_tests:
+    docker:
+      # TODO not sure which is easier to pick...
+      - image: circleci/python:latest-browsers
+    steps:
+      - checkout
+      - run: sudo apt install nodejs npm
+      - run:
+          name: 'build extension'
+          command: |
+            cd extension
+            npm install
+            ./build --firefox
+            ./build --chrome
+
+      - run: python3 -m pip install --user tox
+      - run: sudo apt install atool # used to pack the extension
+      - run: python3 -m tox -e end2end
+
 
 workflows:
   version: 2
@@ -64,3 +82,4 @@ workflows:
     jobs:
       - client_build_and_check
       - server_build_and_check
+      - end2end_tests

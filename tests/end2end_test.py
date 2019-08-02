@@ -40,8 +40,11 @@ def _get_webdriver(tdir: Path, browser: str, headless: bool):
         options = webdriver.FirefoxOptions()
         options.headless = headless
         # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
-        driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox', options=options)
-        # TODO this should be under with...
+        driver = webdriver.Firefox(profile, options=options)
+
+        # driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox', options=options)
+        # TODO how to pass it here properly?
+
         driver.install_addon(str(addon), temporary=True)
     elif browser == B.CH:
         # TODO ugh. very hacky...
@@ -133,10 +136,9 @@ class Hotkey:
     ACTIVATE = ('ctrl', 'alt', 'w')
     DOTS     = ('ctrl', 'alt', 'v')
     SEARCH   = ('ctrl', 'alt', 'b')
- 
 
-# TODO run this test on CI??
-@skip_if_ci("uses X")
+
+
 @pytest.mark.parametrize("browser", [B.CH, B.FF])
 def test_installs(tmp_path, browser):
     with get_webdriver(browser=browser, headless=True):
@@ -144,7 +146,7 @@ def test_installs(tmp_path, browser):
         pass
 
 
-@skip_if_ci("uses X")
+# TODO detect if uses X from get_webdriver fixture?
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
 def test_settings(tmp_path, browser):
     with get_webdriver(browser=browser, headless=True) as driver:

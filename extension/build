@@ -2,6 +2,7 @@
 import argparse
 import os
 from subprocess import check_call
+from pathlib import Path
 
 def main():
     p = argparse.ArgumentParser()
@@ -19,7 +20,7 @@ def main():
     }
     check_call([
         'npm', 'run-script', 'build',
-    ], env=env)
+    ], env=env, cwd=Path(__file__).absolute().parent)
 
 if __name__ == '__main__':
     main()
