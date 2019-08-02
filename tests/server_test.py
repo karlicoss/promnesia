@@ -9,8 +9,8 @@ from subprocess import check_output, check_call, Popen, PIPE
 import time
 from typing import NamedTuple, ContextManager
 
+import pytz
 
-from common import skip_if_ci
 from integration_test import index_hypothesis
 
 
@@ -75,71 +75,59 @@ def _test_helper(tmp_path):
         yield srv
 
 
+def post(*args):
+    cmd = [
+        'http',
+        # '--timeout', '10000', # useful for debugging
+        '--ignore-stdin',
+        'post',
+        *args,
+    ]
+    return json.loads(check_output(cmd).decode('utf8'))
+
+
 def test_query_instapaper(tmp_path):
     tdir = Path(tmp_path)
     index_hypothesis(tdir)
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     with wserver(config=tdir / 'test_config.py') as helper:
-        cmd = [
-            'http', 'post', f'http://localhost:{helper.port}/visits', f'url={test_url}',
-        ]
-        response = json.loads(check_output(cmd).decode('utf8'))
+        response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
         assert len(response) > 5
         # TODO actually test response?
 
 
-# TODO FIXME can use cachew now
-@skip_if_ci("TODO FIXME dbcache")
 def test_visits(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
         for q in range(3):
             print(f"querying {q}")
-            cmd = [
-                'http', 'post', f'http://localhost:{helper.port}/visits', f'url={test_url}',
-            ]
-            response = json.loads(check_output(cmd).decode('utf8'))
+            response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
             assert len(response) == 1
 
 
-@skip_if_ci("TODO FIXME dbcache")
 def test_search(tmp_path):
     tdir = Path(tmp_path)
     index_hypothesis(tdir)
     test_url = "http://www.e-flux.com"
     with wserver(config=tdir / 'test_config.py') as helper:
-        cmd = [
-            'http', 'post', f'http://localhost:{helper.port}/search', f'url={test_url}',
-        ]
-        response = json.loads(check_output(cmd).decode('utf8'))
+        response = post(f'http://localhost:{helper.port}/search', f'url={test_url}')
         assert len(response) == 8
 
 
-@skip_if_ci("TODO FIXME dbcache")
 def test_visited(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
-        cmd = [
-            'http',
-            # '--timeout', '10000', # useful for debugging
-            'post',  f'http://localhost:{helper.port}/visited', f"""urls:=["{test_url}","http://badurl.org"]""",
-        ]
-        response = json.loads(check_output(cmd))
+        response = post(f'http://localhost:{helper.port}/visited', f"""urls:=["{test_url}","http://badurl.org"]""")
         assert response == [True, False]
 
 
-@skip_if_ci("TODO FIXME dbcache")
 def test_search_around(tmp_path):
     tdir = Path(tmp_path)
     index_hypothesis(tdir)
     test_ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
-    import pytz
     # test_ts = int(datetime(2016, 12, 13, 12, 31, 4, 229275, tzinfo=pytz.utc).timestamp())
     # TODO hmm. perhaps it makes more sense to run query in different process and server in main process for testing??
     with wserver(config=tdir / 'test_config.py') as helper:
-        cmd = [
-            'http', 'post', f'http://localhost:{helper.port}/search_around', f'timestamp={test_ts}',
-        ]
-        response = json.loads(check_output(cmd).decode('utf8'))
+        response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={test_ts}')
         # TODO highlight original url in extension??
         assert 5 < len(response) < 20
