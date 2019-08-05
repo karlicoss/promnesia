@@ -37,24 +37,16 @@ function showError(err) {
 }
 
 
-async function _doSearch(cb: Promise<Visits>) {
+async function _doSearch(cb: Promise<Visits>, {with_ctx_first, }: {with_ctx_first: boolean}) {
     clearResults();
 
-    const bvisits = (await cb).visits;
-    bvisits.sort((f, s) => (s.time - f.time));
+    const visits = (await cb).visits;
+    visits.sort((f, s) => (s.time - f.time));
     // TODO ugh, should do it via sort predicate...
-    const with_ctx = [];
-    const no_ctx = [];
-    for (const v of bvisits) {
-        if (v.context === null) {
-            no_ctx.push(v);
-        } else {
-            with_ctx.push(v);
-        }
-    }
-    // TODO duplicated code...
-    const visits = [].concat(with_ctx).concat(no_ctx);
 
+    if (with_ctx_first) {
+        visits.sort((f, s) => (f.context === null ? 1 : 0) - (s.context === null ? 1 : 0));
+    }
 
     const res = getResultsContainer();
     const cc = doc.createElement('div'); res.appendChild(cc);
@@ -78,9 +70,9 @@ async function _doSearch(cb: Promise<Visits>) {
     }
 }
 
-async function doSearch (cb: Promise<Visits>) {
+async function doSearch (...args) {
     try {
-        await _doSearch(cb);
+        await _doSearch(...args);
     } catch (err) {
         console.error(err);
         try {
@@ -94,7 +86,8 @@ async function doSearch (cb: Promise<Visits>) {
 
 unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event) => {
     event.preventDefault();
-    await doSearch(searchVisits(getQuery().value));
+    // TODO make ctx first configurable?
+    await doSearch(searchVisits(getQuery().value), {with_ctx_first: true});
 });
 
 
@@ -107,7 +100,7 @@ window.onload = async () => {
 
     if (params.has('timestamp')) {
         const timestamp = parseInt(unwrap(params.get('timestamp')));
-        await doSearch(searchAround(timestamp));
+        await doSearch(searchAround(timestamp), {with_ctx_first: false});
     }
     // TODO otherwise, error??
 };
