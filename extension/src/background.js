@@ -93,7 +93,7 @@ const lerror = log; // TODO
 function queryBackendCommon(params, opts: Options, endp: string, cb: (Visits) => void) {
     const data = JSON.stringify(params);
 
-    const request = new XMLHttpRequest();
+    const request = new XMLHttpRequest(); // TODO FIXME use reqwest?
 
     const endpoint = `${opts.host}/${endp}`;
     request.open('POST', endpoint, true);
@@ -106,13 +106,14 @@ function queryBackendCommon(params, opts: Options, endp: string, cb: (Visits) =>
         const rtext = request.responseText;
         var had_error = false;
         var error_message = `status ${status}, response ${rtext}`;
-        log(`status: ${status}, response: ${rtext}`);
+        ldebug(`status: ${status}, response: ${rtext}`);
 
         if (status >= 200 && status < 400) { // success
             try {
                 // TODO handle json parsing defensively here
-                const response = JSON.parse(request.response);
-                log(`success: ${response}`);
+                const resps = request.response;
+                ldebug(`success: ${resps}`);
+                const response = JSON.parse(resps);
                 const vis = rawToVisits(response);
                 cb(vis);
             } catch (err) {
@@ -128,7 +129,7 @@ function queryBackendCommon(params, opts: Options, endp: string, cb: (Visits) =>
         }
 
         if (had_error) {
-            console.error(`[background] ERROR: ${error_message}`);
+            lerror(`ERROR: ${error_message}`);
             showNotification(`ERROR: ${error_message}`);
             // TODO crap, doesn't really seem to respect urgency...
         }
@@ -202,7 +203,6 @@ async function isBlacklisted(url: Url): Promise<?Reason> {
     const domains_url = chrome.runtime.getURL('shallalist/finance/banking/domains');
     const resp = await fetch(domains_url);
     const domains = (await resp.text()).split('\n');
-    console.log(domains);
     if (domains.includes(hostname)) {
         return "'Banking' blacklist";
     }
@@ -300,6 +300,7 @@ async function updateState () {
 }
 
 // TODO check for blacklist here as well
+// TODO FIXME ugh. this can be tested on some static page... I guess?
 function showDots(tabId, options: Options) {
     chrome.tabs.executeScript(tabId, {
         code: `
@@ -445,22 +446,23 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
 // chrome.tabs.onReplaced.addListener(updateState);
 
 chrome.tabs.onCreated.addListener((tab) => {
-    ldebug("!!!!!! CREATED %s", tab);
+    ldebug("onCreated %s", tab);
 });
 
 
 // $FlowFixMe
 chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
-    ldebug("!!!!!! UPDATED %s %s", tab, info);
+    delete tab.favIconUrl; // too spammy in logs
+    ldebug("onUpdated %s %s", tab, info);
 
     const url = tab.url;
     if (url == null) {
-        ldebug('URL is not set; ignoring');
+        ldebug('onUpdated: ignoring as URL is not set');
         return;
     }
 
     if (ignored(url)) {
-        linfo("ignoring %s", url);
+        linfo('onUpdated: ignored explicitly %s', url);
         return;
     }
     // right, tab updated triggered quite a lot, e.g. when the title is blinking
