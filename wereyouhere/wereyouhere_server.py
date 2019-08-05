@@ -22,7 +22,7 @@ from sqlalchemy import Column, Table, func # type: ignore
 
 
 from .common import PathWithMtime, DbVisit, Url, Loc
-from .config import Config, import_config
+from . import config as cfg
 from .normalise import normalise_url
 
 _ENV_CONFIG = 'WEREYOUHERE_CONFIG'
@@ -39,14 +39,15 @@ def get_logger():
 
 
 @lru_cache(1)
-def _load_config(mpath: PathWithMtime) -> Config:
-    return import_config(mpath.path)
+def _get_config(mpath: PathWithMtime) -> cfg.Config:
+    cfg.load_from(mpath.path) # TODO err, not sure if should really bother with hot reloading; it would assert?
+    return cfg.get()
 
 
-def load_config() -> Config:
+def get_config() -> cfg.Config:
     cp = os.environ.get(_ENV_CONFIG)
     assert cp is not None
-    return _load_config(PathWithMtime.make(Path(cp)))
+    return _get_config(PathWithMtime.make(Path(cp)))
 
 # TODO use that?? https://github.com/timothycrosley/hug/blob/develop/tests/test_async.py
 
@@ -83,10 +84,11 @@ def as_json(v: DbVisit) -> Dict:
         'normalised_url': v.norm_url,
     }
 
+
 @lru_cache(1)
 def get_stuff(): # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
-    config = load_config()
+    config = get_config()
     db_path = Path(config.OUTPUT_DIR) / 'visits.sqlite' # TODO FIXME need to update it
     assert db_path.exists()
 
@@ -103,7 +105,7 @@ def get_stuff(): # TODO better name
 
 def search_common(url: str, where):
     logger = get_logger()
-    config = load_config()
+    config = get_config()
 
     logger.info('url: %s', url)
     url = normalise_url(url)
@@ -186,26 +188,37 @@ def visited(
     logger = get_logger()
 
     logger.debug(urls)
-    nurls = list(map(normalise_url, urls))
-    logger.debug('normalised: %s', nurls)
+    norms = [(u, normalise_url(u)) for u in urls]
+    # logger.debug('\n'.join(f'{u} -> {nu}' for u, nu in norms))
 
+    nurls = [n[1] for n in norms]
     engine, binder, table = get_stuff()
 
+    snurls = list(sorted(set(nurls)))
     # sqlalchemy doesn't seem to support SELECT FROM (VALUES (...)) in its api
     # also doesn't support array binding...
     # https://stackoverflow.com/questions/13190392/how-can-i-bind-a-list-to-a-parameter-in-a-custom-query-in-sqlalchemy
-    bstring = ','.join(f'(:b{i})'   for i, _ in enumerate(nurls))
-    bdict = {            f'b{i}': v for i, v in enumerate(nurls)}
+    bstring = ','.join(f'(:b{i})'   for i, _ in enumerate(snurls))
+    bdict = {            f'b{i}': v for i, v in enumerate(snurls)}
 
     query = f"""
 WITH cte(queried) AS (SELECT * FROM (values {bstring}))
-SELECT visits.norm_url
-    FROM cte LEFT JOIN visits
-    ON visits.norm_url = queried
+SELECT queried
+    FROM cte JOIN visits
+    ON queried = visits.norm_url
     """
+    # hmm that was quite slow...
+    # SELECT queried FROM cte WHERE EXISTS (SELECT 1 FROM visits WHERE queried = visits.norm_url)
+    logger.debug(bdict)
+    logger.debug(query)
     with engine.connect() as conn:
         res = list(conn.execute(query, bdict))
-        results = [x[0] is not None for x in res]
+        present = {x[0] for x in res}
+    results = [nu in present for nu in nurls]
+
+    # logger.debug('\n'.join(
+    #     f'{"X" if v else "-"} {u} -> {nu}' for v, (u, nu) in zip(results, norms)
+    # ))
     return results
 
 
@@ -239,7 +252,7 @@ def main():
     p = argparse.ArgumentParser('wereyouhere server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()
-    run(port=args.port, config=args.config, quiet=args.quiet)
+    run(port=args.port, config_path=args.config, quiet=args.quiet)
 
 
 if __name__ == '__main__':

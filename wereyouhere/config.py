@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
+import importlib.util
 
 from typing_extensions import Protocol
 import pytz
@@ -36,12 +37,9 @@ def reset() -> None:
 
 
 def import_config(config_file: PathIsh) -> Config:
-    mpath = Path(config_file)
-    import os, sys, importlib
-    sys.path.append(str(mpath.parent))
-    try:
-        res = importlib.import_module(mpath.stem)
-        # TODO hmm. check that config conforms to the protocol?? perhaps even in config itself?
-        return res # type: ignore
-    finally:
-        sys.path.pop()
+    p = Path(config_file)
+    name = p.stem
+    spec = importlib.util.spec_from_file_location(name, p) # type: ignore
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod) # type: ignore
+    return mod # type: ignore
