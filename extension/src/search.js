@@ -92,7 +92,8 @@ async function doSearch (cb: Promise<Visits>) {
     }
 }
 
-unwrap(doc.getElementById('search_id')).addEventListener('click', async () => {
+unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event) => {
+    event.preventDefault();
     await doSearch(searchVisits(getQuery().value));
 });
 
