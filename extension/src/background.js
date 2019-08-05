@@ -224,25 +224,35 @@ export async function getVisits(url: Url): Promise<Result> {
     return new Visits(allVisits);
 }
 
+type IconStyle = {
+    icon: string,
+    title: string,
+    text: ?string,
+};
 
-function getIconAndTitle(visits: Result) {
+
+// TODO this can be tested?
+function getIconStyle(visits: Result): IconStyle {
     if (visits instanceof Blacklisted) {
-        return ['images/ic_blacklisted_48.png', `Blacklisted: ${visits.reason}`];
+        return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${visits.reason}`, text: null};
     }
 
-    if (visits.visits.length === 0) {
-        return ['images/ic_not_visited_48.png', 'Was not visited'];
+    const vcount = visits.visits.length;
+    if (vcount === 0) {
+        return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: null};
     }
     const contexts = visits.contexts();
-    if (contexts.length > 0) {
-        return ['images/ic_visited_48.png'    , 'Was visited (has contexts)'];
+    const ccount = contexts.length;
+    if (ccount > 0) {
+        return {icon: 'images/ic_visited_48.png'    , title: `${vcount} visits, ${ccount} contexts`, text: ccount.toString()};
     }
     // TODO a bit ugly, but ok for now.. maybe cut off by time?
     const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
     if (boring) {
-        return ["images/ic_boring_48.png"     , "Was visited (boring)"];
+        // TODO not sure if worth distinguishing..
+        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (local only)`, text: null};
     } else {
-        return ["images/ic_blue_48.png"       , "Was visited"];
+        return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: null};
     }
 }
 
@@ -263,24 +273,27 @@ async function updateState () {
     }
 
     const visits = await getVisits(url);
-    // tabulation preserved from pre-async times for git history
-            let res = getIconAndTitle(visits);
-            let icon = res[0];
-            let title = res[1];
-            for (const action of ACTIONS) {
-                // $FlowFixMe
-                action.setIcon({
-                    path: icon,
-                    tabId: tabId,
-                });
-                // $FlowFixMe
-                action.setTitle({
-                    title: title,
-                    tabId: tabId,
-                });
-            }
-            // TODO if it's part of actions only?
-            chrome.pageAction.show(tabId);
+    let {icon, title, text} = getIconStyle(visits);
+    for (const action of ACTIONS) {
+        // $FlowFixMe
+        action.setIcon({
+            path: icon,
+            tabId: tabId,
+        });
+        // $FlowFixMe
+        action.setTitle({
+            title: title,
+            tabId: tabId,
+        });
+        if (text != null) {
+            // $FlowFixMe
+            action.setBadgeText({
+                text: text,
+            });
+        }
+    }
+    // TODO if it's part of actions only?
+    chrome.pageAction.show(tabId);
 
     if (visits instanceof Visits) {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
