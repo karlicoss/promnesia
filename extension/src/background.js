@@ -30,8 +30,8 @@ function notifyError(obj: any) {
     notify(message); // TODO maybe error icon or something?
 }
 
-function defensify(pf: (any) => Promise<any>): (any) => Promise<any> {
-    return (arg) => pf(arg).catch(notifyError);
+function defensify(pf: (...any) => Promise<any>): (any) => Promise<any> {
+    return (...args) => pf(...args).catch(notifyError);
 }
 
 async function _showTabNotification(tabId: number, text: string, color: string='green') {
@@ -134,7 +134,7 @@ async function getBackendVisits(u: Url) {
 }
 
 
-// TODO FIXME include browser too..
+// TODO include browser too?
 export async function searchVisits(u: Url): Promise<Visits> {
     return queryBackendCommon({url: u}, 'search').then(rawToVisits);
 }
@@ -421,7 +421,7 @@ chrome.tabs.onCreated.addListener((tab) => {
 
 
 // $FlowFixMe
-chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
+chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
     delete tab.favIconUrl; // too spammy in logs
     ldebug("onUpdated %s %s", tab, info);
 
@@ -452,9 +452,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
 
     if (info['status'] === 'complete') {
         linfo('requesting! %s', url);
-        await updateState().catch(notifyError);
+        await updateState();
     }
-});
+}));
 
 
 async function getActiveTab(): Promise<chrome$Tab> {
