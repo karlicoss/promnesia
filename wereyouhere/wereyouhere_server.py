@@ -252,7 +252,7 @@ def main():
     p = argparse.ArgumentParser('wereyouhere server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()
-    run(port=args.port, config_path=args.config, quiet=args.quiet)
+    run(port=args.port, config=args.config, quiet=args.quiet)
 
 
 if __name__ == '__main__':
