@@ -91,55 +91,33 @@ const lerror = log; // TODO
 // TODO definitely need to use something very lightweight for json requests..
 
 function queryBackendCommon(params, opts: Options, endp: string, cb: (Visits) => void) {
-    const data = JSON.stringify(params);
-
-    const request = new XMLHttpRequest(); // TODO FIXME use reqwest?
-
     const endpoint = `${opts.host}/${endp}`;
-    request.open('POST', endpoint, true);
-    request.setRequestHeader('Authorization', `Basic ${btoa(opts.token)}`);
-    request.onreadystatechange = () => {
-        if (request.readyState != request.DONE) {
-            return;
-        }
-        const status = request.status;
-        const rtext = request.responseText;
-        var had_error = false;
-        var error_message = `status ${status}, response ${rtext}`;
-        ldebug(`status: ${status}, response: ${rtext}`);
-
-        if (status >= 200 && status < 400) { // success
+    // TODO reqwest logging??
+    reqwest({
+        url: endpoint,
+        method: 'post',
+        contentType: 'application/json',
+        headers: {
+            'Authorization': "Basic " + btoa(opts.token),
+        },
+        data: JSON.stringify(params),
+        success: response => {
             try {
-                // TODO handle json parsing defensively here
-                const resps = request.response;
-                ldebug(`success: ${resps}`);
-                const response = JSON.parse(resps);
+                ldebug(`success: ${response}`);
                 const vis = rawToVisits(response);
                 cb(vis);
             } catch (err) {
-                had_error = true;
-                error_message = error_message.concat(String(err));
-                console.error(err);
+                lerror(err);
+                showNotification(`error: ${err}, response: ${response}`);
+                // TODO test that? wonder if could test in unit tests...
             }
-        } else {
-            had_error = true;
-            if (status == 0) {
-                error_message = error_message.concat(` ${endpoint} must be unavailable `);
-            }
-        }
-
-        if (had_error) {
-            lerror(`ERROR: ${error_message}`);
-            showNotification(`ERROR: ${error_message}`);
+        },
+        error: err => {
+            lerror(err);
+            showNotification(err.responseText);
             // TODO crap, doesn't really seem to respect urgency...
         }
-    };
-    request.onerror = () => {
-        console.error(request);
-    };
-
-    request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    request.send(data);
+    });
 }
 
 function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
