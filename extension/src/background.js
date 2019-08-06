@@ -3,7 +3,6 @@
 import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common';
 import {normaliseHostname} from './normalise';
-import type {Options} from './options';
 import {get_options_async, setOptions} from './options';
 // $FlowFixMe
 import reqwest from 'reqwest';
@@ -27,7 +26,7 @@ function notifyError(obj: any) {
     notify(message); // TODO maybe error icon or something?
 }
 
-export function showTabNotification(tabId: number, text: string, color: string='green') {
+function _showTabNotification(tabId: number, text: string, color: string='green') {
     // TODO can it be remote script?
     text = text.replace(/\n/g, "\\n"); // ....
 
@@ -46,6 +45,16 @@ Toastify({
     `    });
       });
     });
+}
+
+// $FlowFixMe
+export function showTabNotification(tabId: number, message: string, ...args) {
+    try {
+        _showTabNotification(tabId, message, ...args);
+    } catch (error) {
+        lerror(error);
+        notifyError(message);
+    }
 }
 
 function showIgnoredNotification(tabId: number, url: Url) {
@@ -96,7 +105,7 @@ const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
-async function queryBackendCommon(params, endp: string): Promise<Visits> {
+async function queryBackendCommon(params, endp: string) {
     const opts = await get_options_async();
     const endpoint = `${opts.host}/${endp}`;
     // TODO reqwest logging??
@@ -110,21 +119,21 @@ async function queryBackendCommon(params, endp: string): Promise<Visits> {
         data: JSON.stringify(params)
     });
     ldebug(`success: ${response}`);
-    return rawToVisits(response);
+    return response;
 }
 
 async function getBackendVisits(u: Url) {
-    return queryBackendCommon({url: u}, 'visits');
+    return queryBackendCommon({url: u}, 'visits').then(rawToVisits);
 }
 
 
 // TODO FIXME include browser too..
 export async function searchVisits(u: Url): Promise<Visits> {
-    return queryBackendCommon({url: u}, 'search');
+    return queryBackendCommon({url: u}, 'search').then(rawToVisits);
 }
 
 export async function searchAround(timestamp: number): Promise<Visits> {
-    return queryBackendCommon({timestamp: timestamp}, 'search_around');
+    return queryBackendCommon({timestamp: timestamp}, 'search_around').then(rawToVisits);
 }
 
 function getDelayMs(/*url*/) {
@@ -278,10 +287,14 @@ async function updateState () {
     }
 }
 
+function chromeTabsExecuteScriptAsync(...args) {
+    return new Promise(cb => chrome.tabs.executeScript(...args, cb));
+}
+
 // TODO check for blacklist here as well
 // TODO FIXME ugh. this can be tested on some static page... I guess?
-function showDots(tabId, options: Options) {
-    chrome.tabs.executeScript(tabId, {
+async function showDots(tabId) {
+    const mresults = await chromeTabsExecuteScriptAsync(tabId, {
         code: `
      const aaa = document.getElementsByTagName("a");
      const domain = document.domain;
@@ -305,40 +318,28 @@ function showDots(tabId, options: Options) {
      // TODO move more stuff to background??
      Array.from(aurls)
  `
-    }, results => {
-        if (results == null) {
-            throw "shouldn't happen";
-        }
-        // TODO FIXME filter these by blacklist as well?
-        const res = results[0];
-        if (res == null) {
-            console.error("Weird, res is null. Not doing anything");
-            return;
-        }
-        // TODO check if zero? not sure if necessary...
-        // TODO maybe, I need a per-site extension?
+});
+    const results = unwrap(mresults);
+    // TODO FIXME filter these by blacklist as well?
+    const res = unwrap(results[0]);
+    // TODO check if zero? not sure if necessary...
+    // TODO maybe, I need a per-site extension?
 
-        reqwest({
-            url: `${options.host}/visited`
-            , method: 'post'
-            , contentType: 'application/json'
-            , headers: {
-                'Authorization': "Basic " + btoa(options.token),
-            }
-            , data: JSON.stringify({
-                "urls": res,
-            })
-            , success: resp => {
-                // TODO ok, we received exactly same elements as in res. now what??
-                // TODO cache results internally? At least for visited. ugh.
-                // TODO make it custom option?
-                const vis = {};
-                for (var i = 0; i < res.length; i++) {
-                    vis[res[i]] = resp[i];
-                }
-                // TODO make a map from it..
-                chrome.tabs.insertCSS(tabId, {
-                    code: `
+    const resp = await queryBackendCommon({
+        urls: res,
+    }, 'visited');
+
+    // TODO ok, we received exactly same elements as in res. now what??
+    // TODO cache results internally? At least for visited. ugh.
+    // TODO make it custom option?
+    const vis = {};
+    for (var i = 0; i < res.length; i++) {
+        vis[res[i]] = resp[i];
+    }
+    // TODO async as well?
+    // TODO make a map from it..
+    chrome.tabs.insertCSS(tabId, {
+        code: `
 .wereyouhere-visited:after {
   content: "⚫";
   color: #FF4500;
@@ -351,9 +352,9 @@ function showDots(tabId, options: Options) {
   z-index:100;
 }
 `
-                });
-                chrome.tabs.executeScript(tabId, {
-                    code: `
+    });
+    chrome.tabs.executeScript(tabId, {
+        code: `
 const vis = ${JSON.stringify(vis)}; // madness!
 for (var i = 0; i < aaa.length; i++) {
     var a_tag = aaa[i];
@@ -370,13 +371,6 @@ for (var i = 0; i < aaa.length; i++) {
     }
 }
 `
-                });
-            }
-            , error: err => {
-                notifyError(err.responseText);
-            }
-        });
-
     });
 }
 
@@ -478,7 +472,7 @@ async function getActiveTab(): Promise<?chrome$Tab> {
 }
 
 async function showActiveTabNotification(text: string, color: string): Promise<void> {
-    const atab = await getActiveTab();
+    const atab = await getActiveTab(); // TODO if error also fallback?
     if (atab != null) { // TODO FIXME
         showTabNotification(unwrap(atab.id), text, color);
     }
@@ -537,11 +531,10 @@ for (const action of ACTIONS) {
     });
 }
 
-// $FlowFixMe // err, complains at Promise but nevertheless works
-chrome.commands.onCommand.addListener(async cmd => {
+async function onCommandHandler(cmd) {
     if (cmd === 'show_dots') {
         // TODO actually use show dots setting?
-        const opts = await get_options_async();
+        // const opts = await get_options_async();
         const atab = await getActiveTab();
         if (atab == null) {
             // means it's ignored
@@ -554,14 +547,21 @@ chrome.commands.onCommand.addListener(async cmd => {
             if (bl != null) {
                 showBlackListedNotification(tid, new Blacklisted(url, bl));
             } else {
-                showDots(tid, opts);
+                await showDots(tid);
             }
         }
     } else if (cmd == 'search') {
         // TODO FIXME get current tab url and pass as get parameter?
         chrome.tabs.create({ url: "search.html" });
     }
-});
+}
+
+function onCommandHandlerDef(cmd) {
+    return onCommandHandler(cmd).catch(notifyError);
+}
+
+// $FlowFixMe // err, complains at Promise but nevertheless works
+chrome.commands.onCommand.addListener(onCommandHandlerDef);
 
 
 async function blackListDomain(e): Promise<void> {
