@@ -111,6 +111,11 @@ class TestHelper(NamedTuple):
         open_extension_page(self.driver, page)
 
 
+def confirm(what: str):
+    import click # type: ignore
+    click.confirm(what, abort=True)
+
+
 @contextmanager
 def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
     tdir = Path(tmp_path)
@@ -126,10 +131,6 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
         sleep(3)
 
         yield TestHelper(driver=driver)
-
-        # TODO log what one is expected to see?
-        print("Press any key to finish")
-        getch_or_fail()
 
 
 class Hotkey:
@@ -160,11 +161,11 @@ def test_settings(tmp_path, browser):
 
 @uses_x
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
-def test_blacklist_user(tmp_path, browser):
+def test_blacklist_custom(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
         driver.get('http://stackoverflow.com')
-        print("Should be blacklisted!")
+        confirm('page should be blacklisted (black icon)')
 
 
 @uses_x
@@ -173,7 +174,7 @@ def test_blacklist_builtin(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://www.hsbc.co.uk/mortgages/')
-        print("Should be blacklisted!")
+        confirm('page should be blacklisted (black icon)')
 
 
 @uses_x
@@ -191,7 +192,7 @@ def test_add_to_blacklist(tmp_path, browser):
         pyautogui.typewrite(['up', 'enter'], interval=0.5)
 
         driver.get(driver.current_url)
-        print("Should be blacklisted now!")
+        confirm('page should be blacklisted (black icon)')
 
 
 @uses_x
@@ -200,7 +201,7 @@ def test_visits(tmp_path):
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
     with _test_helper(tmp_path, index_hypothesis, test_url):
         trigger_hotkey(hotkey=Hotkey.ACTIVATE)
-        print("You should see hypothesis contexts now")
+        confirm('you should see hypothesis contexts')
 
 
 @uses_x
@@ -209,6 +210,7 @@ def test_around(tmp_path):
     with _test_helper(tmp_path, index_hypothesis, test_url) as h:
         ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
         h.open_page(f'search.html?timestamp={ts}')
+        confirm('you should see search results')
 
 
 # TODO skip if not my hostname
@@ -218,7 +220,7 @@ def test_chrome_visits(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_local_chrome, test_url):
         trigger_hotkey(hotkey=Hotkey.ACTIVATE)
-        print("You shoud see chrome visits now; with time spent")
+        confirm("You shoud see chrome visits now; with time spent")
 
 
 @uses_x
@@ -226,7 +228,7 @@ def test_show_dots(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
     with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True):
         trigger_hotkey(hotkey=Hotkey.DOTS)
-        print("You should see dots now near SL group, U group, Representation theory")
+        confirm("You should see dots now near SL group, U group, Representation theory")
 
 
 @uses_x
@@ -234,7 +236,7 @@ def test_search(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_local_chrome, test_url):
         trigger_hotkey(hotkey=Hotkey.SEARCH)
-        print("You shoud see chrome visits now; with time spent")
+        confirm("You shoud see chrome visits now; with time spent")
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
