@@ -4,10 +4,14 @@ import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common';
 import {normaliseHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
+import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync} from './async_chrome';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
-const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [chrome.browserAction, chrome.pageAction]; // TODO dispatch depending on android/desktop?
+const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [
+    chrome.browserAction,
+    // chrome.pageAction,
+]; // TODO dispatch depending on android/desktop?
 
 // TODO common?
 export function notify(message: string, priority: number=0) {
@@ -26,13 +30,17 @@ function notifyError(obj: any) {
     notify(message); // TODO maybe error icon or something?
 }
 
-function _showTabNotification(tabId: number, text: string, color: string='green') {
+function defensify(pf: (any) => Promise<any>): (any) => Promise<any> {
+    return (arg) => pf(arg).catch(notifyError);
+}
+
+async function _showTabNotification(tabId: number, text: string, color: string='green') {
     // TODO can it be remote script?
     text = text.replace(/\n/g, "\\n"); // ....
 
-    chrome.tabs.executeScript(tabId, {file: 'toastify.js'}, () => {
-        chrome.tabs.insertCSS(tabId, {file: 'toastify.css'}, () => {
-            chrome.tabs.executeScript(tabId, { code: `
+    await chromeTabsExecuteScriptAsync(tabId, {file: 'toastify.js'});
+    await chromeTabsInsertCSS(tabId, {file: 'toastify.css'});
+    await chromeTabsExecuteScriptAsync(tabId, { code: `
 Toastify({
   text: "${text}",
   duration: 2000,
@@ -42,27 +50,25 @@ Toastify({
   positionLeft: false,
   backgroundColor: "${color}",
 }).showToast();
-    `    });
-      });
-    });
+    ` });
 }
 
 // $FlowFixMe
-export function showTabNotification(tabId: number, message: string, ...args) {
+export async function showTabNotification(tabId: number, message: string, ...args) {
     try {
-        _showTabNotification(tabId, message, ...args);
+        await _showTabNotification(tabId, message, ...args);
     } catch (error) {
         lerror(error);
         notifyError(message);
     }
 }
 
-function showIgnoredNotification(tabId: number, url: Url) {
-    showTabNotification(tabId, `${url} is ignored`, 'red'); // TODO maybe red is not ideal here
+async function showIgnoredNotification(tabId: number, url: Url) {
+    await showTabNotification(tabId, `${url} is ignored`, 'red'); // TODO maybe red is not ideal here
 }
 
-function showBlackListedNotification(tabId: number, b: Blacklisted) {
-    showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red');
+async function showBlackListedNotification(tabId: number, b: Blacklisted) {
+    await showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red');
 }
 
 function rawToVisits(vis): Visits {
@@ -99,6 +105,7 @@ function log() {
 }
 
 const ldebug = log; // TODO
+const lwarn = log; // TODO
 const linfo = log; // TODO
 // eslint-disable-next-line no-unused-vars
 const lerror = log; // TODO
@@ -231,10 +238,6 @@ function getIconStyle(visits: Result): IconStyle {
     }
 }
 
-function chromeTabsQueryAsync(opts): Promise<Array<chrome$Tab>> {
-    return new Promise((cb) => chrome.tabs.query(opts, cb));
-}
-
 async function updateState () {
     const tabs = await chromeTabsQueryAsync({'active': true});
     // TODO why am I getting multiple results???
@@ -260,12 +263,10 @@ async function updateState () {
             title: title,
             tabId: tabId,
         });
-        if (text != null) {
-            // $FlowFixMe
-            action.setBadgeText({
-                text: text,
-            });
-        }
+        // $FlowFixMe
+        action.setBadgeText({
+            text: text,
+        });
     }
     // TODO if it's part of actions only?
     chrome.pageAction.show(tabId);
@@ -274,34 +275,29 @@ async function updateState () {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             const locs = visits.contexts().map(l => l == null ? null : l.title);
             if (locs.length !== 0) {
-                showTabNotification(tabId, `${locs.length} contexts!\n${locs.join('\n')}`);
+                await showTabNotification(tabId, `${locs.length} contexts!\n${locs.join('\n')}`);
             }
 
-            chrome.tabs.executeScript(tabId, {
-                file: 'sidebar.js',
-            }, () => {
-                chrome.tabs.executeScript(tabId, {
-                    code: `bindSidebarData(${JSON.stringify(visits)})`
-                });
-            });
+        await chromeTabsExecuteScriptAsync(tabId, {
+            file: 'sidebar.js',
+        });
+        await chromeTabsExecuteScriptAsync(tabId, {
+            code: `bindSidebarData(${JSON.stringify(visits)})`
+        });
     }
-}
-
-function chromeTabsExecuteScriptAsync(...args) {
-    return new Promise(cb => chrome.tabs.executeScript(...args, cb));
 }
 
 // TODO check for blacklist here as well
 // TODO FIXME ugh. this can be tested on some static page... I guess?
 async function showDots(tabId) {
+    // TODO can be tested
     const mresults = await chromeTabsExecuteScriptAsync(tabId, {
         code: `
-     const aaa = document.getElementsByTagName("a");
-     const domain = document.domain;
-
+     link_elements = document.getElementsByTagName("a");
+{
      const urls = new Set([]);
-     for (var i = 0; i< aaa.length; i++) {
-         urls.add(aaa[i].getAttribute('href'));
+     for (var i = 0; i < link_elements.length; i++) {
+         urls.add(link_elements[i].getAttribute('href'));
      }
      urls.delete("#");
      urls.delete(null);
@@ -310,13 +306,14 @@ async function showDots(tabId) {
          if (u.startsWith('javascript')) {
              continue
          } else if (u.startsWith('/')) {
-             aurls.add(domain + u);
+             aurls.add(document.domain + u);
          } else {
              aurls.add(u);
          }
      }
      // TODO move more stuff to background??
      Array.from(aurls)
+}
  `
 });
     const results = unwrap(mresults);
@@ -336,9 +333,8 @@ async function showDots(tabId) {
     for (var i = 0; i < res.length; i++) {
         vis[res[i]] = resp[i];
     }
-    // TODO async as well?
     // TODO make a map from it..
-    chrome.tabs.insertCSS(tabId, {
+    await chromeTabsInsertCSS(tabId, {
         code: `
 .wereyouhere-visited:after {
   content: "⚫";
@@ -353,22 +349,24 @@ async function showDots(tabId) {
 }
 `
     });
-    chrome.tabs.executeScript(tabId, {
+    await chromeTabsExecuteScriptAsync(tabId, {
         code: `
-const vis = ${JSON.stringify(vis)}; // madness!
-for (var i = 0; i < aaa.length; i++) {
-    var a_tag = aaa[i];
-    var url = a_tag.getAttribute('href');
+vis = ${JSON.stringify(vis)}; // madness!
+{
+for (var i = 0; i < link_elements.length; i++) {
+    const a_tag = link_elements[i];
+    let url = a_tag.getAttribute('href');
     if (url == null) {
         continue;
     }
     if (url.startsWith('/')) {
-        url = domain + url;
+        url = document.domain + url;
     }
     if (vis[url] == true) {
         // console.log("adding class to ", a_tag);
         a_tag.classList.add('wereyouhere-visited');
     }
+}
 }
 `
     });
@@ -459,30 +457,27 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
 });
 
 
-async function getActiveTab(): Promise<?chrome$Tab> {
+async function getActiveTab(): Promise<chrome$Tab> {
     const tabs = await chromeTabsQueryAsync({'active': true});
-    const tab = tabs[0];
-    const url = unwrap(tab.url);
-    // TODO ugh duplication
-    if (ignored(url)) {
-        log("ignoring %s", url); // TODO not sure when it should be handled...
-        return null;
+    // TODO can it be empty at all??
+    if (tabs.length > 1) {
+        lwarn("Multiple active tabs: %s", tabs); // TODO handle properly?
     }
+    const tab = tabs[0];
     return tab;
 }
 
 async function showActiveTabNotification(text: string, color: string): Promise<void> {
-    const atab = await getActiveTab(); // TODO if error also fallback?
-    if (atab != null) { // TODO FIXME
-        showTabNotification(unwrap(atab.id), text, color);
-    }
+    const atab = await getActiveTab();
+    await showTabNotification(unwrap(atab.id), text, color);
 }
 
 // $FlowFixMe
-chrome.runtime.onMessage.addListener(async (msg) => {
+chrome.runtime.onMessage.addListener(async (msg) => { // TODO not sure if should defensify here?
     if (msg.method == Methods.GET_SIDEBAR_VISITS) {
         const atab = await getActiveTab();
-        if (atab != null) { // means it's ignored
+        const url = unwrap(atab.url);
+        if (!ignored(url)) { // TODO shouldn't have been requested in the first place?
             const visits = await getVisits(unwrap(atab.url));
             if (visits instanceof Visits) {
                 return visits;
@@ -511,7 +506,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
 for (const action of ACTIONS) {
     // $FlowFixMe
-    action.onClicked.addListener(async tab => {
+    action.onClicked.addListener(defensify(async tab => {
         const url = unwrap(tab.url);
         const tid = unwrap(tab.id);
         if (ignored(url)) {
@@ -521,31 +516,30 @@ for (const action of ACTIONS) {
         }
         const bl = await isBlacklisted(url);
         if (bl != null) {
-            showBlackListedNotification(tid, new Blacklisted(url, bl));
+            await showBlackListedNotification(tid, new Blacklisted(url, bl));
             // TODO show popup; suggest to whitelist?
         } else {
-            chrome.tabs.executeScript(tid, {file: 'sidebar.js'}, () => {
-                chrome.tabs.executeScript(tid, {code: 'toggleSidebar();'});
-            });
+            await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
+            await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
         }
-    });
+    }));
 }
 
-async function onCommandHandler(cmd) {
+
+// $FlowFixMe // err, complains at Promise but nevertheless works
+chrome.commands.onCommand.addListener(defensify(async cmd => {
     if (cmd === 'show_dots') {
         // TODO actually use show dots setting?
         // const opts = await get_options_async();
         const atab = await getActiveTab();
-        if (atab == null) {
-            // means it's ignored
-            // TODO ugh, would be useful to have tab id here
-            showIgnoredNotification(0, 'TODO URL');
+        const url = unwrap(atab.url);
+        const tid = unwrap(atab.id);
+        if (ignored(url)) {
+            await showIgnoredNotification(tid, url);
         } else {
-            const url = unwrap(atab.url);
-            const tid = unwrap(atab.id);
             const bl = await isBlacklisted(url);
             if (bl != null) {
-                showBlackListedNotification(tid, new Blacklisted(url, bl));
+                await showBlackListedNotification(tid, new Blacklisted(url, bl));
             } else {
                 await showDots(tid);
             }
@@ -554,14 +548,7 @@ async function onCommandHandler(cmd) {
         // TODO FIXME get current tab url and pass as get parameter?
         chrome.tabs.create({ url: "search.html" });
     }
-}
-
-function onCommandHandlerDef(cmd) {
-    return onCommandHandler(cmd).catch(notifyError);
-}
-
-// $FlowFixMe // err, complains at Promise but nevertheless works
-chrome.commands.onCommand.addListener(onCommandHandlerDef);
+}));
 
 
 async function blackListDomain(e): Promise<void> {
@@ -577,9 +564,9 @@ async function blackListDomain(e): Promise<void> {
 }
 
 chrome.contextMenus.create({
-    "title"   : "Blacklist domain",
+    'title'   : "Blacklist domain",
     // $FlowFixMe
-    "onclick" : blackListDomain,
+    'onclick' : defensify(blackListDomain),
 });
 
 // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
