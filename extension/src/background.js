@@ -11,14 +11,20 @@ import reqwest from 'reqwest';
 const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [chrome.browserAction, chrome.pageAction]; // TODO dispatch depending on android/desktop?
 
 // TODO common?
-export function showNotification(text: string, priority: number=0) {
+export function notify(message: string, priority: number=0) {
     chrome.notifications.create({
         'type': "basic",
         'title': "wereyouhere",
-        'message': text,
+        'message': message,
         'priority': priority,
         'iconUrl': 'images/ic_not_visited_48.png',
     });
+}
+
+function notifyError(obj: any) {
+    const message = `ERROR: ${obj}`;
+    lerror(obj);
+    notify(message); // TODO maybe error icon or something?
 }
 
 export function showTabNotification(tabId: number, text: string, color: string='green') {
@@ -43,7 +49,7 @@ Toastify({
 }
 
 function showIgnoredNotification(tabId: number, url: Url) {
-    showTabNotification(tabId, `${url} is ignored`, 'red');
+    showTabNotification(tabId, `${url} is ignored`, 'red'); // TODO maybe red is not ideal here
 }
 
 function showBlackListedNotification(tabId: number, b: Blacklisted) {
@@ -90,52 +96,35 @@ const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
-function queryBackendCommon(params, opts: Options, endp: string, cb: (Visits) => void) {
+async function queryBackendCommon(params, endp: string): Promise<Visits> {
+    const opts = await get_options_async();
     const endpoint = `${opts.host}/${endp}`;
     // TODO reqwest logging??
-    reqwest({
+    const response = await reqwest({
         url: endpoint,
         method: 'post',
         contentType: 'application/json',
         headers: {
             'Authorization': "Basic " + btoa(opts.token),
         },
-        data: JSON.stringify(params),
-        success: response => {
-            try {
-                ldebug(`success: ${response}`);
-                const vis = rawToVisits(response);
-                cb(vis);
-            } catch (err) {
-                lerror(err);
-                showNotification(`error: ${err}, response: ${response}`);
-                // TODO test that? wonder if could test in unit tests...
-            }
-        },
-        error: err => {
-            lerror(err);
-            showNotification(err.responseText);
-            // TODO crap, doesn't really seem to respect urgency...
-        }
+        data: JSON.stringify(params)
     });
+    ldebug(`success: ${response}`);
+    return rawToVisits(response);
 }
 
-function getBackendVisits(u: Url, opts: Options, cb: (Visits) => void) {
-    return queryBackendCommon({url: u}, opts, 'visits', cb);
+async function getBackendVisits(u: Url) {
+    return queryBackendCommon({url: u}, 'visits');
 }
 
 
 // TODO FIXME include browser too..
 export async function searchVisits(u: Url): Promise<Visits> {
-    const opts = await get_options_async();
-    return new Promise((cb) => queryBackendCommon({url: u}, opts, 'search', cb));
+    return queryBackendCommon({url: u}, 'search');
 }
 
 export async function searchAround(timestamp: number): Promise<Visits> {
-    const opts = await get_options_async();
-    return new Promise((cb) => queryBackendCommon({
-        timestamp: timestamp,
-    }, opts, 'search_around', cb));
+    return queryBackendCommon({timestamp: timestamp}, 'search_around');
 }
 
 function getDelayMs(/*url*/) {
@@ -196,8 +185,7 @@ export async function getVisits(url: Url): Promise<Result> {
     }
     // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
     const chromeVisits = await getChromeVisits(url);
-    const opts = await get_options_async();
-    const backendVisits = await new Promise(cb => getBackendVisits(url, opts, cb));
+    const backendVisits = await getBackendVisits(url);
     const allVisits = backendVisits.visits.concat(chromeVisits.visits);
     return new Visits(allVisits);
 }
@@ -385,8 +373,7 @@ for (var i = 0; i < aaa.length; i++) {
                 });
             }
             , error: err => {
-                console.error(err);
-                showNotification(err.responseText);
+                notifyError(err.responseText);
             }
         });
 
@@ -473,7 +460,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
 
     if (info['status'] === 'complete') {
         linfo('requesting! %s', url);
-        await updateState();
+        await updateState().catch(notifyError);
     }
 });
 
@@ -534,7 +521,8 @@ for (const action of ACTIONS) {
         const url = unwrap(tab.url);
         const tid = unwrap(tab.id);
         if (ignored(url)) {
-            showNotification(`${url} can't be handled`);
+            // TODO tab notification?
+            notify(`${url} can't be handled`);
             return;
         }
         const bl = await isBlacklisted(url);
