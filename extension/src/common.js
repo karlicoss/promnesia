@@ -112,3 +112,19 @@ export const Methods = {
     GET_SIDEBAR_VISITS  : 'getActiveTabVisitsForSidebar',
     SEARCH_VISITS_AROUND: 'searchVisitsAround',
 };
+
+
+// $FlowFixMe
+export function log() {
+    const args = [];
+    for (var i = 1; i < arguments.length; i++) {
+        const arg = arguments[i];
+        args.push(JSON.stringify(arg));
+    }
+    console.log('[background] ' + arguments[0], ...args);
+}
+
+export const ldebug = log; // TODO
+export const lwarn = log; // TODO
+export const linfo = log; // TODO
+export const lerror = log; // TODO

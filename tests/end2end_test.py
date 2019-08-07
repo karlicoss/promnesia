@@ -73,16 +73,20 @@ def get_webdriver(browser: str=B.FF, headless=False):
             driver.close()
 
 
-def configure_extension(driver, port: str, show_dots: bool=True, blacklist=()):
+def set_host(*, driver, host: str, port: str):
+    ep = driver.find_element_by_id('host_id') # TODO rename to 'backend'?
+    ep.clear()
+    ep.send_keys(f'{host}:{port}')
+
+
+def configure_extension(driver, *, host: str='http://localhost', port: str, show_dots: bool=True, blacklist=()):
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
     open_extension_page(driver, page='options_page.html')
     sleep(1) # err, wtf? otherwise not always interacts with the elements correctly
 
-    ep = driver.find_element_by_id('host_id') # TODO rename to 'endpoint'?
-    ep.clear()
-    ep.send_keys(f'http://localhost:{port}')
+    set_host(driver=driver, host=host, port=port)
 
     dots = driver.find_element_by_id('dots_id')
     if dots.is_selected() != show_dots:
@@ -157,6 +161,28 @@ def test_settings(tmp_path, browser):
         open_extension_page(driver, page='options_page.html')
         hh = driver.find_element_by_id('host_id')
         assert hh.get_attribute('value') == 'http://localhost:12345'
+
+
+@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+def test_backend_test(tmp_path, browser):
+    with get_webdriver(browser=browser, headless=False) as driver:
+        # configure_extension(driver, port='12345')
+        # TODO enter host?
+        # host='https://nosuchhost.com', 
+        open_extension_page(driver, page='options_page.html')
+        sleep(1) # ugh. for some reason pause here seems necessary..
+        set_host(driver=driver, host='https://nosuchhost.com', port='1234')
+        driver.find_element_by_id('test_id').click()
+        sleep(0.5)
+
+        alert = driver.switch_to.alert
+        assert 'ERROR' in alert.text
+        driver.switch_to.alert.accept()
+
+        sleep(0.5)
+
+        # ugh. extra alert...
+        driver.switch_to.alert.accept()
 
 
 @uses_x

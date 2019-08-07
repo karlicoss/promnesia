@@ -1,10 +1,11 @@
 /* @flow */
 
 import type {Locator, Tag, Url, Second} from './common';
-import {Visit, Visits, Blacklisted, unwrap, Methods} from './common';
+import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {normaliseHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync} from './async_chrome';
+import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
@@ -12,64 +13,6 @@ const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [
     chrome.browserAction,
     // chrome.pageAction,
 ]; // TODO dispatch depending on android/desktop?
-
-// TODO common?
-export function notify(message: string, priority: number=0) {
-    chrome.notifications.create({
-        'type': "basic",
-        'title': "wereyouhere",
-        'message': message,
-        'priority': priority,
-        'iconUrl': 'images/ic_not_visited_48.png',
-    });
-}
-
-function notifyError(obj: any) {
-    const message = `ERROR: ${obj}`;
-    lerror(obj);
-    notify(message); // TODO maybe error icon or something?
-}
-
-function defensify(pf: (...any) => Promise<any>): (any) => Promise<any> {
-    return (...args) => pf(...args).catch(notifyError);
-}
-
-async function _showTabNotification(tabId: number, text: string, color: string='green') {
-    // TODO can it be remote script?
-    text = text.replace(/\n/g, "\\n"); // ....
-
-    await chromeTabsExecuteScriptAsync(tabId, {file: 'toastify.js'});
-    await chromeTabsInsertCSS(tabId, {file: 'toastify.css'});
-    await chromeTabsExecuteScriptAsync(tabId, { code: `
-Toastify({
-  text: "${text}",
-  duration: 2000,
-  newWindow: true,
-  close: true,
-  gravity: "top",
-  positionLeft: false,
-  backgroundColor: "${color}",
-}).showToast();
-    ` });
-}
-
-// $FlowFixMe
-export async function showTabNotification(tabId: number, message: string, ...args) {
-    try {
-        await _showTabNotification(tabId, message, ...args);
-    } catch (error) {
-        lerror(error);
-        notifyError(message);
-    }
-}
-
-async function showIgnoredNotification(tabId: number, url: Url) {
-    await showTabNotification(tabId, `${url} is ignored`, 'red'); // TODO maybe red is not ideal here
-}
-
-async function showBlackListedNotification(tabId: number, b: Blacklisted) {
-    await showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red');
-}
 
 function rawToVisits(vis): Visits {
     // TODO not sure, maybe we want to distinguish these situations..
@@ -94,21 +37,6 @@ function rawToVisits(vis): Visits {
     }));
 }
 
-// $FlowFixMe
-function log() {
-    const args = [];
-    for (var i = 1; i < arguments.length; i++) {
-        const arg = arguments[i];
-        args.push(JSON.stringify(arg));
-    }
-    console.log('[background] ' + arguments[0], ...args);
-}
-
-const ldebug = log; // TODO
-const lwarn = log; // TODO
-const linfo = log; // TODO
-// eslint-disable-next-line no-unused-vars
-const lerror = log; // TODO
 
 // TODO definitely need to use something very lightweight for json requests..
 
@@ -243,7 +171,7 @@ async function updateState (tab: chrome$Tab) {
     const tabId = unwrap(tab.id);
 
     if (ignored(url)) {
-        log("ignoring %s", url);
+        linfo("ignoring %s", url);
         return;
     }
 
