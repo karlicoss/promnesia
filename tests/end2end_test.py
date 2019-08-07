@@ -238,9 +238,26 @@ def test_search(tmp_path):
         trigger_hotkey(hotkey=Hotkey.SEARCH)
         confirm("You shoud see chrome visits now; with time spent")
 
+
+@uses_x
+def test_new_background_tab(tmp_path):
+    from selenium.webdriver.common.keys import Keys
+    from selenium.webdriver.common.by import By
+    start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
+    # bg_url_text = "El Proceso (The Process)"
+    # TODO generate some fake data instead?
+    with _test_helper(tmp_path, index_hypothesis, start_url) as helper:
+        confirm('you should see notification about contexts')
+        helper.driver.find_element(By.XPATH, '//div[@class="logo"]/a').send_keys(Keys.CONTROL + Keys.ENTER)
+        confirm('you should not see any new notifications')
+        # TODO switch to new tab?
+        # TODO https://www.e-flux.com/journal/53/
+
+
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
     # python3 -m pytest -s tests/server_test.py::test_query 
     pytest.main(['-s', __file__])
+
 
 # TODO perhaps make them independent of network? Although useful for demos

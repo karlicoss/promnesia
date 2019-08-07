@@ -238,12 +238,9 @@ function getIconStyle(visits: Result): IconStyle {
     }
 }
 
-async function updateState () {
-    const tabs = await chromeTabsQueryAsync({'active': true});
-    // TODO why am I getting multiple results???
-    const atab = tabs[0];
-    const url = unwrap(atab.url);
-    const tabId = unwrap(atab.id);
+async function updateState (tab: chrome$Tab) {
+    const url = unwrap(tab.url);
+    const tabId = unwrap(tab.id);
 
     if (ignored(url)) {
         log("ignoring %s", url);
@@ -255,16 +252,17 @@ async function updateState () {
     for (const action of ACTIONS) {
         // $FlowFixMe
         action.setIcon({
-            path: icon,
             tabId: tabId,
+            path: icon,
         });
         // $FlowFixMe
         action.setTitle({
-            title: title,
             tabId: tabId,
+            title: title,
         });
         // $FlowFixMe
         action.setBadgeText({
+            tabId: tabId,
             text: text,
         });
     }
@@ -452,7 +450,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 
     if (info['status'] === 'complete') {
         linfo('requesting! %s', url);
-        await updateState();
+        await updateState(tab);
     }
 }));
 
