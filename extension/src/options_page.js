@@ -47,19 +47,20 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getExtraCss().value  = opts.extra_css;
 }));
 
-unwrap(document.getElementById('test_id')).addEventListener('click', defensifyAlert(async() => {
+unwrap(document.getElementById('backend_status_id')).addEventListener('click', defensifyAlert(async() => {
     const host = getHost().value;
     const token = getToken().value;
 
     await reqwest({
-        url: `${host}/ping`,
+        url: `${host}/status`,
         method: 'post',
         headers: {
             'Authorization': "Basic " + btoa(token),
         },
         timeout: 1000, // 1s
     }).then(res => {
-        alert(`Success! Response: ${res}`);
+        console.log(res);
+        alert(`Success! ${JSON.stringify(res)}`);
     }, err => {
         // TODO ugh. unclear how to transform error object, nothing seemed to work.
         // that results in two error alerts, but I guess thats' not so bad..

@@ -164,16 +164,13 @@ def test_settings(tmp_path, browser):
 
 
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
-def test_backend_test(tmp_path, browser):
+def test_backend_status(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
-        # configure_extension(driver, port='12345')
-        # TODO enter host?
-        # host='https://nosuchhost.com', 
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
         set_host(driver=driver, host='https://nosuchhost.com', port='1234')
-        driver.find_element_by_id('test_id').click()
-        sleep(0.5)
+        driver.find_element_by_id('backend_status_id').click()
+        sleep(1 + 0.5) # needs enough time for timeout to trigger...
 
         alert = driver.switch_to.alert
         assert 'ERROR' in alert.text
@@ -183,6 +180,8 @@ def test_backend_test(tmp_path, browser):
 
         # ugh. extra alert...
         driver.switch_to.alert.accept()
+
+        # TODO implement positive check??
 
 
 @uses_x

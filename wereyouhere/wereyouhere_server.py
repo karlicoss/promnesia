@@ -85,12 +85,17 @@ def as_json(v: DbVisit) -> Dict:
     }
 
 
-@lru_cache(1)
-def get_stuff(): # TODO better name
-    # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
+def get_db_path() -> Path:
     config = get_config()
     db_path = Path(config.OUTPUT_DIR) / 'visits.sqlite' # TODO FIXME need to update it
     assert db_path.exists()
+    return db_path
+
+
+@lru_cache(1)
+def get_stuff(): # TODO better name
+    # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
+    db_path = get_db_path()
 
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path}') # , echo=True)
@@ -137,6 +142,18 @@ def search_common(url: str, where):
         return None # TODO handle empty list in client?
     else:
         return list(map(as_json, vlist))
+
+
+@hug.local()
+@hug.post('/status')
+def status():
+    db_path = get_db_path()
+    # TODO query count of items in db?
+    return {
+        # TODO hug stats?
+        'status': 'OK',
+        'db'    : str(db_path),
+    }
 
 
 @hug.local()
