@@ -2,6 +2,7 @@
 
 import {unwrap} from './common';
 import type {Visits} from './common';
+import {get_options_async} from './options';
 import {searchVisits, searchAround} from './background';
 import {Binder, _fmt} from './display';
 
@@ -51,6 +52,7 @@ async function _doSearch(cb: Promise<Visits>, {with_ctx_first, }: {with_ctx_firs
     const res = getResultsContainer();
     const cc = doc.createElement('div'); res.appendChild(cc);
     cc.classList.add('summary');
+    // TODO display similar summary as on sidebar?
     const node = doc.createTextNode(`Found ${visits.length} visits`); cc.appendChild(node);
 
 
@@ -92,6 +94,11 @@ unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event)
 
 
 window.onload = async () => {
+    const opts = await get_options_async();
+    const style = doc.createElement('style');
+    style.innerHTML = opts.extra_css;
+    unwrap(doc.head).appendChild(style);
+
     const url = new URL(window.location);
     const params = url.searchParams;
     if ([...params.keys()].length == 0) {
