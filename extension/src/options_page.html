@@ -9,17 +9,17 @@
 
     <div>
     <label for="host_id">Host</label>
-    <input type="text" id="host_id" size="40">
+    <input type="text" id="host_id">
     </div>
 
     <div>
     <label for="token_id">Auth token (if necessary)</label>
-    <input type="text" id="token_id" size="40">
+    <input type="text" id="token_id">
     </div>
 
-    <hr>
-
     <button id="backend_status_id">Check backend status</button>
+
+    <hr>
 
     <div>
     <!-- TODO come up with a better name -->
@@ -29,17 +29,26 @@
 
     <div>
     <label for="blacklist_id">Blacklisted urls</label>
-    <div><textarea cols="60" rows="5" id="blacklist_id"></textarea></div>
+    <div><textarea rows="5" id="blacklist_id"></textarea></div>
     </div>
 
     <div>
     <label for="tag_map_id">Tag map</label>
-    <div><textarea cols="60" rows="10" id="tag_map_id"></textarea></div>
+    <div><textarea rows="10" id="tag_map_id"></textarea></div>
     </div>
+
+    <hr>
+    <div>Style options</div>
+
+    <div>
+        <label for="width_id">Sidebar width (px or %)<label>
+        <div><input id="width_id"></div>
+    </div>
+
 
     <div>
     <label for="extra_css_id">Custom CSS</label>
-    <div><textarea cols="60" rows="10" id="extra_css_id"></textarea></div>
+    <div><textarea rows="10" id="extra_css_id"></textarea></div>
     </div>
 
     <div>

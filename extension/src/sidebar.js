@@ -15,7 +15,6 @@ function get_or_default(obj, key, def) {
 
 
 const SIDEBAR_ID = "wereyouhere-sidebar";
-const sidebar_width = '500px'; // TODO get from settings?
 
 const doc = document;
 
@@ -84,7 +83,7 @@ class Sidebar {
         // TODO FIXME when should we bind data?
         const original_padding = this.body.style.paddingRight;
         this.body.setAttribute('original_padding', original_padding);
-        this.body.style.paddingRight = sidebar_width;
+        this.body.style.paddingRight = this.opts.sidebar_width;
         frame.style.display = 'block';
     }
 
@@ -117,7 +116,7 @@ class Sidebar {
             'right'     : '0px',
             'top'       : '0px',
             'z-index'   : '9999',
-            'width'     : sidebar_width,
+            'width'     : this.opts.sidebar_width,
             'height'    : '100%',
             'background': 'rgba(236, 236, 236, 0.4)',
         })) {

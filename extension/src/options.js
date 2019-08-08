@@ -8,10 +8,13 @@ type TagMap = {
 
 export type Options = {
     host: string;
-    dots: boolean;
     token: string;
+
+    dots: boolean;
     blacklist: Array<string>;
     tag_map: TagMap;
+
+    sidebar_width: string;
     extra_css: string;
 }
 
@@ -19,10 +22,14 @@ export type Options = {
 function default_options(): Options {
     return {
         host: "http://localhost:13131",
-        dots: true,
         token: "",
+
+        dots: true,
         blacklist: [],
         tag_map: {},
+
+        // TODO FIXME do something if value is invalide?..
+        sidebar_width: '25%',
         extra_css: "",
     };
 }

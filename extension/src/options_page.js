@@ -40,6 +40,10 @@ function getTagMap(): HTMLInputElement {
     return getInputElement('tag_map_id');
 }
 
+function getWidth(): HTMLInputElement {
+    return getInputElement('width_id');
+}
+
 function getExtraCss(): HTMLInputElement {
     return getInputElement('extra_css_id');
 }
@@ -54,11 +58,14 @@ function getCssEditor() {
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await get_options_async();
     getHost().value      = opts.host;
-    getDots().checked    = opts.dots;
     getToken().value     = opts.token;
+
+    getDots().checked    = opts.dots;
     getBlackList().value = opts.blacklist.join('\n');
     // TODO tag map could be json?
     getTagMap().value    = JSON.stringify(opts.tag_map);
+
+    getWidth().value     = opts.sidebar_width;
     getExtraCss().value  = opts.extra_css;
 
     CodeMirror.fromTextArea(getExtraCss(), {
@@ -93,14 +100,17 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
 unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAlert(async () => {
     const opts = {
         host      : getHost().value,
-        dots      : getDots().checked,
         token     : getToken().value,
+
+        dots      : getDots().checked,
         // this is preserving whitespaces so might end up with '' entries
         // but perhaps it's ok; lets the user space out blacklist entries
         // TODO also make sure we don't reorder entries in settings without user's permissions
         // I guess the real solution is blacklist object which keeps textual repr separately
         blacklist : getBlackList().value.split(/\n/),
         tag_map   : JSON.parse(getTagMap().value),
+
+        sidebar_width: getWidth().value,
         extra_css : getCssEditor().getValue(),
     };
     await setOptions(opts);
