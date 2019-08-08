@@ -7,49 +7,65 @@
 
 <body>
 
-    <div>
-    <label for="host_id">Host</label>
-    <input type="text" id="host_id">
-    </div>
+    <fieldset>
+        <legend>Backend</legend>
 
-    <div>
-    <label for="token_id">Auth token (if necessary)</label>
-    <input type="text" id="token_id">
-    </div>
+        <table>
+            <tr>
+                <td><label for="host_id">Host</label> </td>
+                <td><input type="text" id="host_id">  </td>
+            </tr>
+                <td><label for="token_id">Auth token (if necessary)</label> </td>
+                <td><input type="text" id="token_id"> </td>
+            <tr>
+            </tr>
+        </table>
 
-    <button id="backend_status_id">Check backend status</button>
+        <button id="backend_status_id">Check backend status</button>
+    </fieldset>
 
-    <hr>
+    <fieldset>
+        <legend>Behaviour</legend>
 
-    <div>
     <!-- TODO come up with a better name -->
-    <input type="checkbox"  id="dots_id"/>
-    <label for="dots_id">Show dots</label>
-    </div>
 
-    <div>
-    <label for="blacklist_id">Blacklisted urls</label>
-    <div><textarea rows="5" id="blacklist_id"></textarea></div>
-    </div>
+        <table>
+            <tr>
+                <td><input type="checkbox"  id="dots_id"/></td>
+                <td><label for="dots_id">Show dots</label></td>
+            </tr>
+        </table>
 
-    <div>
-    <label for="tag_map_id">Tag map</label>
-    <div><textarea rows="10" id="tag_map_id"></textarea></div>
-    </div>
+        <div>
+            <label for="blacklist_id">Blacklisted urls</label>
+            <div><textarea rows="5" id="blacklist_id"></textarea></div>
+        </div>
 
-    <hr>
-    <div>Style options</div>
+        <div>
+            <label for="tag_map_id">Tag map</label>
+            <div><textarea rows="10" id="tag_map_id"></textarea></div>
+        </div>
+    </fieldset>
 
-    <div>
-        <label for="width_id">Sidebar width (px or %)<label>
-        <div><input id="width_id"></div>
-    </div>
+    <fieldset>
+        <legend>Style</legend>
+
+        <table>
+            <tr>
+                <td><label for="width_id">Sidebar width (px or %)</label></td>
+                <td><input id="width_id"></td>
+            </tr>
+        </table>
 
 
-    <div>
-    <label for="extra_css_id">Custom CSS</label>
-    <div><textarea rows="10" id="extra_css_id"></textarea></div>
-    </div>
+        <div>
+            <label>
+                Custom CSS:
+                <textarea rows="10" id="extra_css_id"></textarea>
+            </label>
+        </div>
+
+    </fieldset>
 
     <div>
     <button id="save_id">Save</button>
