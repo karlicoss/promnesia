@@ -98,9 +98,8 @@ const options = {
           }
       },
       {
-          test: /\.css$/,
-          loader: "style-loader!css-loader",
-          exclude: /node_modules/
+          test: /\.css$/i,
+          use: ['style-loader', 'css-loader'],
       },
       {
           test: /\.html$/,

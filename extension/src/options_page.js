@@ -6,6 +6,16 @@ import {defensifyAlert, alertError} from './notifications';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
+// $FlowFixMe
+import CodeMirror from 'codemirror/lib/codemirror.js';
+// $FlowFixMe
+import 'codemirror/mode/css/css.js';
+// err. that's a bit stupid, js injected css? surely it can be done via webpacke and static files...
+// $FlowFixMe
+import 'codemirror/lib/codemirror.css';
+// turned out more tedious than expected... https://github.com/codemirror/CodeMirror/issues/5484#issue-338185331
+
+
 function getInputElement(element_id: string): HTMLInputElement {
     return ((document.getElementById(element_id): any): HTMLInputElement);
 }
@@ -36,6 +46,10 @@ function getExtraCss(): HTMLInputElement {
 
 // TODO display it floating
 
+function getCssEditor() {
+    // $FlowFixMe
+    return document.querySelector('.CodeMirror').CodeMirror;
+}
 
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await get_options_async();
@@ -43,8 +57,14 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getDots().checked    = opts.dots;
     getToken().value     = opts.token;
     getBlackList().value = opts.blacklist.join('\n');
+    // TODO tag map could be json?
     getTagMap().value    = JSON.stringify(opts.tag_map);
     getExtraCss().value  = opts.extra_css;
+
+    CodeMirror.fromTextArea(getExtraCss(), {
+        mode:  'css',
+        lineNumbers: true,
+    });
 }));
 
 unwrap(document.getElementById('backend_status_id')).addEventListener('click', defensifyAlert(async() => {
@@ -81,7 +101,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         // I guess the real solution is blacklist object which keeps textual repr separately
         blacklist : getBlackList().value.split(/\n/),
         tag_map   : JSON.parse(getTagMap().value),
-        extra_css : getExtraCss().value,
+        extra_css : getCssEditor().getValue(),
     };
     await setOptions(opts);
     alert("Saved!");

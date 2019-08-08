@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/karlicoss/were-you-here#readme",
   "dependencies": {
+    "codemirror": "^5.48.2",
     "reqwest": "^2.0.5"
   },
   "devDependencies": {
@@ -37,6 +38,7 @@
     "babel-loader": "^8.0.5",
     "clean-webpack-plugin": "^1.0.0",
     "copy-webpack-plugin": "^4.0.1",
+    "css-loader": "^3.2.0",
     "eslint": "^6.0.1",
     "eslint-config-google": "^0.13.0",
     "eslint-plugin-flowtype": "^3.11.1",
@@ -44,6 +46,7 @@
     "flow-bin": "^0.89.0",
     "flow-interfaces-chrome": "^0.6.0",
     "jest": "^24.8.0",
+    "style-loader": "^1.0.0",
     "webpack": "^4.28.3",
     "webpack-cli": "^3.2.0",
     "webpack-dev-server": "^3.1.14",
