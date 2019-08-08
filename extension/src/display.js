@@ -137,6 +137,8 @@ export class Binder {
             link.href = unwrap(original_url);
             tchild(link, normalised_url);
         }
+
+        return item;
     }
 }
 

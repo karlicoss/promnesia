@@ -1,7 +1,7 @@
 /* @flow */
 
 import {unwrap} from './common';
-import type {Visits} from './common';
+import type {Visits, Visit} from './common';
 import {get_options_async} from './options';
 import {searchVisits, searchAround} from './background';
 import {Binder, _fmt} from './display';
@@ -38,7 +38,20 @@ function showError(err) {
 }
 
 
-async function _doSearch(cb: Promise<Visits>, {with_ctx_first, }: {with_ctx_first: boolean}) {
+async function _doSearch(
+    cb: Promise<Visits>,
+    {
+        with_ctx_first,
+        highlight_if,
+    }: {
+        with_ctx_first: boolean,
+        highlight_if: ?((Visit) => bool),
+    }
+) {
+    if (highlight_if == null) {
+        highlight_if = (v) => false;
+    }
+
     clearResults();
 
     const visits = (await cb).visits;
@@ -60,13 +73,16 @@ async function _doSearch(cb: Promise<Visits>, {with_ctx_first, }: {with_ctx_firs
     // TODO use something more generic for that!
     for (const v of visits) {
         const [dates, times] = _fmt(v.time)
-        binder.render(res, dates, times, v.tags, {
+        const cc = binder.render(res, dates, times, v.tags, {
             timestamp     : v.time,
             original_url  : v.original_url,
             normalised_url: v.normalised_url,
             context       : v.context,
             locator       : v.locator,
         });
+        if (highlight_if(v)) {
+            cc.classList.add('highlight');
+        }
         // const el = doc.createElement('div'); res.appendChild(el);
         // const node = document.createTextNode(JSON.stringify(visit)); el.appendChild(node);
     }
@@ -89,7 +105,13 @@ async function doSearch (...args) {
 unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event) => {
     event.preventDefault();
     // TODO make ctx first configurable?
-    await doSearch(searchVisits(getQuery().value), {with_ctx_first: true});
+    await doSearch(
+        searchVisits(getQuery().value),
+        {
+            with_ctx_first: true,
+            highlight_if: null,
+        },
+    );
 });
 
 
@@ -107,7 +129,14 @@ window.onload = async () => {
 
     if (params.has('timestamp')) {
         const timestamp = parseInt(unwrap(params.get('timestamp')));
-        await doSearch(searchAround(timestamp), {with_ctx_first: false});
+        await doSearch(
+            searchAround(timestamp),
+            {
+                with_ctx_first: false,
+                // TODO duplication..
+                highlight_if: (v: Visit) => v.time.getTime() / 1000 == timestamp,
+            },
+        );
     }
     // TODO otherwise, error??
 };

@@ -67,6 +67,11 @@ a {
     border-color: #ddd;
 }
 
+
+#visits li.highlight {
+    border-color: red;
+}
+
 #visits .datetime {
     white-space: nowrap;
     float: right;

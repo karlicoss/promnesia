@@ -233,9 +233,9 @@ def test_visits(tmp_path):
 def test_around(tmp_path):
     test_url = "about:blank"
     with _test_helper(tmp_path, index_hypothesis, test_url) as h:
-        ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
+        ts = int(datetime.strptime("2017-05-22T10:59:00.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
         h.open_page(f'search.html?timestamp={ts}')
-        confirm('you should see search results')
+        confirm('you should see search results, "anthrocidal" should be highlighted red')
 
 
 # TODO skip if not my hostname
