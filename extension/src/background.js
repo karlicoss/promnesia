@@ -417,7 +417,8 @@ async function showActiveTabNotification(text: string, color: string): Promise<v
 
 // $FlowFixMe
 chrome.runtime.onMessage.addListener(async (msg) => { // TODO not sure if should defensify here?
-    if (msg.method == Methods.GET_SIDEBAR_VISITS) {
+    const method = msg.method;
+    if (method == Methods.GET_SIDEBAR_VISITS) {
         const atab = await getActiveTab();
         const url = unwrap(atab.url);
         if (!ignored(url)) { // TODO shouldn't have been requested in the first place?
@@ -436,13 +437,32 @@ chrome.runtime.onMessage.addListener(async (msg) => { // TODO not sure if should
         // could be Firefox only?
         // sendResponse(visits);
         // return true; // this is important!! otherwise message will not be sent?
-    } else if (msg.method == Methods.SEARCH_VISITS_AROUND) {
+    } else if (method == Methods.SEARCH_VISITS_AROUND) {
         const timestamp = msg.timestamp; // TODO FIXME epoch?? 
         const params = new URLSearchParams();
         // TODO str??
         params.append('timestamp', timestamp.toString());
         const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
         chrome.tabs.create({'url': search_url});
+    } else if (method == Methods.SHOW_DOTS) {
+        // TODO actually use show dots setting?
+        // const opts = await get_options_async();
+        const atab = await getActiveTab();
+        const url = unwrap(atab.url);
+        const tid = unwrap(atab.id);
+        if (ignored(url)) {
+            await showIgnoredNotification(tid, url);
+        } else {
+            const bl = await isBlacklisted(url);
+            if (bl != null) {
+                await showBlackListedNotification(tid, new Blacklisted(url, bl));
+            } else {
+                await showDots(tid);
+            }
+        }
+    } else if (method == Methods.OPEN_SEARCH) {
+        // TODO FIXME get current tab url and pass as get parameter?
+        chrome.tabs.create({ url: "search.html" });
     }
     return false;
 });
@@ -479,24 +499,11 @@ for (const action of ACTIONS) {
 // $FlowFixMe // err, complains at Promise but nevertheless works
 chrome.commands.onCommand.addListener(defensify(async cmd => {
     if (cmd === 'show_dots') {
-        // TODO actually use show dots setting?
-        // const opts = await get_options_async();
-        const atab = await getActiveTab();
-        const url = unwrap(atab.url);
-        const tid = unwrap(atab.id);
-        if (ignored(url)) {
-            await showIgnoredNotification(tid, url);
-        } else {
-            const bl = await isBlacklisted(url);
-            if (bl != null) {
-                await showBlackListedNotification(tid, new Blacklisted(url, bl));
-            } else {
-                await showDots(tid);
-            }
-        }
-    } else if (cmd == 'search') {
-        // TODO FIXME get current tab url and pass as get parameter?
-        chrome.tabs.create({ url: "search.html" });
+        chrome.runtime.sendMessage({ method: Methods.SHOW_DOTS });
+    } else if (cmd === 'search') {
+        chrome.runtime.sendMessage({ method: Methods.OPEN_SEARCH });
+    } else {
+        console.log.error("unexpected command %s", cmd);
     }
 }));
 
