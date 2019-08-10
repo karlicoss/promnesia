@@ -55,12 +55,22 @@ class Sidebar {
         head.appendChild(base);
 
         const cbody = unwrap(cdoc.body);
-        const show_dots = cdoc.createElement('button');
-        show_dots.appendChild(cdoc.createTextNode('Show dots'));
-        show_dots.addEventListener('click', defensify(async () => {
-            await chromeRuntimeSendMessage({method: Methods.SHOW_DOTS});
-        }));
-        cbody.appendChild(show_dots);
+        {
+            const show_dots = cdoc.createElement('button');
+            show_dots.appendChild(cdoc.createTextNode('Show dots'));
+            show_dots.addEventListener('click', defensify(async () => {
+                await chromeRuntimeSendMessage({method: Methods.SHOW_DOTS});
+            }));
+            cbody.appendChild(show_dots);
+        }
+        {
+            const searchb = cdoc.createElement('button');
+            searchb.appendChild(cdoc.createTextNode('Search'));
+            searchb.addEventListener('click', defensify(async () => {
+                await chromeRuntimeSendMessage({method: Methods.OPEN_SEARCH});
+            }));
+            cbody.appendChild(searchb);
+        }
 
         const ccc = cdoc.createElement('div');
         cbody.appendChild(ccc);
