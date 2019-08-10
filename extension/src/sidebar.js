@@ -4,6 +4,8 @@ import type {Second} from './common';
 import {get_options_async} from './options';
 import type {Options} from './options';
 import {Binder, _fmt} from './display';
+import {defensify} from './notifications';
+import {chromeRuntimeSendMessage} from './async_chrome';
 
 // TODO how to prevent sidebar hiding on click??
 
@@ -52,7 +54,17 @@ class Sidebar {
         base.setAttribute('target', '_blank');
         head.appendChild(base);
 
-        return unwrap(frame.contentDocument.body);
+        const cbody = unwrap(cdoc.body);
+        const show_dots = cdoc.createElement('button');
+        show_dots.appendChild(cdoc.createTextNode('Show dots'));
+        show_dots.addEventListener('click', defensify(async () => {
+            await chromeRuntimeSendMessage({method: Methods.SHOW_DOTS});
+        }));
+        cbody.appendChild(show_dots);
+
+        const ccc = cdoc.createElement('div');
+        cbody.appendChild(ccc);
+        return ccc;
     }
 
     clear() {
@@ -144,12 +156,13 @@ async function toggleSidebar() {
 window.toggleSidebar = toggleSidebar;
 
 
-async function bindSidebarData(response) {
+async function bindSidebarData(response: Visits) {
     const opts = await get_options_async();
     const sidebar = new Sidebar(opts);
 
     const cont = sidebar.getContainer();
     sidebar.clear(); // TODO probably, unnecessary?
+
     console.log(response);
 
     const binder = new Binder(doc);
@@ -288,19 +301,20 @@ async function bindSidebarData(response) {
         });
     }
 }
+
+// TODO why is this necessary?? I guess for the code injected by background page?
 window.bindSidebarData = bindSidebarData;
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 function requestVisits() {
-    chrome.runtime.sendMessage({
-        method: Methods.GET_SIDEBAR_VISITS,
-    }, (response: ?Visits)  => {
-        if (response == null) {
-            console.log("No visits for this url");
-            return;
-        }
-        bindSidebarData(response);
-   });
+    chromeRuntimeSendMessage({method: Methods.GET_SIDEBAR_VISITS})
+        .then((response: ?Visits) => {
+            if (response == null) {
+                console.log("No visits for this url");
+                return;
+            }
+            bindSidebarData(response);
+        });
 }
 
 
