@@ -47,8 +47,15 @@ const commandsExtra = {
 // TODO ugh it's getting messy...
 const action = {
     "default_icon": "images/ic_not_visited_48.png",
-    "default_title": "Was not visited"
+    "default_title": "Was not visited",
 };
+
+
+if (target.includes('mobile')) {
+    action["default_popup"] = "popup.html";
+    // TODO ok, need to refine and add things on that page...
+    // TODO maybe show visits as on sidebar?
+}
 
 const manifestExtra = {
     version: pkg.version,
@@ -57,10 +64,11 @@ const manifestExtra = {
     browser_action: action,
 };
 
-if (target !== 'chrome') {
-    // TODO think if we want page action for desktop Firefox?
+/*
+if (target.includes('mobile')) {
     manifestExtra.page_action = action;
 }
+*/
 
 if (target === 'chrome') {
     manifestExtra.options_ui = {chrome_style: true};

@@ -4,14 +4,19 @@ import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {normaliseHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
-import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync} from './async_chrome';
+import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 // $FlowFixMe
 import reqwest from 'reqwest';
 
 const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [
     chrome.browserAction,
+
     // chrome.pageAction,
+    // eh, on mobile neither pageAction nor browserAction have setIcon? so using pageAction has no benefits basically..
+
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
+    // browser action support is under development??
 ]; // TODO dispatch depending on android/desktop?
 
 function rawToVisits(vis): Visits {
@@ -79,6 +84,13 @@ const LOCAL_TAG = 'local';
 
 
 async function getChromeVisits(url: Url): Promise<Visits> {
+    // $FlowFixMe
+    if (!chrome.history) {
+        // ugh. 'history' api is not supported on mobile (TODO mention that in readme)
+        // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
+        return new Visits([]);
+    }
+
     // $FlowFixMe
     const results = await new Promise((cb) => chrome.history.getVisits({url: url}, cb));
 
@@ -175,27 +187,32 @@ async function updateState (tab: chrome$Tab) {
         return;
     }
 
+    const platform = await chromeRuntimeGetPlatformInfo();
+
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
     for (const action of ACTIONS) {
-        // $FlowFixMe
-        action.setIcon({
-            tabId: tabId,
-            path: icon,
-        });
         // $FlowFixMe
         action.setTitle({
             tabId: tabId,
             title: title,
         });
+
         // $FlowFixMe
-        action.setBadgeText({
-            tabId: tabId,
-            text: text,
-        });
+        if (platform.os != 'android') {
+            // $FlowFixMe
+            action.setIcon({
+                tabId: tabId,
+                path: icon,
+            });
+            // $FlowFixMe
+            action.setBadgeText({
+                tabId: tabId,
+                text: text,
+            });
+        }
     }
-    // TODO if it's part of actions only?
-    chrome.pageAction.show(tabId);
+    // chrome.pageAction.show(tabId);
 
     if (visits instanceof Visits) {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
@@ -430,6 +447,13 @@ chrome.runtime.onMessage.addListener(async (msg) => { // TODO not sure if should
     return false;
 });
 
+
+/*
+   On android, clicking on icon in address bar doesn't seem to work.. however clicking in menu triggers this action?
+   https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
+
+   popup is available for pageAction?? can use it for blacklisting/search?
+*/
 for (const action of ACTIONS) {
     // $FlowFixMe
     action.onClicked.addListener(defensify(async tab => {

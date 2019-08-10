@@ -14,15 +14,25 @@ export function notify(message: string, priority: number=0) {
     });
 }
 
+function errmsg(obj: any): string {
+    let msg = null;
+    if (obj instanceof XMLHttpRequest) {
+        msg = `while requesting ${obj.responseURL}`;
+    } else {
+        msg = obj;
+    }
+    return `ERROR: ${msg}`;
+}
+
 export function notifyError(obj: any) {
-    const message = `ERROR: ${obj}`;
+    const message = errmsg(obj);
     lerror(obj);
     notify(message); // TODO maybe error icon or something?
 }
 
 
 export function alertError(obj: any) {
-    const message = `ERROR: ${obj}`;
+    const message = errmsg(obj);
     lerror(obj);
     alert(message);
 }

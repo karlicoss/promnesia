@@ -6,8 +6,15 @@ apparently needs `npm install` done [once?]
 in the addon folder
 ** web-ext lint (TODO file:/// permission ; eval)   
 ** web-ext build --overwrite-dest    TODO --self-hosted?
-** TODO learn how to sign https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/web-ext_command_reference#web-ext_sign
+** DONE learn how to sign https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/web-ext_command_reference#web-ext_sign
+   CLOSED: [2019-08-10 Sat 12:11]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2019-08-10 Sat 12:11]
+   :END:
 
+* Android:
+** [2019-08-10 Sat 12:12] Installing: web-ext run --target=firefox-android --android-device=XXXXX
+** [2019-08-10 Sat 12:56] remote debugging; use Shift-F8 to open web ide https://developer.mozilla.org/en-US/docs/Tools/Remote_Debugging/Debugging_Firefox_for_Android_with_WebIDE#Enable_remote_debugging_in_Firefox_for_Android
 
 * Testing scenarios
 ** [#A] [2019-04-19 Fri 22:38] open new visited tab via a link (have a html page for that)
@@ -55,4 +62,4 @@ in the addon folder
     onUpdated with status complete
 ** [2019-04-21 Sun 10:16] ok, overall onUpdated(complete) seems the most reliable. the only a bit annoying thing is that it happens late sometimes
    I guess I could keep some sort of cache? not sure..
-   
+** TODO [2019-08-10 Sat 12:11] move them to end2end test

@@ -45,11 +45,12 @@ async function _doSearch(
         highlight_if,
     }: {
         with_ctx_first: boolean,
-        highlight_if: ?((Visit) => bool),
+        highlight_if: ?((Visit) => boolean),
     }
 ) {
     if (highlight_if == null) {
-        highlight_if = (v) => false;
+        // eslint-disable-next-line no-unused-vars
+        highlight_if = (_) => false;
     }
 
     clearResults();

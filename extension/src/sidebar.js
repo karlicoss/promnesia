@@ -18,6 +18,8 @@ const SIDEBAR_ID = "wereyouhere-sidebar";
 
 const doc = document;
 
+// TODO add 'show dots' for android here?
+// TODO add 'search here'?
 class Sidebar {
     body: HTMLBodyElement;
     opts: Options;
