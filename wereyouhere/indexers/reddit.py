@@ -37,7 +37,7 @@ walk(if type == "object" then with_entries(select(.key | test("{'|'.join(keys)}"
 
 
 
-def reddit_indexer(p: PathIsh, tag: str) -> Iterable[Extraction]:
+def reddit_indexer(p: PathIsh) -> Iterable[Extraction]:
     logger = get_logger()
     p = Path(p)
     with kompress.open(p, 'r') as fo:
@@ -64,9 +64,9 @@ def reddit_indexer(p: PathIsh, tag: str) -> Iterable[Extraction]:
         yield PreVisit(
             url=url,
             dt=dt,
-            tag=tag,
             locator=loc,
             context=ctx,
+            # TODO jq path in debug?? 
         )
 
 

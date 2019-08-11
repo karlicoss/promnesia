@@ -10,7 +10,7 @@ from sqlalchemy import Column, Table # type: ignore
 
 from cachew import DbBinder, ichunks
 
-from .common import get_logger, History, DbVisit
+from .common import get_logger, DbVisit
 from .config import Config
 
 
@@ -40,7 +40,7 @@ def dictify(obj):
         return obj
 
 
-def dump_histories(all_histories: List[Tuple[str, History]], config: Config):
+def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]], config: Config):
     logger = get_logger()
     logger.info('preparing intermediate state...')
 
@@ -55,7 +55,7 @@ def dump_histories(all_histories: List[Tuple[str, History]], config: Config):
     intermediates = []
     for e, h in all_histories:
         cur = []
-        for visit in sorted(h.visits, key=cmp_key):
+        for visit in sorted(h, key=cmp_key):
             cur.append(dictify(visit))
         intermediates.append((e, cur))
     intp = intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json'))
@@ -68,7 +68,10 @@ def dump_histories(all_histories: List[Tuple[str, History]], config: Config):
     def iter_visits():
         for e, h in all_histories:
             # TODO sort them somehow for determinism?
-            yield from h.visits
+            # TODO what do we do with errors?
+            # TODO maybe conform them to schema and dump too?
+            # TODO or, dump to a separate table?
+            yield from h
 
     ntf = tempfile.NamedTemporaryFile(delete=False)
     tpath = ntf.name

@@ -9,23 +9,23 @@ FALLBACK_TIMEZONE = pytz.timezone('Europe/London')
 FILTERS = [] # type: ignore
 
 
-from wereyouhere.generator.smart import Wrapper as W
+from wereyouhere.generator.smart import Indexer as I
 from wereyouhere.generator.plaintext import extract_from_path
 import wereyouhere.extractors.custom as custom # type: ignore
 import wereyouhere.extractors.takeout as takeout # type: ignore
 
 class Extractors:
-    TAKEOUT = W(
+    TAKEOUT = I(
         takeout.extract,
         # TODO relative paths are not great..
         'testdata/takeout-20150518T000000Z.zip',
-        tag='takeout',
+        src='takeout',
     )
 
-    PLAIN = W(
+    PLAIN = I(
         custom.extract,
         extract_from_path('testdata/custom'),
-        tag='test',
+        src='test',
     )
 
 

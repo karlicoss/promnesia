@@ -16,7 +16,7 @@ from . import config
 from .dump import dump_histories
 
 # TODO smart is misleading... perhaps, get rid of it?
-from wereyouhere.generator.smart import previsits_to_history, Wrapper
+from wereyouhere.generator.smart import previsits_to_history, Indexer
 
 
 
@@ -38,26 +38,28 @@ def _do_extract():
 
 
     all_histories = []
-    had_errors = False
+    all_errors = []
 
     for extractor in extractors:
         ex = extractor
-        # TODO isinstance wrapper?
+        # TODO isinstance indexer?
         # TODO make more defensive?
         einfo: str
-        if isinstance(ex, Wrapper):
+        if isinstance(ex, Indexer):
             einfo = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs}'
         else:
             einfo = f'{ex.__module__}:{ex.__name__}'
 
-        hist, errors = previsits_to_history(extractor)
-        if len(errors) > 0:
-            had_errors = True
+        assert isinstance(ex, Indexer)
+
+        hist, errors = previsits_to_history(extractor, src=ex.src)
+        all_errors.extend(errors)
         all_histories.append((einfo, hist))
 
+    # TODO perhaps it's better to open connection and dump as we collect so it consumes less memory?
     dump_histories(all_histories, config=cfg)
 
-    if had_errors:
+    if len(all_errors) > 0:
         sys.exit(1)
 
 

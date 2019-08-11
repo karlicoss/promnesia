@@ -1,7 +1,7 @@
 from collections.abc import Sized
 from datetime import datetime, date
 import re
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence
 from pathlib import Path
 import itertools
 import logging
@@ -18,7 +18,7 @@ import dateparser # type: ignore
 
 
 Url = str
-Tag = str
+Source = str
 DatetimeIsh = Union[datetime, date, str]
 Context = str
 Second = int
@@ -53,11 +53,11 @@ class PreVisit(NamedTuple):
     dt: datetime # TODO FIXME back to DatetimeIsh, but somehow make compatible to dbcache
     locator: Loc
     context: Optional[Context] = None
-    tag: Optional[Tag] = None
     duration: Optional[Second] = None
     # TODO shit. I need to insert it in chrome db....
     # TODO gonna be hard to fill retroactively.
     # spent: Optional[Second] = None
+    debug: Optional[str] = None
 
 
 Extraction = Union[PreVisit, Exception]
@@ -67,12 +67,12 @@ class DbVisit(NamedTuple):
     orig_url: Url
     dt: datetime
     locator: Loc
-    tag: Optional[Tag] = None
+    src: Optional[Source] = None
     context: Optional[Context] = None
     duration: Optional[Second] = None
 
     @staticmethod
-    def make(p: PreVisit) -> Res['DbVisit']:
+    def make(p: PreVisit, src: Source) -> Res['DbVisit']:
         try:
             if isinstance(p.dt, str):
                 dt = dateparser.parse(p.dt)
@@ -96,9 +96,9 @@ class DbVisit(NamedTuple):
             orig_url=p.url,
             dt=dt,
             locator=p.locator,
-            tag=p.tag,
             context=p.context,
             duration=p.duration,
+            src=src,
         )
 
 
@@ -119,6 +119,7 @@ def get_logger():
 
 # TODO do i really need to inherit this??
 class History(Sized):
+    # TODO I guess instead filter on DbVisit making site?
     FILTERS: List[Filter] = [
         make_filter(f) for f in
         [
@@ -147,10 +148,11 @@ class History(Sized):
     def add_filter(cls, filterish):
         cls.FILTERS.append(make_filter(filterish))
 
-    def __init__(self):
+    def __init__(self, *, src: Source):
         self.vmap: Dict[PreVisit, DbVisit] = {}
         # TODO err... why does it map from previsit???
         self.logger = get_logger()
+        self.src = src
 
     # TODO mm. maybe history should get filters from some global config?
     # wonder how okay is it to set class attribute..
@@ -163,8 +165,8 @@ class History(Sized):
         return False
 
     @property
-    def visits(self):
-        return self.vmap.values()
+    def visits(self) -> List[DbVisit]:
+        return list(self.vmap.values())
 
     def register(self, v: PreVisit) -> Optional[Exception]:
         # TODO should we filter before normalising? not sure...
@@ -177,7 +179,8 @@ class History(Sized):
 
         try:
             # TODO if we do it as unwrap(DbVisit.make, v), then we can access make return type and properly handle error type?
-            db_visit = unwrap(DbVisit.make(v))
+            # TODO tag needs to go here??
+            db_visit = unwrap(DbVisit.make(v, src=self.src))
         except CanonifyException as ce:
             self.logger.error('error while canonnifying %s... ignoring', v)
             self.logger.exception(ce)
@@ -189,7 +192,7 @@ class History(Sized):
         return None
         # TODO hmm some filters make sense before stripping off protocol...
 
-    # only used in tests?..
+    ## only used in tests?..
     def _nmap(self):
         from kython import group_by_key
         return group_by_key(self.visits, key=lambda x: x.norm_url)
@@ -202,19 +205,20 @@ class History(Sized):
 
     def __getitem__(self, url: Url):
         return self._nmap()[url]
+    #
 
     def __repr__(self):
         return 'History{' + repr(self.visits) + '}'
 
 
 # kinda singleton
-@lru_cache()
+@lru_cache(1)
 def get_tmpdir():
     import tempfile
     tdir = tempfile.TemporaryDirectory(suffix="wereyouhere")
     return tdir
 
-@lru_cache()
+@lru_cache(1)
 def _get_extractor():
     from urlextract import URLExtract # type: ignore
     u = URLExtract()

@@ -8,12 +8,8 @@ testdata = Path(__file__).absolute().parent.parent / 'testdata'
 
 
 def index(cfg: Path):
-    wd = Path(__file__).absolute().parent.parent
-    check_call([
-        'python3', '-m', 'wereyouhere',
-        'extract',
-        '--config', str(cfg),
-    ], cwd=wd)
+    from wereyouhere.__main__ import do_extract
+    do_extract(cfg)
 
 
 base_config = """
@@ -60,10 +56,14 @@ def index_hypothesis(tdir: Path):
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.generator.smart import Wrapper as W
+from wereyouhere.generator.smart import Indexer as I
 import wereyouhere.extractors.hypothesis as hypothesis
 
-hyp_extractor = W(hypothesis.extract, '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json')
+hyp_extractor = I(
+    hypothesis.extract,
+    '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json',
+    src='hyp',
+)
 
 EXTRACTORS = [hyp_extractor]
     """)
@@ -82,10 +82,10 @@ def index_local_chrome(tdir: Path):
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.generator.smart import Wrapper as W # TODO make it easier to use or get rid of whatsoever..
+from wereyouhere.generator.smart import Indexer as I
 from wereyouhere.extractors.browser import chrome
 
-chrome_extractor = W(chrome, '{merged}')
+chrome_extractor = I(chrome, '{merged}', src='chrome')
 
 EXTRACTORS = [chrome_extractor]
 """)

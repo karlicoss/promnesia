@@ -15,9 +15,8 @@ from pytest import mark # type: ignore
 
 from common import skip_if_ci
 
-from wereyouhere.dump import dump_histories
 from wereyouhere.common import History, PreVisit
-from wereyouhere.generator.smart import Wrapper
+from wereyouhere.generator.smart import Indexer
 
 # TODO need to expire dbcache in tests..
 
@@ -25,30 +24,23 @@ skip = mark.skip
 
 
 def W(*args, **kwargs):
-    if 'tag' not in kwargs:
-        kwargs['tag'] = 'whatever'
-    return Wrapper(*args, **kwargs)
+    if 'src' not in kwargs:
+        kwargs['src'] = 'whatever'
+    return Indexer(*args, **kwargs)
 
 def history(*args, **kwargs):
     from wereyouhere.generator.smart import previsits_to_history
-    return previsits_to_history(*args, **kwargs)[0] # TODO meh
+    return previsits_to_history(*args, **kwargs, src='whatever')[0] # TODO meh
 
 from kython import import_file
 
 backup_db = import_file('scripts/browser_history.py')
 populate_db = import_file('scripts/populate-browser-history.py')
 
-def assert_got_tzinfo(h: History):
-    for v in h.visits:
+def assert_got_tzinfo(visits):
+    for v in visits:
         assert v.dt.tzinfo is not None
 
-
-def dump(hist: History):
-    # TODO cfg??
-    with TemporaryDirectory() as tdir:
-        class Cfg:
-            OUTPUT_DIR = tdir
-        dump_histories([('test', hist)], config=Cfg()) # type: ignore
 
 # TODO I guess global get_config methods is ok? command line can populate it, also easy to hack in code?
 # TODO cache should be in the configuration I suppose?
@@ -77,12 +69,11 @@ def test_takeout(adhoc_config, tmp_path):
     import wereyouhere.extractors.takeout as tex
     tex._get_cache_dir = lambda: tdir
 
-    hist = history(W(tex.extract, test_takeout_path))
-    assert len(hist) > 0 # kinda arbitrary?
+    visits = history(W(tex.extract, test_takeout_path))
+    assert len(visits) > 0 # kinda arbitrary?
 
-    assert_got_tzinfo(hist)
+    assert_got_tzinfo(visits)
 
-    dump(hist)
 
 
 def test_with_error():
@@ -105,9 +96,9 @@ def test_with_error():
 def test_takeout_new_zip(adhoc_config):
     test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
     import wereyouhere.extractors.takeout as tex
-    hist = history(lambda: tex.extract(test_takeout_path, tag='whatevs'))
-    assert len(hist) == 3
-    [vis] = hist['takeout.google.com/settings/takeout']
+    visits = history(lambda: tex.extract(test_takeout_path))
+    assert len(visits) == 3
+    [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
 
     edt = datetime(
         year=2018,
@@ -120,7 +111,7 @@ def test_takeout_new_zip(adhoc_config):
     )
     assert vis.dt == edt
 
-    assert_got_tzinfo(hist)
+    assert_got_tzinfo(visits)
 
 
 # TODO run condition?? and flag to force all
@@ -136,12 +127,10 @@ def test_chrome(tmp_path):
     hist = history(W(chrome, path))
     assert len(hist) > 10 # kinda random sanity check
 
-    dump(hist)
-
     assert_got_tzinfo(hist)
 
 
-@skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
+@skip("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_firefox(tmp_path):
     tdir = Path(tmp_path)
     path = backup_db.backup_history('firefox', to=tdir)
@@ -159,11 +148,11 @@ def test_plaintext_path_extractor():
     import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = history(W(custom_gen.extract,
+    visits = history(W(custom_gen.extract,
         extract_from_path('testdata/custom'),
     ))
     assert {
-        v.orig_url for v in hist.visits
+        v.orig_url for v in visits
     } == {
         'http://google.com',
         'http://google.com/',
@@ -177,11 +166,12 @@ def test_normalise():
     import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = history(W(custom_gen.extract,
+    visits = history(W(custom_gen.extract,
         extract_from_path('testdata/normalise'),
     ))
+    assert len(visits) == 7
     assert {
-        v.norm_url for v in hist.visits
+        v.norm_url for v in visits
     } == {
         'hi.com',
         'reddit.com/post',
@@ -189,17 +179,17 @@ def test_normalise():
         'youtube.com/watch?v=XXlZfc1TrD0',
         'youtube.com/watch?v=XXlZfc1Tr11',
     }
-    assert len(hist) == 5
 
 
 def test_normalise_weird():
     import wereyouhere.extractors.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
-    hist = history(W(custom_gen.extract,
+    visits = history(W(
+        custom_gen.extract,
         extract_from_path('testdata/weird.txt'),
     ))
-    norms = {v.norm_url for v in hist.visits}
+    norms = {v.norm_url for v in visits}
 
     # TODO assert there are no spaces in the database?
     assert "urbandictionary.com/define.php?term=Belgian%20Whistle" in norms
@@ -223,8 +213,9 @@ def test_custom():
     hist = history(W(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
     ))
-    assert len(hist) == 3 # https and http are same; also trailing slash and no trailing slash
-    dump(hist)
+    # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
+    assert len(hist) == 5
+    # TODO FIXME https and http are same; also trailing slash and no trailing slash
 
 
 

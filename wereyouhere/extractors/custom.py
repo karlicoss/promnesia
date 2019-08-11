@@ -11,10 +11,10 @@ import json
 
 import pytz
 
-from wereyouhere.common import PreVisit, Tag, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
+from wereyouhere.common import PreVisit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
 
 
-def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
+def extract(command: str) -> Iterable[PreVisit]:
     output = check_output(command, shell=True)
     lines = [line.decode('utf-8') for line in output.splitlines()]
     for line in lines:
@@ -57,7 +57,6 @@ def extract(command: str, tag: Tag) -> Iterable[PreVisit]:
         yield PreVisit(
             url=url,
             dt=ts,
-            tag=tag,
             locator=loc,
             context=context,
         )
@@ -99,11 +98,11 @@ def collect_from(thing) -> List[EUrl]:
 
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
-def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> Iterable[PreVisit]:
+def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[PreVisit]:
     logger = get_logger()
     if isinstance(path, list):
         for p in path:
-            yield from simple(p, tag=tag)
+            yield from simple(p)
         return
 
     pp = Path(path)
@@ -115,7 +114,7 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> I
         with lzma.open(pp, 'rb') as cf:
             with uncomp.open('wb') as fo:
                 fo.write(cf.read())
-        yield from simple(path=uncomp, tag=tag, do_unquote=True) # ugh. only used for reddit currelty
+        yield from simple(path=uncomp, do_unquote=True) # ugh. only used for reddit currelty
         return
 
     urls: List[EUrl]
@@ -137,7 +136,7 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> I
         # TODO use url extractor..
         logger.info(f'{pp}: fallback to grep')
         from wereyouhere.generator.plaintext import extract_from_path
-        yield from extract(extract_from_path(pp), tag=tag)
+        yield from extract(extract_from_path(pp))
         # raise RuntimeError(f'Unexpected suffix {pp}')
         return
 
@@ -147,7 +146,6 @@ def simple(path: Union[List[PathIsh], PathIsh], tag: Tag, do_unquote=False) -> I
         yield PreVisit(
             url=eu.url, # TODO FIXME use ctx?
             dt=dt,
-            tag=tag,
             locator=Loc.file(pp),
         )
 

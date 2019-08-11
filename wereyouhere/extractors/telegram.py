@@ -13,8 +13,7 @@ from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc, extract_urls,
 
 
 
-# TODO tag??
-def extract(database: PathIsh, tag: str) -> Iterable[Extraction]:
+def extract(database: PathIsh) -> Iterable[Extraction]:
     logger = get_logger()
 
     # TODO context manager?
@@ -46,7 +45,7 @@ ORDER BY time;
     # TODO FIXME yield error if chatname or chat or smth else is null?
     for row in db.query(make_query('M.text')):
         try:
-            yield from _handle_row(row, tag=tag)
+            yield from _handle_row(row)
         except Exception as ex:
             yield echain(RuntimeError(f'While handling {row}'), ex)
             # , None, sys.exc_info()[2]
@@ -56,12 +55,12 @@ ORDER BY time;
     if 'json' in db['messages'].columns:
         for row in db.query(make_query("json_extract(json, '$.media.webpage.description')")):
             try:
-                yield from _handle_row(row, tag=tag)
+                yield from _handle_row(row)
             except Exception as ex:
                 yield echain(RuntimeError(f'While handling {row}'), ex)
 
 
-def _handle_row(row, tag) -> Iterable[Extraction]:
+def _handle_row(row) -> Iterable[Extraction]:
     text = row['text']
     if text is None:
         return
@@ -88,5 +87,4 @@ def _handle_row(row, tag) -> Iterable[Extraction]:
                 title=f"chat with {chatname}",
                 href=in_context,
             ),
-            tag=tag,
         )

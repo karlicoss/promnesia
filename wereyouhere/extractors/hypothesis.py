@@ -8,7 +8,7 @@ from typing import NamedTuple, List, Optional, Union, Iterable
 from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
 
 # TODO extract to a separate hypothesis provider; reuse in my module?
-def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
+def extract(json_path: PathIsh) -> Iterable[PreVisit]:
     logger = get_logger()
 
     j = json.loads(Path(json_path).read_text())
@@ -46,6 +46,5 @@ def extract(json_path: PathIsh, tag='hyp') -> Iterable[PreVisit]:
                 title='hypothesis',
                 href=in_context,
             ),
-            tag=tag,
         )
         yield v

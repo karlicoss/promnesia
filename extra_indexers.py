@@ -25,7 +25,7 @@ from wereyouhere.common import extract_urls, get_logger, PreVisit, Loc
 #   "full_text" : "http://old.slackware.ru/article.ghtml?ID=544  Забавно =)",
 #   "lang" : "ru"
 # }
-def twitter_indexer(tag: str):
+def twitter_indexer():
     import my.tweets
     logger = get_logger()
     for t in my.tweets.tweets_all():
@@ -44,13 +44,12 @@ def twitter_indexer(tag: str):
             yield PreVisit(
                 url=u,
                 dt=t.dt,
-                tag=tag,
                 context=t.text,
                 locator=loc,
             )
 
 
-def instapaper_indexer(src: str):
+def instapaper_indexer():
     import my.instapaper
     logger = get_logger()
     for p in my.instapaper.get_pages():
@@ -60,7 +59,6 @@ def instapaper_indexer(src: str):
         def pv(**kwargs):
             return PreVisit(
                 url=bm.url,
-                tag=src,
                 **kwargs,
             )
 

@@ -73,7 +73,7 @@ def as_json(v: DbVisit) -> Dict:
     return {
         # TODO do not display year if it's current year??
         'dt': dts,
-        'tags': [v.tag],
+        'tags': [v.src], # TODO shouldn't be array I guess?
         'context': v.context,
         'duration': v.duration,
         'locator': {

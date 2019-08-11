@@ -3,24 +3,25 @@ from typing import Iterable, List, Optional, Tuple
 
 from kython.kerror import unwrap
 
-from wereyouhere.common import History, Loc, PreVisit, get_logger
+from ..common import History, Loc, PreVisit, get_logger, Source, DbVisit
 
 
-class Wrapper:
-    def __init__(self, ff, *args, **kwargs):
+class Indexer:
+    def __init__(self, ff, *args, src: str, **kwargs):
         self.ff = ff
         self.args = args
         self.kwargs = kwargs
+        self.src = src
 
 # TODO do we really need it?
-def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
+def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List[Exception]]:
     ex = extractor
     # TODO isinstance wrapper?
     # TODO make more defensive?
     logger = get_logger()
 
     log_info: str
-    if isinstance(ex, Wrapper):
+    if isinstance(ex, Indexer):
         log_info = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs} ...'
         extr = lambda: ex.ff(*ex.args, **ex.kwargs)
     else:
@@ -31,7 +32,7 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
 
     logger.info('extracting via %s ...', log_info)
 
-    h = History()
+    h = History(src=src)
     errors = []
     previsits = list(extr()) # TODO DEFENSIVE HERE!!!
     for p in previsits:
@@ -61,4 +62,4 @@ def previsits_to_history(extractor) -> Tuple[History, List[Exception]]:
 
     # TODO should handle filtering properly?
     logger.info('extracting via %s: got %d visits', log_info, len(h))
-    return h, errors
+    return h.visits, errors

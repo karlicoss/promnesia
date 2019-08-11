@@ -17,7 +17,7 @@ import json
 
 from dateutil import parser
 
-from ..common import PreVisit, get_logger, PathIsh, Tag, Url, Loc
+from ..common import PreVisit, get_logger, PathIsh, Url, Loc
 from .. import config
 
 from cachew import mtime_hash, cachew
@@ -49,12 +49,12 @@ class TakeoutHTMLParser(HTMLParser):
     current: Dict[str, str]
     visits: List[PreVisit]
 
-    def __init__(self, tag: str, fpath: Path) -> None:
+    def __init__(self, *, kind: str, fpath: Path) -> None:
         super().__init__()
         self.state = State.OUTSIDE
         self.visits = []
         self.current = {}
-        self.tag = tag
+        self.kind = kind
         self.locator = Loc.file(fpath)
 
     def _reg(self, name, value):
@@ -68,7 +68,7 @@ class TakeoutHTMLParser(HTMLParser):
         self.state = t
 
     # enter content cell -> scan link -> scan date -> finish till next content cell
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs) -> None:
         if self.state == State.INSIDE and tag == 'a':
             self.state = State.PARSING_LINK
             attrs = OrderedDict(attrs)
@@ -82,7 +82,7 @@ class TakeoutHTMLParser(HTMLParser):
                 hr = unquote(hr)
             self._reg('url', hr)
 
-    def handle_endtag(self, tag):
+    def handle_endtag(self, tag: str) -> None:
         if tag == 'html':
             pass # ??
 
@@ -111,8 +111,8 @@ class TakeoutHTMLParser(HTMLParser):
                     visit = PreVisit(
                         url=url,
                         dt=time,
-                        tag=self.tag,
                         locator=self.locator,
+                        debug=self.kind,
                     )
                     self.visits.append(visit)
 
@@ -121,11 +121,12 @@ class TakeoutHTMLParser(HTMLParser):
                     return
 
 
-def _read_google_activity(myactivity_html_fo, tag: str, fpath: Path):
+def _read_google_activity(myactivity_html_fo, *, kind: str, fpath: Path):
     # TODO is it possible to parse iteratively?
     data: str = myactivity_html_fo.read().decode('utf-8')
-    parser = TakeoutHTMLParser(tag, fpath=fpath)
+    parser = TakeoutHTMLParser(kind=kind, fpath=fpath)
     parser.feed(data)
+    # TODO could be yieldy?? and use multiple processes?
     return parser.visits
 
 
@@ -166,7 +167,7 @@ def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
     with _open(takeout, spath) as fo:
-        return _read_google_activity(fo, 'activity-chrome', fpath=_path(takeout))
+        return _read_google_activity(fo, kind='Chrome/MyAcvitity.html', fpath=_path(takeout))
 
 @cacheme('search_activity')
 def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
@@ -176,7 +177,7 @@ def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
     with _open(takeout, spath) as fo:
-        return _read_google_activity(fo, 'activity-search', fpath=_path(takeout))
+        return _read_google_activity(fo, kind='Search/MyActivity.html', fpath=_path(takeout))
 
 
 # TODO add this to tests?
@@ -204,8 +205,8 @@ def read_browser_history_json(takeout: TakeoutSource) -> Iterable[PreVisit]:
         yield PreVisit(
             url=url,
             dt=time,
-            tag="history_json",
             locator=locator,
+            debug='Chrome/BrowserHistory.json',
         )
 
 _TAKEOUT_REGEX = re.compile(r'(\d{8}T\d{6}Z)')
@@ -223,6 +224,7 @@ def takeout_candidates(takeouts_path: Path) -> Iterable[Path]:
     for root, dirs, files in os.walk(str(takeouts_path)): # TODO make sure it traverses inside in case it's a symlink
         rp = Path(root)
         if rp.joinpath('Takeout').exists():
+            # TODO hmm, maybe src should be assigned to non-frozen dataclasses??
             yield rp
 
         for f in files:
@@ -235,10 +237,10 @@ def takeout_candidates(takeouts_path: Path) -> Iterable[Path]:
 Key = Tuple[Url, datetime]
 _Map = Dict[Key, PreVisit]
 
-def _merge(current: _Map, new: Iterable[PreVisit], tag=''):
+def _merge(current: _Map, new: Iterable[PreVisit]):
     logger = get_logger()
     # TODO would be nice to add specific takeout source??
-    logger.debug('before merging %s: %d', tag, len(current))
+    logger.debug('before merging %s: %d', 'TODO', len(current))
     for pv in new:
         key = (pv.url, pv.dt)
         if key in current:
@@ -247,12 +249,12 @@ def _merge(current: _Map, new: Iterable[PreVisit], tag=''):
         else:
             # logger.info('adding %s', pv)
             current[key] = pv
-    logger.debug('after merging %s: %d', tag, len(current))
+    logger.debug('after merging %s: %d', 'TODO', len(current))
 
 
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
-def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
+def extract(takeout_path_: PathIsh) -> Iterable[PreVisit]:
     logger = get_logger()
     path = Path(takeout_path_)
 
@@ -277,7 +279,7 @@ def extract(takeout_path_: PathIsh, tag: Tag) -> Iterable[PreVisit]:
         else:
             tr = takeout
         logger.info('handling takeout %s', tr)
-        _merge(chrome_myactivity, read_google_activity(tr), tag='chrome_myactivity')
-        _merge(search_myactivity, read_search_activity(tr), tag='search_myactivity')
-        _merge(browser_history_json, read_browser_history_json(tr), tag='browser_history_json')
+        _merge(chrome_myactivity, read_google_activity(tr))
+        _merge(search_myactivity, read_search_activity(tr))
+        _merge(browser_history_json, read_browser_history_json(tr))
     return itertools.chain(chrome_myactivity.values(), search_myactivity.values(), browser_history_json.values())

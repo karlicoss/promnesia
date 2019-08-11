@@ -28,7 +28,7 @@ def test_org():
 
 
         """)
-        results = list(notes_extractor(td, tag='gerg'))
+        results = list(notes_extractor(td))
         assert len(results) == 6
         assert results[0].url == 'https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i'
         assert results[1].url == 'https://link.com'
