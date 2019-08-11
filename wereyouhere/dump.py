@@ -56,7 +56,10 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]], config: Confi
     for e, h in all_histories:
         cur = []
         for visit in sorted(h, key=cmp_key):
-            cur.append(dictify(visit))
+            dd = dictify(visit)
+            dd['tag'] = dd['src']
+            del dd['src'] # meh
+            cur.append(dd)
         intermediates.append((e, cur))
     intp = intm.joinpath(datetime.utcnow().strftime('%Y%m%d%H%M%S.json'))
     with intp.open('w') as fo:
