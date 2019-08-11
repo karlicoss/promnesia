@@ -6,7 +6,7 @@ backup_file () {
     file="$1"
     to="$2"
     fname="$(basename "$file")"
-    timestamp=$(date -d "@$(stat -c %Y .)" +'%Y%m%d%H%M%S')
+    timestamp=$(date -d "@$(stat -c %Y "$file")" +'%Y%m%d%H%M%S')
     tdir="$to/$timestamp"
     mkdir -p "$tdir"
     cp "$file" "$tdir/$fname"
