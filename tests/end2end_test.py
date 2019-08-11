@@ -165,7 +165,7 @@ def test_settings(tmp_path, browser):
 
 @pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
 def test_backend_status(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=False) as driver:
+    with get_webdriver(browser=browser, headless=True) as driver:
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
         set_host(driver=driver, host='https://nosuchhost.com', port='1234')
