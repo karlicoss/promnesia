@@ -30,7 +30,7 @@ OUTPUT_DIR = '{tdir}'
 
 from sqlalchemy import create_engine, MetaData, exists # type: ignore
 from sqlalchemy import Column, Table # type: ignore
-from cachew import DbBinder
+from cachew import NTBinder
 from wereyouhere.common import DbVisit # TODO ugh. figure out pythonpath
 
 
@@ -40,13 +40,10 @@ def _get_stuff(outdir: Path):
 
     engine = create_engine(f'sqlite:///{db_path}')
 
-    # TODO ugh. 
-    import sys
-    print(sys.path)
-    binder = DbBinder(DbVisit)
+    binder = NTBinder.make(DbVisit)
 
     meta = MetaData(engine)
-    table = Table('visits', meta, *binder.db_columns)
+    table = Table('visits', meta, *binder.columns)
 
     return engine, binder, table
 

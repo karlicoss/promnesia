@@ -12,7 +12,7 @@ from typing import Collection, List, NamedTuple, Dict
 
 from kython import setup_logzero
 
-from cachew import DbBinder
+from cachew import NTBinder
 
 import hug # type: ignore
 import hug.types as T # type: ignore
@@ -100,10 +100,10 @@ def get_stuff(): # TODO better name
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path}') # , echo=True)
 
-    binder = DbBinder(DbVisit)
+    binder = NTBinder.make(DbVisit)
 
     meta = MetaData(engine)
-    table = Table('visits', meta, *binder.db_columns)
+    table = Table('visits', meta, *binder.columns)
 
     return engine, binder, table
 

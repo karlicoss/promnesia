@@ -8,7 +8,7 @@ import tempfile
 from sqlalchemy import create_engine, MetaData # type: ignore
 from sqlalchemy import Column, Table # type: ignore
 
-from cachew import DbBinder, ichunks
+from cachew import NTBinder, ichunks
 
 from .common import get_logger, DbVisit
 from .config import Config
@@ -79,9 +79,9 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]], config: Confi
     ntf = tempfile.NamedTemporaryFile(delete=False)
     tpath = ntf.name
     engine = create_engine(f'sqlite:///{tpath}')
-    binder = DbBinder(DbVisit)
+    binder = NTBinder.make(DbVisit)
     meta = MetaData(engine)
-    table = Table('visits', meta, *binder.db_columns)
+    table = Table('visits', meta, *binder.columns)
     meta.create_all()
 
     with engine.begin() as trans:
