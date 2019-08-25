@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eu
 
+# TODO not sure if should cd; some paths might be relative..
 cd "$(dirname "$0")"
 
-python3 -m wereyouhere "$@"
+PYTHONPATH=src python3 -m wereyouhere "$@"
