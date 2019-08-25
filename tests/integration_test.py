@@ -8,8 +8,8 @@ testdata = Path(__file__).absolute().parent.parent / 'testdata'
 
 
 def index(cfg: Path):
-    from wereyouhere.__main__ import do_extract
-    do_extract(cfg)
+    from wereyouhere.__main__ import do_index
+    do_index(cfg)
 
 
 base_config = """
