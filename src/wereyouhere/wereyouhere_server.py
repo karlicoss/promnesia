@@ -132,7 +132,7 @@ def search_common(url: str, where):
         dt = vis.dt
         if dt.tzinfo is None:
             # TODO hmm. I guess server and indexer should better agree on timezone...
-            # TODO use lazy property in cofig for extractors?
+            # TODO use lazy property in config for indexers?
             dt = config.FALLBACK_TIMEZONE.localize(dt)
             vis = vis._replace(dt=dt)
         vlist.append(vis)

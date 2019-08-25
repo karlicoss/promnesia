@@ -75,7 +75,7 @@ CACHE_DIR  = '{cache_dir}'
 """)
 
     path = (Path(__file__).parent.parent / 'run').absolute()
-    check_call([str(path), 'extract', '--config', config])
+    check_call([str(path), 'index', '--config', config])
 
     with wserver(config=config) as srv:
         yield srv

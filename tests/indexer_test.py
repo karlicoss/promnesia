@@ -66,7 +66,7 @@ def test_takeout(adhoc_config, tmp_path):
     tdir = Path(tmp_path)
 
     test_takeout_path = "testdata/takeout"
-    import wereyouhere.extractors.takeout as tex
+    import wereyouhere.indexers.takeout as tex
     tex._get_cache_dir = lambda: tdir
 
     visits = history(W(tex.extract, test_takeout_path))
@@ -95,7 +95,7 @@ def test_with_error():
 
 def test_takeout_new_zip(adhoc_config):
     test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
-    import wereyouhere.extractors.takeout as tex
+    import wereyouhere.indexers.takeout as tex
     visits = history(lambda: tex.extract(test_takeout_path))
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
@@ -117,7 +117,7 @@ def test_takeout_new_zip(adhoc_config):
 # TODO run condition?? and flag to force all
 @skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_chrome(tmp_path):
-    from wereyouhere.extractors.browser import chrome
+    from wereyouhere.indexers.browser import chrome
     tdir = Path(tmp_path)
 
     path = tdir / 'history'
@@ -145,7 +145,7 @@ def test_firefox(tmp_path):
 
 
 def test_plaintext_path_extractor():
-    import wereyouhere.extractors.custom as custom_gen
+    import wereyouhere.indexers.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
@@ -163,7 +163,7 @@ def test_plaintext_path_extractor():
 
 # TODO perhaps it belongs to canonify?
 def test_normalise():
-    import wereyouhere.extractors.custom as custom_gen
+    import wereyouhere.indexers.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
@@ -182,7 +182,7 @@ def test_normalise():
 
 
 def test_normalise_weird():
-    import wereyouhere.extractors.custom as custom_gen
+    import wereyouhere.indexers.custom as custom_gen
     from wereyouhere.generator.plaintext import extract_from_path
 
     visits = history(W(
@@ -208,7 +208,7 @@ def test_filter():
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
-    import wereyouhere.extractors.custom as custom_gen
+    import wereyouhere.indexers.custom as custom_gen
 
     hist = history(W(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
@@ -278,7 +278,7 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
-    import wereyouhere.extractors.chrome as chrome_ex
+    import wereyouhere.indexers.chrome as chrome_ex
 
     hist = history(W(chrome_ex.extract, mfile))
     assert len(hist) > 0

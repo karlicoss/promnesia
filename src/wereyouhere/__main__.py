@@ -26,7 +26,7 @@ def _do_extract():
     logger = get_logger()
 
     fallback_tz = cfg.FALLBACK_TIMEZONE
-    extractors = cfg.EXTRACTORS
+    indexers = cfg.INDEXERS
 
     output_dir = Path(cfg.OUTPUT_DIR)
     if not output_dir.exists():
@@ -40,7 +40,7 @@ def _do_extract():
     all_histories = []
     all_errors = []
 
-    for extractor in extractors:
+    for extractor in indexers:
         ex = extractor
         # TODO isinstance indexer?
         # TODO make more defensive?
@@ -79,7 +79,7 @@ def main():
 
     p = argparse.ArgumentParser()
     subp = p.add_subparsers(dest='mode')
-    ep = subp.add_parser('extract')
+    ep = subp.add_parser('index')
     ep.add_argument('--config', type=Path, default=Path('config.py'))
     ep.add_argument('--intermediate', required=False)
     sp = subp.add_parser('serve')
@@ -92,7 +92,7 @@ def main():
     # worst case -- could use database?
 
     with get_tmpdir() as tdir:
-        if args.mode == 'extract':
+        if args.mode == 'index':
             do_extract(config_file=args.config)
         elif args.mode == 'serve':
             do_serve(port=args.port, config=args.config, quiet=args.quiet)

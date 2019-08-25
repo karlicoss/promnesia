@@ -8,7 +8,6 @@ skip = mark.skip
 
 
 def test_org():
-    from config import Extractors
     from private import notes_extractor
     with tempfile.TemporaryDirectory() as tdir:
         td = Path(tdir)

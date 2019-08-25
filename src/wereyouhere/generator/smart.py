@@ -42,12 +42,12 @@ def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List
             # Ok, I guess we can't rely on normal exception logger here because it expects proper traceback
             # so we can unroll the cause chain manually at least...
             # TODO at least preserving location would be nice.
-            parts = ['extractor emitted exception']
+            parts = ['indexer emitted exception']
             cur: Optional[BaseException] = p
             while cur is not None:
                 ss = str(cur)
                 if len(parts) >= 2:
-                    ss = 'caused by ' + ss
+                    ss = 'caused by ' + ss # TODO use some lib for that
                 parts.append(ss)
                 cur = cur.__cause__
             logger.error('\n'.join(parts))

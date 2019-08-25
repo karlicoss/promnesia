@@ -11,10 +11,10 @@ FILTERS = [] # type: ignore
 
 from wereyouhere.generator.smart import Indexer as I
 from wereyouhere.generator.plaintext import extract_from_path
-import wereyouhere.extractors.custom as custom # type: ignore
-import wereyouhere.extractors.takeout as takeout # type: ignore
+import wereyouhere.indexers.custom as custom # type: ignore
+import wereyouhere.indexers.takeout as takeout # type: ignore
 
-class Extractors:
+class Indexers:
     TAKEOUT = I(
         takeout.extract,
         # TODO relative paths are not great..
@@ -29,7 +29,7 @@ class Extractors:
     )
 
 
-EXTRACTORS = [
-    Extractors.PLAIN,
-    Extractors.TAKEOUT,
+INDEXERS = [
+    Indexers.PLAIN,
+    Indexers.TAKEOUT,
 ]

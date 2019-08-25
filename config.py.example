@@ -2,6 +2,8 @@ from typing import List, Tuple, Optional
 from wereyouhere.generator.plaintext import extract_from_path
 import pytz
 
+# TODO FIXME these are quite outdated...
+
 """
 This directory keeps backups of chrome history databases (~/.config/google-chrome/Default/History).
 The script is just scanning it based on mime type and populating from the databases it finds, so you are free to store them in any layout you prefer.
@@ -25,6 +27,7 @@ The path is one of the following:
 If not set, the script will just skip it.
 """
 GOOGLE_TAKEOUT_PATH: Optional[str] = None
+
 
 """
 Specify commands which just output urls line by line

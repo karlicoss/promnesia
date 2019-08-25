@@ -14,7 +14,7 @@ def index(cfg: Path):
 
 base_config = """
 FALLBACK_TIMEZONE = 'Europe/Moscow'
-EXTRACTORS = []
+INDEXERS = []
 FILTERS = []
 """
 
@@ -54,7 +54,7 @@ def index_hypothesis(tdir: Path):
 OUTPUT_DIR = '{tdir}'
 
 from wereyouhere.generator.smart import Indexer as I
-import wereyouhere.extractors.hypothesis as hypothesis
+import wereyouhere.indexers.hypothesis as hypothesis
 
 hyp_extractor = I(
     hypothesis.extract,
@@ -62,7 +62,7 @@ hyp_extractor = I(
     src='hyp',
 )
 
-EXTRACTORS = [hyp_extractor]
+INDEXERS = [hyp_extractor]
     """)
     index(cfg)
 
@@ -80,11 +80,11 @@ def index_local_chrome(tdir: Path):
 OUTPUT_DIR = '{tdir}'
 
 from wereyouhere.generator.smart import Indexer as I
-from wereyouhere.extractors.browser import chrome
+from wereyouhere.indexers.browser import chrome
 
 chrome_extractor = I(chrome, '{merged}', src='chrome')
 
-EXTRACTORS = [chrome_extractor]
+INDEXERS = [chrome_extractor]
 """)
     index(cfg)
 
