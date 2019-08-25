@@ -11,7 +11,7 @@ import json
 
 import pytz
 
-from wereyouhere.common import PreVisit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
+from ..common import PreVisit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
 
 
 def extract(command: str) -> Iterable[PreVisit]:
@@ -135,7 +135,7 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Pr
     else:
         # TODO use url extractor..
         logger.info(f'{pp}: fallback to grep')
-        from wereyouhere.generator.plaintext import extract_from_path
+        from ..generator.plaintext import extract_from_path
         yield from extract(extract_from_path(pp))
         # raise RuntimeError(f'Unexpected suffix {pp}')
         return

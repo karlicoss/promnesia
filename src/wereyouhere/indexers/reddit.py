@@ -12,9 +12,8 @@ from kython.kjq import jdel, jq_del_all, pipe
 from kython.kjson import JDict, JPath, JsonProcessor
 from kython.ktyping import PathIsh
 
-from wereyouhere.common import (Extraction, Loc, PathIsh, PreVisit,
-    extract_urls, get_logger)
-from wereyouhere.normalise import normalise_url
+from ..common import (Extraction, Loc, PathIsh, PreVisit, extract_urls, get_logger)
+from ..normalise import normalise_url
 
 
 Query = str

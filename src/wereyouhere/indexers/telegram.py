@@ -9,7 +9,7 @@ import dataset # type: ignore
 
 from kython.kerror import echain, unwrap
 
-from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction
+from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction
 
 
 

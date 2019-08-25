@@ -16,7 +16,7 @@ from . import config
 from .dump import dump_histories
 
 # TODO smart is misleading... perhaps, get rid of it?
-from wereyouhere.generator.smart import previsits_to_history, Indexer
+from .generator.smart import previsits_to_history, Indexer
 
 
 

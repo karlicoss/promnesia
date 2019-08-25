@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from typing import NamedTuple, List, Optional, Union, Iterable
 
-from wereyouhere.common import PathIsh, PreVisit, get_logger, Loc
+from ..common import PathIsh, PreVisit, get_logger, Loc
 
 # TODO extract to a separate hypothesis provider; reuse in my module?
 def extract(json_path: PathIsh) -> Iterable[PreVisit]:

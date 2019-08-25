@@ -8,7 +8,7 @@ from urllib.parse import unquote
 import pytz
 from sqlalchemy import Column, MetaData, Table, create_engine # type: ignore
 
-from wereyouhere.common import Loc, PathIsh, PreVisit, get_logger, Second
+from ..common import Loc, PathIsh, PreVisit, get_logger, Second
 
 
 def browser_extract(histfile: PathIsh, cols, row_handler) -> Iterator[PreVisit]:
