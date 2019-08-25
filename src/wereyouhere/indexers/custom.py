@@ -135,7 +135,7 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Pr
     else:
         # TODO use url extractor..
         logger.info(f'{pp}: fallback to grep')
-        from ..generator.plaintext import extract_from_path
+        from .plaintext import extract_from_path
         yield from extract(extract_from_path(pp))
         # raise RuntimeError(f'Unexpected suffix {pp}')
         return

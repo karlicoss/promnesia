@@ -1,5 +1,5 @@
 from typing import List, Tuple, Optional
-from wereyouhere.generator.plaintext import extract_from_path
+from wereyouhere.indexers.plaintext import extract_from_path
 import pytz
 
 # TODO FIXME these are quite outdated...

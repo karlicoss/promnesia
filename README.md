@@ -9,7 +9,7 @@ The Chrome extension consumes a JSON file with history. It may be generated from
 * local sqlite history database backups
 * Google Takeout/Activity backups
 * custom shell command 
-* [todo] file system link extractors
+* [todo] file system link indexers
 * in general, it's super extendable. It's JSON, after all!
 
 See more in [sources.md](sources.md).

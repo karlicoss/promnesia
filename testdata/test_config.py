@@ -9,8 +9,8 @@ FALLBACK_TIMEZONE = pytz.timezone('Europe/London')
 FILTERS = [] # type: ignore
 
 
-from wereyouhere.generator.smart import Indexer as I
-from wereyouhere.generator.plaintext import extract_from_path
+from wereyouhere.common import Indexer as I
+from wereyouhere.indexers.plaintext import extract_from_path
 import wereyouhere.indexers.custom as custom # type: ignore
 import wereyouhere.indexers.takeout as takeout # type: ignore
 

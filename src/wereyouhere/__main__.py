@@ -15,12 +15,11 @@ from .common import History, Filter, make_filter, get_logger, get_tmpdir
 from . import config
 from .dump import dump_histories
 
-# TODO smart is misleading... perhaps, get rid of it?
-from .generator.smart import previsits_to_history, Indexer
+from .common import previsits_to_history, Indexer
 
 
 
-def _do_extract():
+def _do_index():
     cfg = config.get()
 
     logger = get_logger()
@@ -63,10 +62,10 @@ def _do_extract():
         sys.exit(1)
 
 
-def do_extract(config_file: Path):
+def do_index(config_file: Path):
     try:
         config.load_from(config_file)
-        _do_extract()
+        _do_index()
     finally:
         config.reset()
 
@@ -81,6 +80,7 @@ def main():
     subp = p.add_subparsers(dest='mode')
     ep = subp.add_parser('index')
     ep.add_argument('--config', type=Path, default=Path('config.py'))
+    # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False)
     sp = subp.add_parser('serve')
     setup_parser(sp)
@@ -93,7 +93,7 @@ def main():
 
     with get_tmpdir() as tdir:
         if args.mode == 'index':
-            do_extract(config_file=args.config)
+            do_index(config_file=args.config)
         elif args.mode == 'serve':
             do_serve(port=args.port, config=args.config, quiet=args.quiet)
         else:

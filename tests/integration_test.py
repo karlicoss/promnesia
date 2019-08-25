@@ -53,7 +53,7 @@ def index_hypothesis(tdir: Path):
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.generator.smart import Indexer as I
+from wereyouhere.common import Indexer as I
 import wereyouhere.indexers.hypothesis as hypothesis
 
 hyp_extractor = I(
@@ -79,7 +79,7 @@ def index_local_chrome(tdir: Path):
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.generator.smart import Indexer as I
+from wereyouhere.common import Indexer as I
 from wereyouhere.indexers.browser import chrome
 
 chrome_extractor = I(chrome, '{merged}', src='chrome')
