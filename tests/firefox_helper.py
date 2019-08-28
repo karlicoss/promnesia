@@ -3,21 +3,7 @@ import re
 import json
 from time import sleep
 
-
-# TODO can extract hotkeys from Preferences file too ['extensions'] / commands / 
-# "path": "/tmp/.org.chromium.Chromium.TKhNoq/extension_ceedkmkoeooncekjljapnkkjhldddcid",
-#     "commands": {
-#            "linux:Ctrl+Shift+V": {
-#                "command_name": "show_dots",
-#                "extension": "ceedkmkoeooncekjljapnkkjhldddcid",
-#                "global": false
-#            }
-#        },
-
-
-# copy pasted from grasp
-
-
+# TODO share with grasp... maybe move to kython?
 def open_extension_page(driver, page: str):
     ff = {
         'chrome' : get_extension_page_chrome,
@@ -27,6 +13,10 @@ def open_extension_page(driver, page: str):
     driver.get(extension_prefix + '/' + page)
 
 
+# TODO looks like it used to be posssible in webdriver api?
+# at least as of 2011 https://github.com/gavinp/chromium/blob/681563ea0f892a051f4ef3d5e53438e0bb7d2261/chrome/test/webdriver/test/chromedriver.py#L35-L40
+# but here https://github.com/SeleniumHQ/selenium/blob/master/cpp/webdriver-server/command_types.h there are no Extension commands
+# also see driver.command_executor._commands
 def get_extension_page_chrome(driver):
     chrome_profile = Path(driver.capabilities['chrome']['userDataDir'])
     prefs_file = chrome_profile / 'Default/Preferences'
@@ -34,6 +24,7 @@ def get_extension_page_chrome(driver):
     # also oddly enough user install extensions don't have manifest information, so we can't find it by name
 
     # seems to be quite a bit asynchronous (e.g. up to several seconds), so good to be defensive for a bit
+    prefs = None
     addon_id = None
     for _ in range(30):
         sleep(0.5)
@@ -51,6 +42,7 @@ def get_extension_page_chrome(driver):
             continue
         [addon_id] = addon_ids
     assert addon_id is not None
+    assert prefs is not None
     return f'chrome-extension://{addon_id}'
 
 

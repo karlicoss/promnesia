@@ -24,8 +24,8 @@ const modifier = target === 'chrome' ? 'Shift' : 'Alt';
 const commandsExtra = {
     "_execute_browser_action": {
         "suggested_key": {
-            "default": `Ctrl+${modifier}+W`,
-            "mac":  `Command+${modifier}+W`
+            "default": `Ctrl+${modifier}+E`,
+            "mac":  `Command+${modifier}+E`
         }
     },
     "show_dots": {
@@ -38,8 +38,10 @@ const commandsExtra = {
     // need all of that discoverable from menu anyway
     // also dots and browser action too
     "search": {
-        "default": `Ctrl+${modifier}+B`,
-        "mac":  `Command+${modifier}+B`
+        "suggested_key": {
+            "default": `Ctrl+${modifier}+H`,
+            "mac":  `Command+${modifier}+H`
+        }
     }
 };
 

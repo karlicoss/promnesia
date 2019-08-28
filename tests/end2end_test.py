@@ -36,6 +36,31 @@ def get_addon_path(browser: str) -> Path:
     return addon_path
 
 
+def get_hotkey(driver, cmd: str) -> str:
+    # TODO shit, need to unify this...
+    if driver.name == 'chrome':
+        chrome_profile = Path(driver.capabilities['chrome']['userDataDir'])
+        prefs_file = chrome_profile / 'Default/Preferences'
+        import json
+        prefs = json.loads(prefs_file.read_text())
+        # "commands": {
+        #        "linux:Ctrl+Shift+V": {
+        #            "command_name": "show_dots",
+        #            "extension": "ceedkmkoeooncekjljapnkkjhldddcid",
+        #            "global": false
+        #        }
+        #    },
+        cmd_map = {cmd['command_name']: k.split(':')[-1] for k, cmd in prefs['extensions']['commands'].items()}
+    else:
+        # TODO FIXME
+        cmd_map = {
+            'show_dots'              : 'Ctrl+Alt+V',
+            '_execute_browser_action': 'Ctrl+Alt+E',
+            'search'                 : 'Ctrl+Alt+H',
+        }
+    return cmd_map[cmd].split('+')
+
+
 def _get_webdriver(tdir: Path, browser: str, headless: bool):
     addon = get_addon_path(browser=browser)
     if browser == B.FF:
@@ -111,6 +136,10 @@ def trigger_hotkey(hotkey):
     pyautogui.hotkey(*hotkey)
 
 
+def trigger_command(driver, cmd):
+    trigger_hotkey(get_hotkey(driver, cmd))
+
+
 class TestHelper(NamedTuple):
     driver: webdriver.Remote
 
@@ -139,12 +168,11 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browse
 
         yield TestHelper(driver=driver)
 
-
-class Hotkey:
-    ACTIVATE = ('ctrl', 'alt', 'w')
-    DOTS     = ('ctrl', 'alt', 'v')
-    SEARCH   = ('ctrl', 'alt', 'b')
-
+class Command:
+    SHOW_DOTS = 'show_dots'
+    ACTIVATE  = '_execute_browser_action'
+    SEARCH    = 'search'
+# TODO assert this against manifest?
 
 
 @pytest.mark.parametrize("browser", [B.CH, B.FF])
@@ -228,11 +256,13 @@ def test_add_to_blacklist(tmp_path, browser):
 
 
 @uses_x
-def test_visits(tmp_path):
+@pytest.mark.parametrize("browser", [B.FF, B.CH])
+def test_visits(tmp_path, browser):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
-    with _test_helper(tmp_path, index_hypothesis, test_url):
-        trigger_hotkey(hotkey=Hotkey.ACTIVATE)
+    with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
+        confirm('carry on?')
+        trigger_command(helper.driver, Command.ACTIVATE)
         confirm('you should see hypothesis contexts')
 
 
@@ -250,24 +280,25 @@ def test_around(tmp_path):
 def test_chrome_visits(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_local_chrome, test_url):
-        trigger_hotkey(hotkey=Hotkey.ACTIVATE)
+    with _test_helper(tmp_path, index_local_chrome, test_url) as helper:
+        trigger_command(helper.driver, Command.ACTIVATE)
         confirm("You shoud see chrome visits now; with time spent")
 
 
 @uses_x
-def test_show_dots(tmp_path):
+@pytest.mark.parametrize("browser", [B.FF, B.CH])
+def test_show_dots(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
-    with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True):
-        trigger_hotkey(hotkey=Hotkey.DOTS)
+    with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True, browser=browser) as helper:
+        trigger_command(helper.driver, Command.SHOW_DOTS)
         confirm("You should see dots now near SL group, U group, Representation theory")
 
 
 @uses_x
 def test_search(tmp_path):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_local_chrome, test_url):
-        trigger_hotkey(hotkey=Hotkey.SEARCH)
+    with _test_helper(tmp_path, index_local_chrome, test_url) as helper:
+        trigger_command(helper.driver, Command.SEARCH)
         confirm("You shoud see chrome visits now; with time spent")
 
 
