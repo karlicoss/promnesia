@@ -8,7 +8,10 @@ from time import sleep
 from typing import NamedTuple
 
 import pytest # type: ignore
+
 from selenium import webdriver # type: ignore
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 
 
 from kython.tui import getch_or_fail
@@ -63,7 +66,7 @@ def _get_webdriver(tdir: Path, browser: str, headless: bool):
 
 # TODO copy paste from grasp
 @contextmanager
-def get_webdriver(browser: str=B.FF, headless=False):
+def get_webdriver(browser: str, headless: bool):
     with TemporaryDirectory() as td:
         tdir = Path(td)
         driver = _get_webdriver(tdir, browser=browser, headless=headless)
@@ -121,12 +124,12 @@ def confirm(what: str):
 
 
 @contextmanager
-def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False):
+def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browser: str=B.FF, headless: bool=False):
     tdir = Path(tmp_path)
 
     indexer(tdir)
     config = tdir / 'test_config.py'
-    with wserver(config=config) as srv, get_webdriver() as driver:
+    with wserver(config=config) as srv, get_webdriver(browser=browser, headless=headless) as driver:
         port = srv.port
         configure_extension(driver, port=port, show_dots=show_dots)
         sleep(0.5)
@@ -266,8 +269,6 @@ def test_search(tmp_path):
 
 @uses_x
 def test_new_background_tab(tmp_path):
-    from selenium.webdriver.common.keys import Keys
-    from selenium.webdriver.common.by import By
     start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
@@ -278,6 +279,13 @@ def test_new_background_tab(tmp_path):
         # TODO switch to new tab?
         # TODO https://www.e-flux.com/journal/53/
 
+
+@uses_x
+@pytest.mark.parametrize("browser", [B.FF, B.CH])
+def test_local_page(tmp_path, browser):
+    url = "file:///usr/share/doc/python3/html/index.html"
+    with _test_helper(tmp_path, index_local_chrome, url, browser=browser) as helper:
+        confirm('Icon should not be black (TODO more comprehensive test maybe?)')
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
