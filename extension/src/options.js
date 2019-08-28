@@ -11,21 +11,22 @@ export type Options = {
     token: string;
 
     dots: boolean;
-    blacklist: Array<string>;
+    blacklist: string;
     tag_map: TagMap;
 
     sidebar_width: string;
     extra_css: string;
+
 }
 
 // TODO how to export settings?? seriously need some standard package for settings
 function default_options(): Options {
     return {
-        host: "http://localhost:13131",
-        token: "",
+        host: 'http://localhost:13131',
+        token: '',
 
         dots: true,
-        blacklist: [],
+        blacklist: '',
         tag_map: {},
 
         // TODO FIXME do something if value is invalid?..

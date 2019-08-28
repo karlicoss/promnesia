@@ -152,7 +152,6 @@
 
     // Displaying the toast
     showToast: function() {
-        console.log("TOAAAAAAAST");
       // Creating the DOM object for the toast
       var toastElement = this.buildToast();
 

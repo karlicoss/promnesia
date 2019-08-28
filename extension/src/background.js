@@ -2,7 +2,7 @@
 
 import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
-import {normalisedHostname} from './normalise';
+import {normalisedURLHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
@@ -109,17 +109,28 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 
 type Reason = string;
 
+function asList(bl: string): Array<string> {
+    return bl.split(/\n/).filter(s => s.length > 0);
+}
+
 async function isBlacklisted(url: Url): Promise<?Reason> {
+    /*
+      TODO ''.split('\n') gives an emptly line, which would block local files
+      will fix later if necessary, it's not a big issue I guess
+      TODO maybe use codemirror widget for it?
+    */
+
+
     // TODO perhaps use binary search?
-    const hostname = normalisedHostname(url);
+    const hostname = normalisedURLHostname(url);
     const opts = await get_options_async();
     // for now assumes it's exact domain match domain level
-    if (opts.blacklist.includes(hostname)) {
+    if (asList(opts.blacklist).includes(hostname)) {
         return "User-defined blacklist"; // TODO maybe supply item number?
     }
     const domains_url = chrome.runtime.getURL('shallalist/finance/banking/domains');
     const resp = await fetch(domains_url);
-    const domains = (await resp.text()).split('\n');
+    const domains = asList(await resp.text());
     if (domains.includes(hostname)) {
         return "'Banking' blacklist";
     }
@@ -504,12 +515,12 @@ chrome.commands.onCommand.addListener(defensify(async cmd => {
 
 async function blackListDomain(e): Promise<void> {
     const url = unwrap(e.pageUrl);
-    const hostname = normalisedHostname(url);
+    const hostname = normalisedURLHostname(url);
 
     const opts = await get_options_async();
-    opts.blacklist.push(hostname);
+    opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + hostname;
 
-    const ll = opts.blacklist.length;
+    const ll = opts.blacklist.split(/\n/).length;
     await showActiveTabNotification(`Added ${hostname} to blacklist (${ll} items now)`, 'blue');
     await setOptions(opts);
 }

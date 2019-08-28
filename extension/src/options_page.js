@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getToken().value     = opts.token;
 
     getDots().checked    = opts.dots;
-    getBlackList().value = opts.blacklist.join('\n');
+    getBlackList().value = opts.blacklist;
     // TODO tag map could be json?
     getTagMap().value    = JSON.stringify(opts.tag_map);
 
@@ -98,20 +98,13 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
 // TODO careful here if I ever implement not showing notifications?
 // defensify might need to alert then...
 unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAlert(async () => {
+    // TODO make opts active object so we don't query unnecessary things like blacklist every time?
     const opts = {
         host      : getHost().value,
         token     : getToken().value,
 
         dots      : getDots().checked,
-        // this is preserving whitespaces so might end up with '' entries
-        // but perhaps it's ok; lets the user space out blacklist entries
-        // TODO also make sure we don't reorder entries in settings without user's permissions
-        // I guess the real solution is blacklist object which keeps textual repr separately
-        // TODO maybe allow comment strings? ugh.
-        // TODO ''.split('\n') result in empty line...
-        // TODO I guess empty string is kind of an exception? not sure how to indicate it in interface
-        // just give a warning for the user to be careful I guess..
-        blacklist : getBlackList().value.split(/\n/),
+        blacklist : getBlackList().value,
         tag_map   : JSON.parse(getTagMap().value),
 
         sidebar_width: getWidth().value,

@@ -123,7 +123,7 @@ export function log() {
         const arg = arguments[i];
         args.push(JSON.stringify(arg));
     }
-    console.log('[background] ' + arguments[0], ...args);
+    console.trace('[background] ' + arguments[0], ...args);
 }
 
 export const ldebug = log; // TODO
