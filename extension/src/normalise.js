@@ -44,3 +44,10 @@ const _re = R('^(www|ww|amp)\\.'  );
 export function normaliseHostname(url) {
     return _re[Symbol.replace](url, '');
 }
+
+
+export function normalisedURLHostname(url: Url): string {
+    const _hostname = new URL(url).hostname;
+    const hostname = normaliseHostname(_hostname);
+    return hostname;
+}

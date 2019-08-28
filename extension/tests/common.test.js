@@ -17,3 +17,10 @@ import {normalise_url} from '../src/normalise.js';
 test('normalises', () => {
     expect(normalise_url('https://www.youtube.com/playlist?list=PLWz5rJ2EKKc9CBxr3BVjPTPoDPLdPIFCE/')).toBe('youtube.com/playlist?list=PLWz5rJ2EKKc9CBxr3BVjPTPoDPLdPIFCE');
 });
+
+
+import {normalisedURLHostname} from '../src/normalise.js';
+test('normalisedURLHostname', () => {
+    expect(normalisedURLHostname('https://www.reddit.com/whatever')).toBe('reddit.com');
+    expect(normalisedURLHostname('file:///usr/share/doc/python3/html/index.html')).toBe('');
+});

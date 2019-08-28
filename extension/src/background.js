@@ -2,7 +2,7 @@
 
 import type {Locator, Tag, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
-import {normaliseHostname} from './normalise';
+import {normalisedHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
@@ -108,12 +108,6 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 }
 
 type Reason = string;
-
-function normalisedHostname(url: Url): string {
-    const _hostname = new URL(url).hostname;
-    const hostname = normaliseHostname(_hostname);
-    return hostname;
-}
 
 async function isBlacklisted(url: Url): Promise<?Reason> {
     // TODO perhaps use binary search?
