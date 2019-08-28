@@ -149,19 +149,19 @@ export async function getVisits(url: Url): Promise<Result> {
 type IconStyle = {
     icon: string,
     title: string,
-    text: ?string,
+    text: string,
 };
 
 
 // TODO this can be tested?
 function getIconStyle(visits: Result): IconStyle {
     if (visits instanceof Blacklisted) {
-        return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${visits.reason}`, text: null};
+        return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${visits.reason}`, text: ''};
     }
 
     const vcount = visits.visits.length;
     if (vcount === 0) {
-        return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: null};
+        return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: ''};
     }
     const contexts = visits.contexts();
     const ccount = contexts.length;
@@ -172,9 +172,9 @@ function getIconStyle(visits: Result): IconStyle {
     const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
     if (boring) {
         // TODO not sure if worth distinguishing..
-        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (local only)`, text: null};
+        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (local only)`, text: ''};
     } else {
-        return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: null};
+        return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: ''};
     }
 }
 
