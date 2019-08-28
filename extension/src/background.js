@@ -525,11 +525,20 @@ async function blackListDomain(e): Promise<void> {
     await setOptions(opts);
 }
 
+const BLACKLIST_DOMAIN_MENU = 'blacklist-domain';
+
 chrome.contextMenus.create({
+    'id'      : BLACKLIST_DOMAIN_MENU,
     'title'   : "Blacklist domain",
-    // $FlowFixMe
-    'onclick' : defensify(blackListDomain),
 });
+
+// looks like onClicked is more portable...
+// $FlowFixMe // err, complains at Promise but nevertheless works
+chrome.contextMenus.onClicked.addListener(defensify(async (info) => {
+    if (info.menuItemId === BLACKLIST_DOMAIN_MENU) {
+        await blackListDomain(info);
+    }
+}));
 
 // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
 // chrome.contextMenus.create({

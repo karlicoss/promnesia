@@ -206,7 +206,7 @@ def test_blacklist_builtin(tmp_path, browser):
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+@pytest.mark.parametrize("browser", [B.FF, B.CH])
 def test_add_to_blacklist(tmp_path, browser):
     with get_webdriver(browser=browser, headless=False) as driver:
         configure_extension(driver, port='12345')
@@ -216,8 +216,12 @@ def test_add_to_blacklist(tmp_path, browser):
 
         # looks like selenium can't interact with browser context menu...
         import pyautogui # type: ignore
-        # assumes extension context menu item is last
-        pyautogui.typewrite(['up', 'enter'], interval=0.5)
+
+        if driver.name == 'chrome':
+            offset = 2 # Inspect, View page source
+        else:
+            offset = 0
+        pyautogui.typewrite(['up'] + ['up'] * offset + ['enter'], interval=0.5)
 
         driver.get(driver.current_url)
         confirm('page should be blacklisted (black icon)')
@@ -284,7 +288,7 @@ def test_new_background_tab(tmp_path):
 @pytest.mark.parametrize("browser", [B.FF, B.CH])
 def test_local_page(tmp_path, browser):
     url = "file:///usr/share/doc/python3/html/index.html"
-    with _test_helper(tmp_path, index_local_chrome, url, browser=browser) as helper:
+    with _test_helper(tmp_path, index_hypothesis, url, browser=browser) as helper:
         confirm('Icon should not be black (TODO more comprehensive test maybe?)')
 
 if __name__ == '__main__':
