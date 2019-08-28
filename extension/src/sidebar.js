@@ -16,12 +16,12 @@ function get_or_default(obj, key, def) {
 }
 
 
-const SIDEBAR_ID = "wereyouhere-sidebar";
+const SIDEBAR_ID   = 'wereyouhere-sidebar';
+const CONTAINER_ID = 'wereyouhere-sidebar-container';
 
 const doc = document;
 
-// TODO add 'show dots' for android here?
-// TODO add 'search here'?
+// TODO think about 'show dots' and 'search' icons -- maybe only show them for android?
 class Sidebar {
     body: HTMLBodyElement;
     opts: Options;
@@ -31,10 +31,12 @@ class Sidebar {
         this.opts = opts;
     }
 
-    getContainer(): HTMLElement {
-        const frame = unwrap(this.getFrame());
+    async getContainer(): Promise<HTMLElement> {
+        const frame = await this.ensureFrame();
+        return unwrap(frame.contentDocument.getElementById(CONTAINER_ID));
+    }
 
-        // TODO wtf?? adding styles didn't work on iframe createion (in ensureFrame method)
+    setupFrame(frame) {
         const cdoc = frame.contentDocument;
         const head = unwrap(cdoc.head);
 
@@ -73,36 +75,36 @@ class Sidebar {
         }
 
         const ccc = cdoc.createElement('div');
+        ccc.id = CONTAINER_ID;
         cbody.appendChild(ccc);
-        return ccc;
     }
 
-    clear() {
+    async clear() {
         // TODO not sure if that's even necessary?
-        const cont = this.getContainer();
+        const cont = await this.getContainer();
         while (cont.firstChild) {
             cont.removeChild(cont.firstChild);
         }
     }
 
-    toggle() {
-        if (this.shown()) {
-            this.hide();
+    async toggle() {
+        if (await this.shown()) {
+            await this.hide();
         } else {
-            this.show();
+            await this.show();
         }
     }
 
-    shown(): boolean {
-        const frame = this.getFrame();
+    async shown(): Promise<boolean> {
+        const frame = await this.getFrame();
         if (frame == null) {
             return false;
         }
         return frame.style.display === 'block'; // TODO not sure...
     }
 
-    show() {
-        const frame = this.ensureFrame();
+    async show() {
+        const frame = await this.ensureFrame();
 
         // TODO FIXME when should we bind data?
         const original_padding = this.body.style.paddingRight;
@@ -111,8 +113,8 @@ class Sidebar {
         frame.style.display = 'block';
     }
 
-    hide() {
-        const frame = this.ensureFrame();
+    async hide() {
+        const frame = await this.ensureFrame();
 
         // const original_padding = unwrap(this.body.getAttribute('original_padding'));
         // TODO FIXME why that doesn't work??
@@ -125,7 +127,7 @@ class Sidebar {
         return ((doc.getElementById(SIDEBAR_ID): any): ?HTMLIFrameElement);
     }
 
-    ensureFrame(): HTMLIFrameElement {
+    async ensureFrame(): Promise<HTMLIFrameElement> {
         const frame = this.getFrame();
         if (frame != null) {
             return frame;
@@ -143,12 +145,33 @@ class Sidebar {
             'width'     : this.opts.sidebar_width,
             'height'    : '100%',
             'background': 'rgba(236, 236, 236, 0.4)',
+            'display'   : 'none', // TODO reuse hide() method?
         })) {
             // $FlowFixMe
             sidebar.style.setProperty(key, value);
         }
 
-        requestVisits(); // TODO not sure that belongs here...
+
+        // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..
+        const loadPromise = new Promise((resolve, /*reject*/) => {
+            // TODO not sure if there is anything to reject?..
+            sidebar.addEventListener('load', () => {resolve();}, {once: true});
+        });
+        await loadPromise;
+
+        this.setupFrame(sidebar);
+
+        // TODO a bit nasty, but at the moment easiest way to solve it
+        // apparetnly iframe is loading about:blank 
+
+
+        // TODO perhaps better move it to toggle? although maybe not necessary at all
+
+        // TODO surely this is not necessary considering we do it anyway in bindSidebarData?
+        // unless there is some sort of race condition?
+        // requestVisits();
+
+
         return sidebar;
     }
 
@@ -166,17 +189,18 @@ async function toggleSidebar() {
 window.toggleSidebar = toggleSidebar;
 
 
+// TODO rename to 'set'?
 async function bindSidebarData(response: Visits) {
+    // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
+    // TDO perhaps we need something reactive...
+    // window.sidebarData = response;
     const opts = await get_options_async();
     const sidebar = new Sidebar(opts);
 
-    const cont = sidebar.getContainer();
-    sidebar.clear(); // TODO probably, unnecessary?
-
-    console.log(response);
+    const cont = await sidebar.getContainer();
+    await sidebar.clear(); // TODO probably, unnecessary?
 
     const binder = new Binder(doc);
-
 
     const all_tags_c = binder.makeChild(cont, 'div', ['tag-filter']);
     const items = binder.makeChild(cont, 'ul');
@@ -316,11 +340,11 @@ async function bindSidebarData(response: Visits) {
 window.bindSidebarData = bindSidebarData;
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
+// eslint-disable-next-line no-unused-vars
 function requestVisits() {
     chromeRuntimeSendMessage({method: Methods.GET_SIDEBAR_VISITS})
         .then((response: ?Visits) => {
             if (response == null) {
-                console.log("No visits for this url");
                 return;
             }
             bindSidebarData(response);
