@@ -107,6 +107,10 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         // but perhaps it's ok; lets the user space out blacklist entries
         // TODO also make sure we don't reorder entries in settings without user's permissions
         // I guess the real solution is blacklist object which keeps textual repr separately
+        // TODO maybe allow comment strings? ugh.
+        // TODO ''.split('\n') result in empty line...
+        // TODO I guess empty string is kind of an exception? not sure how to indicate it in interface
+        // just give a warning for the user to be careful I guess..
         blacklist : getBlackList().value.split(/\n/),
         tag_map   : JSON.parse(getTagMap().value),
 

@@ -28,9 +28,9 @@ function default_options(): Options {
         blacklist: [],
         tag_map: {},
 
-        // TODO FIXME do something if value is invalide?..
+        // TODO FIXME do something if value is invalid?..
         sidebar_width: '25%',
-        extra_css: "",
+        extra_css: "", // TODO add some docs on cofiguring it...
     };
 }
 

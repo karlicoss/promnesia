@@ -115,7 +115,7 @@ async function isBlacklisted(url: Url): Promise<?Reason> {
     const opts = await get_options_async();
     // for now assumes it's exact domain match domain level
     if (opts.blacklist.includes(hostname)) {
-        return "User-defined blacklist";
+        return "User-defined blacklist"; // TODO maybe supply item number?
     }
     const domains_url = chrome.runtime.getURL('shallalist/finance/banking/domains');
     const resp = await fetch(domains_url);
