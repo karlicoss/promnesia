@@ -14,6 +14,8 @@ from kython import setup_logzero
 
 from cachew import NTBinder
 
+import pytz
+
 import hug # type: ignore
 import hug.types as T # type: ignore
 
@@ -133,7 +135,9 @@ def search_common(url: str, where):
         if dt.tzinfo is None:
             # TODO hmm. I guess server and indexer should better agree on timezone...
             # TODO use lazy property in config for indexers?
-            dt = config.FALLBACK_TIMEZONE.localize(dt)
+            ftz = config.FALLBACK_TIMEZONE
+            tz = pytz.timezone(ftz) if isinstance(ftz, str) else ftz
+            dt = tz.localize(dt)
             vis = vis._replace(dt=dt)
         vlist.append(vis)
 

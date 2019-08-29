@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 import importlib.util
 
 from typing_extensions import Protocol
@@ -9,7 +9,7 @@ from kython.ktyping import PathIsh
 
 
 class Config(Protocol):
-    FALLBACK_TIMEZONE: pytz.BaseTzInfo
+    FALLBACK_TIMEZONE: Union[str, pytz.BaseTzInfo]
     CACHE_DIR: PathIsh # TODO do not use cache if it's none?
     OUTPUT_DIR: PathIsh
     INDEXERS: List
