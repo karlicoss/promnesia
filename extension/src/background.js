@@ -239,34 +239,25 @@ async function updateState (tab: chrome$Tab) {
 // TODO FIXME ugh. this can be tested on some static page... I guess?
 async function showDots(tabId) {
     // TODO can be tested
+
     const mresults = await chromeTabsExecuteScriptAsync(tabId, {
         code: `
      link_elements = document.getElementsByTagName("a");
-{
-     const urls = new Set([]);
-     for (var i = 0; i < link_elements.length; i++) {
-         urls.add(link_elements[i].getAttribute('href'));
-     }
-     urls.delete("#");
-     urls.delete(null);
-     const aurls = new Set([]);
-     for (let u of urls) {
-         if (u.startsWith('javascript')) {
-             continue
-         } else if (u.startsWith('/')) {
-             aurls.add(document.domain + u);
-         } else {
-             aurls.add(u);
-         }
-     }
-     // TODO move more stuff to background??
-     Array.from(aurls)
-}
+     Array.from(link_elements).map(el => el.href)
  `
 });
-    const results = unwrap(mresults);
+    function is_bad(u: ?string): boolean {
+        if (u == null) {
+            return true;
+        }
+        return u === '#' || u.startsWith('javascript:');
+    }
+    // not sure why it's returning array..
+    const good_urls = new Set(unwrap(mresults[0]).filter(u => !is_bad(u)));
+
+    const res = Array.from(good_urls);
     // TODO FIXME filter these by blacklist as well?
-    const res = unwrap(results[0]);
+
     // TODO check if zero? not sure if necessary...
     // TODO maybe, I need a per-site extension?
 
@@ -282,6 +273,7 @@ async function showDots(tabId) {
         vis[res[i]] = resp[i];
     }
     // TODO make a map from it..
+    // TODO use CSS from settings?
     await chromeTabsInsertCSS(tabId, {
         code: `
 .wereyouhere-visited:after {
@@ -299,18 +291,15 @@ async function showDots(tabId) {
     });
     await chromeTabsExecuteScriptAsync(tabId, {
         code: `
-vis = ${JSON.stringify(vis)}; // madness!
+vis = ${JSON.stringify(vis)}; // madness! FIXME could be potentially unsafe
 {
 for (var i = 0; i < link_elements.length; i++) {
     const a_tag = link_elements[i];
-    let url = a_tag.getAttribute('href');
+    let url = a_tag.href;
     if (url == null) {
         continue;
     }
-    if (url.startsWith('/')) {
-        url = document.domain + url;
-    }
-    if (vis[url] == true) {
+    if (vis[url] === true) {
         // console.log("adding class to ", a_tag);
         a_tag.classList.add('wereyouhere-visited');
     }
