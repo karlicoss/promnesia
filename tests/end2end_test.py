@@ -17,7 +17,7 @@ from selenium.webdriver.common.by import By
 from kython.tui import getch_or_fail
 
 from common import skip_if_ci, uses_x
-from integration_test import index_hypothesis, index_local_chrome
+from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from firefox_helper import open_extension_page
 
@@ -319,10 +319,15 @@ def test_chrome_visits(tmp_path, browser):
 @uses_x
 @browsers(FF, CH)
 def test_show_dots(tmp_path, browser):
+    visited = {
+        'https://en.wikipedia.org/wiki/Special_linear_group',
+        'http://en.wikipedia.org/wiki/Unitary_group',
+        'en.wikipedia.org/wiki/Transpose',
+    }
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
-    with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True, browser=browser) as helper:
+    with _test_helper(tmp_path, index_urls(visited), test_url, show_dots=True, browser=browser) as helper:
         trigger_command(helper.driver, Command.SHOW_DOTS)
-        confirm("You should see dots now near SL group, U group, Representation theory")
+        confirm("You should see dots near special linear group, Unitary group, Transpose")
 
 
 @uses_x
@@ -353,8 +358,12 @@ def test_new_background_tab(tmp_path, browser):
 @uses_x
 @browsers(FF, CH)
 def test_local_page(tmp_path, browser):
+    urls = {
+        'file:///usr/share/doc/python3/html/tutorial/index.html',
+        'file:///usr/share/doc/python3/html/reference/index.html',
+    }
     url = "file:///usr/share/doc/python3/html/index.html"
-    with _test_helper(tmp_path, index_hypothesis, url, browser=browser) as helper:
+    with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
         confirm('Icon should not be black (TODO more comprehensive test maybe?)')
 
 if __name__ == '__main__':
