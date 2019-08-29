@@ -131,7 +131,7 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
 
 
 def trigger_hotkey(hotkey):
-    print("sending hotkey!")
+    print(f"sending hotkey! {hotkey}")
     import pyautogui # type: ignore
     pyautogui.hotkey(*hotkey)
 
@@ -261,7 +261,6 @@ def test_visits(tmp_path, browser):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
-        confirm('carry on?')
         trigger_command(helper.driver, Command.ACTIVATE)
         confirm('you should see hypothesis contexts')
 
@@ -295,11 +294,14 @@ def test_show_dots(tmp_path, browser):
 
 
 @uses_x
-def test_search(tmp_path):
+@pytest.mark.parametrize("browser", [B.FF, B.CH])
+def test_search(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_local_chrome, test_url) as helper:
+    with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:
         trigger_command(helper.driver, Command.SEARCH)
-        confirm("You shoud see chrome visits now; with time spent")
+        # TODO actually search something?
+        # TODO use current domain as deafult? or 'parent' url?
+        confirm("You shoud see search prompt now, with focus on search field")
 
 
 @uses_x
