@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import check_call
-from typing import Set
+from typing import Set, Dict, Optional
 
 from indexer_test import populate_db
 
@@ -49,16 +49,21 @@ def _get_stuff(outdir: Path):
     return engine, binder, table
 
 
-def index_urls(urls: Set[str]):
+def index_urls(urls: Dict[str, Optional[str]]):
     def idx(tdir: Path):
         cfg = tdir / 'test_config.py'
         cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
 from wereyouhere.common import Indexer, PreVisit, Loc
-from datetime import datetime
+from datetime import datetime, timedelta
 indexer = Indexer(
-    lambda: [PreVisit(url=url, dt=datetime.min, locator=Loc.make('adhoc')) for url in {urls}],
+    lambda: [PreVisit(
+        url=url,
+        dt=datetime.min + timedelta(days=5000),
+        locator=Loc.make('adhoc'),
+        context=ctx,
+    ) for url, ctx in {urls}.items()],
     src='adhoc',
 )
 

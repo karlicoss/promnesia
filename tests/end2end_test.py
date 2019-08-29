@@ -320,9 +320,9 @@ def test_chrome_visits(tmp_path, browser):
 @browsers(FF, CH)
 def test_show_dots(tmp_path, browser):
     visited = {
-        'https://en.wikipedia.org/wiki/Special_linear_group',
-        'http://en.wikipedia.org/wiki/Unitary_group',
-        'en.wikipedia.org/wiki/Transpose',
+        'https://en.wikipedia.org/wiki/Special_linear_group': None,
+        'http://en.wikipedia.org/wiki/Unitary_group'        : None,
+        'en.wikipedia.org/wiki/Transpose'                   : None,
     }
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
     with _test_helper(tmp_path, index_urls(visited), test_url, show_dots=True, browser=browser) as helper:
@@ -358,13 +358,21 @@ def test_new_background_tab(tmp_path, browser):
 @uses_x
 @browsers(FF, CH)
 def test_local_page(tmp_path, browser):
+    tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
     urls = {
-        'file:///usr/share/doc/python3/html/tutorial/index.html',
-        'file:///usr/share/doc/python3/html/reference/index.html',
+         tutorial                                                : 'TODO read this',
+        'file:///usr/share/doc/python3/html/reference/index.html': None,
     }
     url = "file:///usr/share/doc/python3/html/index.html"
     with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
-        confirm('Icon should not be black (TODO more comprehensive test maybe?)')
+        confirm('grey icon')
+        helper.driver.get(tutorial)
+        confirm('green icon. ACTIVATE SIDEBAR!. It should open sidebar with one visit')
+        helper.driver.back()
+        # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
+        confirm('grey icon, should be no sidebar')
+        helper.driver.forward()
+        confirm('green icon, sidebar visible')
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
