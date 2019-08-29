@@ -22,15 +22,28 @@ from server_test import wserver
 from firefox_helper import open_extension_page
 
 
-class Browser:
-    FF = 'firefox'
-    CH = 'chrome'
-B = Browser
+class Browser(NamedTuple):
+    name: str
+    headless: bool
+
+    def skip_ci_x(self):
+        import os
+        if 'CI' in os.environ and not self.headless:
+            pytest.skip("Only can't use headless browser on CI")
+
+
+FF  = Browser('firefox', headless=False)
+CH  = Browser('chrome' , headless=False)
+FFH = Browser('firefox', headless=True)
+# sadly headless chrome doesn't support extensions..
+# https://stackoverflow.com/a/45372648/706389
+# there is some workaround, but it's somewhat tricky...
+# https://stackoverflow.com/a/46475980/706389
+
 
 def get_addon_path(browser: str) -> Path:
     # TODO compile first?
     addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / browser).absolute()
-    # TODO assert manifest or smth?
     assert addon_path.exists()
     assert (addon_path / 'manifest.json').exists()
     return addon_path
@@ -61,12 +74,12 @@ def get_hotkey(driver, cmd: str) -> str:
     return cmd_map[cmd].split('+')
 
 
-def _get_webdriver(tdir: Path, browser: str, headless: bool):
-    addon = get_addon_path(browser=browser)
-    if browser == B.FF:
+def _get_webdriver(tdir: Path, browser: Browser):
+    addon = get_addon_path(browser=browser.name)
+    if browser.name == 'firefox':
         profile = webdriver.FirefoxProfile(str(tdir))
         options = webdriver.FirefoxOptions()
-        options.headless = headless
+        options.headless = browser.headless
         # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
         driver = webdriver.Firefox(profile, options=options)
 
@@ -74,14 +87,14 @@ def _get_webdriver(tdir: Path, browser: str, headless: bool):
         # TODO how to pass it here properly?
 
         driver.install_addon(str(addon), temporary=True)
-    elif browser == B.CH:
+    elif browser.name == 'chrome':
         # TODO ugh. very hacky...
         ex = tdir / 'extension.zip'
         files = [x.name for x in addon.iterdir()]
         check_call(['apack', '-q', str(ex), *files], cwd=addon)
         # looks like chrome uses temporary dir for data anyway
         options = webdriver.ChromeOptions()
-        options.headless = headless
+        options.headless = browser.headless
         options.add_extension(ex)
         driver = webdriver.Chrome(options=options)
     else:
@@ -91,10 +104,10 @@ def _get_webdriver(tdir: Path, browser: str, headless: bool):
 
 # TODO copy paste from grasp
 @contextmanager
-def get_webdriver(browser: str, headless: bool):
+def get_webdriver(browser: Browser):
     with TemporaryDirectory() as td:
         tdir = Path(td)
-        driver = _get_webdriver(tdir, browser=browser, headless=headless)
+        driver = _get_webdriver(tdir, browser=browser)
         try:
             yield driver
         finally:
@@ -153,12 +166,12 @@ def confirm(what: str):
 
 
 @contextmanager
-def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browser: str=B.FF, headless: bool=False):
+def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browser: Browser=FFH):
     tdir = Path(tmp_path)
 
     indexer(tdir)
     config = tdir / 'test_config.py'
-    with wserver(config=config) as srv, get_webdriver(browser=browser, headless=headless) as driver:
+    with wserver(config=config) as srv, get_webdriver(browser=browser) as driver:
         port = srv.port
         configure_extension(driver, port=port, show_dots=show_dots)
         sleep(0.5)
@@ -175,28 +188,44 @@ class Command:
 # TODO assert this against manifest?
 
 
-@pytest.mark.parametrize("browser", [B.CH, B.FF])
+def browsers(*br):
+    from functools import wraps
+    def dec(f):
+        @pytest.mark.parametrize('browser', br, ids=lambda b: b.name + ('_headless' if b.headless else ''))
+        @wraps(f)
+        def ff(*args, **kwargs):
+            return f(*args, **kwargs)
+        return ff
+    return dec
+
+
+@browsers(FFH, CH)
 def test_installs(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=True):
+    browser.skip_ci_x()
+
+    with get_webdriver(browser=browser):
         # just shouldn't crash
         pass
 
 
-# TODO detect if uses X from get_webdriver fixture?
-@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+@browsers(FFH, CH)
 def test_settings(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=True) as driver:
+    browser.skip_ci_x()
+
+    # TODO fixture for driver?
+    with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', show_dots=False)
-        # just shouldn't crash
         driver.get('about:blank')
         open_extension_page(driver, page='options_page.html')
         hh = driver.find_element_by_id('host_id')
         assert hh.get_attribute('value') == 'http://localhost:12345'
 
 
-@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+@browsers(FFH, CH)
 def test_backend_status(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=True) as driver:
+    browser.skip_ci_x()
+
+    with get_webdriver(browser=browser) as driver:
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
         set_host(driver=driver, host='https://nosuchhost.com', port='1234')
@@ -216,27 +245,28 @@ def test_backend_status(tmp_path, browser):
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+@browsers(FF, CH)
 def test_blacklist_custom(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=False) as driver:
+    # TODO make confirm a fixture? so we can automatically skip them on ci
+    with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
         driver.get('http://stackoverflow.com')
         confirm('page should be blacklisted (black icon)')
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF]) # TODO chrome too
+@browsers(FF, CH)
 def test_blacklist_builtin(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=False) as driver:
+    with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://www.hsbc.co.uk/mortgages/')
         confirm('page should be blacklisted (black icon)')
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF, B.CH])
+@browsers(FF, CH)
 def test_add_to_blacklist(tmp_path, browser):
-    with get_webdriver(browser=browser, headless=False) as driver:
+    with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://example.com')
         chain = webdriver.ActionChains(driver)
@@ -256,7 +286,7 @@ def test_add_to_blacklist(tmp_path, browser):
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF, B.CH])
+@browsers(FF, CH)
 def test_visits(tmp_path, browser):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
@@ -266,9 +296,10 @@ def test_visits(tmp_path, browser):
 
 
 @uses_x
-def test_around(tmp_path):
+@browsers(FF, CH)
+def test_around(tmp_path, browser):
     test_url = "about:blank"
-    with _test_helper(tmp_path, index_hypothesis, test_url) as h:
+    with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
         ts = int(datetime.strptime("2017-05-22T10:59:00.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
         h.open_page(f'search.html?timestamp={ts}')
         confirm('you should see search results, "anthrocidal" should be highlighted red')
@@ -276,16 +307,17 @@ def test_around(tmp_path):
 
 # TODO skip if not my hostname
 @uses_x
-def test_chrome_visits(tmp_path):
+@browsers(FF, CH)
+def test_chrome_visits(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_local_chrome, test_url) as helper:
+    with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:
         trigger_command(helper.driver, Command.ACTIVATE)
         confirm("You shoud see chrome visits now; with time spent")
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF, B.CH])
+@browsers(FF, CH)
 def test_show_dots(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
     with _test_helper(tmp_path, index_local_chrome, test_url, show_dots=True, browser=browser) as helper:
@@ -294,7 +326,7 @@ def test_show_dots(tmp_path, browser):
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF, B.CH])
+@browsers(FF, CH)
 def test_search(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:
@@ -305,11 +337,12 @@ def test_search(tmp_path, browser):
 
 
 @uses_x
-def test_new_background_tab(tmp_path):
+@browsers(FF, CH)
+def test_new_background_tab(tmp_path, browser):
     start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
-    with _test_helper(tmp_path, index_hypothesis, start_url) as helper:
+    with _test_helper(tmp_path, index_hypothesis, start_url, browser=browser) as helper:
         confirm('you should see notification about contexts')
         helper.driver.find_element(By.XPATH, '//div[@class="logo"]/a').send_keys(Keys.CONTROL + Keys.ENTER)
         confirm('you should not see any new notifications')
@@ -318,7 +351,7 @@ def test_new_background_tab(tmp_path):
 
 
 @uses_x
-@pytest.mark.parametrize("browser", [B.FF, B.CH])
+@browsers(FF, CH)
 def test_local_page(tmp_path, browser):
     url = "file:///usr/share/doc/python3/html/index.html"
     with _test_helper(tmp_path, index_hypothesis, url, browser=browser) as helper:
