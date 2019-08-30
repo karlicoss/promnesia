@@ -120,6 +120,13 @@ def set_host(*, driver, host: str, port: str):
     ep.send_keys(f'{host}:{port}')
 
 
+def save_settings(driver):
+    se = driver.find_element_by_id('save_id')
+    se.click()
+
+    driver.switch_to.alert.accept()
+
+
 def configure_extension(driver, *, host: str='http://localhost', port: str, show_dots: bool=True, blacklist=()):
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
@@ -137,10 +144,7 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
     bl = driver.find_element_by_id('blacklist_id')
     bl.send_keys('\n'.join(blacklist))
 
-    se = driver.find_element_by_id('save_id')
-    se.click()
-
-    driver.switch_to.alert.accept()
+    save_settings(driver)
 
 
 def trigger_hotkey(hotkey):
@@ -199,6 +203,9 @@ def browsers(*br):
     return dec
 
 
+PYTHON_DOC_URL = 'file:///usr/share/doc/python3/html/index.html'
+
+
 @browsers(FFH, CH)
 def test_installs(tmp_path, browser):
     browser.skip_ci_x()
@@ -242,6 +249,32 @@ def test_backend_status(tmp_path, browser):
         driver.switch_to.alert.accept()
 
         # TODO implement positive check??
+
+@browsers(FF, CH)
+def test_sidebar_bottom(browser):
+    browser.skip_ci_x()
+
+    with get_webdriver(browser=browser) as driver:
+        open_extension_page(driver, page='options_page.html')
+        sleep(1) # ugh. for some reason pause here seems necessary..
+
+        area = driver.find_element_by_xpath('//*[@id="position_css_id"]//textarea')
+        # for some reason area.clear() caused
+        # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
+        area.send_keys([Keys.DELETE] * 500)
+        area.send_keys("""
+#wereyouhere-sidebar {
+    left: 0px;
+    width: 100%;
+    bottom: 0px;
+    height: 20%;
+}""")
+        save_settings(driver)
+
+        driver.get(PYTHON_DOC_URL)
+
+        trigger_command(driver, Command.ACTIVATE)
+        confirm("You should see sidebar below")
 
 
 @uses_x
@@ -363,7 +396,7 @@ def test_local_page(tmp_path, browser):
          tutorial                                                : 'TODO read this',
         'file:///usr/share/doc/python3/html/reference/index.html': None,
     }
-    url = "file:///usr/share/doc/python3/html/index.html"
+    url = PYTHON_DOC_URL
     with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
         confirm('grey icon')
         helper.driver.get(tutorial)

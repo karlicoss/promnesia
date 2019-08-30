@@ -30,8 +30,12 @@ function default_options(): Options {
         tag_map: {},
 
         // TODO FIXME do something if value is invalid?..
+        // TODO make it literate from test?
         position_css: `
-/* you might want to change these, e.g. to reposition the sidebar */
+/* Change these if you want to reposition the sidebar
+ * E.g. to display on bottom, use
+ * #wereyouhere-sidebar { left: 0px; width: 100%; bottom: 0px; height: 20%; }
+ */
 #wereyouhere-sidebar {
     right: 0px;
     width: 25%;
