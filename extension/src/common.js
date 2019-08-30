@@ -11,7 +11,7 @@ export type VisitsMap = {[Url]: Visits};
 export type Dt = Date;
 
 export function unwrap<T>(x: ?T): T {
-    if (!x) {
+    if (x == null) {
         throw "undefined or null!";
     }
     return x;

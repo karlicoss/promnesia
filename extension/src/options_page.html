@@ -47,24 +47,18 @@
         </div>
     </fieldset>
 
+    <!-- TODO hmm. iframe css can't be applied from outside; so we have to use two separate CSS settings.. -->
+    <!-- could be a bit confusing for user -->
     <fieldset>
-        <legend>Style</legend>
-
-        <table>
-            <tr>
-                <td><label for="width_id">Sidebar width (px or %)</label></td>
-                <td><input id="width_id"></td>
-            </tr>
-        </table>
+        <legend>Sidebar position (CSS)</legend>
+        <div id="position_css_id"></div>
+    </fieldset>
 
 
-        <div>
-            <label>
-                Custom CSS:
-                <textarea rows="10" id="extra_css_id"></textarea>
-            </label>
-        </div>
-
+    <!-- TODO give some quick help on using CSS, some examples too? -->
+    <fieldset>
+        <legend>Sidebar style (CSS)</legend>
+        <div id="extra_css_id"></div>
     </fieldset>
 
     <div>

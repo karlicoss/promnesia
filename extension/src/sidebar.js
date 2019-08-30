@@ -105,21 +105,40 @@ class Sidebar {
 
     async show() {
         const frame = await this.ensureFrame();
-
         // TODO FIXME when should we bind data?
-        const original_padding = this.body.style.paddingRight;
-        this.body.setAttribute('original_padding', original_padding);
-        this.body.style.paddingRight = this.opts.sidebar_width;
+
+        // TODO a bit hacky..
+        // TODO would be nicer to keep percents...
+        const sidebar_style = window.getComputedStyle(document.getElementById(SIDEBAR_ID));
+        for (let [dim, pad] of [
+            ['width' , 'padding-right' ],
+            // TODO FIXME figure out how to support other options properly...
+            // TODO I guess I might need to carefully looks at positions values etc..
+            // ['width' , 'padding-left'  ],
+            // ['height', 'padding-top'   ],
+            // ['height', 'padding-bottom'],
+        ]) {
+            this.body.setAttribute('original_' + pad, this.body.style.getPropertyValue(pad));
+            //  TODO handle undefined in sidebar_style carefully
+            this.body.style.setProperty(pad, sidebar_style.getPropertyValue(dim));
+        }
+
         frame.style.display = 'block';
     }
 
     async hide() {
         const frame = await this.ensureFrame();
 
-        // const original_padding = unwrap(this.body.getAttribute('original_padding'));
-        // TODO FIXME why that doesn't work??
-        const original_padding = '';
-        this.body.style.paddingRight = original_padding;
+        for (let [dim, pad] of [
+            ['width' , 'padding-right' ],
+            // ['width' , 'padding-left'  ],
+            // ['height', 'padding-top'   ],
+            // ['height', 'padding-bottom'],
+        ]) {
+            const original = unwrap(this.body.getAttribute('original_' + pad));
+            this.body.style.setProperty(pad, original);
+        }
+
         frame.style.display = 'none';
     }
 

@@ -14,7 +14,7 @@ export type Options = {
     blacklist: string;
     tag_map: TagMap;
 
-    sidebar_width: string;
+    position_css: string;
     extra_css: string;
 
 }
@@ -30,8 +30,26 @@ function default_options(): Options {
         tag_map: {},
 
         // TODO FIXME do something if value is invalid?..
-        sidebar_width: '25%',
-        extra_css: "", // TODO add some docs on cofiguring it...
+        position_css: `
+/* you might want to change these, e.g. to reposition the sidebar */
+#wereyouhere-sidebar {
+    right: 0px;
+    width: 25%;
+
+    top: 0px;
+    height: 100%;
+
+    background: rgba(236, 236, 236, 0.4) none repeat scroll 0% 0%;
+}
+`.trim(),
+
+        // TODO add some docs on configuring it...
+        // TODO set it from sidebar.css?
+        extra_css   : `
+.tag {
+    color: orange;
+}
+`.trim(),
     };
 }
 

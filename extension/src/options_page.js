@@ -20,6 +20,10 @@ function getInputElement(element_id: string): HTMLInputElement {
     return ((document.getElementById(element_id): any): HTMLInputElement);
 }
 
+function getElement(element_id: string): HTMLElement {
+    return ((document.getElementById(element_id): any): HTMLElement);
+}
+
 function getHost(): HTMLInputElement {
     return getInputElement('host_id');
 }
@@ -40,20 +44,27 @@ function getTagMap(): HTMLInputElement {
     return getInputElement('tag_map_id');
 }
 
-function getWidth(): HTMLInputElement {
-    return getInputElement('width_id');
+function getPositionCss(): HTMLElement {
+    return getElement('position_css_id');
 }
 
-function getExtraCss(): HTMLInputElement {
-    return getInputElement('extra_css_id');
+function getExtraCss(): HTMLElement {
+    return getElement('extra_css_id');
 }
 
 // TODO display it floating
 
-function getCssEditor() {
+function getExtraCssEditor() {
     // $FlowFixMe
-    return document.querySelector('.CodeMirror').CodeMirror;
+    return getExtraCss().querySelector('.CodeMirror').CodeMirror;
 }
+
+
+function getPositionCssEditor() {
+    // $FlowFixMe
+    return getPositionCss().querySelector('.CodeMirror').CodeMirror;
+}
+
 
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await get_options_async();
@@ -65,12 +76,16 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     // TODO tag map could be json?
     getTagMap().value    = JSON.stringify(opts.tag_map);
 
-    getWidth().value     = opts.sidebar_width;
-    getExtraCss().value  = opts.extra_css;
-
-    CodeMirror.fromTextArea(getExtraCss(), {
-        mode:  'css',
+    CodeMirror(getPositionCss(), {
+        mode       : 'css',
         lineNumbers: true,
+        value      : opts.position_css,
+    });
+
+    CodeMirror(getExtraCss(), {
+        mode       :  'css',
+        lineNumbers: true,
+        value      : opts.extra_css,
     });
 }));
 
@@ -107,8 +122,8 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         blacklist : getBlackList().value,
         tag_map   : JSON.parse(getTagMap().value),
 
-        sidebar_width: getWidth().value,
-        extra_css : getCssEditor().getValue(),
+        position_css : getPositionCssEditor().getValue(),
+        extra_css    : getExtraCssEditor().getValue(),
     };
     await setOptions(opts);
     alert("Saved!");

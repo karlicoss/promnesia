@@ -219,6 +219,7 @@ async function updateState (tab: chrome$Tab) {
     }
     // chrome.pageAction.show(tabId);
 
+    const opts = await get_options_async();
     if (visits instanceof Visits) {
             // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
             const locs = visits.contexts().map(l => l == null ? null : l.title);
@@ -230,6 +231,7 @@ async function updateState (tab: chrome$Tab) {
             file: 'sidebar.js',
         });
         await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
+        await chromeTabsInsertCSS(tabId, {code: opts.position_css});
         await chromeTabsExecuteScriptAsync(tabId, {
             code: `bindSidebarData(${JSON.stringify(visits)})`
         });
