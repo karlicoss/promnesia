@@ -1,0 +1,15 @@
+/* you might want to consider these, e.g. to reposition the sidebar */
+#wereyouhere-sidebar {
+    right: 0px;
+    width: 25%;
+
+    top: 0px;
+    height: 100%;
+
+    background: rgba(236, 236, 236, 0.4) none repeat scroll 0% 0%;
+}
+
+#wereyouhere-sidebar {
+    position: fixed;
+    z-index: 9999;
+}

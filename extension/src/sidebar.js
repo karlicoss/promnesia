@@ -138,13 +138,6 @@ class Sidebar {
         sidebar.id = SIDEBAR_ID;
 
         for (let [key, value] of Object.entries({
-            'position'  : 'fixed',
-            'right'     : '0px',
-            'top'       : '0px',
-            'z-index'   : '9999',
-            'width'     : this.opts.sidebar_width,
-            'height'    : '100%',
-            'background': 'rgba(236, 236, 236, 0.4)',
             'display'   : 'none', // TODO reuse hide() method?
         })) {
             // $FlowFixMe

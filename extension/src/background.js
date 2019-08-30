@@ -229,6 +229,7 @@ async function updateState (tab: chrome$Tab) {
         await chromeTabsExecuteScriptAsync(tabId, {
             file: 'sidebar.js',
         });
+        await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
         await chromeTabsExecuteScriptAsync(tabId, {
             code: `bindSidebarData(${JSON.stringify(visits)})`
         });
