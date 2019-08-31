@@ -42,7 +42,17 @@ def run(tdir: Path):
         '--port', '17777', # TODO get free port?
     )
 
-    time.sleep(3)
+    response = None
+    for x in range(10):
+        time.sleep(1)
+        try:
+            response = json.loads(check_output([
+                'curl', 'localhost:17777/status', '--data', '',
+            ]).decode('utf8'))
+            break
+        except Exception as e:
+            print(str(e))
+    assert response is not None
 
     response = json.loads(check_output([
         'curl', 'localhost:17777/status', '--data', '',
@@ -56,11 +66,9 @@ def run(tdir: Path):
 
     time.sleep(1)
     check_call([
-        'systemctl', '--user', 'is-active', 'wereyouhere.service',
+        'systemctl', '--no-pager', '--user', 'is-active', 'wereyouhere-test.service',
     ])
 
-
-    # TODO query it with curl
 
 def main():
     with TemporaryDirectory() as tdir:
