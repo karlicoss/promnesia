@@ -32,13 +32,12 @@ def setup(args):
 
     server_bin = (Path(__file__).parent / 'run').absolute()
 
-    extra_args = f'serve --port {args.port}'
+    extra_args = f'serve --config {args.config} --port {args.port}'
 
-    with out.open('w') as fo:
-        fo.write(SYSTEMD_CONFIG.format(
-            server=server_bin,
-            extra_args=extra_args,
-        ))
+    out.write_text(SYSTEMD_CONFIG.format(
+        server=server_bin,
+        extra_args=extra_args,
+    ))
 
     try:
         systemd('stop' , unit_name, method=run) # ignore errors here if it wasn't running in the first place
