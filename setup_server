@@ -14,7 +14,7 @@ Description=Wereyouhere extension server conterpart
 WantedBy=default.target
 
 [Service]
-ExecStart={server} {extra_args}
+ExecStart=/bin/bash -l -c '{server} $@' wereyouhere-server {extra_args}
 Type=simple
 Restart=always
 """
@@ -22,7 +22,7 @@ Restart=always
 
 def systemd(*args, method=check_call):
     method([
-        'systemctl', '--user', *args,
+        'systemctl', '--no-pager', '--user', *args,
     ])
 
 def setup(args):
@@ -34,6 +34,7 @@ def setup(args):
 
     extra_args = f'serve --config {args.config} --port {args.port}'
 
+    out.parent.mkdir(parents=True, exist_ok=True) # TODO not sure if there is a more standard way of ensuring
     out.write_text(SYSTEMD_CONFIG.format(
         server=server_bin,
         extra_args=extra_args,
