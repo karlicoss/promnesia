@@ -19,7 +19,7 @@ function get_or_default(obj, key, def) {
 const SIDEBAR_ID   = 'wereyouhere-sidebar';
 const CONTAINER_ID = 'wereyouhere-sidebar-container';
 
-const SIDEBAR_ACTIVE = 'wereyouhere-sidebar-active';
+const SIDEBAR_ACTIVE = 'wereyouhere';
 
 const doc = document;
 
@@ -130,13 +130,7 @@ class Sidebar {
         const sidebar = doc.createElement('iframe'); this.body.appendChild(sidebar);
         sidebar.src = '';
         sidebar.id = SIDEBAR_ID;
-
-        for (let [key, value] of Object.entries({
-            'display'   : 'none', // TODO reuse hide() method?
-        })) {
-            // $FlowFixMe
-            sidebar.style.setProperty(key, value);
-        }
+        sidebar.classList.add(SIDEBAR_ACTIVE);
 
 
         // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..

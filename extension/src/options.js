@@ -31,25 +31,21 @@ function default_options(): Options {
 
         // TODO FIXME do something if value is invalid?..
         // TODO make it literate from test?
+        // TODO hmm. not sure if I can get rid of :root thing without relying on JS?
         position_css: `
 /* Change these if you want to reposition the sidebar
- * E.g. to display on bottom, use
- * #wereyouhere-sidebar { left: 0; bottom: 0; height: 20%; } TODO fix in test
+ * E.g. to display on bottom, use :root { --bottom 1; --size: 25%; }
  */
-#wereyouhere-sidebar {
+.wereyouhere {
     --right: 1;
-    --size : 30%;
+    --size: 30%;
 
-    /*
-TODO move non repeat scroll to bundled?
-    */
-    background: rgba(236, 236, 236, 0.4) none repeat scroll 0% 0%;
+    background-color: rgba(236, 236, 236, 0.4);
 }
 `.trim(),
-        // TODO if height is not present assume 100%? I guess that's kinda reasonable...
+        // TODO not sure why that in background was necessary..  none repeat scroll 0% 0%;
 
         // TODO add some docs on configuring it...
-        // TODO set it from sidebar.css?
         extra_css   : `
 .tag {
     color: orange;

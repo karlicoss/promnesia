@@ -1,4 +1,4 @@
-#wereyouhere-sidebar {
+#wereyouhere-sidebar.wereyouhere {
     /* e.g. left should result in: left initial, right 0px, top 0px, bot 0px, height 100%, width 30%
        need to set irrelevant dimensions to 0px, otherwise it misbehaves
     */
@@ -24,8 +24,13 @@
 
     position: fixed;
     z-index: 9999;
+
+    display: none;
 }
 
-body.wereyouhere-sidebar-active {
-    padding-right: var(--size);
+body.wereyouhere {
+    padding-left  : calc(var(--left)   * var(--size));
+    padding-right : calc(var(--right)  * var(--size));
+    padding-top   : calc(var(--top)    * var(--size));
+    padding-bottom: calc(var(--bottom) * var(--size));
 }
