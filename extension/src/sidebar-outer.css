@@ -25,3 +25,7 @@
     position: fixed;
     z-index: 9999;
 }
+
+body.wereyouhere-sidebar-active {
+    padding-right: var(--size);
+}

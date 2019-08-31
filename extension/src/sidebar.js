@@ -19,6 +19,8 @@ function get_or_default(obj, key, def) {
 const SIDEBAR_ID   = 'wereyouhere-sidebar';
 const CONTAINER_ID = 'wereyouhere-sidebar-container';
 
+const SIDEBAR_ACTIVE = 'wereyouhere-sidebar-active';
+
 const doc = document;
 
 // TODO think about 'show dots' and 'search' icons -- maybe only show them for android?
@@ -105,40 +107,13 @@ class Sidebar {
 
     async show() {
         const frame = await this.ensureFrame();
-        // TODO FIXME when should we bind data?
-
-        // TODO a bit hacky..
-        // TODO would be nicer to keep percents...
-        const sidebar_style = window.getComputedStyle(document.getElementById(SIDEBAR_ID));
-        for (let [dim, pad] of [
-            ['width' , 'padding-right' ],
-            // TODO FIXME figure out how to support other options properly...
-            // TODO I guess I might need to carefully looks at positions values etc..
-            // ['width' , 'padding-left'  ],
-            // ['height', 'padding-top'   ],
-            // ['height', 'padding-bottom'],
-        ]) {
-            this.body.setAttribute('original_' + pad, this.body.style.getPropertyValue(pad));
-            //  TODO handle undefined in sidebar_style carefully
-            this.body.style.setProperty(pad, sidebar_style.getPropertyValue(dim));
-        }
-
+        this.body.classList.add(SIDEBAR_ACTIVE);
         frame.style.display = 'block';
     }
 
     async hide() {
         const frame = await this.ensureFrame();
-
-        for (let [dim, pad] of [
-            ['width' , 'padding-right' ],
-            // ['width' , 'padding-left'  ],
-            // ['height', 'padding-top'   ],
-            // ['height', 'padding-bottom'],
-        ]) {
-            const original = unwrap(this.body.getAttribute('original_' + pad));
-            this.body.style.setProperty(pad, original);
-        }
-
+        this.body.classList.remove(SIDEBAR_ACTIVE);
         frame.style.display = 'none';
     }
 
