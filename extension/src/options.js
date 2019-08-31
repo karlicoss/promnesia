@@ -34,18 +34,19 @@ function default_options(): Options {
         position_css: `
 /* Change these if you want to reposition the sidebar
  * E.g. to display on bottom, use
- * #wereyouhere-sidebar { left: 0px; width: 100%; bottom: 0px; height: 20%; }
+ * #wereyouhere-sidebar { left: 0; bottom: 0; height: 20%; } TODO fix in test
  */
 #wereyouhere-sidebar {
-    right: 0px;
-    width: 25%;
+    --right: 1;
+    --size : 30%;
 
-    top: 0px;
-    height: 100%;
-
+    /*
+TODO move non repeat scroll to bundled?
+    */
     background: rgba(236, 236, 236, 0.4) none repeat scroll 0% 0%;
 }
 `.trim(),
+        // TODO if height is not present assume 100%? I guess that's kinda reasonable...
 
         // TODO add some docs on configuring it...
         // TODO set it from sidebar.css?

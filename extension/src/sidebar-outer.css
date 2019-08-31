@@ -1,4 +1,27 @@
 #wereyouhere-sidebar {
+    /* e.g. left should result in: left initial, right 0px, top 0px, bot 0px, height 100%, width 30%
+       need to set irrelevant dimensions to 0px, otherwise it misbehaves
+    */
+
+    --is-v: var(--left, var(--right ));
+    --is-h: var(--top , var(--bottom));
+
+    --init-left  : var(--left  , var(--top , var(--bottom)));
+    --init-right : var(--right , var(--top , var(--bottom)));
+    --init-top   : var(--top   , var(--left, var(--right )));
+    --init-bottom: var(--bottom, var(--left, var(--right )));
+
+
+    left  : calc(var(--init-left  ) * 0px);
+    right : calc(var(--init-right ) * 0px);
+    top   : calc(var(--init-top   ) * 0px);
+    bottom: calc(var(--init-bottom) * 0px);
+
+    --whelper: calc(var(--is-v) * var(--size));
+    --hhelper: calc(var(--is-h) * var(--size));
+    width : var(--whelper, 100%);
+    height: var(--hhelper, 100%);
+
     position: fixed;
     z-index: 9999;
 }

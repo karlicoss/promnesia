@@ -264,10 +264,8 @@ def test_sidebar_bottom(browser):
         area.send_keys([Keys.DELETE] * 500)
         area.send_keys("""
 #wereyouhere-sidebar {
-    left: 0px;
-    width: 100%;
-    bottom: 0px;
-    height: 20%;
+    --left: 1;
+    --size: 20%;
 }""")
         save_settings(driver)
 
