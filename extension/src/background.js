@@ -452,8 +452,8 @@ async function handleOpenSearch() {
     chrome.tabs.create({ url: "search.html" });
 }
 
-// $FlowFixMe
-chrome.runtime.onMessage.addListener(async (msg) => { // TODO not sure if should defensify here?
+
+const onMessageCallback = async (msg) => { // TODO not sure if should defensify here?
     const method = msg.method;
     if (method == Methods.GET_SIDEBAR_VISITS) {
         const atab = await getActiveTab();
@@ -487,7 +487,7 @@ chrome.runtime.onMessage.addListener(async (msg) => { // TODO not sure if should
         await handleOpenSearch();
     }
     return false;
-});
+};
 
 
 /*
@@ -518,8 +518,7 @@ for (const action of ACTIONS) {
 }
 
 
-// $FlowFixMe // err, complains at Promise but nevertheless works
-chrome.commands.onCommand.addListener(defensify(async cmd => {
+const onCommandCallback = defensify(async cmd => {
     // ok apparently background page shouldn't communicate with itself via messages. wonder how could it work for me before..
     // https://stackoverflow.com/a/35858654/706389
     if (cmd === 'show_dots') {
@@ -528,9 +527,9 @@ chrome.commands.onCommand.addListener(defensify(async cmd => {
         await handleOpenSearch();
     } else {
         // TODO throw?
-        console.log.error("unexpected command %s", cmd);
+        lerror("unexpected command %s", cmd);
     }
-}));
+});
 
 
 async function blackListDomain(e): Promise<void> {
@@ -547,27 +546,52 @@ async function blackListDomain(e): Promise<void> {
 
 const BLACKLIST_DOMAIN_MENU = 'blacklist-domain';
 
-chrome.contextMenus.create({
-    'id'      : BLACKLIST_DOMAIN_MENU,
-    'title'   : "Blacklist domain",
-});
 
 // looks like onClicked is more portable...
-// $FlowFixMe // err, complains at Promise but nevertheless works
-chrome.contextMenus.onClicked.addListener(defensify(async (info) => {
+const onMenuClickedCallback = defensify(async (info) => {
     if (info.menuItemId === BLACKLIST_DOMAIN_MENU) {
         await blackListDomain(info);
     }
-}));
+});
 
-// TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
-// chrome.contextMenus.create({
-//     "title"   : "Blacklist page",
-//     // $FlowFixMe
-//     "onclick" : blackListPage,
-// });
 
-// chrome.contextMenus.create({
-//     "title"   : "Whitelist page",
-//     "onclick" : clickHandler,
-// });
+// TODO shit. https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs still don't understand why's that happening
+getActiveTab().then(tab => {
+    // TODO FIXME null tab?
+
+    const aurl = tab.url;
+
+    if (aurl != null && isSpecialProtocol(aurl)) {
+        lwarn("Suppressing diplicate background page %s", aurl);
+        return;
+    }
+    linfo("Registering background page callbacks %s", aurl);
+
+    // $FlowFixMe
+    chrome.runtime.onMessage.addListener(onMessageCallback);
+
+    // $FlowFixMe // err, complains at Promise but nevertheless works
+    chrome.commands.onCommand.addListener(onCommandCallback);
+
+    // TODO on opening search, this errors that menu already exists
+    chrome.contextMenus.create({
+        'id'      : BLACKLIST_DOMAIN_MENU,
+        'title'   : "Blacklist domain",
+    });
+    // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
+    // chrome.contextMenus.create({
+    //     "title"   : "Blacklist page",
+    //     // $FlowFixMe
+    //     "onclick" : blackListPage,
+    // });
+
+    // chrome.contextMenus.create({
+    //     "title"   : "Whitelist page",
+    //     "onclick" : clickHandler,
+    // });
+
+    // $FlowFixMe // err, complains at Promise but nevertheless works
+    chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
+
+    // TODO do it for actions as well?
+});

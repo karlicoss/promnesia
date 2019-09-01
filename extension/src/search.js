@@ -63,6 +63,7 @@ async function _doSearch(
         visits.sort((f, s) => (f.context === null ? 1 : 0) - (s.context === null ? 1 : 0));
     }
 
+    // TODO res is undefined??
     const res = getResultsContainer();
     const cc = doc.createElement('div'); res.appendChild(cc);
     cc.classList.add('summary');
