@@ -10,14 +10,14 @@ import sys
 from subprocess import check_call, check_output
 import logging
 
-STATE_DIR = expanduser("~/.cache/wereyouhere/")
+STATE_DIR = expanduser("~/.cache/promnesia/")
 STATE_FILE = join(STATE_DIR, 'state.json')
 STATE_FILE_OLD = join(STATE_DIR, 'state.old.json')
 
 # TODO use atomicwrite?
 
 def get_logger():
-    return logging.getLogger('wereyouhere-changes')
+    return logging.getLogger('promnesia-changes')
 
 
 def load_state():
@@ -65,7 +65,7 @@ def print_diff():
 
 def load_urls():
     # TODO needs path to links db.... so it should use config?
-    with open('/L/data/wereyouhere/linksdb.json', 'r') as fo:
+    with open('/L/data/promnesia/linksdb.json', 'r') as fo:
         return json.load(fo)
 
 
@@ -103,7 +103,7 @@ def report_all():
     logger = get_logger()
 
     from kython.kgit import RepoHandle
-    repo = RepoHandle('/L/Dropbox/tmp/wereyouhere')
+    repo = RepoHandle('/L/Dropbox/tmp/promnesia')
 
     prev = None
     revisions = repo.revisions()

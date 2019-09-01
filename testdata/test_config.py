@@ -2,17 +2,17 @@ import pytz
 from pathlib import Path
 
 # TODO FIXME need to update it
-DB_PATH = '/L/data/wereyouhere/visits.sqlite'
+DB_PATH = '/L/data/promnesia/visits.sqlite'
 
 FALLBACK_TIMEZONE = pytz.timezone('Europe/London')
 
 FILTERS = [] # type: ignore
 
 
-from wereyouhere.common import Indexer as I
-from wereyouhere.indexers.plaintext import extract_from_path
-import wereyouhere.indexers.custom as custom # type: ignore
-import wereyouhere.indexers.takeout as takeout # type: ignore
+from promnesia.common import Indexer as I
+from promnesia.indexers.plaintext import extract_from_path
+import promnesia.indexers.custom as custom # type: ignore
+import promnesia.indexers.takeout as takeout # type: ignore
 
 class Indexers:
     TAKEOUT = I(

@@ -37,7 +37,7 @@ def run(tdir: Path):
     # TODO uninstall too?
     run_bin(
         'setup_server',
-        '--unit-name', 'wereyouhere-test.service',
+        '--unit-name', 'promnesia-test.service',
         '--config', cfg_file,
         '--port', '17777', # TODO get free port?
     )
@@ -66,7 +66,7 @@ def run(tdir: Path):
 
     time.sleep(1)
     check_call([
-        'systemctl', '--no-pager', '--user', 'is-active', 'wereyouhere-test.service',
+        'systemctl', '--no-pager', '--user', 'is-active', 'promnesia-test.service',
     ])
 
 

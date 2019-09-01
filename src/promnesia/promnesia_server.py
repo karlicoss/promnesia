@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-__package__ = 'wereyouhere' # ugh. hacky way to make hug work properly...
+__package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
 import argparse
 import os
@@ -35,7 +35,7 @@ _ENV_CONFIG = 'WEREYOUHERE_CONFIG'
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
 def get_logger():
-    logger = logging.getLogger('wereyouhere')
+    logger = logging.getLogger('promnesia')
     setup_logzero(logger, level=logging.DEBUG)
     return logger
 
@@ -249,7 +249,7 @@ def run(port: str, config: Path, quiet: bool):
     # # not sure if there is a simpler way to communicate with the server...
     env[_ENV_CONFIG] = str(config)
     args = [
-        'wereyouhere-server',
+        'promnesia-server',
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,
@@ -270,7 +270,7 @@ def setup_parser(p):
 def main():
     # setup_logzero(logging.getLogger('sqlalchemy.engine'), level=logging.DEBUG)
     setup_logzero(get_logger(), level=logging.DEBUG)
-    p = argparse.ArgumentParser('wereyouhere server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    p = argparse.ArgumentParser('promnesia server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()
     run(port=args.port, config=args.config, quiet=args.quiet)

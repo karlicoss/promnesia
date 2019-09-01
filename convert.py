@@ -15,7 +15,7 @@ class Visit(NamedTuple):
     # TODO locator?
 
 
-p = Path('/L/data/wereyouhere/intermediate/20190509090714.json')
+p = Path('/L/data/promnesia/intermediate/20190509090714.json')
 
 
 import ijson # type: ignore

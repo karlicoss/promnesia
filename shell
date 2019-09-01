@@ -1,8 +1,0 @@
-#!/bin/bash
-
-
-ipython3 -i -c """
-from wereyouhere.generator import *
-from wereyouhere.generator.plaintext import extract_from_path
-from wereyouhere.generator.custom import get_custom_history 
-"""

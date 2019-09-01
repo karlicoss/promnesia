@@ -11,7 +11,7 @@ jobs:
 
       # - restore_cache:
       #     keys:
-      #     - v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
+      #     - v1-dependencies-{{ checksum "promnesia/requirements.txt" }}-{{ checksum "promnesia/requirements-dev.txt" }}
       #     # fallback to using the latest cache if no exact match is found
       #     - v1-dependencies-
 
@@ -22,7 +22,7 @@ jobs:
       # - save_cache:
       #     paths:
       #       - ./venv
-      #     key: v1-dependencies-{{ checksum "wereyouhere/requirements.txt" }}-{{ checksum "wereyouhere/requirements-dev.txt" }}
+      #     key: v1-dependencies-{{ checksum "promnesia/requirements.txt" }}-{{ checksum "promnesia/requirements-dev.txt" }}
         
 
       - store_artifacts:

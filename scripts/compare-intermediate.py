@@ -18,7 +18,7 @@ from kython.canonify import canonify
 from cconfig import ignore, filtered
 
 def get_logger():
-    return logging.getLogger('wereyouhere-db-changes')
+    return logging.getLogger('promnesia-db-changes')
 
 # TODO return error depending on severity?
 

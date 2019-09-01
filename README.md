@@ -30,7 +30,7 @@ Some explanations:
   * I also have this link annotated via [Hypothesis](https://hypothes.is/)!
 
 # Configuring
-* generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m wereyouhere`
+* generator: TODO `cp config.py.example config.py`, edit config.py, run `python3 -m promnesia`
 then, see the comments in the `config.py` for more information on using various history sources.
 * extension: choose the generated JSON in the extension settings
 

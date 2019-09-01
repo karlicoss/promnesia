@@ -215,7 +215,7 @@ class History(Sized):
 @lru_cache(1)
 def get_tmpdir():
     import tempfile
-    tdir = tempfile.TemporaryDirectory(suffix="wereyouhere")
+    tdir = tempfile.TemporaryDirectory(suffix="promnesia")
     return tdir
 
 @lru_cache(1)

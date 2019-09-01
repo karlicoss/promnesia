@@ -15,8 +15,8 @@ from pytest import mark # type: ignore
 
 from common import skip_if_ci
 
-from wereyouhere.common import History, PreVisit
-from wereyouhere.common import Indexer
+from promnesia.common import History, PreVisit
+from promnesia.common import Indexer
 
 # TODO need to expire dbcache in tests..
 
@@ -29,7 +29,7 @@ def W(*args, **kwargs):
     return Indexer(*args, **kwargs)
 
 def history(*args, **kwargs):
-    from wereyouhere.common import previsits_to_history
+    from promnesia.common import previsits_to_history
     return previsits_to_history(*args, **kwargs, src='whatever')[0] # TODO meh
 
 from kython import import_file
@@ -51,7 +51,7 @@ def adhoc_config(tmp_path):
     cdir = tdir / 'cache'
     cdir.mkdir()
 
-    from wereyouhere import config
+    from promnesia import config
     class Cfg:
         CACHE_DIR = cdir
 
@@ -66,7 +66,7 @@ def test_takeout(adhoc_config, tmp_path):
     tdir = Path(tmp_path)
 
     test_takeout_path = "testdata/takeout"
-    import wereyouhere.indexers.takeout as tex
+    import promnesia.indexers.takeout as tex
     tex._get_cache_dir = lambda: tdir
 
     visits = history(W(tex.extract, test_takeout_path))
@@ -95,7 +95,7 @@ def test_with_error():
 
 def test_takeout_new_zip(adhoc_config):
     test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
-    import wereyouhere.indexers.takeout as tex
+    import promnesia.indexers.takeout as tex
     visits = history(lambda: tex.extract(test_takeout_path))
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
@@ -117,7 +117,7 @@ def test_takeout_new_zip(adhoc_config):
 # TODO run condition?? and flag to force all
 @skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_chrome(tmp_path):
-    from wereyouhere.indexers.browser import chrome
+    from promnesia.indexers.browser import chrome
     tdir = Path(tmp_path)
 
     path = tdir / 'history'
@@ -145,8 +145,8 @@ def test_firefox(tmp_path):
 
 
 def test_plaintext_path_extractor():
-    import wereyouhere.indexers.custom as custom_gen
-    from wereyouhere.indexers.plaintext import extract_from_path
+    import promnesia.indexers.custom as custom_gen
+    from promnesia.indexers.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
         extract_from_path('testdata/custom'),
@@ -163,8 +163,8 @@ def test_plaintext_path_extractor():
 
 # TODO perhaps it belongs to canonify?
 def test_normalise():
-    import wereyouhere.indexers.custom as custom_gen
-    from wereyouhere.indexers.plaintext import extract_from_path
+    import promnesia.indexers.custom as custom_gen
+    from promnesia.indexers.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
         extract_from_path('testdata/normalise'),
@@ -182,8 +182,8 @@ def test_normalise():
 
 
 def test_normalise_weird():
-    import wereyouhere.indexers.custom as custom_gen
-    from wereyouhere.indexers.plaintext import extract_from_path
+    import promnesia.indexers.custom as custom_gen
+    from promnesia.indexers.plaintext import extract_from_path
 
     visits = history(W(
         custom_gen.extract,
@@ -198,8 +198,8 @@ def test_normalise_weird():
 
 @skip("use a different way to specify filter other than class variable..")
 def test_filter():
-    import wereyouhere.indexers.custom as custom_gen
-    from wereyouhere.indexers.plaintext import extract_from_path
+    import promnesia.indexers.custom as custom_gen
+    from promnesia.indexers.plaintext import extract_from_path
 
     History.add_filter(r'some-weird-domain')
     hist = custom_gen.get_custom_history(
@@ -208,7 +208,7 @@ def test_filter():
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
-    import wereyouhere.indexers.custom as custom_gen
+    import promnesia.indexers.custom as custom_gen
 
     hist = history(W(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
@@ -219,7 +219,7 @@ def test_custom():
 
 
 
-TESTDATA_CHROME_HISTORY = "/L/data/wereyouhere/testdata/chrome-history"
+TESTDATA_CHROME_HISTORY = "/L/data/promnesia/testdata/chrome-history"
 
 def get_chrome_history_backup(td: str):
     copytree(TESTDATA_CHROME_HISTORY, join(td, 'backup'))
@@ -278,7 +278,7 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
-    import wereyouhere.indexers.chrome as chrome_ex
+    import promnesia.indexers.chrome as chrome_ex
 
     hist = history(W(chrome_ex.extract, mfile))
     assert len(hist) > 0

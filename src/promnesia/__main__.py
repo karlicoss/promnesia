@@ -70,7 +70,7 @@ def do_index(config_file: Path):
         config.reset()
 
 
-from .wereyouhere_server import setup_parser, run as do_serve
+from .promnesia_server import setup_parser, run as do_serve
 
 def main():
     from kython.klogging import setup_logzero

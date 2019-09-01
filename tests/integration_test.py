@@ -9,7 +9,7 @@ testdata = Path(__file__).absolute().parent.parent / 'testdata'
 
 
 def index(cfg: Path):
-    from wereyouhere.__main__ import do_index
+    from promnesia.__main__ import do_index
     do_index(cfg)
 
 
@@ -32,7 +32,7 @@ OUTPUT_DIR = '{tdir}'
 from sqlalchemy import create_engine, MetaData, exists # type: ignore
 from sqlalchemy import Column, Table # type: ignore
 from cachew import NTBinder
-from wereyouhere.common import DbVisit # TODO ugh. figure out pythonpath
+from promnesia.common import DbVisit # TODO ugh. figure out pythonpath
 
 
 def _get_stuff(outdir: Path):
@@ -55,7 +55,7 @@ def index_urls(urls: Dict[str, Optional[str]]):
         cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.common import Indexer, PreVisit, Loc
+from promnesia.common import Indexer, PreVisit, Loc
 from datetime import datetime, timedelta
 indexer = Indexer(
     lambda: [PreVisit(
@@ -78,8 +78,8 @@ def index_hypothesis(tdir: Path):
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.common import Indexer as I
-import wereyouhere.indexers.hypothesis as hypothesis
+from promnesia.common import Indexer as I
+import promnesia.indexers.hypothesis as hypothesis
 
 hyp_extractor = I(
     hypothesis.extract,
@@ -94,18 +94,18 @@ INDEXERS = [hyp_extractor]
 
 def index_local_chrome(tdir: Path):
     # TODO mm, would be good to keep that for proper end2end
-    # inp = Path('/L/data/wereyouhere/testdata/chrome-history/History') # TODO make it accessible to the repository
+    # inp = Path('/L/data/promnesia/testdata/chrome-history/History') # TODO make it accessible to the repository
     # merged = tdir / 'chrome-merged.sqlite'
     # populate_db.merge_from('chrome', from_=inp, to=merged)
 
-    merged = Path('/L/data/wereyouhere/testdata/chrome.sqlite')
+    merged = Path('/L/data/promnesia/testdata/chrome.sqlite')
 
     cfg = tdir / 'test_config.py'
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
-from wereyouhere.common import Indexer as I
-from wereyouhere.indexers.browser import chrome
+from promnesia.common import Indexer as I
+from promnesia.indexers.browser import chrome
 
 chrome_extractor = I(chrome, '{merged}', src='chrome')
 

@@ -14,7 +14,7 @@ if __name__ == "__main__":
     setup(
         use_pyscaffold=True,
         package_data={
-            'wereyouhere': [
+            'promnesia': [
                 'py.typed',
             ],
         },

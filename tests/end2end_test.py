@@ -281,7 +281,7 @@ def test_sidebar_bottom(browser):
         # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
         area.send_keys([Keys.DELETE] * 500)
         area.send_keys("""
-#wereyouhere-sidebar {
+#promnesia-sidebar {
     --bottom: 1;
     --size: 20%;
 }""")
@@ -426,7 +426,7 @@ def test_local_page(tmp_path, browser):
 
 def trigger_sidebar_search(driver):
     driver.switch_to.default_content()
-    driver.switch_to.frame('wereyouhere-sidebar')
+    driver.switch_to.frame('promnesia-sidebar')
     search_button = driver.find_element_by_xpath('//button[text()="Search"]')
     search_button.click()
 

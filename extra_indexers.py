@@ -2,7 +2,7 @@
 This file contains stuff that's I'm using but which would be hard to share with other people because of private data sources etc
 So this isn't worth moving in the main package but could be useful as a reference.
 """
-from wereyouhere.common import extract_urls, get_logger, PreVisit, Loc
+from promnesia.common import extract_urls, get_logger, PreVisit, Loc
 
 # ok, so it doesn't necessarily have everything in entities...
 # {

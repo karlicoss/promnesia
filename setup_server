@@ -4,17 +4,17 @@ import argparse
 from pathlib import Path
 from subprocess import check_call, run
 
-from wereyouhere.wereyouhere_server import setup_parser
+from promnesia.promnesia_server import setup_parser
 
 SYSTEMD_CONFIG = """
 [Unit]
-Description=Wereyouhere extension server conterpart
+Description=Promnesia browser extension backend
 
 [Install]
 WantedBy=default.target
 
 [Service]
-ExecStart=/bin/bash -l -c '{server} $@' wereyouhere-server {extra_args}
+ExecStart=/bin/bash -l -c '{server} $@' promnesia-server {extra_args}
 Type=simple
 Restart=always
 """
@@ -51,8 +51,8 @@ def setup(args):
         raise e
 
 def main():
-    p = argparse.ArgumentParser('wereyouhere server setup', formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=100)) # type: ignore
-    p.add_argument('--unit-name', type=str, default='wereyouhere.service', help='Systemd unit name')
+    p = argparse.ArgumentParser('promnesia server setup', formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=100)) # type: ignore
+    p.add_argument('--unit-name', type=str, default='promnesia.service', help='Systemd unit name')
     setup_parser(p)
     args = p.parse_args()
     setup(args)
