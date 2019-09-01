@@ -1,6 +1,6 @@
 {
   "name": "promnesia",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Recall what you already visited, why and in which context",
   "main": "dist/background.js",
   "scripts": {
