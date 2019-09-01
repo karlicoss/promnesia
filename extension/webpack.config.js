@@ -61,7 +61,7 @@ if (target.includes('mobile')) {
 
 const manifestExtra = {
     version: pkg.version,
-    name: release ? "Were you here?" : "Were you here? (dev)",
+    name: release ? "Promnesia" : "Promnesia (dev)",
     commands: commandsExtra,
     browser_action: action,
 };
