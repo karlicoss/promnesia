@@ -557,7 +557,13 @@ const onMenuClickedCallback = defensify(async (info) => {
 });
 
 
-// TODO shit. https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs still don't understand why's that happening
+/*
+  Right, that's a hack for some nasty bug/behaviour that happens both in firefox and chrome.
+  Basically, if you have tabs open for html pages within the extensions (e.g. moz-extensions://<id>/search.html ), each of them ends up with a copy of background page.
+  That results it multiple responses for commands, messages etc.
+  Only relevantinformation I could found about that is https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs , but that didn't really help
+  This behaviour is tested by test_duplicate_background_pages to prevent regressions
+*/
 getActiveTab().then(tab => {
     // TODO FIXME null tab?
 
