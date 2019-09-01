@@ -89,7 +89,7 @@ def as_json(v: DbVisit) -> Dict:
 
 def get_db_path() -> Path:
     config = get_config()
-    db_path = Path(config.OUTPUT_DIR) / 'visits.sqlite' # TODO FIXME need to update it
+    db_path = Path(config.OUTPUT_DIR) / 'promnesia.sqlite'
     assert db_path.exists()
     return db_path
 

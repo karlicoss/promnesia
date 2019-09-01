@@ -66,7 +66,7 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]], config: Confi
         json.dump(intermediates, fo, ensure_ascii=False, sort_keys=True, indent=1, default=encoder)
     logger.info('saved intermediate state to %s', intp)
 
-    db_path = output_dir / 'visits.sqlite'
+    db_path = output_dir / 'promnesia.sqlite'
 
     def iter_visits():
         for e, h in all_histories:

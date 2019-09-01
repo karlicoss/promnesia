@@ -1,9 +1,6 @@
 import pytz
 from pathlib import Path
 
-# TODO FIXME need to update it
-DB_PATH = '/L/data/promnesia/visits.sqlite'
-
 FALLBACK_TIMEZONE = pytz.timezone('Europe/London')
 
 FILTERS = [] # type: ignore

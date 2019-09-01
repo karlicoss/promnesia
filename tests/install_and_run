@@ -61,7 +61,7 @@ def run(tdir: Path):
     print(response)
     assert response == {
         'status': 'OK',
-        'db'    : str(tdir / 'visits.sqlite'),
+        'db'    : str(tdir / 'promnesia.sqlite'),
     }
 
     time.sleep(1)

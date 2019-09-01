@@ -36,7 +36,7 @@ from promnesia.common import DbVisit # TODO ugh. figure out pythonpath
 
 
 def _get_stuff(outdir: Path):
-    db_path = outdir / 'visits.sqlite'
+    db_path = outdir / 'promnesia.sqlite'
     assert db_path.exists()
 
     engine = create_engine(f'sqlite:///{db_path}')
