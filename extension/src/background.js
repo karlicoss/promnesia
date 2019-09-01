@@ -496,25 +496,27 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
 
    popup is available for pageAction?? can use it for blacklisting/search?
 */
-for (const action of ACTIONS) {
-    // $FlowFixMe
-    action.onClicked.addListener(defensify(async tab => {
-        const url = unwrap(tab.url);
-        const tid = unwrap(tab.id);
-        if (ignored(url)) {
-            // TODO tab notification?
-            notify(`${url} can't be handled`);
-            return;
-        }
-        const bl = await isBlacklisted(url);
-        if (bl != null) {
-            await showBlackListedNotification(tid, new Blacklisted(url, bl));
-            // TODO show popup; suggest to whitelist?
-        } else {
-            await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
-            await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
-        }
-    }));
+function registerActions() {
+    for (const action of ACTIONS) {
+        // $FlowFixMe
+        action.onClicked.addListener(defensify(async tab => {
+            const url = unwrap(tab.url);
+            const tid = unwrap(tab.id);
+            if (ignored(url)) {
+                // TODO tab notification?
+                notify(`${url} can't be handled`);
+                return;
+            }
+            const bl = await isBlacklisted(url);
+            if (bl != null) {
+                await showBlackListedNotification(tid, new Blacklisted(url, bl));
+                // TODO show popup; suggest to whitelist?
+            } else {
+                await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
+                await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
+            }
+        }));
+    }
 }
 
 
@@ -593,5 +595,5 @@ getActiveTab().then(tab => {
     // $FlowFixMe // err, complains at Promise but nevertheless works
     chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
 
-    // TODO do it for actions as well?
+    registerActions();
 });
