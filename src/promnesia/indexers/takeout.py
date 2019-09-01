@@ -152,12 +152,19 @@ def _open(thing: TakeoutSource, path):
         return thing.joinpath(path).open('rb')
 
 def cacheme(ident: str):
+    logger = get_logger()
     # doesn't even need a nontrivial hash function, timestsamp is encoded in name
     def db_pathf(takeout: TakeoutSource) -> Path:
         tpath = _path(takeout)
-        cache_dir = Path(config.get().CACHE_DIR)
-        return cache_dir / (tpath.name + '_' + ident + '.cache')
-    return cachew(db_pathf, cls=PreVisit, logger=get_logger())
+        cname = tpath.name + '_' + ident + '.cache'
+        if config.has():
+            cache_dir = Path(config.get().CACHE_DIR)
+        else:
+            # TODO hmm. if using relative path, make it relative to /tmp?
+            logger.warning('Caching in /tmp')
+            cache_dir = Path('/tmp')
+        return cache_dir / cname
+    return cachew(db_pathf, cls=PreVisit, logger=logger)
 
 @cacheme('google_activity')
 def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:

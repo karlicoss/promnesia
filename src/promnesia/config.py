@@ -19,6 +19,9 @@ class Config(Protocol):
 instance: Optional[Config] = None
 
 
+def has() -> bool:
+    return instance is not None
+
 def get() -> Config:
     assert instance is not None
     return instance

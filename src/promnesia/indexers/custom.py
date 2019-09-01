@@ -14,6 +14,7 @@ import pytz
 from ..common import PreVisit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
 
 
+# TODO custom is not a great name?
 def extract(command: str) -> Iterable[PreVisit]:
     output = check_output(command, shell=True)
     lines = [line.decode('utf-8') for line in output.splitlines()]

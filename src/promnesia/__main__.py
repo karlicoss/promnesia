@@ -70,6 +70,29 @@ def do_index(config_file: Path):
         config.reset()
 
 
+def adhoc_indexers():
+    from .indexers import custom, browser, takeout
+    return {
+        # TODO rename to plaintext?
+        'simple': custom.simple,
+        # TODO org mode
+
+        # TODO ugh, this runs against merged db
+        # 'chrome' : browser.chrome,
+        # 'firefox': browser.firefox,
+        'takeout': takeout.extract,
+    }
+
+
+def do_adhoc(indexer: str, *args):
+    # TODO logging?
+    idx = adhoc_indexers()[indexer]
+    for visit in idx(*args):
+        print(visit)
+    print("Finished extracting {} {}".format(indexer, *args))
+    # TODO color?
+
+
 from .promnesia_server import setup_parser, run as do_serve
 
 def main():
@@ -82,8 +105,19 @@ def main():
     ep.add_argument('--config', type=Path, default=Path('config.py'))
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False)
+
     sp = subp.add_parser('serve')
     setup_parser(sp)
+
+ # TODO not sure what would be a good name?
+    ap = subp.add_parser('adhoc')
+    # TODO use docstring or something?
+    ap.add_argument(
+        'indexer',
+        choices=list(sorted(adhoc_indexers().keys())),
+        help='Indexer name',
+    )
+    ap.add_argument('params', nargs='*')
 
     args = p.parse_args()
 
@@ -91,11 +125,13 @@ def main():
     # the only downside is storage. dunno.
     # worst case -- could use database?
 
-    with get_tmpdir() as tdir:
+    with get_tmpdir() as tdir: # TODO??
         if args.mode == 'index':
             do_index(config_file=args.config)
         elif args.mode == 'serve':
             do_serve(port=args.port, config=args.config, quiet=args.quiet)
+        elif args.mode == 'adhoc':
+            do_adhoc(args.indexer, *args.params)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 
