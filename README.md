@@ -63,3 +63,4 @@ eh, urls can have commas...  e.g. http://adit.io/posts/2013-04-17-functors,_appl
 so, for csv need a separate extractor.
 * describe why and what for each permission used
 * timestamps seem wrong either in JS or in sqlite backup (most likely in sqlite)
+* old temporary name: wereyouhere

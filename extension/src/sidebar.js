@@ -16,10 +16,10 @@ function get_or_default(obj, key, def) {
 }
 
 
-const SIDEBAR_ID   = 'wereyouhere-sidebar';
-const CONTAINER_ID = 'wereyouhere-sidebar-container';
+const SIDEBAR_ID   = 'promnesia-sidebar';
+const CONTAINER_ID = 'promnesia-sidebar-container';
 
-const SIDEBAR_ACTIVE = 'wereyouhere';
+const SIDEBAR_ACTIVE = 'promnesia';
 
 const doc = document;
 

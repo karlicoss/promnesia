@@ -6,11 +6,11 @@ import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS} from './async_chrome'
 // TODO common?
 export function notify(message: string, priority: number=0) {
     chrome.notifications.create({
-        'type': "basic",
-        'title': "wereyouhere",
-        'message': message,
+        'type'    : "basic",
+        'title'   : "promnesia",
+        'message' : message,
         'priority': priority,
-        'iconUrl': 'images/ic_not_visited_48.png',
+        'iconUrl' : 'images/ic_not_visited_48.png',
     });
 }
 

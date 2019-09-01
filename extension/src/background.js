@@ -279,7 +279,7 @@ async function showDots(tabId) {
     // TODO use CSS from settings?
     await chromeTabsInsertCSS(tabId, {
         code: `
-.wereyouhere-visited:after {
+.promnesia-visited:after {
   content: "⚫";
   color: #FF4500;
   vertical-align: super;
@@ -304,7 +304,7 @@ for (var i = 0; i < link_elements.length; i++) {
     }
     if (vis[url] === true) {
         // console.log("adding class to ", a_tag);
-        a_tag.classList.add('wereyouhere-visited');
+        a_tag.classList.add('promnesia-visited');
     }
 }
 }

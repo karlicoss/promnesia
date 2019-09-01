@@ -36,7 +36,7 @@ function default_options(): Options {
 /* Change these if you want to reposition the sidebar
  * E.g. to display on bottom, use :root { --bottom 1; --size: 25%; }
  */
-.wereyouhere {
+.promnesia {
     --right: 1;
     --size: 30%;
 
