@@ -160,11 +160,11 @@ def focus_browser_window(driver):
     # some windows are not focusable or whatever (e.g. in chrome)? so just try all of them. hopefully on of them succeeds..
     for wid in wids:
         check_call(['xdotool', 'windowactivate', wid])
-    # TODO sleep?
 
 
 def trigger_hotkey(driver, hotkey):
     focus_browser_window(driver)
+    sleep(0.5)
 
     print(f"sending hotkey! {hotkey}")
     import pyautogui # type: ignore
