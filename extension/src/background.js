@@ -315,14 +315,31 @@ for (var i = 0; i < link_elements.length; i++) {
 // ok, looks like this one was excessive..
 // chrome.tabs.onActivated.addListener(updateState);
 
+function isSpecialProtocol(url: string): boolean {
+    const pro = new URL(url).protocol;
+    if ([
+        'chrome:',
+        'chrome-devtools:',
+        'chrome-extension:',
+        'moz-extension:',
+    ].includes(pro)) {
+        return true;
+    }
+    return false;
+}
+
 function ignored(url: string): boolean {
-    // not sure why about:blank is loading like 5 times.. but this seems to fix it
-    if (url.match('chrome://') != null || url.match('chrome-devtools://') != null || url == 'about:blank') {
+    if ([
+        'https://www.google.com/_/chrome/newtab?ie=UTF-8', // ugh, not sure how to dix that properly
+        'about:blank', // not sure why about:blank is loading like 5 times.. but this seems to fix it
+    ].includes(url)) {
         return true;
     }
-    if (url === 'https://www.google.com/_/chrome/newtab?ie=UTF-8') { // ugh, not sure how to dix that properly
+
+    if (isSpecialProtocol(url)) {
         return true;
     }
+
     return false;
 }
 
