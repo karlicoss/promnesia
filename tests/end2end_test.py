@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from datetime import datetime
 from tempfile import TemporaryDirectory
-from subprocess import check_call
+from subprocess import check_call, check_output
 from time import sleep
 from typing import NamedTuple
 
@@ -147,14 +147,32 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
     save_settings(driver)
 
 
-def trigger_hotkey(hotkey):
+def focus_browser_window(driver):
+    if driver.name == 'firefox':
+        pid = str(driver.capabilities['moz:processID'])
+    else:
+        # ugh nothing in capabilities...
+        pid = check_output(['pgrep', '-f', 'chrome.*enable-automation']).decode('utf8').strip()
+    # https://askubuntu.com/a/385037/427470
+
+    wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf-8').splitlines()
+    wids = [w.strip() for w in wids if len(w.strip()) > 0]
+    # some windows are not focusable or whatever (e.g. in chrome)? so just try all of them. hopefully on of them succeeds..
+    for wid in wids:
+        check_call(['xdotool', 'windowactivate', wid])
+    # TODO sleep?
+
+
+def trigger_hotkey(driver, hotkey):
+    focus_browser_window(driver)
+
     print(f"sending hotkey! {hotkey}")
     import pyautogui # type: ignore
     pyautogui.hotkey(*hotkey)
 
 
 def trigger_command(driver, cmd):
-    trigger_hotkey(get_hotkey(driver, cmd))
+    trigger_hotkey(driver, get_hotkey(driver, cmd))
 
 
 class TestHelper(NamedTuple):
@@ -404,6 +422,44 @@ def test_local_page(tmp_path, browser):
         confirm('grey icon, should be no sidebar')
         helper.driver.forward()
         confirm('green icon, sidebar visible')
+
+
+def trigger_sidebar_search(driver):
+    driver.switch_to.default_content()
+    driver.switch_to.frame('wereyouhere-sidebar')
+    search_button = driver.find_element_by_xpath('//button[text()="Search"]')
+    search_button.click()
+
+
+@uses_x
+@browsers(FF, CH)
+def test_duplicate_background_pages(tmp_path, browser):
+    url = PYTHON_DOC_URL
+    with _test_helper(tmp_path, index_urls({}), url, browser=browser) as helper:
+        driver = helper.driver
+
+        trigger_command(driver, Command.ACTIVATE)
+        # TODO separate test just for buttons from extension
+        confirm('sidebar opened?')
+
+        trigger_sidebar_search(driver)
+        sleep(1)
+        driver.switch_to.window(driver.window_handles[0])
+        sleep(1)
+
+        trigger_sidebar_search(driver)
+        sleep(1)
+        driver.switch_to.window(driver.window_handles[0])
+        sleep(1)
+
+        confirm('only two search pages should be opened')
+
+        trigger_command(driver, Command.ACTIVATE)
+
+        confirm('sidebar should be closed now')
+
+        # TODO wtf? browser with search pages stays open after test... 
+
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
