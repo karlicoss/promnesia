@@ -1,5 +1,5 @@
 from pathlib import Path
-from subprocess import check_call
+from subprocess import check_call, run
 from typing import Set, Dict, Optional
 
 from indexer_test import populate_db
@@ -136,3 +136,36 @@ def test_hypothesis(tdir):
     assert vis.orig_url == 'https://www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
     assert vis.locator.href == 'https://hyp.is/_Z9ccmVZEeexBOO7mToqdg/www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
     assert 'misconception about evolution is fueling misconception about AI' in vis.context # contains notes as well
+
+
+def compare_db(old: Path, new: Path):
+    cmp_script = Path(__file__).absolute().parent.parent / 'scripts/compare-intermediate.py'
+    return run([str(cmp_script), str(old), str(new)])
+
+
+def test_comparison(tdir: Path):
+    idx = index_urls({
+        'https://example.com': None,
+        'https://en.wikipedia.org/wiki/Saturn_V': None,
+        'https://plato.stanford.edu/entries/qualia': None,
+    })
+    idx(tdir)
+    db     = tdir / 'promnesia.sqlite'
+    old_db = tdir / 'promnesia-old.sqlite'
+    import shutil
+    shutil.move(db, old_db)
+
+    idx2 = index_urls({
+        'https://example.com': None,
+        'https://www.reddit.com/r/explainlikeimfive/comments/1ev6e0/eli5entropy': None,
+        'https://en.wikipedia.org/wiki/Saturn_V': None,
+        'https://plato.stanford.edu/entries/qualia': None,
+    })
+    idx2(tdir)
+
+    # should not crash, as there are more links in the new database
+    assert compare_db(old_db, db).returncode == 0
+
+    # TODO use more abstract comparison
+    assert compare_db(db, old_db).returncode != 0
+

@@ -94,11 +94,7 @@ def get_db_path() -> Path:
     return db_path
 
 
-@lru_cache(1)
-def get_stuff(): # TODO better name
-    # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
-    db_path = get_db_path()
-
+def _get_stuff(db_path: Path):
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path}') # , echo=True)
 
@@ -108,6 +104,14 @@ def get_stuff(): # TODO better name
     table = Table('visits', meta, *binder.columns)
 
     return engine, binder, table
+
+
+@lru_cache(1)
+def get_stuff(): # TODO better name
+    # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
+    db_path = get_db_path()
+    return _get_stuff(db_path)
+
 
 
 def search_common(url: str, where):

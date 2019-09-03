@@ -2,52 +2,27 @@
 from datetime import datetime
 import argparse
 from pathlib import Path
+from hashlib import sha1
 import sys
 import json
 import logging
 from itertools import chain
 from typing import Dict, List, Any, NamedTuple, Optional, Set
 
-from hashlib import sha1
+
+from promnesia.common import DbVisit, Url # TODO ugh. figure out pythonpath
 
 from kython.klogging import setup_logzero
 from kython import kompress
 from kython.canonify import canonify
 
 # TODO include latest too?
-from cconfig import ignore, filtered
+# from cconfig import ignore, filtered
 
 def get_logger():
     return logging.getLogger('promnesia-db-changes')
 
 # TODO return error depending on severity?
-
-Url = str
-Dt = str
-Source = str
-Context = str
-Tag = str
-Locator = str
-
-
-# TODO reuse DbVisit? or use db?
-class Visit(NamedTuple):
-    url: Url
-    dt: Dt
-    source: Source
-    context: Context
-    tag: Tag
-    locator: Locator
-
-
-    # special id for easier excluding..
-    @property
-    def exid(self):
-        return sha1('!'.join([self.url, self.dt, self.source, self.context, self.tag]).encode('utf8')).hexdigest()
-
-
-def ddiff(a, b):
-    return list(sorted(a.difference(b))), list(sorted(a.intersection(b))), list(sorted(b.difference(a)))
 
 
 def eliminate_by(sa, sb, key):
@@ -80,30 +55,30 @@ def eliminate_by(sa, sb, key):
     return onlya, common, onlyb
 
 
-def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
-    errors: List[Visit] = []
+def compare(before: List[DbVisit], after: List[DbVisit], between: str) -> List[DbVisit]:
+    errors: List[DbVisit] = []
 
-    umap: Dict[str, List[Visit]] = {
-    }
+    umap: Dict[Url, List[DbVisit]] = {}
     for a in after:
-        xx = umap.get(a.url, [])
+        url = a.norm_url
+        xx = umap.get(url, []) # TODO canonify here?
         xx.append(a)
-        umap[a.url] = xx
+        umap[url] = xx
 
     def reg_error(b):
         errors.append(b)
         logger.error('between %s missing %s', between, b)
-        print('ignoreline "%s", # %s %s' % (b.exid, b.url, b.tag), file=sys.stderr)
+        print('ignoreline "%s", # %s %s' % ('exid', b.norm_url, b.src), file=sys.stderr)
 
 
     logger = get_logger()
-    # optimisation: eliminate common
 
+    # the idea is that we eliminate items simultaneously from both sets
     eliminations = [
         ('identity'               , lambda x: x),
-        ('without dt'             , lambda x: x._replace(source='', dt='')),
-        ('without context'        , lambda x: x._replace(source='', context='', locator='')), # TODO FIXME only allow for certain tags?
-        ('without dt and context' , lambda x: x._replace(source='', dt='', context='', locator='')), # ugh..
+        ('without dt'             , lambda x: x._replace(src='', dt='')),
+        ('without context'        , lambda x: x._replace(src='',        context='', locator='')),
+        ('without dt and context' , lambda x: x._replace(src='', dt='', context='', locator='')),
     ]
     for ename, ekey in eliminations:
         logger.info('eliminating by %s', ename)
@@ -112,7 +87,7 @@ def compare(before: Set[Visit], after: Set[Visit], between: str) -> List[Visit]:
         logger.info('common: %d, before: %d, after: %d', len(common), len(before), len(after))
 
     logger.info('removing explicitly ignored items')
-    before = filtered(before, between=between, umap=umap)
+    # before = filtered(before, between=between, umap=umap)
     logger.info('before: %d', len(before))
 
     for b in before:
@@ -153,7 +128,6 @@ def collect(fname: str, jj):
                 # TODO FIXME shit. ok, duplicates are coming from different takeouts apparently. enable back once I merge properly...
                 # logger.warning('duplicate visit %s', vs)
                 pass
-            #     import ipdb; ipdb.set_trace() 
             visits.add(vs)
     return visits
 
@@ -163,33 +137,38 @@ def main():
 
     p = argparse.ArgumentParser()
     # TODO better name?
-    p.add_argument('--intermediate-dir', type=Path, required=True)
+    p.add_argument('--intermediate-dir', type=Path)
     p.add_argument('--last', type=int, default=2)
     p.add_argument('--all', action='store_const', const=0, dest='last')
     p.add_argument('paths', nargs='*')
     args = p.parse_args()
     # TODO perhaps get rid of linksdb completely? The server could merge them by itself
-    int_dir = args.intermediate_dir
-    assert int_dir.exists()
 
-    jsons = list(sorted(int_dir.glob('*.json*')))
     if len(args.paths) == 0:
-        jsons = jsons[-args.last:]
+        int_dir = args.intermediate_dir
+        assert int_dir.exists()
+        files = list(sorted(int_dir.glob('*.json*')))
+        files = files[-args.last:]
     else:
-        jsons = [Path(p) for p in args.paths]
+        files = [Path(p) for p in args.paths]
 
-    assert len(jsons) > 0
+    assert len(files) > 0
 
     all_errors = []
 
     last = None
     last_dts = None
-    for f in jsons:
+    for f in files:
         logger.info('processing %r', f)
         name = f.name
         this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
-        with kompress.open(f) as fo:
-            vis = collect(name, json.load(fo))
+
+        from promnesia.promnesia_server import _get_stuff # TODO ugh
+        engine, binder, table = _get_stuff(f)
+
+        with engine.connect() as conn:
+            vis = [binder.from_row(row) for row in conn.execute(table.select())]
+
         if last is not None:
             between = f'{last_dts}:{this_dts}'
             errs = compare(last, vis, between=between)
@@ -199,7 +178,6 @@ def main():
 
     if len(all_errors) > 0:
         sys.exit(1)
-import sys; exec("global info\ndef info(type, value, tb):\n    import ipdb, traceback; traceback.print_exception(type, value, tb); ipdb.pm()"); sys.excepthook = info # type: ignore
 
 if __name__ == '__main__':
     main()
