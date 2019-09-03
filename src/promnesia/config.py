@@ -29,7 +29,6 @@ def get() -> Config:
 
 def load_from(config_file: Path) -> None:
     global instance
-    assert instance is None
     instance = import_config(config_file)
 
 

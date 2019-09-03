@@ -42,6 +42,7 @@ def get_logger():
 
 @lru_cache(1)
 def _get_config(mpath: PathWithMtime) -> cfg.Config:
+    get_logger().info('Reloading config: %s', mpath)
     cfg.load_from(mpath.path) # TODO err, not sure if should really bother with hot reloading; it would assert?
     return cfg.get()
 
@@ -87,6 +88,7 @@ def get_db_path() -> Path:
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime):
+    get_logger().info('Reloading DB: %s', db_path)
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path.path}') # , echo=True)
 
