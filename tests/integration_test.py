@@ -4,6 +4,12 @@ from typing import Set, Dict, Optional
 
 from indexer_test import populate_db
 
+import pytest
+
+@pytest.fixture
+def tdir(tmp_path):
+    yield Path(tmp_path)
+
 
 testdata = Path(__file__).absolute().parent.parent / 'testdata'
 
@@ -20,8 +26,7 @@ FILTERS = []
 """
 
 
-def test_empty(tmp_path):
-    tdir = Path(tmp_path)
+def test_empty(tdir):
     cfg = tdir / 'test_config.py'
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
@@ -114,8 +119,7 @@ INDEXERS = [chrome_extractor]
     index(cfg)
 
 
-def test_hypothesis(tmp_path):
-    tdir = Path(tmp_path)
+def test_hypothesis(tdir):
     index_hypothesis(tdir)
 
     # TODO copy pasting from server; need to unify
