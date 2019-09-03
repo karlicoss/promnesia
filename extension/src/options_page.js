@@ -32,9 +32,9 @@ function getToken(): HTMLInputElement {
     return getInputElement('token_id');
 }
 
-function getDots(): HTMLInputElement {
-    return getInputElement('dots_id');
-}
+// function getDots(): HTMLInputElement {
+//     return getInputElement('dots_id');
+// }
 
 function getBlackList(): HTMLInputElement {
     return getInputElement('blacklist_id');
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getHost().value      = opts.host;
     getToken().value     = opts.token;
 
-    getDots().checked    = opts.dots;
+    // getDots().checked    = opts.dots;
     getBlackList().value = opts.blacklist;
     // TODO tag map could be json?
     getSrcMap().value    = JSON.stringify(opts.src_map);
@@ -118,7 +118,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         host      : getHost().value,
         token     : getToken().value,
 
-        dots      : getDots().checked,
+        dots      : true, // TODO? getDots().checked,
         blacklist : getBlackList().value,
         src_map   : JSON.parse(getSrcMap().value),
 
