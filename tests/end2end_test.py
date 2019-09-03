@@ -136,10 +136,10 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
 
     set_host(driver=driver, host=host, port=port)
 
-    dots = driver.find_element_by_id('dots_id')
-    if dots.is_selected() != show_dots:
-        dots.click()
-    assert dots.is_selected() == show_dots
+    # dots = driver.find_element_by_id('dots_id')
+    # if dots.is_selected() != show_dots:
+    #     dots.click()
+    # assert dots.is_selected() == show_dots
 
     bl = driver.find_element_by_id('blacklist_id')
     bl.send_keys('\n'.join(blacklist))
