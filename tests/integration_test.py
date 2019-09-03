@@ -138,12 +138,9 @@ def test_hypothesis(tdir):
     assert 'misconception about evolution is fueling misconception about AI' in vis.context # contains notes as well
 
 
-def compare_db(old: Path, new: Path):
-    cmp_script = Path(__file__).absolute().parent.parent / 'scripts/compare-intermediate.py'
-    return run([str(cmp_script), str(old), str(new)])
-
-
 def test_comparison(tdir: Path):
+    from promnesia.compare import compare_files
+
     idx = index_urls({
         'https://example.com': None,
         'https://en.wikipedia.org/wiki/Saturn_V': None,
@@ -164,8 +161,7 @@ def test_comparison(tdir: Path):
     idx2(tdir)
 
     # should not crash, as there are more links in the new database
-    assert compare_db(old_db, db).returncode == 0
+    assert len(compare_files(old_db, db)) == 0
 
-    # TODO use more abstract comparison
-    assert compare_db(db, old_db).returncode != 0
+    assert len(compare_files(db, old_db)) == 1
 

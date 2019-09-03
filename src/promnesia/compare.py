@@ -25,9 +25,14 @@ def get_logger():
 # TODO return error depending on severity?
 
 
-def eliminate_by(sa, sb, key):
-    def make_dict(s):
-        res = {}
+from typing import TypeVar, Sequence
+
+
+T = TypeVar('T')
+
+def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
+    def make_dict(s: Sequence[T]) -> Dict[str, List[T]]:
+        res: Dict[str, List[T]] = {}
         for a in s:
             k = key(a)
             ll = res.get(k, None)
@@ -40,9 +45,9 @@ def eliminate_by(sa, sb, key):
     db = make_dict(sb)
     ka = set(da.keys())
     kb = set(db.keys())
-    onlya = set()
-    common = set()
-    onlyb = set()
+    onlya: Set[T] = set()
+    common: Set[T] = set()
+    onlyb: Set[T] = set()
     for k in ka.union(kb):
         la = da.get(k, [])
         lb = db.get(k, [])
@@ -96,45 +101,8 @@ def compare(before: List[DbVisit], after: List[DbVisit], between: str) -> List[D
     return errors
 
 
-def collect(fname: str, jj):
-    logger = get_logger()
-    visits = set()
-    for src, data in sorted(jj):
-        for v in data:
-            loc = v['locator']
-            # TODO hmm, comparison tends to be same if we just ignore the locator..
-            locs = '' # TODO FIXME '{}:{}'.format(loc['href'], loc['title'])
-
-            tag = v['tag']
-            # # TODO shit, only need to do that first time...
-            # if '20190525074221' in fname:
-            #     # split databases
-            #     if tag.endswith('-old'):
-            #         tag = tag[:-4]
-
-            vs = Visit(
-                source=src,
-                # canonify once again to compare against changes in normalising as well
-                url=canonify(v['norm_url']),
-                tag=tag,
-                dt=v['dt'],
-                context=v['context'] or '<no context>', # to simplify comparisons...
-                locator=locs,
-            )
-            # assert vs not in visits
-            if vs in visits:
-                # TODO FIXME multiset??
-                # TODO debug level? not sure if should show them at all
-                # TODO FIXME shit. ok, duplicates are coming from different takeouts apparently. enable back once I merge properly...
-                # logger.warning('duplicate visit %s', vs)
-                pass
-            visits.add(vs)
-    return visits
-
 def main():
     setup_logzero(get_logger(), level=logging.DEBUG)
-    logger = get_logger()
-
     p = argparse.ArgumentParser()
     # TODO better name?
     p.add_argument('--intermediate-dir', type=Path)
@@ -152,9 +120,17 @@ def main():
     else:
         files = [Path(p) for p in args.paths]
 
+    errors = compare_files(*files)
+    if len(errors) > 0:
+        sys.exit(1)
+
+
+def compare_files(*files: Path):
     assert len(files) > 0
 
-    all_errors = []
+    logger = get_logger()
+
+    errors = [] # type: ignore
 
     last = None
     last_dts = None
@@ -172,12 +148,11 @@ def main():
         if last is not None:
             between = f'{last_dts}:{this_dts}'
             errs = compare(last, vis, between=between)
-            all_errors.extend(errs)
+            errors.extend(errs)
         last = vis
         last_dts = this_dts
 
-    if len(all_errors) > 0:
-        sys.exit(1)
+    return errors
 
 if __name__ == '__main__':
     main()
