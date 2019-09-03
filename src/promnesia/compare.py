@@ -10,7 +10,7 @@ from itertools import chain
 from typing import Dict, List, Any, NamedTuple, Optional, Set
 
 
-from promnesia.common import DbVisit, Url # TODO ugh. figure out pythonpath
+from promnesia.common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
 
 from kython.klogging import setup_logzero
 from kython import kompress
@@ -139,7 +139,7 @@ def compare_files(*files: Path):
         this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
 
         from promnesia.promnesia_server import _get_stuff # TODO ugh
-        engine, binder, table = _get_stuff(f)
+        engine, binder, table = _get_stuff(PathWithMtime.make(f))
 
         with engine.connect() as conn:
             vis = [binder.from_row(row) for row in conn.execute(table.select())]

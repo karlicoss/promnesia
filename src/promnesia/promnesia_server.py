@@ -94,9 +94,12 @@ def get_db_path() -> Path:
     return db_path
 
 
-def _get_stuff(db_path: Path):
+# TODO maybe, keep db connection? need to recycle it properly..
+@lru_cache(1)
+# PathWithMtime aids lru_cache in reloading the sqlalchemy binder
+def _get_stuff(db_path: PathWithMtime):
     # TODO how to open read only?
-    engine = create_engine(f'sqlite:///{db_path}') # , echo=True)
+    engine = create_engine(f'sqlite:///{db_path.path}') # , echo=True)
 
     binder = NTBinder.make(DbVisit)
 
@@ -106,11 +109,10 @@ def _get_stuff(db_path: Path):
     return engine, binder, table
 
 
-@lru_cache(1)
 def get_stuff(): # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
     db_path = get_db_path()
-    return _get_stuff(db_path)
+    return _get_stuff(PathWithMtime.make(db_path))
 
 
 
