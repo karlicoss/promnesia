@@ -56,7 +56,7 @@ def _do_index():
         all_histories.append((einfo, hist))
 
     # TODO perhaps it's better to open connection and dump as we collect so it consumes less memory?
-    dump_histories(all_histories, config=cfg)
+    dump_histories(all_histories)
 
     if len(all_errors) > 0:
         sys.exit(1)

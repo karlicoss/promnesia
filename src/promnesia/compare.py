@@ -110,7 +110,6 @@ def main():
     p.add_argument('--all', action='store_const', const=0, dest='last')
     p.add_argument('paths', nargs='*')
     args = p.parse_args()
-    # TODO perhaps get rid of linksdb completely? The server could merge them by itself
 
     if len(args.paths) == 0:
         int_dir = args.intermediate_dir
