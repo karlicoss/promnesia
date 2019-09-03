@@ -1,7 +1,7 @@
 /* @flow */
 
 export type Url = string;
-export type Tag = string;
+export type Src = string;
 export type Second = number;
 export type Locator = {
     title: string,
@@ -56,13 +56,13 @@ export class Visit {
     original_url: string;
     normalised_url: string;
     time: Dt;
-    tags: Array<Tag>;
+    tags: Array<Src>; // TODO need to rename tags to sources
     context: ?string;
     locator: ?Locator;
     duration: ?Second;
 
 
-    constructor(original_url: string, normalised_url: string, time: Dt, tags: Array<Tag>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
+    constructor(original_url: string, normalised_url: string, time: Dt, tags: Array<Src>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
         this.original_url   = original_url;
         this.normalised_url = normalised_url;
         this.time = time;

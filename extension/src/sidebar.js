@@ -183,7 +183,7 @@ async function bindSidebarData(response: Visits) {
 
     const binder = new Binder(doc);
 
-    const all_tags_c = binder.makeChild(cont, 'div', ['tag-filter']);
+    const all_tags_c = binder.makeChild(cont, 'div', ['src-filter']);
     const items = binder.makeChild(cont, 'ul');
     items.id = 'visits';
 
@@ -236,13 +236,13 @@ async function bindSidebarData(response: Visits) {
 
         // TODO show total counts?
         // TODO if too many tags, just overlap on the seconds line
-        const tag_c = binder.makeChild(all_tags_c, 'span', ['tag', tag]);
+        const tag_c = binder.makeChild(all_tags_c, 'span', ['src', tag]);
         binder.makeTchild(tag_c, `${tag} (${count})`);
         // TODO checkbox??
         tag_c.addEventListener('click', () => {
             for (const x of items.children) {
-                const tt = unwrap(x.getAttribute('tags')).split(' ');
-                const found = tt.some(predicate);
+                const sources = unwrap(x.getAttribute('sources')).split(' ');
+                const found = sources.some(predicate);
                 x.style.display = found ? 'block' : 'none';
             }
         });
@@ -281,7 +281,7 @@ async function bindSidebarData(response: Visits) {
     }
     dump_group();
 
-    const tag_map = opts.tag_map;
+    const tag_map = opts.src_map;
     // TODO group ones with no ctx..
     for (const group of groups) {
         const first = group[0];

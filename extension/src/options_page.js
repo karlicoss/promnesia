@@ -40,8 +40,8 @@ function getBlackList(): HTMLInputElement {
     return getInputElement('blacklist_id');
 }
 
-function getTagMap(): HTMLInputElement {
-    return getInputElement('tag_map_id');
+function getSrcMap(): HTMLInputElement {
+    return getInputElement('source_map_id');
 }
 
 function getPositionCss(): HTMLElement {
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getDots().checked    = opts.dots;
     getBlackList().value = opts.blacklist;
     // TODO tag map could be json?
-    getTagMap().value    = JSON.stringify(opts.tag_map);
+    getSrcMap().value    = JSON.stringify(opts.src_map);
 
     CodeMirror(getPositionCss(), {
         mode       : 'css',
@@ -120,7 +120,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
 
         dots      : getDots().checked,
         blacklist : getBlackList().value,
-        tag_map   : JSON.parse(getTagMap().value),
+        src_map   : JSON.parse(getSrcMap().value),
 
         position_css : getPositionCssEditor().getValue(),
         extra_css    : getExtraCssEditor().getValue(),

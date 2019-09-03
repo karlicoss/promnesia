@@ -53,29 +53,18 @@ def get_config() -> cfg.Config:
 
 # TODO use that?? https://github.com/timothycrosley/hug/blob/develop/tests/test_async.py
 
-    # def reg_visit(v):
-    #     # TODO parse loc
-    #     for vis in v['visits']:
-    #         dt = fromisoformat(vis['dt'])
-    #         if dt.tzinfo is None:
-    #             dt = config.FALLBACK_TIMEZONE.localize(dt)
-
-
 # TODO how to return exception in error?
 
 def as_json(v: DbVisit) -> Dict:
     # TODO check utc
-   #  "09 Aug 2018 19:48",
-   #  "06 Aug 2018 21:36--21:37",
-    # TODO perhaps tag merging should be done by browser as well?
-    # TODO also local should be suppressed if any other tag with this timestamp is present
+    # TODO also local should be suppressed if any other src with this timestamp is present
     dts = v.dt.strftime('%d %b %Y %H:%M')
     loc = v.locator
     # # TODO is locator always present??
     return {
         # TODO do not display year if it's current year??
         'dt': dts,
-        'tags': [v.src], # TODO shouldn't be array I guess?
+        'src': v.src,
         'context': v.context,
         'duration': v.duration,
         'locator': {

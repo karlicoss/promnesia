@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Locator, Tag, Url, Second} from './common';
+import type {Locator, Src, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {normalisedURLHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
@@ -32,7 +32,7 @@ function rawToVisits(vis): Visits {
         const dts = v['dt'] + ' UTC'; // jeez. seems like it's the easiest way...
 
         const dt: Date = new Date(dts);
-        const vtags: Array<Tag> = v['tags']; // TODO hmm. backend is responsible for tag merging?
+        const vtags: Array<Src> = [v['src']]; // TODO hmm. shouldn't be array?
         const vourl: string = v['original_url'];
         const vnurl: string = v['normalised_url'];
         const vctx: ?string = v['context'];

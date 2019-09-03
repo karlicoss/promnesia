@@ -1,9 +1,8 @@
 /* @flow */
+import type {Src} from './common';
 
-type Tag = string;
-
-type TagMap = {
-    [Tag]: Tag
+type SrcMap = {
+    [Src]: Src
 };
 
 export type Options = {
@@ -12,7 +11,7 @@ export type Options = {
 
     dots: boolean;
     blacklist: string;
-    tag_map: TagMap;
+    src_map: SrcMap;
 
     position_css: string;
     extra_css: string;
@@ -27,7 +26,7 @@ function default_options(): Options {
 
         dots: true,
         blacklist: '',
-        tag_map: {},
+        src_map: {},
 
         // TODO FIXME do something if value is invalid?..
         // TODO make it literate from test?
@@ -47,8 +46,8 @@ function default_options(): Options {
 
         // TODO add some docs on configuring it...
         extra_css   : `
-.tag {
-    color: orange;
+.src {
+    font-weight: bold;
 }
 `.trim(),
     };

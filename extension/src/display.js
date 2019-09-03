@@ -1,5 +1,5 @@
 /* @flow */
-import type {Url, Tag, Locator} from './common';
+import type {Url, Src, Locator} from './common';
 import {format_dt, Methods, unwrap} from './common';
 
 // TODO need to pass document??
@@ -50,7 +50,7 @@ export class Binder {
         parent: HTMLElement,
         dates: string,
         times: string,
-        tags: Array<Tag>,
+        tags: Array<Src>,
         {
             timestamp,
             original_url,
@@ -70,10 +70,10 @@ export class Binder {
         const time_c = child(dt_c, 'span', ['time']);
         const date_c = child(dt_c, 'span', ['date']);
 
-        item.setAttribute('tags', tags.join(" "));
+        item.setAttribute('sources', tags.join(" "));
 
         for (const tag of tags) {
-            const tag_c = child(tags_c, 'span', ['tag', tag]);
+            const tag_c = child(tags_c, 'span', ['src', tag]);
             tchild(tag_c, tag);
         }
         tchild(date_c, dates);
