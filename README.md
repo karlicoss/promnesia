@@ -1,23 +1,31 @@
-[![CircleCI](https://circleci.com/gh/karlicoss/promnesia.svg?style=svg)](https://circleci.com/gh/karlicoss/promnesia)  (just started configuring CI)
+[![CircleCI](https://circleci.com/gh/karlicoss/promnesia.svg?style=svg)](https://circleci.com/gh/karlicoss/promnesia)  
 
 Has it ever occured to you that you were reading an old bookmark or some lengthy blog post and suddenly realized you had read it already before? It would be fairly easy to search in chrome history, however it is only stored locally for three months. 
 
-Or perhaps you even have a habit of annotating and making notes elsewhere? And you wanna know quickly if you have the current page annotated. Then this tool is for you.
+Or perhaps you even have a habit of annotating and making notes elsewhere? And you wanna know quickly if you have the current page annotated and display the annotations.
 
-The Chrome extension consumes a JSON file with history. It may be generated from:
+Or you have this feeling that someone sent you this link ages ago, but you don't rememeber who and where.
+
+Or you finally got to watch that thing it your 'Watch later' youtube playlist that's been there for three years, and now you want to know why did you add it in the first place.
+
+Then this tool is for you.
+
+It consists of two parts. On part is the extension itself that neatly displays the history in a sidebar. Second bit is the indexer and backend (which can absolutely run locally).
+
+Indexer can run against:
 
 * local sqlite history database backups
 * Google Takeout/Activity backups
+* Data exports from Hypothesis/Pocket/Instapaper/Reddit etc
 * custom shell command 
-* [todo] file system link indexers
-* in general, it's super extendable. It's JSON, after all!
+* in general, anything that can be parsed and interacted with, it's pretty extensible
 
 See more in [sources.md](sources.md).
 
-# Demo (as of v 0.5)
-![Demo screenshot](/misc/demo.jpg)
+# Demo (as of v 0.8)
+![Demo screenshot](https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG)
 
-Apologies for design, I'm not great at it and it's a screenshot of the first (as of v 0.5) version of sidebar :)
+Apologies for design, I'm not great at it :)
 
 Some explanations:
 
