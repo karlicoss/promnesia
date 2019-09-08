@@ -23,8 +23,8 @@ const modifier = target === 'chrome' ? 'Shift' : 'Alt';
 // ugh. declarative formats are shit.
 const commandsExtra = {
     "_execute_browser_action": {
+        "description": "Activate extension",
         "suggested_key": {
-            "description": "Activate extension",
             "default": `Ctrl+${modifier}+E`,
             "mac":  `Command+${modifier}+E`
         }
@@ -70,10 +70,10 @@ if (isMobile) {
 const permissionsExtra = [];
 
 if (!isMobile) {
-    permissionsExtra.extend([
+    permissionsExtra.push(
         'contextMenus',
         'history',
-    ]);
+    );
 }
 
 const manifestExtra = {

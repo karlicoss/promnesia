@@ -202,7 +202,7 @@ async function updateState (tab: chrome$Tab) {
         return;
     }
 
-    const android = await isAndroid();
+    // const android = await isAndroid();
 
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
@@ -210,7 +210,8 @@ async function updateState (tab: chrome$Tab) {
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
     // TODO not sure if can benefit from setPopup?
     for (const action of ACTIONS) {
-        if (action.setTitle) { // ugh, only present in browserAction..
+        // ugh, some of these only present in browserAction..
+        if (action.setTitle) {
             // $FlowFixMe
              action.setTitle({
                  tabId: tabId,
@@ -218,13 +219,14 @@ async function updateState (tab: chrome$Tab) {
              });
         }
 
-        // $FlowFixMe
-        if (!android) {
+        if (action.setIcon) {
             // $FlowFixMe
             action.setIcon({
                 tabId: tabId,
                 path: icon,
             });
+        }
+        if (action.setBadgeText) {
             // $FlowFixMe
             action.setBadgeText({
                 tabId: tabId,
