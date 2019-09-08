@@ -28,13 +28,16 @@ function default_options(): Options {
         blacklist: '',
         src_map: {},
 
+
+        /* Change these if you want to reposition the sidebar
+         * E.g. to display on bottom, use :root { --bottom 1; --size: 25%; }
+         * TODO shit, somehow this was breaking on Android... I guess keep it aside
+         */
+
         // TODO FIXME do something if value is invalid?..
         // TODO make it literate from test?
         // TODO hmm. not sure if I can get rid of :root thing without relying on JS?
         position_css: `
-/* Change these if you want to reposition the sidebar
- * E.g. to display on bottom, use :root { --bottom 1; --size: 25%; }
- */
 .promnesia {
     --right: 1;
     --size: 30%;
