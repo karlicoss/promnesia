@@ -127,9 +127,11 @@ const options = {
   entry: {
     background   : path.join(__dirname, './src/background'),
     options_page : path.join(__dirname, './src/options_page'),
+      // TODO remove popup?
     popup        : path.join(__dirname, './src/popup'),
     sidebar      : path.join(__dirname, './src/sidebar'),
     search       : path.join(__dirname, './src/search'),
+    background_injector : path.join(__dirname, './src/background_injector'),
   },
   output: {
     path: buildPath,

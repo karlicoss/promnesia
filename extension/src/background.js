@@ -593,17 +593,8 @@ const onMenuClickedCallback = defensify(async (info) => {
   Only relevantinformation I could found about that is https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs , but that didn't really help
   This behaviour is tested by test_duplicate_background_pages to prevent regressions
 */
-getActiveTab().then(async tab => {
-    // TODO FIXME null tab?
-
-    const aurl = tab.url;
-
-    if (aurl != null && isSpecialProtocol(aurl)) {
-        lwarn("Suppressing diplicate background page %s", aurl);
-        return;
-    }
-    linfo("Registering background page callbacks %s", aurl);
-
+var backgroundInitialised = false; // should be synchronous hopefully?
+async function initBackground() {
     const android = await isAndroid();
 
     // $FlowFixMe
@@ -615,6 +606,7 @@ getActiveTab().then(async tab => {
     }
 
     if (!android) {
+        // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
         chrome.contextMenus.create({
             'id'      : BLACKLIST_DOMAIN_MENU,
             'title'   : "Blacklist domain",
@@ -638,4 +630,29 @@ getActiveTab().then(async tab => {
     }
 
     await registerActions();
+    backgroundInitialised = true;
+}
+
+
+/*
+  The idea is that each page pokes background.
+  If background happens to be extensions' background, it's ignored; otherwise we're trying to register callbacks.
+ */
+chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) => {
+    if (info.method != "INJECT_BACKGROUND_CALLBACKS") {
+        console.debug("ignoring %o %o; %s", info, sender, backgroundInitialised);
+        return;
+    }
+    console.log("onmessage %o %o", info, sender);
+    const aurl = sender.tab == null ? null : sender.tab.url;
+    if (aurl != null && isSpecialProtocol(aurl)) {
+        lwarn("Suppressing special background page %s", aurl);
+        return;
+    }
+    console.info("Registering background page callbacks %s", aurl);
+    if (backgroundInitialised) {
+        console.debug("background already initialised");
+        return;
+    }
+    initBackground();
 });

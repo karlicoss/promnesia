@@ -11,6 +11,10 @@
         "scripts": ["background.js"],
         "persistent": false
     },
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": ["background_injector.js"]
+    }],
     "options_ui": {
         "page": "options_page.html",
         "open_in_tab": true,

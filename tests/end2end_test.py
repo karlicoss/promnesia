@@ -409,6 +409,7 @@ def test_new_background_tab(tmp_path, browser):
 
 
 @uses_x
+# TODO shit disappears on chrome and present on firefox
 @browsers(FF, CH)
 def test_local_page(tmp_path, browser):
     tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
@@ -420,7 +421,7 @@ def test_local_page(tmp_path, browser):
     with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
         confirm('grey icon')
         helper.driver.get(tutorial)
-        confirm('green icon. ACTIVATE SIDEBAR!. It should open sidebar with one visit')
+        confirm('green icon. MANUALLY: ACTIVATE SIDEBAR!. It should open sidebar with one visit')
         helper.driver.back()
         # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
         confirm('grey icon, should be no sidebar')
@@ -464,6 +465,15 @@ def test_duplicate_background_pages(tmp_path, browser):
 
         # TODO wtf? browser with search pages stays open after test... 
 
+        # TODO getting this in chrome inspector while running this...
+# VM2048 common.js:116 [background] [object Object]
+# log @ VM2048 common.js:116
+# notifyError @ VM2056 notifications.js:40
+# Promise.catch (async)
+# (anonymous) @ VM2056 notifications.js:49
+# VM2056 notifications.js:17 Uncaught (in promise) TypeError: Cannot read property 'create' of undefined
+#     at notify (VM2056 notifications.js:17)
+#     at notifyError (VM2056 notifications.js:41)
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
