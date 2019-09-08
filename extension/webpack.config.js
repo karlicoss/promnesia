@@ -87,6 +87,17 @@ if (!isMobile) {
     manifestExtra.commands = commandsExtra;
 }
 
+if (isMobile) {
+    // on mobile firefox pageAction makes a bit of sense due to various limitations...
+    manifestExtra.pageAction = {
+        browser_style: true,
+        default_icon: {
+            "48": "images/ic_visited_48.png"
+        },
+        default_title: "Promnesia",
+    };
+}
+
 
 if (target === 'chrome') {
     manifestExtra.options_ui = {chrome_style: true};

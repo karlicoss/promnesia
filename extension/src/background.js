@@ -9,24 +9,24 @@ import {showTabNotification, showBlackListedNotification, showIgnoredNotificatio
 // $FlowFixMe
 import reqwest from 'reqwest';
 
-const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [
-    chrome.browserAction,
-
-    chrome.pageAction,
-    // eh, on mobile neither pageAction nor browserAction have setIcon? so using pageAction has no benefits basically..
-
-    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
-    // browser action support is under development??
-];
-// TODO dispatch depending on android/desktop?
-// for android it's kinda complementary as in the menu you can actually set title...
-
-
 async function isAndroid() {
     const platform = await chromeRuntimeGetPlatformInfo();
     return platform.os === 'android';
 }
 
+async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction>> {
+    const res = [chrome.browserAction];
+
+    const android = await isAndroid();
+    if (android) {
+        res.push(chrome.pageAction);
+    }
+    // eh, on mobile neither pageAction nor browserAction have setIcon
+    // but we can use pageAction to show at least some (default) icon in some circumstances
+
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
+    return res;
+}
 
 function rawToVisits(vis): Visits {
     // TODO not sure, maybe we want to distinguish these situations..
@@ -209,7 +209,7 @@ async function updateState (tab: chrome$Tab) {
 
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
     // TODO not sure if can benefit from setPopup?
-    for (const action of ACTIONS) {
+    for (const action of (await actions())) {
         // ugh, some of these only present in browserAction..
         if (action.setTitle) {
             // $FlowFixMe
@@ -523,8 +523,8 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
 
    popup is available for pageAction?? can use it for blacklisting/search?
 */
-function registerActions() {
-    for (const action of ACTIONS) {
+async function registerActions() {
+    for (const action of (await actions())) {
         // $FlowFixMe
         action.onClicked.addListener(defensify(async tab => {
             const url = unwrap(tab.url);
@@ -637,5 +637,5 @@ getActiveTab().then(async tab => {
         chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
     }
 
-    registerActions();
+    await registerActions();
 });

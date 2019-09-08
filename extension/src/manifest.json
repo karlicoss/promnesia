@@ -31,13 +31,6 @@
 
         "notifications"
     ],
-    "page_action": {
-        "browser_style": true,
-        "default_icon": {
-            "48": "images/ic_visited_48.png"
-        },
-        "default_title": "Promnesia"
-    },
     "icons": {
         "48": "images/ic_not_visited_48.png"
     },
