@@ -1,13 +1,13 @@
 /* @flow */
 
 function wrap(fn, ...args: Array<any>): Promise<any> {
-    return new Promise(cb => {
+    return new Promise((resolve, reject) => {
         const cbb = (...xxx) => {
             const err = chrome.runtime.lastError;
             if (err) {
-                throw err;
+                reject(err);
             }
-            cb(...xxx);
+            resolve(...xxx);
         };
         fn(...args, cbb);
     });
