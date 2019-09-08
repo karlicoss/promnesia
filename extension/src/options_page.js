@@ -10,6 +10,8 @@ import reqwest from 'reqwest';
 import CodeMirror from 'codemirror/lib/codemirror.js';
 // $FlowFixMe
 import 'codemirror/mode/css/css.js';
+// $FlowFixMe
+import 'codemirror/mode/javascript/javascript.js';
 // err. that's a bit stupid, js injected css? surely it can be done via webpacke and static files...
 // $FlowFixMe
 import 'codemirror/lib/codemirror.css';
@@ -40,8 +42,8 @@ function getBlackList(): HTMLInputElement {
     return getInputElement('blacklist_id');
 }
 
-function getSrcMap(): HTMLInputElement {
-    return getInputElement('source_map_id');
+function getSrcMap(): HTMLElement {
+    return getElement('source_map_id');
 }
 
 function getPositionCss(): HTMLElement {
@@ -54,15 +56,10 @@ function getExtraCss(): HTMLElement {
 
 // TODO display it floating
 
-function getExtraCssEditor() {
-    // $FlowFixMe
-    return getExtraCss().querySelector('.CodeMirror').CodeMirror;
-}
 
-
-function getPositionCssEditor() {
+function getEditor(el: HTMLElement) {
     // $FlowFixMe
-    return getPositionCss().querySelector('.CodeMirror').CodeMirror;
+    return el.querySelector('.CodeMirror').CodeMirror;
 }
 
 
@@ -72,9 +69,17 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getToken().value     = opts.token;
 
     // getDots().checked    = opts.dots;
-    getBlackList().value = opts.blacklist;
+    CodeMirror(getBlackList(), {
+        lineNumbers: true,
+        value      : opts.blacklist,
+    });
+
     // TODO tag map could be json?
-    getSrcMap().value    = JSON.stringify(opts.src_map);
+    CodeMirror(getSrcMap(), {
+        mode       : 'javascript',
+        lineNumbers: true,
+        value      : JSON.stringify(opts.src_map),
+    });
 
     CodeMirror(getPositionCss(), {
         mode       : 'css',
@@ -119,11 +124,11 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         token     : getToken().value,
 
         dots      : true, // TODO? getDots().checked,
-        blacklist : getBlackList().value,
-        src_map   : JSON.parse(getSrcMap().value),
+        blacklist : getEditor(getBlackList()).getValue(),
 
-        position_css : getPositionCssEditor().getValue(),
-        extra_css    : getExtraCssEditor().getValue(),
+        src_map   : JSON.parse(getEditor(getSrcMap()).getValue()),
+        position_css : getEditor(getPositionCss()).getValue(),
+        extra_css    : getEditor(getExtraCss()).getValue(),
     };
     await setOptions(opts);
     alert("Saved!");

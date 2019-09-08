@@ -10,6 +10,10 @@ textarea {
     width: 100%;
 }
 
+.CodeMirror {
+    height: auto !important;
+}
+
 input:invalid {
     background-color: red;
 }
