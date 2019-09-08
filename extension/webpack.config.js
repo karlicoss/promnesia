@@ -98,6 +98,15 @@ if (target === 'chrome') {
     throw new Error("unknown target " + target);
 }
 
+if (target.includes('firefox')) {
+    manifestExtra.browser_specific_settings = {
+        "gecko": {
+            "id": "promnesia@karlicoss.github.com"
+        }
+    };
+}
+
+
 
 const buildPath = path.join(__dirname, 'dist', target);
 

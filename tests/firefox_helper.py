@@ -56,10 +56,14 @@ def get_extension_page_firefox(driver):
         if prefs_file.exists():
             break
 
+    addon_name = 'temporary_addon'
+    # TODO FIXME ok, apparently I should add it to tips on using or something..
+    addon_name = 'promnesia@karlicoss.github.com'
+
     addon_id = None
     for line in prefs_file.read_text().splitlines():
         # temporary-addon\":\"53104c22-acd0-4d44-904c-22d11d31559a\"}")
-        m = re.search(r'temporary-addon.....([0-9a-z-]+)."', line)
+        m = re.search(addon_name + r'.....([0-9a-z-]+)."', line)
         if m is None:
             continue
         addon_id = m.group(1)
