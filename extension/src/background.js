@@ -12,12 +12,14 @@ import reqwest from 'reqwest';
 const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [
     chrome.browserAction,
 
-    // chrome.pageAction,
+    chrome.pageAction,
     // eh, on mobile neither pageAction nor browserAction have setIcon? so using pageAction has no benefits basically..
 
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
     // browser action support is under development??
-]; // TODO dispatch depending on android/desktop?
+];
+// TODO dispatch depending on android/desktop?
+// for android it's kinda complementary as in the menu you can actually set title...
 
 
 async function isAndroid() {
@@ -204,12 +206,17 @@ async function updateState (tab: chrome$Tab) {
 
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
+
+    // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
+    // TODO not sure if can benefit from setPopup?
     for (const action of ACTIONS) {
-        // $FlowFixMe
-        action.setTitle({
-            tabId: tabId,
-            title: title,
-        });
+        if (action.setTitle) { // ugh, only present in browserAction..
+            // $FlowFixMe
+             action.setTitle({
+                 tabId: tabId,
+                 title: title,
+             });
+        }
 
         // $FlowFixMe
         if (!android) {
@@ -225,7 +232,17 @@ async function updateState (tab: chrome$Tab) {
             });
         }
     }
-    // chrome.pageAction.show(tabId);
+
+    // TODO ok, only show it if there are visits? and only on android?
+    // TODO FIXME write that icon can't be changed on android
+
+    if (icon === 'images/ic_visited_48.png') { // ugh. pretty hacky
+        // TODO do I need to hide?
+        if (chrome.pageAction) {
+            // TODO make dependent on options?
+            chrome.pageAction.show(tabId);
+        }
+    }
 
     const opts = await get_options_async();
     if (visits instanceof Visits) {

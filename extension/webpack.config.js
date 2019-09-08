@@ -60,6 +60,7 @@ const action = {
 };
 
 
+// TODO not sure why it is here?
 if (isMobile) {
     action["default_popup"] = "popup.html";
     // TODO ok, need to refine and add things on that page...
