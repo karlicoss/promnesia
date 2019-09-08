@@ -24,29 +24,14 @@
         "storage",
 
         "tabs",
-        "history",
-
         "activeTab",
 
         "webNavigation",
-
-        "contextMenus",
 
         "notifications"
     ],
     "icons": {
         "48": "images/ic_not_visited_48.png"
-    },
-    "commands": {
-        "_execute_browser_action": {
-            "description": "Activate extension"
-        },
-        "show_dots": {
-            "description": "Activate dots for visited urls"
-        },
-        "search": {
-            "description": "Open search page"
-        }
     },
     "manifest_version": 2,
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"

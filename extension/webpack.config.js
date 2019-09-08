@@ -24,11 +24,13 @@ const modifier = target === 'chrome' ? 'Shift' : 'Alt';
 const commandsExtra = {
     "_execute_browser_action": {
         "suggested_key": {
+            "description": "Activate extension",
             "default": `Ctrl+${modifier}+E`,
             "mac":  `Command+${modifier}+E`
         }
     },
     "show_dots": {
+        "description": "Activate dots for visited urls",
         "suggested_key": {
             "default": `Ctrl+${modifier}+V`,
             "mac":  `Command+${modifier}+V`
@@ -38,6 +40,7 @@ const commandsExtra = {
     // need all of that discoverable from menu anyway
     // also dots and browser action too
     "search": {
+        "description": "Open search page",
         "suggested_key": {
             "default": `Ctrl+${modifier}+H`,
             "mac":  `Command+${modifier}+H`
@@ -46,6 +49,10 @@ const commandsExtra = {
 };
 
 
+// see this for up to date info on the differences..
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
+const isMobile = target.includes('mobile');
+
 // TODO ugh it's getting messy...
 const action = {
     "default_icon": "images/ic_not_visited_48.png",
@@ -53,24 +60,32 @@ const action = {
 };
 
 
-if (target.includes('mobile')) {
+if (isMobile) {
     action["default_popup"] = "popup.html";
     // TODO ok, need to refine and add things on that page...
     // TODO maybe show visits as on sidebar?
 }
 
+const permissionsExtra = [];
+
+if (!isMobile) {
+    permissionsExtra.extend([
+        'contextMenus',
+        'history',
+    ]);
+}
+
 const manifestExtra = {
     version: pkg.version,
     name: release ? "Promnesia" : "Promnesia (dev)",
-    commands: commandsExtra,
     browser_action: action,
+    permissions: permissionsExtra,
 };
 
-/*
-if (target.includes('mobile')) {
-    manifestExtra.page_action = action;
+if (!isMobile) {
+    manifestExtra.commands = commandsExtra;
 }
-*/
+
 
 if (target === 'chrome') {
     manifestExtra.options_ui = {chrome_style: true};

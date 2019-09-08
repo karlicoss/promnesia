@@ -19,6 +19,13 @@ const ACTIONS: Array<chrome$browserAction | chrome$pageAction> = [
     // browser action support is under development??
 ]; // TODO dispatch depending on android/desktop?
 
+
+async function isAndroid() {
+    const platform = await chromeRuntimeGetPlatformInfo();
+    return platform.os === 'android';
+}
+
+
 function rawToVisits(vis): Visits {
     // TODO not sure, maybe we want to distinguish these situations..
     if (vis == null) {
@@ -84,8 +91,8 @@ const LOCAL_TAG = 'local';
 
 
 async function getChromeVisits(url: Url): Promise<Visits> {
-    // $FlowFixMe
-    if (!chrome.history) {
+    const android = await isAndroid();
+    if (android) {
         // ugh. 'history' api is not supported on mobile (TODO mention that in readme)
         // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
         return new Visits([]);
@@ -183,6 +190,7 @@ function getIconStyle(visits: Result): IconStyle {
     }
 }
 
+
 async function updateState (tab: chrome$Tab) {
     const url = unwrap(tab.url);
     const tabId = unwrap(tab.id);
@@ -192,7 +200,7 @@ async function updateState (tab: chrome$Tab) {
         return;
     }
 
-    const platform = await chromeRuntimeGetPlatformInfo();
+    const android = await isAndroid();
 
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
@@ -204,7 +212,7 @@ async function updateState (tab: chrome$Tab) {
         });
 
         // $FlowFixMe
-        if (platform.os != 'android') {
+        if (!android) {
             // $FlowFixMe
             action.setIcon({
                 tabId: tabId,
@@ -564,7 +572,7 @@ const onMenuClickedCallback = defensify(async (info) => {
   Only relevantinformation I could found about that is https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs , but that didn't really help
   This behaviour is tested by test_duplicate_background_pages to prevent regressions
 */
-getActiveTab().then(tab => {
+getActiveTab().then(async tab => {
     // TODO FIXME null tab?
 
     const aurl = tab.url;
@@ -575,17 +583,22 @@ getActiveTab().then(tab => {
     }
     linfo("Registering background page callbacks %s", aurl);
 
+    const android = await isAndroid();
+
     // $FlowFixMe
     chrome.runtime.onMessage.addListener(onMessageCallback);
 
-    // $FlowFixMe // err, complains at Promise but nevertheless works
-    chrome.commands.onCommand.addListener(onCommandCallback);
+    if (!android) {
+        // $FlowFixMe // err, complains at Promise but nevertheless works
+        chrome.commands.onCommand.addListener(onCommandCallback);
+    }
 
-    // TODO on opening search, this errors that menu already exists
-    chrome.contextMenus.create({
-        'id'      : BLACKLIST_DOMAIN_MENU,
-        'title'   : "Blacklist domain",
-    });
+    if (!android) {
+        chrome.contextMenus.create({
+            'id'      : BLACKLIST_DOMAIN_MENU,
+            'title'   : "Blacklist domain",
+        });
+    }
     // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
     // chrome.contextMenus.create({
     //     "title"   : "Blacklist page",
@@ -598,8 +611,10 @@ getActiveTab().then(tab => {
     //     "onclick" : clickHandler,
     // });
 
-    // $FlowFixMe // err, complains at Promise but nevertheless works
-    chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
+    if (!android) {
+        // $FlowFixMe // err, complains at Promise but nevertheless works
+        chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
+    }
 
     registerActions();
 });
