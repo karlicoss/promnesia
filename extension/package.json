@@ -27,7 +27,8 @@
   "homepage": "https://github.com/karlicoss/promnesia#readme",
   "dependencies": {
     "codemirror": "^5.48.2",
-    "reqwest": "^2.0.5"
+    "reqwest": "^2.0.5",
+    "webext-options-sync": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
