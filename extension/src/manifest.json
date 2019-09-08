@@ -13,6 +13,7 @@
     },
     "options_ui": {
         "page": "options_page.html",
+        "open_in_tab": true,
         "chrome_style": true
     },
 
