@@ -9,3 +9,7 @@ input {
 textarea {
     width: 100%;
 }
+
+input:invalid {
+    background-color: red;
+}
