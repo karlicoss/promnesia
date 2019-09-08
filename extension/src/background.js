@@ -445,7 +445,7 @@ async function getActiveTab(): Promise<chrome$Tab> {
     const tabs = await chromeTabsQueryAsync({'active': true});
     // TODO can it be empty at all??
     if (tabs.length > 1) {
-        lwarn("Multiple active tabs: %s", tabs); // TODO handle properly?
+        console.error("Multiple active tabs: %o", tabs); // TODO handle properly?
     }
     const tab = tabs[0];
     return tab;
@@ -564,6 +564,8 @@ const onCommandCallback = defensify(async cmd => {
 async function blackListDomain(e): Promise<void> {
     const url = unwrap(e.pageUrl);
     const hostname = normalisedURLHostname(url);
+
+    console.debug('blacklisting %s', hostname);
 
     const opts = await get_options_async();
     opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + hostname;

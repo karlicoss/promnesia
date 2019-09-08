@@ -60,17 +60,33 @@ function defaultOptions(): Options {
     };
 }
 
+
+// TODO mm. don't really like having global object, but seems that it's easiest way to avoid race conditions
+// see https://github.com/fregante/webext-options-sync/issues/38
+const _options = new OptionsSync({
+    defaults: defaultOptions(),
+});
+
+
 function optSync() {
-    return new OptionsSync({
-        defaults: defaultOptions(),
-    });
+    return _options;
 }
 
 // TODO later rename to just get_options
 export async function get_options_async(): Promise<Options> {
-    return await (optSync().getAll());
+    return await optSync().getAll();
 }
 
+
+/*
+function sleeper(ms) {
+    return function(x) {
+        return new Promise(resolve => setTimeout(() => resolve(x), ms));
+    };
+}
+*/
+
 export async function setOptions(opts: Options) {
-    await optSync().set(opts);
+    const os = optSync();
+    await os.set(opts);
 }

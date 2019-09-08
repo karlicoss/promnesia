@@ -141,7 +141,7 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
     #     dots.click()
     # assert dots.is_selected() == show_dots
 
-    bl = driver.find_element_by_id('blacklist_id')
+    bl = driver.find_element_by_id('blacklist_id').find_element_by_tag_name('textarea')
     bl.send_keys('\n'.join(blacklist))
 
     save_settings(driver)
@@ -300,7 +300,8 @@ def test_blacklist_custom(tmp_path, browser):
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
         driver.get('http://stackoverflow.com')
-        confirm('page should be blacklisted (black icon)')
+        trigger_command(driver, Command.ACTIVATE)
+        confirm('page should be blacklisted (black icon), your should see an error notification')
 
 
 @uses_x
