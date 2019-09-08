@@ -141,8 +141,11 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
     #     dots.click()
     # assert dots.is_selected() == show_dots
 
-    bl = driver.find_element_by_id('blacklist_id').find_element_by_tag_name('textarea')
-    bl.send_keys('\n'.join(blacklist))
+    bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
+    bl.click()
+    # ugh, that's hacky. presumably due to using Codemirror?
+    bla = driver.switch_to_active_element()
+    bla.send_keys('\n'.join(blacklist))
 
     save_settings(driver)
 
