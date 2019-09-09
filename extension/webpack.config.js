@@ -89,6 +89,7 @@ const manifestExtra = {
     name: name,
     browser_action: action,
     permissions: permissionsExtra,
+    options_ui: {},
 };
 
 if (!isMobile) {
@@ -109,14 +110,19 @@ if (isMobile) {
 
 
 if (target === 'chrome') {
-    manifestExtra.options_ui = {chrome_style: true};
+    manifestExtra.options_ui.chrome_style = true;
 } else if (target.includes('firefox')) {
     // TODO not sure if should do anything special for mobile
-    manifestExtra.options_ui = {browser_style: true};
-    manifestExtra.browser_action = {browser_style: true};
+    manifestExtra.options_ui.browser_style = true;
+    manifestExtra.browser_action.browser_style = true;
 } else {
     throw new Error("unknown target " + target);
 }
+
+if (!isMobile) {
+    manifestExtra.options_ui.open_in_tab = true;
+}
+
 
 if (target.includes('firefox') && !release) {
     // TODO not sure if should use AMO id?
