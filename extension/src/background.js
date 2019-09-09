@@ -349,12 +349,14 @@ for (var i = 0; i < link_elements.length; i++) {
 // chrome.tabs.onActivated.addListener(updateState);
 
 function isSpecialProtocol(url: string): boolean {
+    // TODO eh, maybe makes more sense to only allow http[s]/ftp/file?
     const pro = new URL(url).protocol;
     if ([
         'chrome:',
         'chrome-devtools:',
         'chrome-extension:',
         'moz-extension:',
+        'about:', // e.g. about:addons or about:devtool
     ].includes(pro)) {
         return true;
     }
