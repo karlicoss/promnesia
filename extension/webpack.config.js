@@ -95,9 +95,10 @@ if (!isMobile) {
     manifestExtra.commands = commandsExtra;
 }
 
+// TODO shit, how to validate manifest?? didn't find anything...
 if (isMobile) {
-    // on mobile firefox pageAction makes a bit of sense due to various limitations...
-    manifestExtra.pageAction = {
+    // on mobile firefox page_action makes a bit of sense due to various limitations...
+    manifestExtra.page_action = {
         browser_style: true,
         default_icon: {
             "48": "images/ic_visited_48.png"
