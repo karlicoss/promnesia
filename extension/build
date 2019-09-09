@@ -8,19 +8,41 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--target', type=str)
     p.add_argument('--release', action='store_true')
+    p.add_argument('--sign', action='store_true')
     for b in ['chrome', 'firefox', 'firefox-mobile']:
         p.add_argument('--' + b, action='store_const', const=b, dest='target')
     args = p.parse_args()
-    assert args.target is not None
+    target = args.target
+
+    assert target is not None
 
     env = {
-        'TARGET': args.target,
+        'TARGET': target,
         'RELEASE': 'YES' if args.release else 'NO',
         **os.environ,
     }
     check_call([
         'npm', 'run-script', 'build',
     ], env=env, cwd=str(Path(__file__).absolute().parent))
+
+    if args.sign:
+        assert args.release
+        if target not in ['firefox', 'firefox-mobile']:
+            raise RuntimeError(f"{target} is not supported for signing yet")
+
+
+        dist_dir = Path(__file__).absolute().parent / 'dist'
+        src_dir = dist_dir / target
+
+        from firefox_dev_secrets import API_KEY, API_SECRET
+        check_call([
+            'web-ext',
+            '--source-dir'   , str(src_dir),
+            '--artifacts-dir', str(dist_dir),
+            '--api-key'      , API_KEY,
+            '--api-secret'   , API_SECRET,
+            'sign',
+        ])
 
 if __name__ == '__main__':
     main()
