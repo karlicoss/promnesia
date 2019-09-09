@@ -7,7 +7,7 @@ rm -rf shallalist
 git clone git@github.com:cbuijs/shallalist.git
 rm -rf shallalist/.git
 
-for f in COPYRIGHT README.md last.updated finance/banking/domains; do
+for f in COPYRIGHT README.md last.updated finance/banking/domains webmail/domains; do
     git add "shallalist/$f"
 done
 

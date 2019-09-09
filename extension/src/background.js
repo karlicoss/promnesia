@@ -126,7 +126,6 @@ async function isBlacklisted(url: Url): Promise<?Reason> {
     /*
       TODO ''.split('\n') gives an emptly line, which would block local files
       will fix later if necessary, it's not a big issue I guess
-      TODO maybe use codemirror widget for it?
     */
 
 
@@ -137,11 +136,18 @@ async function isBlacklisted(url: Url): Promise<?Reason> {
     if (asList(opts.blacklist).includes(hostname)) {
         return "User-defined blacklist"; // TODO maybe supply item number?
     }
-    const domains_url = chrome.runtime.getURL('shallalist/finance/banking/domains');
-    const resp = await fetch(domains_url);
-    const domains = asList(await resp.text());
-    if (domains.includes(hostname)) {
-        return "'Banking' blacklist";
+
+    // TODO FIXME not very efficient... I guess I need to refresh it straight from github now and then?
+    for (let [bname, bfile] of [
+        ['Webmail', 'shallalist/webmail/domains'],
+        ['Banking', 'shallalist/finance/banking/domains'],
+    ]) {
+        const domains_url = chrome.runtime.getURL(bfile);
+        const resp = await fetch(domains_url);
+        const domains = asList(await resp.text());
+        if (domains.includes(hostname)) {
+            return `'${bname}' blacklist`;
+        }
     }
     return null;
 }

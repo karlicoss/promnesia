@@ -160,8 +160,9 @@ const options = {
    new CleanWebpackPlugin([buildPath + "/*"]),
    new CopyWebpackPlugin([
       { from: 'images/*' },
+       // TODO compress maybe...
       { from: 'shallalist/finance/banking/domains', to: 'shallalist/finance/banking' },
-       // TODO webmail as well?
+      { from: 'shallalist/webmail/domains'        , to: 'shallalist/webmail' },
       { from: 'src/*.html' , flatten: true},
       { from: 'src/*.css' , flatten: true},
       { from: 'src/toastify.js', flatten: true},
