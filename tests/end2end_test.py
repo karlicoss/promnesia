@@ -23,8 +23,12 @@ from firefox_helper import open_extension_page
 
 
 class Browser(NamedTuple):
-    name: str
+    dist: str
     headless: bool
+
+    @property
+    def name(self) -> str:
+        return self.dist.split('-')[0] # TODO meh
 
     def skip_ci_x(self):
         import os
@@ -35,15 +39,19 @@ class Browser(NamedTuple):
 FF  = Browser('firefox', headless=False)
 CH  = Browser('chrome' , headless=False)
 FFH = Browser('firefox', headless=True)
+
+# TODO ugh, I guess it's not that easy to make it work because of isAndroid checks...
+# I guess easy way to test if you really want is to temporary force isAndroid to return true in extension...
+FM  = Browser('firefox-mobile', headless=False)
 # sadly headless chrome doesn't support extensions..
 # https://stackoverflow.com/a/45372648/706389
 # there is some workaround, but it's somewhat tricky...
 # https://stackoverflow.com/a/46475980/706389
 
 
-def get_addon_path(browser: str) -> Path:
+def get_addon_path(kind: str) -> Path:
     # TODO compile first?
-    addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / browser).absolute()
+    addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / kind).absolute()
     assert addon_path.exists()
     assert (addon_path / 'manifest.json').exists()
     return addon_path
@@ -75,7 +83,7 @@ def get_hotkey(driver, cmd: str) -> str:
 
 
 def _get_webdriver(tdir: Path, browser: Browser):
-    addon = get_addon_path(browser=browser.name)
+    addon = get_addon_path(kind=browser.dist)
     if browser.name == 'firefox':
         profile = webdriver.FirefoxProfile(str(tdir))
         options = webdriver.FirefoxOptions()
@@ -216,7 +224,7 @@ class Command:
 def browsers(*br):
     from functools import wraps
     def dec(f):
-        @pytest.mark.parametrize('browser', br, ids=lambda b: b.name + ('_headless' if b.headless else ''))
+        @pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
         @wraps(f)
         def ff(*args, **kwargs):
             return f(*args, **kwargs)
