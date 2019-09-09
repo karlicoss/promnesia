@@ -109,7 +109,8 @@ if (target === 'chrome') {
     throw new Error("unknown target " + target);
 }
 
-if (target.includes('firefox')) {
+if (target.includes('firefox') && !release) {
+    // TODO not sure if should use AMO id?
     manifestExtra.browser_specific_settings = {
         "gecko": {
             "id": "promnesia@karlicoss.github.com"
