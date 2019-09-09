@@ -76,9 +76,17 @@ if (!isMobile) {
     );
 }
 
+let name = "Promnesia";
+if (isMobile) {
+    name += " mobile";
+}
+if (!release) {
+    name += " (dev)";
+}
+
 const manifestExtra = {
     version: pkg.version,
-    name: release ? "Promnesia" : "Promnesia (dev)",
+    name: name,
     browser_action: action,
     permissions: permissionsExtra,
 };
