@@ -4,7 +4,7 @@ import type {Locator, Src, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {normalisedURLHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
-import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo} from './async_chrome';
+import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 // $FlowFixMe
 import reqwest from 'reqwest';
@@ -208,8 +208,6 @@ async function updateState (tab: chrome$Tab) {
         return;
     }
 
-    // const android = await isAndroid();
-
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
 
@@ -254,20 +252,35 @@ async function updateState (tab: chrome$Tab) {
 
     const opts = await get_options_async();
     if (visits instanceof Visits) {
-            // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
-            const locs = visits.contexts().map(l => l == null ? null : l.title);
-            if (locs.length !== 0) {
-                await showTabNotification(tabId, `${locs.length} contexts!\n${locs.join('\n')}`);
-            }
+        // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
+        // TODO and show system wide notification instead of tab notification?
+        // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
+        // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
+        // a little hacky, but kinda works?
+        const isOk = (await chromeTabsGet(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg';
 
-        await chromeTabsExecuteScriptAsync(tabId, {
-            file: 'sidebar.js',
-        });
-        await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
-        await chromeTabsInsertCSS(tabId, {code: opts.position_css});
-        await chromeTabsExecuteScriptAsync(tabId, {
-            code: `bindSidebarData(${JSON.stringify(visits)})`
-        });
+        // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
+        const locs = visits.contexts().map(l => l == null ? null : l.title);
+        if (locs.length !== 0) {
+            const msg = `${locs.length} contexts!\n${locs.join('\n')}`;
+            if (isOk) {
+                await showTabNotification(tabId, msg);
+            } else {
+                notify(msg);
+            }
+        }
+
+        if (isOk) {
+            // TODO this should be executed as a single block?
+            await chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'});
+            await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
+            await chromeTabsInsertCSS(tabId, {code: opts.position_css});
+            await chromeTabsExecuteScriptAsync(tabId, {
+                code: `bindSidebarData(${JSON.stringify(visits)})`
+            });
+        } else {
+            console.warn("TODO implement binding visits to popup?");
+        }
     }
 }
 
@@ -446,7 +459,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
         linfo('requesting! %s', url);
         await updateState(tab);
     }
-}));
+}, 'onUpdated'));
 
 
 async function getActiveTab(): Promise<chrome$Tab> {
@@ -547,10 +560,11 @@ async function registerActions() {
                 await showBlackListedNotification(tid, new Blacklisted(url, bl));
                 // TODO show popup; suggest to whitelist?
             } else {
+                // TODO ugh. messy
                 await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
                 await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
             }
-        }));
+        }, 'action.onClicked'));
     }
 }
 
@@ -566,7 +580,7 @@ const onCommandCallback = defensify(async cmd => {
         // TODO throw?
         lerror("unexpected command %s", cmd);
     }
-});
+}, 'onCommand');
 
 
 async function blackListDomain(e): Promise<void> {
@@ -591,7 +605,7 @@ const onMenuClickedCallback = defensify(async (info) => {
     if (info.menuItemId === BLACKLIST_DOMAIN_MENU) {
         await blackListDomain(info);
     }
-});
+}, 'onMenuClicked');
 
 
 /*
@@ -603,6 +617,7 @@ const onMenuClickedCallback = defensify(async (info) => {
 */
 var backgroundInitialised = false; // should be synchronous hopefully?
 async function initBackground() {
+    // TODO make it defensive in case of error tabs? if it fails then can be conservative and ignore menu etc anyway
     const android = await isAndroid();
 
     // $FlowFixMe

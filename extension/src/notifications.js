@@ -37,8 +37,11 @@ export function alertError(obj: any) {
     alert(message);
 }
 
-export function defensify(pf: (...any) => Promise<any>): (any) => Promise<any> {
-    return (...args) => pf(...args).catch(notifyError);
+export function defensify(pf: (...any) => Promise<any>, name: string=''): (any) => Promise<any> {
+    return (...args) => pf(...args).catch((err) => {
+        console.error('%s failed!', name);
+        notifyError(err);
+    });
 }
 
 
@@ -65,6 +68,7 @@ Toastify({
     ` });
 }
 
+// TODO maybe if tabId = -1, show normal notification?
 // $FlowFixMe
 export async function showTabNotification(tabId: number, message: string, ...args) {
     try {

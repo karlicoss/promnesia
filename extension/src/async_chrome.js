@@ -9,6 +9,8 @@ function wrap(fn, ...args: Array<any>): Promise<any> {
             }
             resolve(...xxx);
         };
+        // ugh. can't pass proper typed args down to chrome interfaces?
+        // $FlowFixMe
         fn(...args, cbb);
     });
 }
@@ -32,4 +34,8 @@ export function chromeRuntimeGetPlatformInfo(): Promise<chrome$PlatformInfo> {
 
 export function chromeRuntimeSendMessage(msg: any) {
     return wrap(chrome.runtime.sendMessage, msg);
+}
+
+export function chromeTabsGet(tabId: number) {
+    return wrap(chrome.tabs.get, tabId);
 }

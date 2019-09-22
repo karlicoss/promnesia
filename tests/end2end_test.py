@@ -444,13 +444,13 @@ def test_unreachable(tmp_path, browser):
     urls = {
         url: 'some context',
     }
-    # can't go directly to url because it results in exception
     with _test_helper(tmp_path, index_urls(urls), 'about:blank', browser=browser) as helper:
         try:
             helper.driver.get(url)
         except:
+            # results in exception because it's unreachable
             pass
-        confirm('green icon, no errors')
+        confirm('green icon, no errors, desktop notification with contexts')
 
 
 def trigger_sidebar_search(driver):
