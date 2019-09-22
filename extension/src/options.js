@@ -11,6 +11,7 @@ type SrcMap = {
 export type Options = {
     host: string;
     token: string;
+    verbose_errors: boolean;
 
     dots: boolean;
     blacklist: string;
@@ -27,6 +28,7 @@ function defaultOptions(): Options {
     return {
         host: 'http://localhost:13131',
         token: '',
+        verbose_errors: false,
 
         dots: true,
         blacklist: '',
@@ -72,11 +74,14 @@ function optSync() {
     return _options;
 }
 
-// TODO later rename to just get_options
-export async function get_options_async(): Promise<Options> {
+export async function getOptions(): Promise<Options> {
     return await optSync().getAll();
 }
 
+// TODO legacy; remove
+export async function get_options_async() {
+    return await getOptions();
+}
 
 /*
 function sleeper(ms) {

@@ -1,6 +1,7 @@
 /* @flow */
 import type {Url} from './common';
-import {Blacklisted, lerror} from './common';
+import {Blacklisted} from './common';
+import {getOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS} from './async_chrome';
 
 // TODO common?
@@ -24,23 +25,29 @@ function errmsg(obj: any): string {
     return `ERROR: ${msg}`;
 }
 
-export function notifyError(obj: any) {
+export function notifyError(obj: any, context: string='') {
     const message = errmsg(obj);
-    lerror(obj);
+    console.error('%o, context=%s', obj, context);
     notify(message); // TODO maybe error icon or something?
 }
 
 
 export function alertError(obj: any) {
     const message = errmsg(obj);
-    lerror(obj);
+    console.error('%o', obj);
     alert(message);
 }
 
 export function defensify(pf: (...any) => Promise<any>, name: string): (any) => Promise<any> {
     return (...args) => pf(...args).catch((err) => {
-        console.error('%s failed!', name);
-        notifyError(err);
+        console.error('%s failed: %o', name, err);
+        getOptions().then(opts => {
+            if (opts.verbose_errors) {
+                notifyError(err, 'defensify');
+            } else {
+                console.warn("error notification is suppressed by 'verbose_errors' option");
+            }
+        });
     });
 }
 
@@ -75,7 +82,10 @@ export async function showTabNotification(tabId: number, message: string, ...arg
         await _showTabNotification(tabId, message, ...args);
     } catch (error) {
         console.error('showTabNotification: %o', error);
-        notifyError(message); // TODO not sure about that now...
+        // TODO could check for 'Invalid tab ID' here? although
+        // TODO I guess if it's an error notification good to display it? otherwise, can suppress and just rely on propagation?
+        // for now just rely on verbose_error settting to decide if we are up for displaying it
+        throw error;
     }
 }
 

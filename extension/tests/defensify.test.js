@@ -1,4 +1,4 @@
-import {defensify} from '../src/notifications.js';
+// import {defensify} from '../src/notifications.js';
 
 async function inner() {
     throw 'some_error';

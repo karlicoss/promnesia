@@ -148,6 +148,9 @@ def configure_extension(driver, *, host: str='http://localhost', port: str, show
     # if dots.is_selected() != show_dots:
     #     dots.click()
     # assert dots.is_selected() == show_dots
+    verbose_errors = driver.find_element_by_id('verbose_errors_id')
+    if not verbose_errors.is_selected():
+        verbose_errors.click()
 
     bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
     bl.click()
@@ -488,7 +491,7 @@ def test_fuzz(tmp_path, browser):
                 send_key('Ctrl+Shift+t')
                 sleep(0.1)
         trigger_callback(driver, cb)
-        confirm("shouldn't result in 'unexpected error occured'")
+        confirm("shouldn't result in 'unexpected error occured'; show only show single notification per page")
 
 
 def trigger_sidebar_search(driver):
