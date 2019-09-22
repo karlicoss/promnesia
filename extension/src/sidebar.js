@@ -64,7 +64,7 @@ class Sidebar {
             show_dots.appendChild(cdoc.createTextNode('Show dots'));
             show_dots.addEventListener('click', defensify(async () => {
                 await chromeRuntimeSendMessage({method: Methods.SHOW_DOTS});
-            }));
+            }, 'show_dots.onClick'));
             cbody.appendChild(show_dots);
         }
         {
@@ -72,7 +72,7 @@ class Sidebar {
             searchb.appendChild(cdoc.createTextNode('Search'));
             searchb.addEventListener('click', defensify(async () => {
                 await chromeRuntimeSendMessage({method: Methods.OPEN_SEARCH});
-            }));
+            }, 'open_search.onClick'));
             cbody.appendChild(searchb);
         }
 

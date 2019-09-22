@@ -37,7 +37,7 @@ export function alertError(obj: any) {
     alert(message);
 }
 
-export function defensify(pf: (...any) => Promise<any>, name: string=''): (any) => Promise<any> {
+export function defensify(pf: (...any) => Promise<any>, name: string): (any) => Promise<any> {
     return (...args) => pf(...args).catch((err) => {
         console.error('%s failed!', name);
         notifyError(err);
@@ -74,8 +74,8 @@ export async function showTabNotification(tabId: number, message: string, ...arg
     try {
         await _showTabNotification(tabId, message, ...args);
     } catch (error) {
-        lerror(error);
-        notifyError(message);
+        console.error('showTabNotification: %o', error);
+        notifyError(message); // TODO not sure about that now...
     }
 }
 

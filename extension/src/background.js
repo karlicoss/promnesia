@@ -4,7 +4,7 @@ import type {Locator, Src, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {normalisedURLHostname} from './normalise';
 import {get_options_async, setOptions} from './options';
-import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
+import {awrap, chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 // $FlowFixMe
 import reqwest from 'reqwest';
@@ -427,7 +427,10 @@ chrome.tabs.onCreated.addListener((tab) => {
 
 // $FlowFixMe
 chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
-    delete tab.favIconUrl; // too spammy in logs
+    // too spammy in logs
+    delete tab.favIconUrl;
+    delete info.favIconUrl;
+    //
     ldebug("onUpdated %s %s", tab, info);
 
     const url = tab.url;
@@ -455,9 +458,28 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 
     // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
 
-    if (info['status'] === 'complete') {
-        linfo('requesting! %s', url);
+    if (info['status'] != 'complete') {
+        return;
+    }
+    linfo('requesting! %s', url);
+    try {
         await updateState(tab);
+    } catch (error) {
+        const message = error.message;
+        if (message == null) {
+            throw error;
+        }
+
+        if (message.includes('Invalid tab ID')) {
+            console.warn('Error %o ignored; most likely due to closed tab', error);
+            return;
+        }
+        if (message.includes('An unexpected error occurred')) {
+            console.warn('Error %o ignored; presumably bug in Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1397667', error);
+            // also that https://bugzilla.mozilla.org/show_bug.cgi?id=1290016
+            return;
+        }
+        throw error;
     }
 }, 'onUpdated'));
 
