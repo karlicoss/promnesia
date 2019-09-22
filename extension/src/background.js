@@ -10,8 +10,14 @@ import {showTabNotification, showBlackListedNotification, showIgnoredNotificatio
 import reqwest from 'reqwest';
 
 async function isAndroid() {
-    const platform = await chromeRuntimeGetPlatformInfo();
-    return platform.os === 'android';
+    try {
+        const platform = await chromeRuntimeGetPlatformInfo();
+        return platform.os === 'android';
+    } catch (error) {
+        // defensive just in case since isAndroid is kinda crucial for extension functioning
+        console.error('error while determining platfrom; assuming not android: %o', error);
+        return false;
+    }
 }
 
 async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction>> {
