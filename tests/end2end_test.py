@@ -173,13 +173,23 @@ def focus_browser_window(driver):
         check_call(['xdotool', 'windowactivate', wid])
 
 
-def trigger_hotkey(driver, hotkey):
+def trigger_callback(driver, callback):
     focus_browser_window(driver)
     sleep(0.5)
+    callback()
 
-    print(f"sending hotkey! {hotkey}")
+
+def send_key(key):
+    if isinstance(key, str):
+        key = key.split('+')
+
+    print(f"sending hotkey! {key}")
     import pyautogui # type: ignore
-    pyautogui.hotkey(*hotkey)
+    pyautogui.hotkey(*key)
+
+
+def trigger_hotkey(driver, hotkey):
+    trigger_callback(driver, lambda: send_key(hotkey))
 
 
 def trigger_command(driver, cmd):
@@ -451,6 +461,34 @@ def test_unreachable(tmp_path, browser):
             # results in exception because it's unreachable
             pass
         confirm('green icon, no errors, desktop notification with contexts')
+
+
+@uses_x
+@browsers(FF, CH)
+def test_fuzz(tmp_path, browser):
+    urls = {
+        'https://www.iana.org/domains/reserved': 'IANA',
+        'iana.org/domains/reserved': 'IANA2',
+    }
+    with _test_helper(tmp_path, index_urls(urls), 'https://example.com', browser=browser) as helper:
+        driver = helper.driver
+        # import ipdb; ipdb.set_trace()
+        tabs = 30
+        for _ in range(tabs):
+            driver.find_element_by_tag_name('a').send_keys(Keys.CONTROL + Keys.RETURN)
+
+        sleep(5)
+        for _ in range(tabs - 2):
+            driver.close()
+            sleep(0.1)
+            driver.switch_to.window(driver.window_handles[0])
+
+        def cb():
+            for _ in range(10):
+                send_key('Ctrl+Shift+t')
+                sleep(0.1)
+        trigger_callback(driver, cb)
+        confirm("shouldn't result in 'unexpected error occured'")
 
 
 def trigger_sidebar_search(driver):
