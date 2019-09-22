@@ -437,6 +437,22 @@ def test_local_page(tmp_path, browser):
         confirm('green icon, sidebar visible')
 
 
+@uses_x
+@browsers(FF, CH)
+def test_unreachable(tmp_path, browser):
+    url = 'https://somenonexist1ngurl.com'
+    urls = {
+        url: 'some context',
+    }
+    # can't go directly to url because it results in exception
+    with _test_helper(tmp_path, index_urls(urls), 'about:blank', browser=browser) as helper:
+        try:
+            helper.driver.get(url)
+        except:
+            pass
+        confirm('green icon, no errors')
+
+
 def trigger_sidebar_search(driver):
     driver.switch_to.default_content()
     driver.switch_to.frame('promnesia-sidebar')
