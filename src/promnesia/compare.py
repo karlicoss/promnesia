@@ -100,24 +100,31 @@ def compare(before: List[DbVisit], after: List[DbVisit], between: str) -> List[D
 
     return errors
 
-
-def main():
+def setup_parser(p):
     setup_logzero(get_logger(), level=logging.DEBUG)
-    p = argparse.ArgumentParser()
     # TODO better name?
     p.add_argument('--intermediate-dir', type=Path)
     p.add_argument('--last', type=int, default=2)
     p.add_argument('--all', action='store_const', const=0, dest='last')
     p.add_argument('paths', nargs='*')
-    args = p.parse_args()
 
+
+def get_files(args):
     if len(args.paths) == 0:
         int_dir = args.intermediate_dir
         assert int_dir.exists()
-        files = list(sorted(int_dir.glob('*.json*')))
+        files = list(sorted(int_dir.glob('*.sqlite*')))
         files = files[-args.last:]
     else:
         files = [Path(p) for p in args.paths]
+    return files
+
+
+def main():
+    p = argparse.ArgumentParser()
+    setup_parser(p)
+    args = p.parse_args()
+    files = get_files(args)
 
     errors = compare_files(*files)
     if len(errors) > 0:
@@ -128,6 +135,7 @@ def compare_files(*files: Path):
     assert len(files) > 0
 
     logger = get_logger()
+    logger.info('comparing %s', files)
 
     errors = [] # type: ignore
 
