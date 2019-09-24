@@ -8,10 +8,11 @@ from typing import NamedTuple, List, Optional, Union, Iterable
 from ..common import PathIsh, PreVisit, get_logger, Loc
 
 # TODO extract to a separate hypothesis provider; reuse in my module?
+# TODO yeah, would be really nice to reuse hypexport model
 def extract(json_path: PathIsh) -> Iterable[PreVisit]:
     logger = get_logger()
 
-    j = json.loads(Path(json_path).read_text())
+    j = json.loads(Path(json_path).read_text())['annotations']
     # TODO what I really need is my hypothesis provider... is it possible to share somehow?
     for x in j:
         [tg] = x['target'] # hopefully it's always single element
