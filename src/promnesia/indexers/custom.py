@@ -37,8 +37,8 @@ def extract(command: str) -> Iterable[PreVisit]:
             lineno = None
             url = parts[0]
         else:
-            [fname, lineno] = parts[0].rsplit(':', maxsplit=1)
-            lineno = int(lineno) # type: ignore
+            [fname, linenos] = parts[0].rsplit(':', maxsplit=1)
+            lineno = int(linenos)
             url = split_by[1:] + parts[1]
 
         context = f"{fname}:{lineno}" if fname and lineno else None
