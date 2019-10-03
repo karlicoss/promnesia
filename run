@@ -9,4 +9,4 @@ cd "$(dirname "$0")"
 # perhaps it's some weird interaction with bash -l 
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 
-PYTHONPATH=src python3 -m promnesia "$@"
+PYTHONPATH="src:$PYTHONPATH" exec python3 -m promnesia "$@"

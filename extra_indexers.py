@@ -50,9 +50,9 @@ def twitter_indexer():
 
 
 def instapaper_indexer():
-    import my.instapaper
+    import my.new.instapaper as ip
     logger = get_logger()
-    for p in my.instapaper.get_pages():
+    for p in ip.get_pages():
         bm = p.bookmark
         hls = p.highlights
 
