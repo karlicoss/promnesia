@@ -177,7 +177,7 @@ async function toggleSidebar() {
 window.toggleSidebar = toggleSidebar;
 
 
-function tryh(elem: Node, text: string): ?Node {
+function findText(elem: Node, text: string): ?Node {
     let res = null;
     // TODO need to match or something..
     // TODO not sure if better to go bottom up?
@@ -189,7 +189,7 @@ function tryh(elem: Node, text: string): ?Node {
         return res;
     }
     for (let x of children) {
-        let cr = tryh(x, text);
+        let cr = findText(x, text);
         if (cr != null) {
             return cr;
         }
@@ -197,6 +197,40 @@ function tryh(elem: Node, text: string): ?Node {
     return res;
 }
 
+// TODO not very effecient; replace with something existing
+function _highlight(text: string) {
+    for (const line of text.split('\n')) {
+        // TODO filter too short strings? or maybe only pick the longest one?
+        const found = findText(unwrap(doc.body), line);
+        if (found == null) {
+            console.debug('No match found for %s', line);
+            continue;
+        }
+        console.debug("highlighting %o %s", found, line);
+
+        // $FlowFixMe
+        const target: HTMLElement = unwrap(found.nodeType == Node.TEXT_NODE ? found.parentElement : found);
+
+        if (target.classList.contains('toastify')) {
+            // TODO hacky...
+            continue;
+        }
+
+        // TODO use css?
+        let style = target.getAttribute('style') || '';
+        style += '; background-color: #ffff6688';
+        target.setAttribute('style', style);
+    }
+}
+
+function tryHighlight(text: string) {
+    // TODO use tag color for background?
+    try {
+        _highlight(text);
+    } catch (error) {
+        console.error('Error while highlighting %s: %o', text, error); // TODO come up with something better..
+    }
+}
 
 // TODO rename to 'set'?
 async function bindSidebarData(response: Visits) {
@@ -279,25 +313,8 @@ async function bindSidebarData(response: Visits) {
 
     for (const v of with_ctx) {
         const ctx = unwrap(v.context);
-        const me = tryh(unwrap(doc.body), ctx);
         // TODO control it via options?
-        // TODO make it defensive?
-        if (me != null) {
-            console.debug("highlighting %s", ctx);
-            const hl = document.createElement('span');
-            // TODO use css?
-            hl.setAttribute('style', 'background-color: #ffff6688');
-            // TODO not sure why Flow is complaining; resolve it later
-            if (me.hasOwnProperty('replaceWith')) {
-                // $FlowFixMe
-                me.replaceWith(hl);
-                hl.appendChild(me);
-            } else {
-                console.error('No replaceWith method for %o', me);
-            }
-        } else {
-            console.debug('No match found for %s', ctx);
-        }
+        tryHighlight(ctx);
 
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {
