@@ -75,6 +75,13 @@ class Sidebar {
             }, 'open_search.onClick'));
             cbody.appendChild(searchb);
         }
+        /*
+        {
+            const hb = cdoc.createElement('button');
+            hb.appendChild(cdoc.createTextNode('Highlight')); // TODO eh, not sure ... need a proper component for that or what?
+
+        }
+        */ // TODO notsure about that...
 
         const ccc = cdoc.createElement('div');
         ccc.id = CONTAINER_ID;
@@ -170,6 +177,27 @@ async function toggleSidebar() {
 window.toggleSidebar = toggleSidebar;
 
 
+function tryh(elem: Node, text: string): ?Node {
+    let res = null;
+    // TODO need to match or something..
+    // TODO not sure if better to go bottom up?
+    if (elem.textContent.includes(text)) {
+        res = elem;
+    }
+    const children = elem.childNodes;
+    if (children == null) {
+        return res;
+    }
+    for (let x of children) {
+        let cr = tryh(x, text);
+        if (cr != null) {
+            return cr;
+        }
+    }
+    return res;
+}
+
+
 // TODO rename to 'set'?
 async function bindSidebarData(response: Visits) {
     // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
@@ -250,6 +278,27 @@ async function bindSidebarData(response: Visits) {
 
 
     for (const v of with_ctx) {
+        const ctx = unwrap(v.context);
+        const me = tryh(unwrap(doc.body), ctx);
+        // TODO control it via options?
+        // TODO make it defensive?
+        if (me != null) {
+            console.debug("highlighting %s", ctx);
+            const hl = document.createElement('span');
+            // TODO use css?
+            hl.setAttribute('style', 'background-color: #ffff6688');
+            // TODO not sure why Flow is complaining; resolve it later
+            if (me.hasOwnProperty('replaceWith')) {
+                // $FlowFixMe
+                me.replaceWith(hl);
+                hl.appendChild(me);
+            } else {
+                console.error('No replaceWith method for %o', me);
+            }
+        } else {
+            console.debug('No match found for %s', ctx);
+        }
+
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {
             timestamp     : v.time,

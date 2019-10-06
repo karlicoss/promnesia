@@ -12,9 +12,12 @@ from ..common import PathIsh, PreVisit, get_logger, Loc
 def extract(json_path: PathIsh) -> Iterable[PreVisit]:
     logger = get_logger()
 
-    j = json.loads(Path(json_path).read_text())['annotations']
+    j = json.loads(Path(json_path).read_text())
+    # TODO use model instead?
+    annotations = j if isinstance(j, list) else j['annotations']
+
     # TODO what I really need is my hypothesis provider... is it possible to share somehow?
-    for x in j:
+    for x in annotations:
         [tg] = x['target'] # hopefully it's always single element
         assert tg['source'] == x['uri'] # why would they not be equal???
         url = tg['source']
