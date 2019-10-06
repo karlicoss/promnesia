@@ -313,8 +313,9 @@ async function bindSidebarData(response: Visits) {
 
     for (const v of with_ctx) {
         const ctx = unwrap(v.context);
-        // TODO control it via options?
-        tryHighlight(ctx);
+        if (opts.highlight_on) {
+            tryHighlight(ctx);
+        }
 
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {

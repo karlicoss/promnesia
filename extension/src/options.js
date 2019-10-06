@@ -11,7 +11,8 @@ type SrcMap = {
 export type Options = {
     host: string;
     token: string;
-    verbose_errors: boolean;
+    verbose_errors_on: boolean;
+    highlight_on: boolean;
 
     dots: boolean;
     blacklist: string;
@@ -28,7 +29,8 @@ function defaultOptions(): Options {
     return {
         host: 'http://localhost:13131',
         token: '',
-        verbose_errors: false,
+        verbose_errors_on: false,
+        highlight_on: true,
 
         dots: true,
         blacklist: '',

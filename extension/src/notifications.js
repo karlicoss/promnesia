@@ -42,7 +42,7 @@ export function defensify(pf: (...any) => Promise<any>, name: string): (any) => 
     return (...args) => pf(...args).catch((err) => {
         console.error('%s failed: %o', name, err);
         getOptions().then(opts => {
-            if (opts.verbose_errors) {
+            if (opts.verbose_errors_on) {
                 notifyError(err, 'defensify');
             } else {
                 console.warn("error notification is suppressed by 'verbose_errors' option");

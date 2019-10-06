@@ -34,8 +34,12 @@ function getToken(): HTMLInputElement {
     return getInputElement('token_id');
 }
 
-function getVerboseErrors(): HTMLInputElement {
+function getVerboseErrorsOn(): HTMLInputElement {
     return getInputElement('verbose_errors_id');
+}
+
+function getHighlightOn(): HTMLInputElement {
+    return getInputElement('highlight_id');
 }
 
 // function getDots(): HTMLInputElement {
@@ -71,7 +75,8 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await get_options_async();
     getHost().value      = opts.host;
     getToken().value     = opts.token;
-    getVerboseErrors().checked = opts.verbose_errors;
+    getVerboseErrorsOn().checked = opts.verbose_errors_on;
+    getHighlightOn().checked = opts.highlight_on;
 
     // getDots().checked    = opts.dots;
     CodeMirror(getBlackList(), {
@@ -127,7 +132,8 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
     const opts = {
         host      : getHost().value,
         token     : getToken().value,
-        verbose_errors: getVerboseErrors().checked,
+        verbose_errors_on: getVerboseErrorsOn().checked,
+        highlight_on: getHighlightOn().checked,
 
         dots      : true, // TODO? getDots().checked,
         blacklist : getEditor(getBlackList()).getValue(),
