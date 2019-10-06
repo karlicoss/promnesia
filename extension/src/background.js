@@ -270,7 +270,9 @@ async function updateState (tab: chrome$Tab) {
         if (locs.length !== 0) {
             const msg = `${locs.length} contexts!\n${locs.join('\n')}`;
             if (isOk) {
-                await showTabNotification(tabId, msg);
+                if (opts.contexts_popup_on) {
+                    showTabNotification(tabId, msg);
+                }
             } else {
                 notify(msg);
             }
