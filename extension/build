@@ -28,7 +28,7 @@ def main():
     if args.sign:
         assert args.release
         if target not in ['firefox', 'firefox-mobile']:
-            raise RuntimeError(f"{target} is not supported for signing yet")
+            raise RuntimeError("{target} is not supported for signing yet".format(target=target))
 
 
         dist_dir = Path(__file__).absolute().parent / 'dist'
