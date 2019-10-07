@@ -8,6 +8,7 @@ from shutil import copytree
 import os
 from os import mkdir
 from os.path import lexists
+from typing import Union
 
 import pytest # type: ignore
 from pytest import mark # type: ignore
@@ -32,8 +33,30 @@ def history(*args, **kwargs):
     from promnesia.common import previsits_to_history
     return previsits_to_history(*args, **kwargs, src='whatever')[0] # TODO meh
 
-from kython import import_file
 
+from contextlib import contextmanager
+@contextmanager
+def extra_path(p: Path):
+    import sys
+    try:
+        sys.path.append(str(p))
+        yield
+    finally:
+        sys.path.pop()
+
+def import_file(p: Union[str, Path], name=None):
+    p = Path(p)
+    if name is None:
+        name = p.stem
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, p) # type: ignore
+    foo = importlib.util.module_from_spec(spec)
+    with extra_path(p.parent):
+        spec.loader.exec_module(foo) # type: ignore
+    return foo
+
+
+# TODO eh. need to separate stuff for history backups out...
 backup_db = import_file('scripts/browser_history.py')
 populate_db = import_file('scripts/populate-browser-history.py')
 
