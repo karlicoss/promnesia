@@ -3,6 +3,7 @@ from pathlib import Path
 from subprocess import check_call, check_output
 import time
 import json
+import os
 from tempfile import TemporaryDirectory
 
 
@@ -23,7 +24,10 @@ INDEXERS = []
 def run_bin(name: str, *args):
     # TODO install binary or something? not sure...
     binary = Path(__file__).absolute().parent.parent / name
-    check_call([str(x) for x in [binary, *args]])
+    check_call(
+        [str(x) for x in [binary, *args]],
+        env={'PYTHONPATH': 'src', **os.environ}, # TODO hacky...
+    )
 
 
 def run(tdir: Path):

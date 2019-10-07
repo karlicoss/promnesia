@@ -9,4 +9,11 @@ cd "$(dirname "$0")"
 # perhaps it's some weird interaction with bash -l 
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 
-PYTHONPATH="src:$PYTHONPATH" exec python3 -m promnesia "$@"
+
+if [[ -n "${PYTHONPATH:=}" ]]; then
+    PREV=":$PYTHONPATH"
+else
+    PREV=""
+fi
+# TODO ugh. rely on installing or something??
+PYTHONPATH="src$PREV" exec python3 -m promnesia "$@"
