@@ -153,10 +153,10 @@ def test_chrome(tmp_path):
     assert_got_tzinfo(hist)
 
 
-@skip("TODO try triggering firefox on CI? not sure if that's possible...")
+@skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_firefox(tmp_path):
     tdir = Path(tmp_path)
-    path = backup_db.backup_history('firefox', to=tdir)
+    path = backup_db.backup_history('firefox', to=tdir, profile='*release*')
     # shouldn't fail at least
 
         # [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
