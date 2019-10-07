@@ -37,14 +37,15 @@ class Browser(NamedTuple):
 FF  = Browser('firefox', headless=False)
 CH  = Browser('chrome' , headless=False)
 FFH = Browser('firefox', headless=True)
+# NOTE: sadly headless chrome doesn't support extensions..
+# https://stackoverflow.com/a/45372648/706389
+# there is some workaround, but it's somewhat tricky...
+# https://stackoverflow.com/a/46475980/706389
+
 
 # TODO ugh, I guess it's not that easy to make it work because of isAndroid checks...
 # I guess easy way to test if you really want is to temporary force isAndroid to return true in extension...
 FM  = Browser('firefox-mobile', headless=False)
-# sadly headless chrome doesn't support extensions..
-# https://stackoverflow.com/a/45372648/706389
-# there is some workaround, but it's somewhat tricky...
-# https://stackoverflow.com/a/46475980/706389
 
 
 def get_addon_path(kind: str) -> Path:
@@ -117,7 +118,7 @@ def get_webdriver(browser: Browser):
         try:
             yield driver
         finally:
-            driver.close()
+            driver.quit()
 
 
 def set_host(*, driver, host: str, port: str):
@@ -268,7 +269,7 @@ def test_settings(tmp_path, browser):
         assert hh.get_attribute('value') == 'http://localhost:12345'
 
 
-@browsers(FFH, CH)
+@browsers(FFH, FF, CH)
 def test_backend_status(tmp_path, browser):
     browser.skip_ci_x()
 
@@ -281,12 +282,14 @@ def test_backend_status(tmp_path, browser):
 
         alert = driver.switch_to.alert
         assert 'ERROR' in alert.text
-        driver.switch_to.alert.accept()
 
-        sleep(0.5)
-
-        # ugh. extra alert...
-        driver.switch_to.alert.accept()
+        # TODO ugh, not sure why it just stucks on headless...
+        # perhaps use policy instead? https://stackoverflow.com/a/43946973/706389
+        if not browser.headless:
+            driver.switch_to.alert.accept()
+            sleep(0.5)
+            # ugh. extra alert...
+            driver.switch_to.alert.accept()
 
         # TODO implement positive check??
 
