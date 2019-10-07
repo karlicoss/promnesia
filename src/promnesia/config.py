@@ -5,7 +5,7 @@ import importlib.util
 from typing_extensions import Protocol
 import pytz
 
-from kython.ktyping import PathIsh
+from .common import PathIsh
 
 
 class Config(Protocol):

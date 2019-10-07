@@ -14,8 +14,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-from kython.tui import getch_or_fail
-
 from common import skip_if_ci, uses_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver

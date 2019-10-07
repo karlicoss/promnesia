@@ -8,10 +8,7 @@ from pathlib import Path
 from datetime import datetime
 
 
-from kython.ktyping import PathIsh
-
-
-from .common import History, Filter, make_filter, get_logger, get_tmpdir
+from .common import PathIsh, History, Filter, make_filter, get_logger, get_tmpdir
 from . import config
 from .dump import dump_histories
 

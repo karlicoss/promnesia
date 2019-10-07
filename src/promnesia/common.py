@@ -10,12 +10,12 @@ import pytz
 
 from .normalise import normalise_url
 
-from kython.ktyping import PathIsh
 from kython.kerror import Res, unwrap
 from kython.canonify import CanonifyException
 
 import dateparser # type: ignore
 
+PathIsh = Union[str, Path]
 
 Url = str
 Source = str
