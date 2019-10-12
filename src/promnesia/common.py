@@ -1,7 +1,7 @@
 from collections.abc import Sized
 from datetime import datetime, date
 import re
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar
 from pathlib import Path
 import itertools
 import logging
@@ -10,11 +10,14 @@ import pytz
 
 from .normalise import normalise_url
 
-from kython.kerror import Res, unwrap
 from kython.canonify import CanonifyException
 
 # TODO not sure if should keep it? it's throwing some warnings
 import dateparser # type: ignore
+
+
+T = TypeVar('T')
+Res = Union[T, Exception]
 
 PathIsh = Union[str, Path]
 
@@ -178,16 +181,15 @@ class History(Sized):
         if v in self.vmap:
             return None
 
-        try:
-            # TODO if we do it as unwrap(DbVisit.make, v), then we can access make return type and properly handle error type?
-            # TODO tag needs to go here??
-            db_visit = unwrap(DbVisit.make(v, src=self.src))
-        except CanonifyException as ce:
+        res = DbVisit.make(v, src=self.src)
+        if isinstance(res, CanonifyException):
             self.logger.error('error while canonnifying %s... ignoring', v)
-            self.logger.exception(ce)
+            self.logger.exception(res)
             return None
-        except Exception as e:
-            return e
+        elif isinstance(res, Exception):
+            return res
+        else:
+            db_visit = res
 
         self.vmap[v] = db_visit
         return None
@@ -330,11 +332,10 @@ def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List
             continue
 
         # TODO check whether it's filtered before construction? probably doesn't really impact
-        try:
-            unwrap(h.register(p))
-        except Exception as e:
-            logger.exception(e)
-            errors.append(e)
+        res = h.register(p)
+        if isinstance(res, Exception):
+            logger.exception(res)
+            errors.append(res)
 
     # TODO should handle filtering properly?
     logger.info('extracting via %s: got %d visits', log_info, len(h))
