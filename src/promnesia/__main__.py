@@ -93,8 +93,8 @@ def do_adhoc(indexer: str, *args):
 from .promnesia_server import setup_parser, run as do_serve
 
 def main():
-    from kython.klogging import setup_logzero
-    setup_logzero(get_logger(), level=logging.DEBUG)
+    from .common import setup_logger
+    setup_logger(get_logger(), level=logging.DEBUG)
 
     p = argparse.ArgumentParser()
     subp = p.add_subparsers(dest='mode')

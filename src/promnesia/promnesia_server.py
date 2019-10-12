@@ -10,7 +10,6 @@ import logging
 from functools import lru_cache
 from typing import Collection, List, NamedTuple, Dict
 
-from kython import setup_logzero
 
 from cachew import NTBinder
 
@@ -23,11 +22,11 @@ from sqlalchemy import create_engine, MetaData, exists, literal, between # type:
 from sqlalchemy import Column, Table, func # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger
 from . import config as cfg
 from .normalise import normalise_url
 
-_ENV_CONFIG = 'WEREYOUHERE_CONFIG'
+_ENV_CONFIG = 'PROMNESIA_CONFIG'
 
 
 # TODO not sure about utc in database... keep orig timezone?
@@ -36,7 +35,7 @@ _ENV_CONFIG = 'WEREYOUHERE_CONFIG'
 @lru_cache(1)
 def get_logger():
     logger = logging.getLogger('promnesia')
-    setup_logzero(logger, level=logging.DEBUG)
+    setup_logger(logger, level=logging.DEBUG)
     return logger
 
 
@@ -266,7 +265,6 @@ def setup_parser(p):
 
 def main():
     # setup_logzero(logging.getLogger('sqlalchemy.engine'), level=logging.DEBUG)
-    setup_logzero(get_logger(), level=logging.DEBUG)
     p = argparse.ArgumentParser('promnesia server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()

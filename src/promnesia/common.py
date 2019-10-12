@@ -13,6 +13,7 @@ from .normalise import normalise_url
 from kython.kerror import Res, unwrap
 from kython.canonify import CanonifyException
 
+# TODO not sure if should keep it? it's throwing some warnings
 import dateparser # type: ignore
 
 PathIsh = Union[str, Path]
@@ -115,7 +116,7 @@ def make_filter(thing) -> Filter:
 
 
 def get_logger():
-    return logging.getLogger("WereYouHere")
+    return logging.getLogger("promnesia")
 
 # TODO do i really need to inherit this??
 class History(Sized):
@@ -194,8 +195,9 @@ class History(Sized):
 
     ## only used in tests?..
     def _nmap(self):
-        from kython import group_by_key
-        return group_by_key(self.visits, key=lambda x: x.norm_url)
+        from itertools import groupby
+        key = lambda x: x.norm_url
+        return {k: list(g) for k, g in groupby(sorted(self.visits, key=key), key=key)}
 
     def __len__(self) -> int:
         return len(self._nmap())
@@ -267,7 +269,6 @@ def from_epoch(ts: int) -> datetime:
     return res
 
 
-# TODO kythonize?
 class PathWithMtime(NamedTuple):
     path: Path
     mtime: float
@@ -338,3 +339,17 @@ def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List
     # TODO should handle filtering properly?
     logger.info('extracting via %s: got %d visits', log_info, len(h))
     return h.visits, errors
+
+
+def setup_logger(logger, level=None, format=None, datefmt=None):
+    import logging
+    old_root = logging.root
+    try:
+        logging.root = logger
+        logging.basicConfig(
+            level=level or logging.DEBUG,
+            format=format or '%(name)s %(asctime)s %(levelname)-8s %(filename)s:%(lineno)-4d %(message)s',
+            datefmt=datefmt or '%Y-%m-%d %H:%M:%S',
+        )
+    finally:
+        logging.root = old_root
