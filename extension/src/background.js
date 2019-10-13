@@ -35,13 +35,8 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
 }
 
 function rawToVisits(vis): Visits {
-    // TODO not sure, maybe we want to distinguish these situations..
-    if (vis == null) {
-        return new Visits([]);
-    }
-
     // TODO filter errors? not sure.
-    return new Visits(vis.map(v => {
+    return new Visits(vis.visits.map(v => {
         // TODO wonder if server is returning utc...
         // TODO server should return tz aware, probably...
         const dts = v['dt'] + ' UTC'; // jeez. seems like it's the easiest way...
@@ -215,6 +210,7 @@ async function updateState (tab: chrome$Tab) {
     }
 
     const visits = await getVisits(url);
+    // TODO if there are relatives, then change icon style as well
     let {icon, title, text} = getIconStyle(visits);
 
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction

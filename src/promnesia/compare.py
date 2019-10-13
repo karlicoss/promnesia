@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO perhaps make it external script?
 from datetime import datetime
 import argparse
 from pathlib import Path

@@ -99,9 +99,10 @@ def _get_stuff(db_path: PathWithMtime):
     return engine, binder, table
 
 
-def get_stuff(): # TODO better name
+def get_stuff(db_path=None): # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
-    db_path = get_db_path()
+    if db_path is None:
+        db_path = get_db_path()
     return _get_stuff(PathWithMtime.make(db_path))
 
 
@@ -111,6 +112,7 @@ def search_common(url: str, where):
     config = get_config()
 
     logger.info('url: %s', url)
+    original_url = url
     url = normalise_url(url)
     logger.info('normalised url: %s', url)
 
@@ -139,7 +141,11 @@ def search_common(url: str, where):
 
     logger.debug('responding with %d visits', len(vlist))
     # TODO respond with normalised result, then frontent could choose how to present children/siblings/whatever?
-    return list(map(as_json, vlist))
+    return {
+        'orginal_url'   : original_url,
+        'normalised_url': url,
+        'visits': list(map(as_json, vlist)),
+    }
 
 
 @hug.local()

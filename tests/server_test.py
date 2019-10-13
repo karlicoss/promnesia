@@ -99,7 +99,7 @@ def test_query_instapaper(tmp_path):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     with wserver(config=tdir / 'test_config.py') as helper:
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
-        assert len(response) > 5
+        assert len(response['visits']) > 5
         # TODO actually test response?
 
 
@@ -109,7 +109,7 @@ def test_visits(tmp_path):
         for q in range(3):
             print(f"querying {q}")
             response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
-            assert len(response) == 1
+            assert len(response['visits']) == 1
 
 
 def test_search(tmp_path):
@@ -118,7 +118,7 @@ def test_search(tmp_path):
     test_url = "http://www.e-flux.com"
     with wserver(config=tdir / 'test_config.py') as helper:
         response = post(f'http://localhost:{helper.port}/search', f'url={test_url}')
-        assert len(response) == 8
+        assert len(response['visits']) == 8
 
 
 def test_visited(tmp_path):
@@ -137,10 +137,11 @@ def test_search_around(tmp_path):
     with wserver(config=tdir / 'test_config.py') as helper:
         response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={test_ts}')
         # TODO highlight original url in extension??
-        assert 5 < len(response) < 20
+        assert 5 < len(response['visits']) < 20
 
 
 # TODO right.. I guess that triggered because of reddit indexer specifically
+# TODO could probably reuse parts of tests to be both integration/server and end2end when necessary?
 def test_visits_hier(tdir):
     test_url = 'https://www.reddit.com/r/QuantifiedSelf/comments/d6m7bd/android_app_to_track_and_export_application_use/'
     urls = {
@@ -150,5 +151,5 @@ def test_visits_hier(tdir):
     indexer(tdir)
     with wserver(config=tdir / 'test_config.py') as helper:
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
-        assert len(response) == 1
+        assert len(response['visits']) == 1
 
