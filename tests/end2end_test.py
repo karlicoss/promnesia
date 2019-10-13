@@ -301,15 +301,28 @@ def test_sidebar_bottom(browser):
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
 
-        area = driver.find_element_by_xpath('//*[@id="position_css_id"]//textarea')
         # for some reason area.clear() caused
         # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
-        area.send_keys([Keys.DELETE] * 500)
-        area.send_keys("""
+
+        settings = """
 #promnesia-sidebar {
     --bottom: 1;
     --size: 20%;
-}""")
+}"""
+
+        position_field = driver.find_element_by_xpath('//*[@id="position_css_id"]')
+        if browser.name == 'chrome':
+            # ugh... for some reason wouldn't send the keys...
+            position_field.click()
+            import pyautogui # type: ignore
+            pyautogui.press(['backspace'] * 100 + ['delete'] * 100)
+            pyautogui.typewrite(settings, interval=0.1)
+        else:
+            ares =  position_field.find_element_by_xpath('//textarea')
+            area.send_keys([Keys.DELETE] * 500)
+            area.send_keys(settings)
+
+
         save_settings(driver)
 
         driver.get(PYTHON_DOC_URL)
