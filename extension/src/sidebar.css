@@ -25,6 +25,7 @@ a {
 
 .src-filter .src {
     cursor: pointer;
+    display: inline-block;
 }
 
 .src-filter .src:hover {
