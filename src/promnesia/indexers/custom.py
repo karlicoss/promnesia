@@ -107,7 +107,7 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Pr
         return
 
     pp = Path(path)
-    # TODO ugh. kythonize that..
+    # TODO use kompress?
     if pp.suffix == '.xz':
         import lzma
         uname = pp.name[:-len('.xz')]

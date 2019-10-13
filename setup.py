@@ -10,12 +10,46 @@ except VersionConflict:
     sys.exit(1)
 
 
+name = 'promnesia'
+
 if __name__ == "__main__":
     setup(
         use_pyscaffold=True,
-        package_data={
-            'promnesia': [
-                'py.typed',
+        install_requires=[
+            'pytz',
+            'urlextract',
+            'sqlalchemy', # DB api
+            'hug', # server
+            'python-magic', # for detecting mime types
+            'dateparser',
+            'typing_extensions',
+
+            # TODO make these optional:
+            'dataset', # used by some indexers
+            'pyjq', # json extraction
+            'cachew', # caching
+
+            # TODO get rid of logzero?
+            'logzero',
+
+            # TODO vendorize
+            'kython@git+https://github.com/karlicoss/kython.git@master',
+        ],
+        extras_require={
+            'testing': [
+                 'pytest',
+                 'pytest-xdist',
+
+                 'httpie',
+                 'selenium',
+                 'click', # end2end test
+                 'getch', # for end2end test
+            ],
+            'linting': [
+                 'pytest',
+                 'pylint',
+                 'mypy',
             ],
         },
+        package_data={name: ['py.typed']},
     )
