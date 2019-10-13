@@ -22,7 +22,6 @@ if __name__ == "__main__":
             'hug', # server
             'python-magic', # for detecting mime types
             'dateparser',
-            'typing_extensions',
 
             # TODO make these optional:
             'dataset', # used by some indexers

@@ -1,19 +1,25 @@
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, NamedTuple
 import importlib.util
 
-from typing_extensions import Protocol
 import pytz
 
 from .common import PathIsh
 
 
-class Config(Protocol):
+class Config(NamedTuple):
     FALLBACK_TIMEZONE: Union[str, pytz.BaseTzInfo]
-    CACHE_DIR: PathIsh # TODO do not use cache if it's none?
     OUTPUT_DIR: PathIsh
     INDEXERS: List
-    FILTERS: List[str]
+    CACHE_DIR: Optional[PathIsh] = None
+    FILTERS: List[str] = []
+
+    @property
+    def cache_dir(self) -> Path:
+        cd = self.CACHE_DIR
+        # TODO maybe do not use cache if it's none?
+        assert cd is not None
+        return Path(cd)
 
 
 instance: Optional[Config] = None
@@ -40,8 +46,14 @@ def reset() -> None:
 
 def import_config(config_file: PathIsh) -> Config:
     p = Path(config_file)
+
     name = p.stem
     spec = importlib.util.spec_from_file_location(name, p) # type: ignore
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod) # type: ignore
-    return mod # type: ignore
+
+    d = {}
+    for f in Config._fields:
+        if hasattr(mod, f):
+            d[f] = getattr(mod, f)
+    return Config(**d)

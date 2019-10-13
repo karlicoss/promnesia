@@ -1,14 +1,11 @@
-import pytz
 from pathlib import Path
 
-FALLBACK_TIMEZONE = pytz.timezone('Europe/London')
-
-FILTERS = [] # type: ignore
-
+FALLBACK_TIMEZONE = 'Europe/London'
 
 from promnesia.common import Indexer as I
 from promnesia.indexers.plaintext import extract_from_path
 import promnesia.indexers.custom as custom # type: ignore
+# TODO rename custom?
 import promnesia.indexers.takeout as takeout # type: ignore
 
 class Indexers:

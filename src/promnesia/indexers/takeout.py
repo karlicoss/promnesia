@@ -157,8 +157,8 @@ def cacheme(ident: str):
     def db_pathf(takeout: TakeoutSource) -> Path:
         tpath = _path(takeout)
         cname = tpath.name + '_' + ident + '.cache'
-        if config.has():
-            cache_dir = Path(config.get().CACHE_DIR)
+        if config.has(): # TODO eh?
+            cache_dir = Path(config.get().cache_dir)
         else:
             # TODO hmm. if using relative path, make it relative to /tmp?
             logger.warning('Caching in /tmp')
