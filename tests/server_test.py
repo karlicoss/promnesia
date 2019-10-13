@@ -11,7 +11,8 @@ from typing import NamedTuple, ContextManager
 
 import pytz
 
-from integration_test import index_hypothesis
+from integration_test import index_hypothesis, index_urls
+from common import tdir
 
 
 class Helper(NamedTuple):
@@ -137,3 +138,18 @@ def test_search_around(tmp_path):
         response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={test_ts}')
         # TODO highlight original url in extension??
         assert 5 < len(response) < 20
+
+
+# TODO right.. I guess that triggered because of reddit indexer specifically
+def test_visits_hier(tdir):
+    test_url = 'https://www.reddit.com/r/QuantifiedSelf/comments/d6m7bd/android_app_to_track_and_export_application_use/'
+    urls = {
+        'https://reddit.com/r/QuantifiedSelf/comments/d6m7bd/android_app_to_track_and_export_application_use/f0vem56': 'Some context',
+    }
+    indexer = index_urls(urls)
+    indexer(tdir)
+    with wserver(config=tdir / 'test_config.py') as helper:
+        response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
+        # TODO when we implement proper child/parent relations, it should fail
+        assert len(response) == 0
+

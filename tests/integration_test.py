@@ -3,12 +3,9 @@ from subprocess import check_call, run
 from typing import Set, Dict, Optional
 
 from indexer_test import populate_db
+from common import tdir
 
 import pytest
-
-@pytest.fixture
-def tdir(tmp_path):
-    yield Path(tmp_path)
 
 
 testdata = Path(__file__).absolute().parent.parent / 'testdata'
