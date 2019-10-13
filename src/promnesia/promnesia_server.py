@@ -18,7 +18,7 @@ import pytz
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData, exists, literal, between # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_ # type: ignore
 from sqlalchemy import Column, Table, func # type: ignore
 
 
@@ -167,8 +167,8 @@ def visits(
 ):
     return search_common(
         url=url,
-        # TODO hmm, ok so this change basically returns children..
-        where=lambda table, url: table.c.norm_url.like(url + '%'),
+        # odd, doesn't work just with: x or (y and z)
+        where=lambda table, url: or_(table.c.norm_url == url, and_(table.c.context != None, table.c.norm_url.like(url + '%'))),
     )
 
 

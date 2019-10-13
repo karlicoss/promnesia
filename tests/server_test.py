@@ -145,11 +145,13 @@ def test_search_around(tmp_path):
 def test_visits_hier(tdir):
     test_url = 'https://www.reddit.com/r/QuantifiedSelf/comments/d6m7bd/android_app_to_track_and_export_application_use/'
     urls = {
+        test_url: 'parent url',
         'https://reddit.com/r/QuantifiedSelf/comments/d6m7bd/android_app_to_track_and_export_application_use/f0vem56': 'Some context',
+        'https://reddit.com/r/QuantifiedSelf/comments/d6m7bd/android_app_to_track_and_export_application_use/whatever': None, # no context so should be ignored..
     }
     indexer = index_urls(urls)
     indexer(tdir)
     with wserver(config=tdir / 'test_config.py') as helper:
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
-        assert len(response['visits']) == 1
+        assert {v['context'] for v in response['visits']} == {'parent url', 'Some context'}
 
