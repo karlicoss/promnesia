@@ -90,13 +90,27 @@ export class Visits {
         this.visits = visits;
     }
 
-    contexts(): Array<?Locator> {
+    self_contexts(): Array<?Locator> {
         const locs = [];
         for (const visit of this.visits) {
             if (visit.context === null) {
                 continue;
             }
-            locs.push(visit.locator);
+            if (visit.normalised_url == this.normalised_url) {
+                locs.push(visit.locator);
+            }
+        }
+        return locs;
+    }
+    relative_contexts(): Array<?Locator> {
+        const locs = [];
+        for (const visit of this.visits) {
+            if (visit.context === null) {
+                continue;
+            }
+            if (visit.normalised_url != this.normalised_url) {
+                locs.push(visit.locator);
+            }
         }
         return locs;
     }

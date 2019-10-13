@@ -193,16 +193,33 @@ function getIconStyle(visits: Result): IconStyle {
     if (vcount === 0) {
         return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: ''};
     }
-    // TODO FIXME if there are relatives, then change icon style as well
-    const contexts = visits.contexts();
-    const ccount = contexts.length;
+    const cp = [];
+
+    const self_contexts = visits.self_contexts();
+    const ccount = self_contexts.length;
     if (ccount > 0) {
-        return {icon: 'images/ic_visited_48.png'    , title: `${vcount} visits, ${ccount} contexts`, text: ccount.toString()};
+        cp.push(`${ccount} contexts`);
+    }
+
+    const rcontexts  = visits.relative_contexts();
+    const rcount = rcontexts.length;
+    if (rcount > 0) {
+        // TODO rename to relative later?
+        cp.push(`${rcount} child contexts`);
+    }
+
+    const btext = rcount == 0 ? `${ccount}` : `${ccount}/${rcount}`;
+    const ctext = cp.join(', ');
+    if (ccount > 0) {
+        return {icon: 'images/ic_visited_48.png'    , title: `${vcount} visits, ${ctext}`, text: btext};
+    }
+    if (rcount > 0) {
+        return {icon: 'images/ic_relatives_48.png'    , title: `${vcount} visits, ${ctext}`, text: btext};
     }
     // TODO a bit ugly, but ok for now.. maybe cut off by time?
     const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
     if (boring) {
-        // TODO not sure if worth distinguishing..
+        // TODO not sure if really worth distinguishing..
         return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (local only)`, text: ''};
     } else {
         return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: ''};
@@ -271,7 +288,7 @@ async function updateState (tab: chrome$Tab) {
         const isOk = (await chromeTabsGet(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg';
 
         // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
-        const locs = visits.contexts().map(l => l == null ? null : l.title);
+        const locs = visits.self_contexts().map(l => l == null ? null : l.title);
         if (locs.length !== 0) {
             const msg = `${locs.length} contexts!\n${locs.join('\n')}`;
             if (isOk) {

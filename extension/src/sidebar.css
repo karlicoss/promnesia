@@ -74,9 +74,8 @@ a {
 }
 
 #visits li.relative {
-    background: #add8e677;
     border-left: 3px solid;
-    border-left-color: blue;
+    border-left-color: #00cc99;
 }
 
 #visits li:hover {
@@ -84,7 +83,7 @@ a {
 }
 
 #visits li.relative:hover {
-    border-color: blue;
+    border-color: #00cc99;
 }
 
 #visits li.highlight {

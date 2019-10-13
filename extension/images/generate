@@ -11,6 +11,7 @@ def main():
 
     spec = [
         (f'ic_visited_{size}.png'    , '#00ff00'),
+        (f'ic_relatives_{size}.png'  , '#00cc99'),
         (f'ic_not_visited_{size}.png', '#999999'),
         (f'ic_boring_{size}.png'     , '#550000'),
         (f'ic_blue_{size}.png'       , '#6666ff'),
