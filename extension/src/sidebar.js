@@ -321,12 +321,14 @@ async function bindSidebarData(response: Visits) {
 
     for (const v of with_ctx) {
         const ctx = unwrap(v.context);
-        if (opts.highlight_on) {
-            tryHighlight(ctx);
-        }
 
         // TODO hmm. hopefully chrome visits wouldn't get highlighted here?
         const relative = v.normalised_url != response.normalised_url;
+
+        if (!relative && opts.highlight_on) {
+            tryHighlight(ctx);
+        }
+
 
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {
