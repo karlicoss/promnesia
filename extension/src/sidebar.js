@@ -255,7 +255,7 @@ async function bindSidebarData(response: Visits) {
         new Visit(
             rvisit.original_url,
             rvisit.normalised_url,
-            new Date(rvisit.time),
+            new Date(rvisit.time), // TODO careful about utc here?
             rvisit.tags,
             rvisit.context,
             rvisit.locator,
@@ -317,6 +317,9 @@ async function bindSidebarData(response: Visits) {
             tryHighlight(ctx);
         }
 
+        // TODO hmm. hopefully chrome visits wouldn't get highlighted here?
+        const relative = v.normalised_url != response.normalised_url;
+
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {
             timestamp     : v.time,
@@ -324,6 +327,7 @@ async function bindSidebarData(response: Visits) {
             normalised_url: null,
             context       : v.context,
             locator       : v.locator,
+            relative      : relative,
         });
     }
 
@@ -380,6 +384,7 @@ async function bindSidebarData(response: Visits) {
             normalised_url: null,
             context: ctx,
             locator: null,
+            relative: false,
         });
     }
 }
@@ -395,6 +400,7 @@ function requestVisits() {
             if (response == null) {
                 return;
             }
+            // TODO FIXME here, distinguish them
             bindSidebarData(response);
         });
 }

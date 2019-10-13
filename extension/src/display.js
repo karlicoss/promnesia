@@ -20,6 +20,7 @@ type Params = {
     normalised_url: ?Url;
     context: ?string;
     locator: ?Locator;
+    relative: boolean;
 }
 
 export class Binder {
@@ -57,20 +58,23 @@ export class Binder {
             normalised_url,
             context,
             locator,
+            relative,
         }: Params,
     ) {
         const child = this.makeChild.bind(this);
         const tchild = this.makeTchild.bind(this); // TODO still necessary??
 
-
-        const item = child(parent, 'li');
+        const item = child(parent, 'li', relative ? ['relative'] : []);
         const header = child(item, 'div');
+        const relative_c = child(header, 'span');
+        relative_c.id = 'relative_indicator';
         const tags_c = child(header, 'span');
         const dt_c = child(header, 'span', ['datetime']);
         const time_c = child(dt_c, 'span', ['time']);
         const date_c = child(dt_c, 'span', ['date']);
+        item.setAttribute('sources', tags.join(' '));
 
-        item.setAttribute('sources', tags.join(" "));
+        tchild(relative_c, '⤑⤑');
 
         for (const tag of tags) {
             const tag_c = child(tags_c, 'span', ['src', tag]);

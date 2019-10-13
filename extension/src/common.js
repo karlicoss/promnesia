@@ -80,9 +80,13 @@ export class Visit {
 type VisitsList = Array<Visit>;
 
 export class Visits {
+    original_url: Url;
+    normalised_url: Url;
     visits: VisitsList;
 
-    constructor(visits: VisitsList) {
+    constructor(original_url: Url, normalised_url: Url, visits: VisitsList) {
+        this.original_url = original_url;
+        this.normalised_url = normalised_url;
         this.visits = visits;
     }
 

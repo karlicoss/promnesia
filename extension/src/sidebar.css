@@ -63,10 +63,29 @@ a {
     border: 3px solid;
     border-color: transparent;
 }
+
+#visits li #relative_indicator {
+    display: none;
+    padding-right: 0.5em;
+}
+
+#visits li.relative #relative_indicator {
+    display: inline;
+}
+
+#visits li.relative {
+    background: #add8e677;
+    border-left: 3px solid;
+    border-left-color: blue;
+}
+
 #visits li:hover {
     border-color: #ddd;
 }
 
+#visits li.relative:hover {
+    border-color: blue;
+}
 
 #visits li.highlight {
     border-color: red;

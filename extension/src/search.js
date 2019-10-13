@@ -81,6 +81,7 @@ async function _doSearch(
             normalised_url: v.normalised_url,
             context       : v.context,
             locator       : v.locator,
+            relative      : false,
         });
         if (highlight_if(v)) {
             cc.classList.add('highlight');

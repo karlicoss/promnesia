@@ -36,7 +36,7 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
 
 function rawToVisits(vis): Visits {
     // TODO filter errors? not sure.
-    return new Visits(vis.visits.map(v => {
+    const visits = vis['visits'].map(v => {
         // TODO wonder if server is returning utc...
         // TODO server should return tz aware, probably...
         const dts = v['dt'] + ' UTC'; // jeez. seems like it's the easiest way...
@@ -49,7 +49,12 @@ function rawToVisits(vis): Visits {
         const vloc: ?Locator = v['locator']
         const vdur: ?Second = v['duration'];
         return new Visit(vourl, vnurl, dt, vtags, vctx, vloc, vdur);
-    }));
+    });
+    return new Visits(
+        vis['original_url'],
+        vis['normalised_url'],
+        visits
+    );
 }
 
 
@@ -98,7 +103,7 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     if (android) {
         // ugh. 'history' api is not supported on mobile (TODO mention that in readme)
         // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
-        return new Visits([]);
+        return new Visits(url, url, []);
     }
 
     // $FlowFixMe
@@ -114,7 +119,7 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
     // TODO FIXME not sure if need to normalise..
     const visits = times.map(t => new Visit(url, url, t, [LOCAL_TAG]));
-    return new Visits(visits);
+    return new Visits(url, url, visits);
 }
 
 type Reason = string;
@@ -160,11 +165,15 @@ export async function getVisits(url: Url): Promise<Result> {
     if (bl != null) {
         return new Blacklisted(url, bl);
     }
+    const backendVisits = await getBackendVisits(url);
     // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
     const chromeVisits = await getChromeVisits(url);
-    const backendVisits = await getBackendVisits(url);
     const allVisits = backendVisits.visits.concat(chromeVisits.visits);
-    return new Visits(allVisits);
+    return new Visits(
+        backendVisits.original_url,
+        backendVisits.normalised_url,
+        allVisits
+    );
 }
 
 type IconStyle = {
@@ -184,6 +193,7 @@ function getIconStyle(visits: Result): IconStyle {
     if (vcount === 0) {
         return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: ''};
     }
+    // TODO FIXME if there are relatives, then change icon style as well
     const contexts = visits.contexts();
     const ccount = contexts.length;
     if (ccount > 0) {
@@ -210,7 +220,6 @@ async function updateState (tab: chrome$Tab) {
     }
 
     const visits = await getVisits(url);
-    // TODO if there are relatives, then change icon style as well
     let {icon, title, text} = getIconStyle(visits);
 
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
