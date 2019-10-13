@@ -262,7 +262,15 @@ async function bindSidebarData(response: Visits) {
             rvisit.duration,
         ) // TODO ugh ugly..
     );
-    visits.sort((f, s) => (s.time - f.time));
+    visits.sort((f, s) => {
+        // keep 'relatives' in the bottom
+        const fr = f.normalised_url === response.normalised_url;
+        const sr = s.normalised_url === response.normalised_url;
+        if (fr != sr) {
+            return (sr ? 1 : 0) - (fr ? 1 : 0);
+        }
+        return s.time - f.time;
+    });
 
     // move visits with contexts on top
     const with_ctx = [];
