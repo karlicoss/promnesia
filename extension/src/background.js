@@ -236,6 +236,12 @@ async function updateState (tab: chrome$Tab) {
         return;
     }
 
+    const opts = await get_options_async();
+    // TODO this should be executed as a single block?
+    await chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'});
+    await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
+    await chromeTabsInsertCSS(tabId, {code: opts.position_css});
+
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
 
@@ -278,7 +284,6 @@ async function updateState (tab: chrome$Tab) {
         }
     }
 
-    const opts = await get_options_async();
     if (visits instanceof Visits) {
         // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
         // TODO and show system wide notification instead of tab notification?
@@ -301,10 +306,6 @@ async function updateState (tab: chrome$Tab) {
         }
 
         if (isOk) {
-            // TODO this should be executed as a single block?
-            await chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'});
-            await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
-            await chromeTabsInsertCSS(tabId, {code: opts.position_css});
             await chromeTabsExecuteScriptAsync(tabId, {
                 code: `bindSidebarData(${JSON.stringify(visits)})`
             });
