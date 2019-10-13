@@ -33,6 +33,8 @@ if __name__ == "__main__":
 
             # TODO vendorize
             'kython@git+https://github.com/karlicoss/kython.git@master',
+            # can remove that once get rid of kython
+            'typing_extensions',
         ],
         extras_require={
             'testing': [
