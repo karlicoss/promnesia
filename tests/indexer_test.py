@@ -75,11 +75,14 @@ def adhoc_config(tmp_path):
     cdir.mkdir()
 
     from promnesia import config
-    class Cfg:
-        CACHE_DIR = cdir
 
     try:
-        config.instance = Cfg
+        config.instance = config.Config(
+            INDEXERS=[],
+            FALLBACK_TIMEZONE='Europe/London',
+            OUTPUT_DIR=tdir,
+            CACHE_DIR=cdir,
+        )
         yield
     finally:
         config.reset()
