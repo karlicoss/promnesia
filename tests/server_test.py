@@ -150,6 +150,5 @@ def test_visits_hier(tdir):
     indexer(tdir)
     with wserver(config=tdir / 'test_config.py') as helper:
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
-        # TODO when we implement proper child/parent relations, it should fail
-        assert len(response) == 0
+        assert len(response) == 1
 

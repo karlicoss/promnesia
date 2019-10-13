@@ -138,10 +138,8 @@ def search_common(url: str, where):
         vlist.append(vis)
 
     logger.debug('responding with %d visits', len(vlist))
-    if len(vlist) is None:
-        return None # TODO handle empty list in client?
-    else:
-        return list(map(as_json, vlist))
+    # TODO respond with normalised result, then frontent could choose how to present children/siblings/whatever?
+    return list(map(as_json, vlist))
 
 
 @hug.local()
@@ -163,7 +161,8 @@ def visits(
 ):
     return search_common(
         url=url,
-        where=lambda table, url: table.c.norm_url == url,
+        # TODO hmm, ok so this change basically returns children..
+        where=lambda table, url: table.c.norm_url.like(url + '%'),
     )
 
 
