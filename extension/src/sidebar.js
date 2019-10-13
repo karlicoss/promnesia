@@ -216,6 +216,14 @@ function _highlight(text: string) {
             continue;
         }
 
+        // TODO why doesn't flow warn about this??
+        // target.name === 'body'
+        if (target === doc.body) {
+            // meh, but otherwise too spammy
+            console.warn('body matched for highlight; skipping it');
+            continue;
+        }
+
         // TODO use css?
         let style = target.getAttribute('style') || '';
         style += '; background-color: #ffff6688';
