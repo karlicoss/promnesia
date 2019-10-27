@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 # TODO perhaps make it external script?
-from datetime import datetime
 import argparse
 from pathlib import Path
-from hashlib import sha1
-import sys
-import json
 import logging
-from itertools import chain
-from typing import Dict, List, Any, NamedTuple, Optional, Set
+import sys
+from typing import Dict, List, Any, NamedTuple, Optional, Iterator, Set, Tuple
 
 
 from promnesia.common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
@@ -73,7 +69,8 @@ def compare(before: List[DbVisit], after: List[DbVisit], between: str) -> List[D
 
     def reg_error(b):
         errors.append(b)
-        logger.error('between %s missing %s', between, b)
+        # TODO ugh. downgraded from error because it's confusing while using my private comparison script...
+        logger.warning('between %s missing %s', between, b)
         print('ignoreline "%s", # %s %s' % ('exid', b.norm_url, b.src), file=sys.stderr)
 
 
@@ -127,18 +124,16 @@ def main():
     args = p.parse_args()
     files = get_files(args)
 
-    errors = compare_files(*files)
+    errors = list(compare_files(*files))
     if len(errors) > 0:
         sys.exit(1)
 
 
-def compare_files(*files: Path):
+def compare_files(*files: Path) -> Iterator[Tuple[str, DbVisit]]:
     assert len(files) > 0
 
     logger = get_logger()
     logger.info('comparing %s', files)
-
-    errors = [] # type: ignore
 
     last = None
     last_dts = None
@@ -156,11 +151,10 @@ def compare_files(*files: Path):
         if last is not None:
             between = f'{last_dts}:{this_dts}'
             errs = compare(last, vis, between=between)
-            errors.extend(errs)
+            for e in errs:
+                yield between, e
         last = vis
         last_dts = this_dts
-
-    return errors
 
 if __name__ == '__main__':
     main()
