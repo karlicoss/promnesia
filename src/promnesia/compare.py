@@ -57,7 +57,10 @@ def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
     return onlya, common, onlyb
 
 
-def compare(before: List[DbVisit], after: List[DbVisit], between: str) -> List[DbVisit]:
+def compare(before: List[DbVisit], after: List[DbVisit], between: str, *, log=True) -> List[DbVisit]:
+    logger = get_logger()
+    logger.info('comparing between: %s', between)
+
     errors: List[DbVisit] = []
 
     umap: Dict[Url, List[DbVisit]] = {}
@@ -69,12 +72,10 @@ def compare(before: List[DbVisit], after: List[DbVisit], between: str) -> List[D
 
     def reg_error(b):
         errors.append(b)
-        # TODO ugh. downgraded from error because it's confusing while using my private comparison script...
-        logger.warning('between %s missing %s', between, b)
-        print('ignoreline "%s", # %s %s' % ('exid', b.norm_url, b.src), file=sys.stderr)
+        if log:
+            logger.error('between %s missing %s', between, b)
+            print('ignoreline "%s", # %s %s' % ('exid', b.norm_url, b.src), file=sys.stderr)
 
-
-    logger = get_logger()
 
     # the idea is that we eliminate items simultaneously from both sets
     eliminations = [
@@ -129,7 +130,7 @@ def main():
         sys.exit(1)
 
 
-def compare_files(*files: Path) -> Iterator[Tuple[str, DbVisit]]:
+def compare_files(*files: Path, log=True) -> Iterator[Tuple[str, DbVisit]]:
     assert len(files) > 0
 
     logger = get_logger()
@@ -150,7 +151,7 @@ def compare_files(*files: Path) -> Iterator[Tuple[str, DbVisit]]:
 
         if last is not None:
             between = f'{last_dts}:{this_dts}'
-            errs = compare(last, vis, between=between)
+            errs = compare(last, vis, between=between, log=log)
             for e in errs:
                 yield between, e
         last = vis
