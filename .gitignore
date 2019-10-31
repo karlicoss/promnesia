@@ -110,3 +110,5 @@ venv.bak/
 
 tmp/
 extension/dist
+
+geckodriver.log
