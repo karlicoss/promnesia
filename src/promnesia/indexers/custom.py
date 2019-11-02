@@ -113,8 +113,8 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Pr
         uname = pp.name[:-len('.xz')]
         uncomp = Path(get_tmpdir().name) / uname
         with lzma.open(pp, 'rb') as cf:
-            with uncomp.open('wb') as fo:
-                fo.write(cf.read())
+            with uncomp.open('wb') as fb:
+                fb.write(cf.read())
         yield from simple(path=uncomp, do_unquote=True) # ugh. only used for reddit currelty
         return
 
@@ -127,7 +127,7 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Pr
             urls = [u._replace(url=unquote(u.url)) for u in urls]
     elif pp.suffix == '.csv':
         urls = []
-        with pp.open() as fo:
+        with pp.open('r') as fo:
             # TODO support do_unquote??
             # TODO shit need to urldecode
             reader = csv.DictReader(fo)
