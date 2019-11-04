@@ -22,21 +22,13 @@ if __name__ == "__main__":
             'hug', # server
             'python-magic', # for detecting mime types
             'dateparser',
+            'cachew', # caching with type hints
 
             # TODO could be optional?
             'logzero', # pretty colored logging
 
-            # TODO make these optional:
-            'dataset', # used by some indexers
-            'pyjq', # json extraction
-            'cachew', # caching
-
-            # TODO get rid of logzero?
-            'logzero',
-
-            # TODO vendorize
-            'kython@git+https://github.com/karlicoss/kython.git@master',
             # can remove that once get rid of kython
+            'kython@git+https://github.com/karlicoss/kython.git@master',
             'typing_extensions',
         ],
         extras_require={
@@ -53,6 +45,12 @@ if __name__ == "__main__":
                  'pytest',
                  'pylint',
                  'mypy',
+            ],
+            'telegram': [
+                'dataset',
+            ],
+            'reddit': [
+                'pyjq',
             ],
         },
         package_data={name: ['py.typed']},

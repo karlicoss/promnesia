@@ -13,8 +13,6 @@ from subprocess import check_call, DEVNULL, check_output
 import magic # type: ignore
 mime = magic.Magic(mime=True)
 
-from kython.py37 import nullcontext
-
 from browser_history import Browser, backup_history, CHROME, FIREFOX, guess_db_date
 
 

@@ -78,12 +78,12 @@ class DbVisit(NamedTuple):
     @staticmethod
     def make(p: PreVisit, src: Source) -> Res['DbVisit']:
         try:
-            if isinstance(p.dt, str):
-                dt = dateparser.parse(p.dt)
-            elif isinstance(p.dt, datetime):
+            if isinstance(p.dt, datetime):
                 dt = p.dt
             elif isinstance(p.dt, date):
                 dt = datetime.combine(p.dt, datetime.min.time()) # meh..
+            elif isinstance(p.dt, str):
+                dt = dateparser.parse(p.dt)
             else:
                 raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
         except Exception as e:

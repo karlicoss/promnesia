@@ -7,17 +7,14 @@ import pytz
 
 import pyjq # type: ignore
 
-from kython import kompress
-from kython.kjq import jdel, jq_del_all, pipe
-from kython.kjson import JDict, JPath, JsonProcessor
-
 from ..common import (PathIsh, Extraction, Loc, PathIsh, PreVisit, extract_urls, get_logger)
-from ..normalise import normalise_url
+from ..kython import kompress
+from ..kython.kjson import JDict, JPath, JsonProcessor
 
 
 Query = str
 
-# TODO move to kython?
+# TODO move to kjq?
 def jq_drop_keys(keys: List[str]) -> Query:
     return """
 def walk(f):
