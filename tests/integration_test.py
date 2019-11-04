@@ -158,7 +158,7 @@ def test_comparison(tdir: Path):
     idx2(tdir)
 
     # should not crash, as there are more links in the new database
-    assert len(compare_files(old_db, db)) == 0
+    assert len(list(compare_files(old_db, db))) == 0
 
-    assert len(compare_files(db, old_db)) == 1
+    assert len(list(compare_files(db, old_db))) == 1
 
