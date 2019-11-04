@@ -342,15 +342,6 @@ def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List
     return h.visits, errors
 
 
-def setup_logger(logger, level=None, format=None, datefmt=None):
-    import logging
-    old_root = logging.root
-    try:
-        logging.root = logger
-        logging.basicConfig(
-            level=level or logging.DEBUG,
-            format=format or '%(name)s %(asctime)s %(levelname)-8s %(filename)s:%(lineno)-4d %(message)s',
-            datefmt=datefmt or '%Y-%m-%d %H:%M:%S',
-        )
-    finally:
-        logging.root = old_root
+def setup_logger(logger, level=logging.DEBUG):
+    import logzero # type: ignore
+    logzero.setup_logger(logger.name, level=level)

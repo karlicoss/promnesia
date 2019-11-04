@@ -23,6 +23,9 @@ if __name__ == "__main__":
             'python-magic', # for detecting mime types
             'dateparser',
 
+            # TODO could be optional?
+            'logzero', # pretty colored logging
+
             # TODO make these optional:
             'dataset', # used by some indexers
             'pyjq', # json extraction
