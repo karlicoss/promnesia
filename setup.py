@@ -19,17 +19,13 @@ if __name__ == "__main__":
             'pytz',
             'urlextract',
             'sqlalchemy', # DB api
-            'hug', # server
-            'python-magic', # for detecting mime types
-            'dateparser',
             'cachew', # caching with type hints
+            'hug', # server
 
             # TODO could be optional?
+            'python-magic', # for detecting mime types
+            'dateparser',
             'logzero', # pretty colored logging
-
-            # can remove that once get rid of kython
-            'kython@git+https://github.com/karlicoss/kython.git@master',
-            'typing_extensions',
         ],
         extras_require={
             'testing': [

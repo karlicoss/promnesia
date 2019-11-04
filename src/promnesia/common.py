@@ -9,8 +9,8 @@ from functools import lru_cache
 import pytz
 
 from .normalise import normalise_url
+from .cannon import CanonifyException
 
-from kython.canonify import CanonifyException
 
 # TODO not sure if should keep it? it's throwing some warnings
 import dateparser # type: ignore

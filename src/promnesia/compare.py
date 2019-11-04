@@ -10,8 +10,6 @@ from typing import Dict, List, Any, NamedTuple, Optional, Iterator, Set, Tuple
 from .common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
 from .kython import kompress
 
-# from kython.canonify import canonify # type: ignore
-
 # TODO include latest too?
 # from cconfig import ignore, filtered
 
