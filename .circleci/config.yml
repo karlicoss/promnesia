@@ -17,6 +17,7 @@ jobs:
 
       - run: python3 -m pip install --user tox
       # ugh, hug is involved as subprocess and doesn't see virtualenv I gues??
+      - run: sudo apt install python3-dev # TODO ugh, regex (dateparser's dep needs it???)
       - run: python3 -m tox
 
       # - save_cache:
