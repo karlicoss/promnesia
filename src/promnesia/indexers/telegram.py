@@ -1,16 +1,22 @@
-from pathlib import Path
-import json
-import logging
-from datetime import datetime
-from typing import NamedTuple, List, Optional, Union, Iterable
+from typing import Optional, Union, Iterable, TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
 import dataset # type: ignore
 
-from kython.kerror import echain, unwrap
-
 from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction
 
+
+def echain(ex: Exception, cause: Exception) -> Exception:
+    ex.__cause__ = cause
+    return ex
+
+
+T = TypeVar('T')
+def unwrap(res: Union[T, Exception]) -> T:
+    if isinstance(res, Exception):
+        raise res
+    else:
+        return res
 
 
 def extract(database: PathIsh) -> Iterable[Extraction]:
