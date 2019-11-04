@@ -2,8 +2,8 @@ import {format_dt, format_duration} from '../src/common.js';
 
 // https://jestjs.io/docs/en/using-matchers
 test('formats date', () => {
-    const dd = new Date(0);
-    expect(format_dt(dd)).toMatch(/Jan 1 1970/);
+    const dd = new Date(Date.UTC(2018, 11, 1, 10, 15, 0));
+    expect(format_dt(dd)).toMatch(/1 Dec 2018 10:15/);
 });
 
 test('formats duration', () => {
