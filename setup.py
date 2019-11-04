@@ -39,7 +39,6 @@ if __name__ == "__main__":
                  'httpie',
                  'selenium',
                  'click', # end2end test
-                 'getch', # for end2end test
             ],
             'linting': [
                  'pytest',
