@@ -14,7 +14,6 @@ import magic # type: ignore
 mime = magic.Magic(mime=True)
 
 from kython.py37 import nullcontext
-from kython.klogging import setup_logzero
 
 from browser_history import Browser, backup_history, CHROME, FIREFOX, guess_db_date
 
@@ -221,7 +220,6 @@ def merge_from(browser: Optional[Browser], from_: Optional[Path], to: Path, prof
 
 def _helper(tmp_path, browser, profile='*'):
     logger = get_logger()
-    setup_logzero(logger, level=logging.DEBUG)
 
     tdir = Path(tmp_path)
     merged = tdir / 'merged.sqlite'
@@ -245,7 +243,6 @@ def test_merge_firefox(tmp_path):
 
 def main():
     logger = get_logger()
-    setup_logzero(logger, level=logging.DEBUG)
 
     p = argparse.ArgumentParser()
     p.add_argument('--browser', type=Browser, required=False)

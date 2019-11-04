@@ -6,8 +6,6 @@ from typing import Optional
 import filecmp
 import logging
 
-from kython.klogging import setup_logzero
-
 Browser = str
 
 CHROME = 'chrome'
@@ -108,7 +106,6 @@ def test_guess(tmp_path):
 
 def main():
     logger = get_logger()
-    setup_logzero(logger, level=logging.DEBUG)
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument('--browser', type=Browser, required=True)

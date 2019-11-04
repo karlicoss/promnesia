@@ -9,7 +9,6 @@ from typing import Dict, List, Any, NamedTuple, Optional, Iterator, Set, Tuple
 
 from promnesia.common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
 
-from kython.klogging import setup_logzero
 from kython import kompress
 from kython.canonify import canonify
 
@@ -100,7 +99,6 @@ def compare(before: List[DbVisit], after: List[DbVisit], between: str, *, log=Tr
     return errors
 
 def setup_parser(p):
-    setup_logzero(get_logger(), level=logging.DEBUG)
     # TODO better name?
     p.add_argument('--intermediate-dir', type=Path)
     p.add_argument('--last', type=int, default=2)
