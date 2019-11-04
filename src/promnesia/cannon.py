@@ -514,11 +514,10 @@ def test_same_norm(urls):
         assert c0 == c, f'Expected {u0} and {u} to be same canonically; got {c0} and {c} instead'
 
 def test_error():
-    # TODO should have two modes? defensive just returns None or falls back to original url? not sure..
-    canonify('  +743535, fewfwf@gmail.com')
-    # hmm, it stopped throuwing at some point... tbh it's not a big deal, not there are many such urls
-    # with pytest.raises(CanonifyException):
-    #     canonify('  +743535, fewfwf@gmail.com')
+    # canonify('  +74Zo535, fewfwf@gmail.com') # -- apparently was patched in some python3.7 versions
+    with pytest.raises(CanonifyException):
+        # borrowed from https://bugs.mageia.org/show_bug.cgi?id=24640#c7
+        canonify('https://example.com\uFF03@bing.com')
 
 
 # TODO chrome-extension://fdpohaocaechififmbbbbbknoalclacl ??
