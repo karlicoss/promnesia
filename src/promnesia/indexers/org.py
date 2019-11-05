@@ -2,15 +2,12 @@ from datetime import datetime
 import re
 from typing import Iterable, List, Set, Optional, Iterator, Union, Tuple, NamedTuple
 from pathlib import Path
+
+
+from ..common import PreVisit, get_logger, Extraction, Url, Loc, from_epoch, echain, extract_urls, PathIsh
+
+
 import pytz
-
-from kython.ktyping import PathIsh
-
-from promnesia.common import PreVisit, get_logger, Extraction, Url, Loc, from_epoch, echain
-from promnesia.common import extract_urls as common_extract_urls
-from promnesia.indexers.custom import collect_from
-
-
 import orgparse # type: ignore
 from orgparse.date import gene_timestamp_regex, OrgDate # type: ignore
 from orgparse.node import OrgNode # type: ignore
@@ -90,7 +87,7 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
         logger.exception(e)
         yield e
     else:
-        yield from common_extract_urls(heading)
+        yield from extract_urls(heading)
 
     try:
         content = _get_body(n)
@@ -98,7 +95,7 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
         logger.exception(e)
         yield e
     else:
-        yield from common_extract_urls(content)
+        yield from extract_urls(content)
 
 
 def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
