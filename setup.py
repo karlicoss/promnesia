@@ -47,6 +47,9 @@ if __name__ == "__main__":
             'reddit': [
                 'pyjq',
             ],
+            'org': [
+                'orgparse',
+            ],
         },
         package_data={name: ['py.typed']},
     )
