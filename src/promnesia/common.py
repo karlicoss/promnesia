@@ -63,6 +63,7 @@ class PreVisit(NamedTuple):
     # spent: Optional[Second] = None
     debug: Optional[str] = None
 
+Visit = PreVisit
 
 Extraction = Union[PreVisit, Exception]
 

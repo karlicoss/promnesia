@@ -68,10 +68,11 @@ def do_index(config_file: Path):
 
 
 def adhoc_indexers():
-    from .indexers import custom, browser, takeout
+    from .indexers import auto, browser, takeout
     return {
         # TODO rename to plaintext?
-        'simple': custom.simple,
+        # TODO or auto?
+        'simple': auto.simple,
         # TODO org mode
 
         # TODO ugh, this runs against merged db
