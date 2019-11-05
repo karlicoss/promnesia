@@ -4,11 +4,21 @@ import json
 from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator
 from pathlib import Path
 from urllib.parse import unquote
+from functools import lru_cache
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction
 
+
+@lru_cache(1)
+def _magic():
+    import magic # type: ignore
+    return magic.Magic(mime=True)
+
+
+def mime(path: PathIsh) -> str:
+    return _magic().from_file(str(path))
 
 Ctx = Sequence[str]
 
@@ -46,7 +56,7 @@ def collect_from(thing) -> List[EUrl]:
 # TODO use magic and mimes maybe?
 
 
-Urls = Iterator[Url]
+Urls = Iterator[EUrl]
 
 def _csv(path: Path) -> Urls:
     # TODO these could also have Loc to be fair..
@@ -54,42 +64,61 @@ def _csv(path: Path) -> Urls:
         # TODO shit need to urldecode
         reader = csv.DictReader(fo)
         for line in reader:
-            yield from urls.extend(collect_from(line))
+            yield from collect_from(line)
+
 
 def _json(path: Path) -> Urls:
     jj = json.loads(path.read_text())
     yield from collect_from(jj)
 
-def _plaintext(path: Path) -> Urls:
+
+def _plaintext(path: Path) -> Iterator[Extraction]:
     from . import shellcmd
-    yield from shellcmd.extract()
-    pass
+    from .plaintext import extract_from_path
+    logger = get_logger()
+    logger.info(f'{path}: fallback to grep')
+    yield from shellcmd.extract(extract_from_path(path))
 
 
-def _markdown(path: Path) -> Urls:
+def _markdown(path: Path) -> Iterator[Extraction]:
     # TODO for now handled as plaintext
     yield from _plaintext(path)
 
 
 SMAP = {
-    'json'       : _json,
-    'csv'        : _csv,
+    '.json'       : _json,
+    '.csv'        : _csv,
 
     # 'org'        : TODO,
     # 'org_archive': TODO,
 
-    'md'         : _markdown,
-    'markdown'   : _markdown,
+    '.md'         : _markdown,
+    '.markdown'   : _markdown,
 
+    'text/plain'  : _plaintext,
+    '.txt'        : _plaintext,
+    '.page'       : _plaintext,
+
+    # TODO not sure about these:
+    'text/x-python': None,
+    'text/x-tex': None,
+    'text/x-lisp': None,
+    '.tex': None, # TODO not sure..
+    '.css': None,
+    '.sh' : None,
 
     # TODO compressed?
+    '.jpg': None,
+    '.png': None,
+    '.gif': None,
+    '.pdf': None,
+    'inode/x-empty': None,
 }
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
-# TODO extraction?
-def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Visit]:
+def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Extraction]:
     logger = get_logger()
     if isinstance(path, list):
         # TODO mm. just walk instead??
@@ -98,6 +127,8 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Vi
         return
 
     pp = Path(path)
+    assert pp.is_file(), pp
+
     # TODO use kompress?
     # TODO not even sure if it's used...
     if pp.suffix == '.xz':
@@ -111,24 +142,35 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterable[Vi
         return
 
     suf = pp.suffix
+    # TODO dispatch org mode here?
+    # TODO try/catch?
 
-    SMAP[suf]
-    # TODO careful, filter out obviously not plaintext? maybe mime could help here??
-
-    urls: List[EUrl]
-        # TODO use url extractor..
-        logger.info(f'{pp}: fallback to grep')
-        from .plaintext import extract_from_path
-        yield from extract(extract_from_path(pp))
-        # raise RuntimeError(f'Unexpected suffix {pp}')
+    if suf not in SMAP:
+        pm = mime(pp)
+        if pm not in SMAP:
+            yield RuntimeError(f"Unexpected file extension: {pp}, {pm}")
+            return
+        else:
+            ip = SMAP.get(pm, None)
+        # TODO assume plaintext?
+    else:
+        ip = SMAP.get(suf, None)
+    if ip is None:
+        logger.info(f'file type suppressed: {pp}')
         return
 
-    dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
+    indexer: Union[Urls, Iterator[Extraction]] = ip(pp) # type: ignore
+    # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 
-    for eu in urls:
-        yield Visit(
-            url=eu.url, # TODO FIXME use ctx?
-            dt=dt,
-            locator=Loc.file(pp),
-        )
-
+    fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
+    loc = Loc.file(pp)
+    for r in indexer:
+        if isinstance(r, EUrl):
+            yield Visit(
+                url=r.url,
+                dt=fallback_dt,
+                locator=loc,
+                context='::'.join(r.ctx),
+            )
+        else:
+            yield r

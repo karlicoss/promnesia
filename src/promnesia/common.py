@@ -65,7 +65,7 @@ class PreVisit(NamedTuple):
 
 Visit = PreVisit
 
-Extraction = Union[PreVisit, Exception]
+Extraction = Union[Visit, Exception]
 
 class DbVisit(NamedTuple):
     norm_url: Url
