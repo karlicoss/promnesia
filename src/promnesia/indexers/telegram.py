@@ -3,12 +3,7 @@ from urllib.parse import unquote # TODO mm, make it easier to rememember to use.
 
 import dataset # type: ignore
 
-from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction
-
-
-def echain(ex: Exception, cause: Exception) -> Exception:
-    ex.__cause__ = cause
-    return ex
+from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction, echain
 
 
 T = TypeVar('T')

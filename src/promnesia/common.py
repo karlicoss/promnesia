@@ -345,3 +345,9 @@ def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List
 def setup_logger(logger, level=logging.DEBUG):
     import logzero # type: ignore
     logzero.setup_logger(logger.name, level=level)
+
+
+def echain(ex: Exception, cause: Exception) -> Exception:
+    ex.__cause__ = cause
+    return ex
+
