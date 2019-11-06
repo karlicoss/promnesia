@@ -1,0 +1,11 @@
+#+FILETAGS: topology
+
+simulations/visualisations of fundamental group
+
+https://en.wikipedia.org/wiki/Computational_topology
+
+http://graphics.stanford.edu/courses/cs468-09-fall/
+hmm wonder if that does it. they mention triangulation.
+
+https://en.wikipedia.org/wiki/Triangulation_(topology)
+https://en.wikipedia.org/wiki/Digital_manifold
