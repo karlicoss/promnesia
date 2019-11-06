@@ -171,7 +171,7 @@ def test_firefox(tmp_path):
 
 
 def test_plaintext_path_extractor():
-    import promnesia.indexers.custom as custom_gen
+    import promnesia.indexers.shellcmd as custom_gen
     from promnesia.indexers.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
@@ -189,7 +189,7 @@ def test_plaintext_path_extractor():
 
 # TODO perhaps it belongs to canonify?
 def test_normalise():
-    import promnesia.indexers.custom as custom_gen
+    import promnesia.indexers.shellcmd as custom_gen
     from promnesia.indexers.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
@@ -208,7 +208,7 @@ def test_normalise():
 
 
 def test_normalise_weird():
-    import promnesia.indexers.custom as custom_gen
+    import promnesia.indexers.shellcmd as custom_gen
     from promnesia.indexers.plaintext import extract_from_path
 
     visits = history(W(
@@ -224,7 +224,7 @@ def test_normalise_weird():
 
 @skip("use a different way to specify filter other than class variable..")
 def test_filter():
-    import promnesia.indexers.custom as custom_gen
+    import promnesia.indexers.shellcmd as custom_gen
     from promnesia.indexers.plaintext import extract_from_path
 
     History.add_filter(r'some-weird-domain')
@@ -234,7 +234,7 @@ def test_filter():
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
-    import promnesia.indexers.custom as custom_gen
+    import promnesia.indexers.shellcmd as custom_gen
 
     hist = history(W(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",

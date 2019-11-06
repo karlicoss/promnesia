@@ -1,9 +1,16 @@
+"""
+Tries to index as much as it can:
+
+- TODO walks up the filesystem hierarchy
+- guesses org/markdown/json/etc by extension or mime type
+
+"""
+
 import csv
 from datetime import datetime
 import json
 from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator
 from pathlib import Path
-from urllib.parse import unquote
 from functools import lru_cache
 
 import pytz
@@ -118,16 +125,19 @@ SMAP = {
 
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
-def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Extraction]:
+def index(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Extraction]:
     logger = get_logger()
     if isinstance(path, list):
         # TODO mm. just walk instead??
         for p in path:
-            yield from simple(p)
+            yield from index(p)
         return
 
     pp = Path(path)
-    assert pp.is_file(), pp
+    if not pp.is_file():
+        logger.error('Expected file: %s', pp)
+        # TODO FIXME walk dir
+        return
 
     # TODO use kompress?
     # TODO not even sure if it's used...
@@ -138,7 +148,7 @@ def simple(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Ex
         with lzma.open(pp, 'rb') as cf:
             with uncomp.open('wb') as fb:
                 fb.write(cf.read())
-        yield from simple(path=uncomp, do_unquote=do_unquote)
+        yield from index(path=uncomp, do_unquote=do_unquote)
         return
 
     suf = pp.suffix

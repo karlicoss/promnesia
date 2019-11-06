@@ -4,8 +4,7 @@ FALLBACK_TIMEZONE = 'Europe/London'
 
 from promnesia.common import Indexer as I
 from promnesia.indexers.plaintext import extract_from_path
-import promnesia.indexers.custom as custom # type: ignore
-# TODO rename custom?
+import promnesia.indexers.shellcmd as shellcmd # type: ignore
 import promnesia.indexers.takeout as takeout # type: ignore
 
 class Indexers:
@@ -17,7 +16,7 @@ class Indexers:
     )
 
     PLAIN = I(
-        custom.extract,
+        shellcmd.extract,
         extract_from_path('testdata/custom'),
         src='test',
     )
