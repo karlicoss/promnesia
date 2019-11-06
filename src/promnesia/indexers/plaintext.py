@@ -28,7 +28,7 @@ def _extract_from_file(path: str) -> str:
         path=f"{quote(path)} /dev/null", # dev null to trick into displaying filename
     )
 
-
+# TODO eh, misleading..
 def extract_from_path(path: PathIsh) -> str:
     pp = Path(path)
 
@@ -45,6 +45,7 @@ def extract_from_path(path: PathIsh) -> str:
                 '.zip',
         )):
             logger.info(f"Extracting from compressed file {path}")
+            raise RuntimeError()
             import lzma
             from tempfile import NamedTemporaryFile
             # TODO hopefully, no collisions

@@ -68,10 +68,9 @@ def do_index(config_file: Path):
 
 
 def adhoc_indexers():
-    from .indexers import custom, browser, takeout
+    from .indexers import auto, browser, takeout
     return {
-        # TODO rename to plaintext?
-        'simple': custom.simple,
+        'auto': auto.index,
         # TODO org mode
 
         # TODO ugh, this runs against merged db
@@ -86,7 +85,7 @@ def do_adhoc(indexer: str, *args):
     idx = adhoc_indexers()[indexer]
     for visit in idx(*args):
         print(visit)
-    print("Finished extracting {} {}".format(indexer, *args))
+    print("Finished indexing {} {}".format(indexer, *args))
     # TODO color?
 
 
