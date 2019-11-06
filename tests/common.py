@@ -20,3 +20,11 @@ def uses_x(f):
 @pytest.fixture
 def tdir(tmp_path):
     yield Path(tmp_path)
+
+
+def tdata(path: str) -> Path:
+    pp = Path(__file__).parent.parent / 'testdata'
+    assert pp.is_dir()
+    return pp.absolute() / path
+
+

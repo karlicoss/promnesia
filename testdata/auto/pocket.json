@@ -1,0 +1,24 @@
+{
+ "status": 1,
+ "complete": 1,
+ "list": {
+  "xxx": {
+     "given_url": "https://johncarlosbaez.wordpress.com/2016/09/09/struggles-with-the-continuum-part-2/",
+     "given_title": "Struggles with the Continuum (Part 2) | Azimuth",
+     "favorite": "0",
+     "status": "0",
+     "sort_id": 1,
+     "resolved_title": "Struggles with the Continuum (Part 2)"
+   },
+  "yyy": {
+     "given_url": "https://www.scottaaronson.com/blog/?p=2464",
+     "given_title": "Bell inequality violation finally done right",
+     "favorite": "0",
+     "sort_id": 2,
+     "resolved_title": "Bell inequality violation finally done right",
+     "resolved_url": "https://www.scottaaronson.com/blog/?p=2464",
+     "excerpt": "A few weeks ago, Hensen et al., of the Delft University of Technology and Barcelona, Spain, put out a paper reporting the first experiment that violates the Bell inequality in a way that closes off the two main loopholes simultaneously: the locality and detection loopholes.",
+     "is_article": "1"
+  }
+ }
+}

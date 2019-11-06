@@ -1,13 +1,6 @@
-from contextlib import contextmanager
-from pathlib import Path
-
 from promnesia.indexers.org import extract_from_file
 
-def tdata(path: str) -> Path:
-    pp = Path(__file__).parent.parent / 'testdata'
-    assert pp.is_dir()
-    return pp.absolute() / path
-
+from common import tdata
 
 def test_org_extractor():
     items = list(extract_from_file(tdata('auto/orgs/file.org')))
