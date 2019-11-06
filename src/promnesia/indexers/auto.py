@@ -92,12 +92,33 @@ def _markdown(path: Path) -> Iterator[Extraction]:
     yield from _plaintext(path)
 
 
+@lru_cache(1)
+def _extract_org():
+    try:
+        from .org import extract_from_file
+        return extract_from_file
+    except ImportError as e:
+        logger = get_logger()
+        logger.exception(e)
+        logger.warning('Falling back to plaintext for Org mode! Install orgparse for better support!')
+        return None
+
+
+def _org(path: Path) -> Iterator[Extraction]:
+    eo = _extract_org()
+    if eo is None:
+        yield from _plaintext(path)
+    else:
+        res = list(eo(path))
+        yield from res
+
+
 SMAP = {
     '.json'       : _json,
     '.csv'        : _csv,
 
-    # 'org'        : TODO,
-    # 'org_archive': TODO,
+    '.org'        : _org,
+    '.org_archive': _org,
 
     '.md'         : _markdown,
     '.markdown'   : _markdown,
@@ -136,7 +157,7 @@ def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
     # TODO FIXME follow symlinks?
     pp = Path(path)
     if pp.is_dir():
-        paths = pp.rglob('*')
+        paths = list(pp.glob('*')) # meh
         for p in paths:
             yield from index(p)
         return

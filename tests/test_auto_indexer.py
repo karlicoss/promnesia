@@ -15,10 +15,10 @@ _JSON_URLS = {
 
 def makemap(visits):
     key = lambda v: v.url
-    def iter():
+    def it():
         for k, g in groupby(sorted(visits, key=key), key=key):
             yield k, list(sorted(g))
-    return dict(iter())
+    return dict(it())
 
 
 def test_json():
@@ -35,7 +35,12 @@ def test_json():
 
 def test_auto():
     mm = makemap(auto.index(tdata('auto')))
+    org_link = 'https://www.youtube.com/watch?v=rHIkrotSwcc'
     assert {
         *_JSON_URLS,
-        'https://www.youtube.com/watch?v=rHIkrotSwcc',
+        org_link,
     }.issubset(mm.keys())
+
+    [v] = mm[org_link]
+    assert v.locator.href.endswith('file.org') # TODO link number or jump to heading?
+    assert "xxx /r/cpp\n I've enjoyed [Chandler Carruth's" in v.context
