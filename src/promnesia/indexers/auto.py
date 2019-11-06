@@ -125,7 +125,7 @@ SMAP = {
 
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
-def index(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Extraction]:
+def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
     logger = get_logger()
     if isinstance(path, list):
         # TODO mm. just walk instead??
@@ -133,10 +133,12 @@ def index(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Ext
             yield from index(p)
         return
 
+    # TODO FIXME follow symlinks?
     pp = Path(path)
-    if not pp.is_file():
-        logger.error('Expected file: %s', pp)
-        # TODO FIXME walk dir
+    if pp.is_dir():
+        paths = pp.rglob('*')
+        for p in paths:
+            yield from index(p)
         return
 
     # TODO use kompress?
@@ -148,7 +150,7 @@ def index(path: Union[List[PathIsh], PathIsh], do_unquote=False) -> Iterator[Ext
         with lzma.open(pp, 'rb') as cf:
             with uncomp.open('wb') as fb:
                 fb.write(cf.read())
-        yield from index(path=uncomp, do_unquote=do_unquote)
+        yield from index(path=uncomp)
         return
 
     suf = pp.suffix
