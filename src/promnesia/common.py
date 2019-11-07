@@ -1,8 +1,10 @@
 from collections.abc import Sized
 from datetime import datetime, date
+import os.path
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar
 from pathlib import Path
+from glob import glob
 import itertools
 import logging
 from functools import lru_cache
@@ -352,3 +354,7 @@ def echain(ex: Exception, cause: Exception) -> Exception:
     ex.__cause__ = cause
     return ex
 
+
+def last(path: PathIsh, *parts: str) -> Path:
+    pp = os.path.join(str(path), *parts)
+    return Path(max(glob(pp, recursive=True)))
