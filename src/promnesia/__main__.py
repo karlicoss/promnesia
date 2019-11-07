@@ -81,11 +81,24 @@ def adhoc_indexers():
 
 
 def do_adhoc(indexer: str, *args):
+    logger = get_logger()
+    from pprint import pprint
     # TODO logging?
     idx = adhoc_indexers()[indexer]
-    for visit in idx(*args):
-        print(visit)
-    print("Finished indexing {} {}".format(indexer, *args))
+    visits = idx(*args)
+    cnt = 0
+
+    errors = []
+    for visit in visits:
+        if isinstance(visit, Exception):
+            logger.warning(visit)
+            errors.append(visit)
+        else:
+            logger.info(visit)
+            cnt += 1
+    for e in errors:
+        logger.error(e)
+    print("Finished indexing {} {}, {} total".format(indexer, args, cnt))
     # TODO color?
 
 

@@ -113,7 +113,9 @@ def _org(path: Path) -> Iterator[Extraction]:
 
 
 SMAP = {
-    '.json'       : _json,
+    'application/json': _json,
+    '.json'           : _json,
+
     '.csv'        : _csv,
 
     '.org'        : _org,
@@ -139,28 +141,68 @@ SMAP = {
     'text/x-python': None,
     'text/x-tex': None,
     'text/x-lisp': None,
+    'text/x-shellscript': None,
+    'text/x-java': None,
+    'text/troff': None,
+    # TODO could reuse magic lib?
+
     '.tex': None, # TODO not sure..
     '.css': None,
     '.sh' : None,
+    '.js' : None,
+    '.hs' : None,
+    '.bat': None,
+    '.pl' : None,
+    '.h'  : None,
+    '.rs' : None,
+
+
+    # TODO possible in theory?
+    '.pptx': None,
+    '.docx': None,
+    '.odt' : None,
+    '.rtf' : None,
+    '.epub': None,
+    '.pdf' : None,
 
     # TODO compressed?
+    'application/octet-stream': None,
+    'application/zip': None,
+    'application/gzip': None,
+    'application/x-sqlite3': None,
+    'application/x-archive': None,
+    'application/x-pie-executable': None,
+    '.o'  : None,
     '.jpg': None,
     '.png': None,
     '.gif': None,
-    '.pdf': None,
+    '.svg': None,
+    '.ico': None,
     'inode/x-empty': None,
 }
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
 IGNORE = [
     '.git',
+    '.mypy_cache',
+    '.pytest_cache',
+    'node_modules',
+    '__pycache__',
+    '.tox',
+    '.stack-work',
+    # TODO use ripgrep?
+
+    # TODO not sure about these:
+    '.gitignore',
+    '.babelrc',
 ]
 
-# TODO FIXME unquote is temporary hack till we figure out everything..
+
 def index(path: Union[List[PathIsh], PathIsh], follow=True) -> Iterator[Extraction]:
     logger = get_logger()
+
+    # TODO meh, unify with glob traversing..
     if isinstance(path, list):
-        # TODO mm. just walk instead??
         for p in path:
             yield from index(p, follow=follow)
         return
@@ -184,6 +226,15 @@ def index(path: Union[List[PathIsh], PathIsh], follow=True) -> Iterator[Extracti
             logger.debug('ignoring symlink %s', pp)
         return
 
+    try:
+        yield from _index_file(pp, follow=follow)
+    except Exception as e:
+        # quite likely due to unavoidable race conditions
+        yield e
+
+
+def _index_file(pp: Path, follow=True) -> Iterator[Extraction]:
+    logger = get_logger()
     # TODO use kompress?
     # TODO not even sure if it's used...
     if pp.suffix == '.xz':
