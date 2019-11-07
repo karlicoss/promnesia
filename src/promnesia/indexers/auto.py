@@ -83,7 +83,6 @@ def _plaintext(path: Path) -> Iterator[Extraction]:
     from . import shellcmd
     from .plaintext import extract_from_path
     logger = get_logger()
-    logger.info(f'{path}: fallback to grep')
     yield from shellcmd.extract(extract_from_path(path))
 
 
@@ -127,8 +126,15 @@ SMAP = {
     '.txt'        : _plaintext,
     '.page'       : _plaintext,
 
+
+    # TODO doesn't work that great; weird stuff like
+    # builtins.ImportError.name|2019-07-10T12:12:35.584510+00:00|names::ImportError::node::names::name::node::fullname
+    # TODO could have stricter url extraction for that; always using http/https?
+    # '.ipynb'      : _json,
+
     # TODO not sure about these:
     'html': None,
+    'text/html': None,
     'text/xml': None,
     'text/x-python': None,
     'text/x-tex': None,
@@ -151,25 +157,31 @@ IGNORE = [
 ]
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
-def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
+def index(path: Union[List[PathIsh], PathIsh], follow=True) -> Iterator[Extraction]:
     logger = get_logger()
     if isinstance(path, list):
         # TODO mm. just walk instead??
         for p in path:
-            yield from index(p)
+            yield from index(p, follow=follow)
         return
 
-    # TODO FIXME follow symlinks?
     pp = Path(path)
 
     if pp.name in IGNORE:
-        logger.debug('Ignoring %s', pp)
+        logger.debug('ignoring %s', pp)
         return
 
     if pp.is_dir():
         paths = list(pp.glob('*')) # meh
         for p in paths:
-            yield from index(p)
+            yield from index(p, follow=follow)
+        return
+
+    if pp.is_symlink():
+        if follow:
+            yield from index(pp.resolve(), follow=follow)
+        else:
+            logger.debug('ignoring symlink %s', pp)
         return
 
     # TODO use kompress?
@@ -181,7 +193,7 @@ def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
         with lzma.open(pp, 'rb') as cf:
             with uncomp.open('wb') as fb:
                 fb.write(cf.read())
-        yield from index(path=uncomp)
+        yield from index(path=uncomp, follow=follow)
         return
 
     suf = pp.suffix
@@ -199,7 +211,7 @@ def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
     else:
         ip = SMAP.get(suf, None)
     if ip is None:
-        logger.info(f'file type suppressed: {pp}')
+        logger.debug('file type suppressed: %s', pp)
         return
 
     indexer: Union[Urls, Iterator[Extraction]] = ip(pp) # type: ignore
