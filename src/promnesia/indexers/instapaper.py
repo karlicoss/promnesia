@@ -7,6 +7,7 @@ from ..common import Extraction, get_logger, Visit, Loc, PathIsh
 import my.instapaper as ip # type: ignore
 
 
+# TODO FIXME rename to export_path
 def index(export_dir: Optional[PathIsh]=None) -> Iterator[Extraction]:
     ip.configure(export_dir=export_dir)
 
