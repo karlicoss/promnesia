@@ -127,6 +127,7 @@ SMAP = {
     'text/plain'  : _plaintext,
     '.txt'        : _plaintext,
     '.page'       : _plaintext,
+    '.rst'        : _plaintext,
 
 
     # TODO doesn't work that great; weird stuff like
@@ -144,6 +145,9 @@ SMAP = {
     'text/x-shellscript': None,
     'text/x-java': None,
     'text/troff': None,
+    'text/x-c': None,
+    'text/x-c++': None,
+    'text/x-makefile': None,
     # TODO could reuse magic lib?
 
     '.tex': None, # TODO not sure..
@@ -158,27 +162,44 @@ SMAP = {
 
 
     # TODO possible in theory?
+    '.ppt' : None,
     '.pptx': None,
+    '.xlsx': None,
+    '.doc' : None,
     '.docx': None,
+    '.ods' : None,
     '.odt' : None,
     '.rtf' : None,
     '.epub': None,
     '.pdf' : None,
+    '.vcf' : None,
+    '.djvu': None,
+    '.dvi' : None,
+    'application/msword': None,
+    'application/postscript': None,
+    'message/rfc822': None,
 
     # TODO compressed?
     'application/octet-stream': None,
     'application/zip': None,
+    'application/x-tar': None,
     'application/gzip': None,
     'application/x-sqlite3': None,
     'application/x-archive': None,
     'application/x-pie-executable': None,
     '.o'  : None,
+    'image/jpeg': None,
     '.jpg': None,
     '.png': None,
+    'image/png': None,
     '.gif': None,
     '.svg': None,
     '.ico': None,
     'inode/x-empty': None,
+    '.class': None,
+    '.jar': None,
+    '.mp3': None,
+    '.mp4': None,
 }
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
@@ -237,7 +258,9 @@ def _index_file(pp: Path, follow=True) -> Iterator[Extraction]:
     logger = get_logger()
     # TODO use kompress?
     # TODO not even sure if it's used...
-    if pp.suffix == '.xz':
+    suf = pp.suffix.lower()
+
+    if suf == '.xz':
         import lzma
         uname = pp.name[:-len('.xz')]
         uncomp = Path(get_tmpdir().name) / uname
@@ -247,7 +270,6 @@ def _index_file(pp: Path, follow=True) -> Iterator[Extraction]:
         yield from index(path=uncomp, follow=follow)
         return
 
-    suf = pp.suffix
     # TODO dispatch org mode here?
     # TODO try/catch?
 
