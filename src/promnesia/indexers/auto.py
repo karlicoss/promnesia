@@ -128,6 +128,8 @@ SMAP = {
     '.page'       : _plaintext,
 
     # TODO not sure about these:
+    'html': None,
+    'text/xml': None,
     'text/x-python': None,
     'text/x-tex': None,
     'text/x-lisp': None,
@@ -144,6 +146,9 @@ SMAP = {
 }
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
+IGNORE = [
+    '.git',
+]
 
 # TODO FIXME unquote is temporary hack till we figure out everything..
 def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
@@ -156,6 +161,11 @@ def index(path: Union[List[PathIsh], PathIsh]) -> Iterator[Extraction]:
 
     # TODO FIXME follow symlinks?
     pp = Path(path)
+
+    if pp.name in IGNORE:
+        logger.debug('Ignoring %s', pp)
+        return
+
     if pp.is_dir():
         paths = list(pp.glob('*')) # meh
         for p in paths:
