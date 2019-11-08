@@ -1,0 +1,13 @@
+* [2016-05-14 Sat 15:33] [[https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i][sc4s2cg comments on How you use your android to the maximum?]] :android:
+
+* something
+      https://link.com
+
+* [2019-05-14 Tue 20:26] [[https://www.instapaper.com/read/1193274157][ip]]   [[https://blog.andymatuschak.org/post/169043084412/successful-habits-through-smoothly-ratcheting][Successful habits through smoothly ratcheting targets]]
+
+
+* fewf
+
+** [2019-05-03 Fri 08:29] apparently [[https://en.wikipedia.org/wiki/Resilio_Sync][Resilio Sync]] exists, but it's proprietary, nothing else I know of or resulting from quick googling
+** [2019-06-13 Thu 19:45] [[https://en.wikipedia.org/wiki/InterPlanetary_File_System][IPFS]] looks close, but appparently not user friendly yet
+

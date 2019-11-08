@@ -2,12 +2,23 @@ from promnesia.indexers.org import extract_from_file
 
 from common import tdata
 
-def test_org_extractor():
+def test_org_indexer():
     items = list(extract_from_file(tdata('auto/orgs/file.org')))
     assert len(items) == 2
 
     cpp = items[1]
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
+
+
+def test_org_indexer_2():
+    items = list(extract_from_file(tdata('auto/orgs/file3.org')))
+
+    assert len(items) == 6
+    assert items[0].url == 'https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i'
+    assert items[1].url == 'https://link.com'
+    assert items[-2].url == 'https://en.wikipedia.org/wiki/Resilio_Sync'
+    # TODO shit def need org specific url extractor (and then extract from everything remaining)
+    # assert results[-1].url == 'https://en.wikipedia.org/wiki/InterPlanetary_File_System'
 
 
 def test_heading():
@@ -18,3 +29,5 @@ def test_heading():
         'https://en.wikipedia.org/wiki/Triangulation_(topology)',
         'https://en.wikipedia.org/wiki/Digital_manifold',
     }
+
+
