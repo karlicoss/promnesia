@@ -35,7 +35,8 @@ def try_cutr(suffix, s):
         return s
 
 dom_subst = [
-    ('m.youtube.', 'youtube.'),
+    ('m.youtube.'     , 'youtube.'),
+    ('mobile.twitter.', 'twitter.')
 ]
 
 def canonify_domain(dom: str):
