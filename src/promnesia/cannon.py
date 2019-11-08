@@ -10,7 +10,7 @@ are same content, but you can't tell that by URL equality. Even canonical urls a
 Also some experiments to establish 'links' hierarchy.
 """
 import re
-from typing import Iterable
+from typing import Iterable, NamedTuple, Set, Optional
 
 import urllib.parse
 from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
@@ -52,7 +52,6 @@ def canonify_domain(dom: str):
 
     return dom
 
-from typing import NamedTuple, Set, Optional
 
 
 default_qremove = {
@@ -184,6 +183,9 @@ def _quote_path(path: str) -> str:
 
 
 def _prenormalise(url: str) -> str:
+    # meh..
+    url = re.sub(r'google\..*/amp/s/', '', url)
+
     if '?' not in url:
         # sometimes urls have not ? but do have query parameters starting with & for some reason; urlsplit chokes over it
         # e.g. in google takeout
@@ -215,8 +217,6 @@ def transform_split(split: SplitResult):
         # TODO wonder if there is a better candidate for canonical video link?
         # {DOMAIN} pattern? implicit?
     }
-
-    import re
 
     def iter_rules():
         for fr, to in rules.items():
@@ -448,6 +448,10 @@ def test_reddit(url, expected):
     ( "https://spoonuniversity.com/lifestyle/marmite-ways-to-eat-it&usg=AFQjCNH4s1SOEjlpENlfPV5nuvADZpSdow"
     , "spoonuniversity.com/lifestyle/marmite-ways-to-eat-it"
     ),
+
+    ( 'https://google.co.uk/amp/s/amp.reddit.com/r/androidapps/comments/757e2t/swiftkey_or_gboard'
+    , 'reddit.com/r/androidapps/comments/757e2t/swiftkey_or_gboard'
+    )
 
     # ( "gwern.net/DNB+FAQ"
     # , "TODO" # ???
