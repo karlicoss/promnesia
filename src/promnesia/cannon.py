@@ -75,6 +75,9 @@ default_qremove = {
     # google language??
     'hl',
     'vl',
+
+    # e.g. on github
+    'utf8',
 }
 
 
@@ -134,7 +137,7 @@ specs = {
 
     'github.com': S(
         qkeep={'q'},
-        qremove={'o', 's', 'type'},
+        qremove={'o', 's', 'type', 'tab', 'code', 'privacy', 'fork'},
     ),
     'facebook.com': S(
         qkeep={'fbid', 'story_fbid'},
@@ -630,9 +633,57 @@ RD_PATTERNS = [
     r'reddit.com/domain/.*',
 ]
 
+GH_PATTERNS = [
+    {
+        'U': r'[\w-]+',
+        'R': r'[\w\.-]+',
+        'B': r'[\w-]+',
+        'X': r'(/.*)?',
+        'C': r'\w+',
+        'G': r'\w+',
+    },
+    r'github.com/U',
+    r'github.com/U/R(/(watchers|settings|actions|branches))?',
+    r'github.com/U/R/wiki/.*',
+    r'github.com/U/R/issuesX',
+    r'github.com/U/R/issues\?q.*',
+    r'github.com/U/R/networkX',
+    r'github.com/U/R/releasesX',
+    r'github.com/U/R/blobX',
+    r'github.com/U/R/treeX',
+    r'github.com/U/R/pullX',
+    r'github.com/U/R/pulls',
+    r'github.com/U/R/wiki',
+    r'github.com/U/R/commits/B',
+    r'github.com/U/R/commit/C',
+    r'github.com/U/R/search\?.*',
+    r'github.com/search\?.*',
+    r'github.com/search/advanced\?.*',
+    r'github.com/loginX',
+    r'github.com/settings/.*',
+    r'github.com/\?q.*',
+
+    r'github.com/_google_extract.*', # TODO wtf?
+    r'github.communityX',
+    r'github.com/dashboard',
+    r'help.github.comX',
+    r'gist.github.com/UX',
+    r'gist.github.com/G',
+    r'developer.github.com/.*',
+
+    # TODO FIXME no canonical here
+    # https://gist.github.com/dneto/2258454
+    # same as https://gist.github.com/2258454
+]
+
+
+EMPTY = []
+
 PATTERNS = {
-    'twitter': TW_PATTERNS,
-    'reddit' : RD_PATTERNS,
+    'twitter'   : TW_PATTERNS,
+    'reddit'    : RD_PATTERNS,
+    'github.com': GH_PATTERNS,
+    # 'facebook'  : EMPTY,
 }
 
 
@@ -681,11 +732,17 @@ def groups(it, args):
             pass
             # dump()
         url = line.strip()
-        nurl = canonify(url)
+        try:
+            nurl = canonify(url)
+        except CanonifyException as e:
+            print(f"ERROR while normalising! {nurl} {e}")
+            continue
         udom = nurl[:nurl.find('/')]
+        usplit = udom.split('.')
         patterns = None
         for dom, pats in all_pats.items():
-            if dom in udom.split('.'):
+            dsplit = dom.split('.')
+            if '$'.join(dsplit) in '$'.join(usplit): # meh
                 patterns = pats
                 break
         else:
