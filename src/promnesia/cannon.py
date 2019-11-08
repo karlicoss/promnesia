@@ -534,7 +534,6 @@ def main():
     p.add_argument('input', nargs='?')
     p.add_argument('--human', action='store_true')
     p.add_argument('--groups', action='store_true')
-    p.add_argument('--dom', type=str)
     args = p.parse_args()
 
     it: Iterable[str]
@@ -550,14 +549,14 @@ def main():
         display(it, args)
 
 
-fmts = {
-    'U': r'[\w-]+',
-    'S': r'\d+',
-    'L': r'[\w-]+',
-}
-
  # TODO wonder if lisp could be convenient for this. lol
-_PATTERNS = [
+TW_PATTERNS = [
+    {
+        'U': r'[\w-]+',
+        'S': r'\d+',
+        'L': r'[\w-]+',
+    },
+
     r'twitter.com/U/status/S',
     r'twitter.com/U/status/S/retweets',
     r'twitter.com/statuses/S',
@@ -589,18 +588,36 @@ _PATTERNS = [
     r'(dev|api|analytics|developer|help|support|blog|anywhere|careers|pic).twitter.com/.*',
 ]
 
-def repl(p, dct):
-    for k, v in dct.items():
-        p = p.replace(k, v)
-    return p
 
-PATTERNS = [
-    repl(p, fmts)
-    for p in _PATTERNS
-]
+PATTERNS = {
+    'twitter': TW_PATTERNS,
+}
+
+
+def get_patterns():
+    def repl(p, dct):
+        for k, v in dct.items():
+            p = p.replace(k, v)
+        return p
+
+    def handle(stuff):
+        pats = []
+        repls = []
+        for x in stuff:
+            if isinstance(x, dict):
+                repls.append(x)
+            else:
+                pats.append(x)
+        if len(repls) == 0:
+            repls.append({})
+        [rdict] = repls
+        for p in pats:
+            yield repl(p, rdict)
+    return {k: list(handle(v)) for k, v in PATTERNS.items()}
+
 
 def groups(it, args):
-    dom = args.dom
+    all_pats = get_patterns()
 
     from collections import Counter
     c = Counter()
@@ -610,6 +627,12 @@ def groups(it, args):
         print(c)
         print('   ' + str(unmatched[-10:]))
 
+    def reg(url, pat):
+        c[pat] += 1
+        if pat is None:
+            unmatched.append(nurl)
+
+
     for i, line in enumerate(it):
         if i % 10000 == 0:
             pass
@@ -617,19 +640,23 @@ def groups(it, args):
         url = line.strip()
         nurl = canonify(url)
         udom = nurl[:nurl.find('/')]
-        if dom not in udom:
+        patterns = None
+        for dom, pats in all_pats.items():
+            if dom in udom:
+                patterns = pats
+                break
+        else:
+            reg(nurl, None)
             continue
 
         pat = None
-        for p in PATTERNS:
+        for p in patterns:
             m = re.fullmatch(p, nurl)
             if m is None:
                 continue
             pat = p
             break
-        c[pat] += 1
-        if pat is None:
-            unmatched.append(nurl)
+        reg(nurl, pat)
     for u in sorted(unmatched):
         print(u)
     dump()
