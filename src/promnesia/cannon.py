@@ -36,7 +36,8 @@ def try_cutr(suffix, s):
 
 dom_subst = [
     ('m.youtube.'     , 'youtube.'),
-    ('mobile.twitter.', 'twitter.')
+    ('mobile.twitter.', 'twitter.'),
+    ('m.twitter.'     , 'twitter.'),
 ]
 
 def canonify_domain(dom: str):
@@ -533,6 +534,7 @@ def main():
     p.add_argument('input', nargs='?')
     p.add_argument('--human', action='store_true')
     p.add_argument('--groups', action='store_true')
+    p.add_argument('--dom', type=str)
     args = p.parse_args()
 
     it: Iterable[str]
@@ -543,34 +545,81 @@ def main():
         it = [args.input]
 
     if args.groups:
-        groups(it)
+        groups(it, args)
     else:
         display(it, args)
 
 
+fmts = {
+    'U': r'[\w-]+',
+    'S': r'\d+',
+    'L': r'[\w-]+',
+}
 
-PATTERNS = [
-    r'twitter.com/(\w+)/status/\d+',
-    r'twitter.com/(\w+)',
-    r'twitter.com/(\w+)/likes',
-    # r'twitter.com/.*',
+ # TODO wonder if lisp could be convenient for this. lol
+_PATTERNS = [
+    r'twitter.com/U/status/S',
+    r'twitter.com/U/status/S/retweets',
+    r'twitter.com/statuses/S',
+    r'twitter.com/U',
+    r'twitter.com/U/likes',
+    r'twitter.com/U/status/S/.*',
+    r'twitter.com/U/statuses/S',
+    r'twitter.com/i/notifications',
+    r'twitter.com/U/with_replies',
+    r'twitter.com/(settings|account)/.*',
+    r'twitter.com/U/lists',
+    r'twitter.com/U/lists/L(/.*)?',
+    r'twitter.com/i/web/status/S',
+    r'twitter.com',
+    r'tweetdeck.twitter.com',
+    r'twitter.com/U/(media|photo|followers|following)',
     # r'mobile.twitter.com/.*',
+
+    r'twitter.com/compose/tweet',
+    r'twitter.com/hashtag/\w+',
+    r'twitter.com/i/(moments|offline|timeline|u|bookmarks|display|redirect)',
+    r'twitter.com/intent/tweet.*',
+    r'twitter.com/lists/(create|add_member)',
+    r'twitter.com/search-home',
+    r'twitter.com/notifications/\d+',
+
+    r'twitter.com/i/events/\d+',
+
+    r'(dev|api|analytics|developer|help|support|blog|anywhere|careers|pic).twitter.com/.*',
 ]
 
-def groups(it):
+def repl(p, dct):
+    for k, v in dct.items():
+        p = p.replace(k, v)
+    return p
+
+PATTERNS = [
+    repl(p, fmts)
+    for p in _PATTERNS
+]
+
+def groups(it, args):
+    dom = args.dom
+
     from collections import Counter
     c = Counter()
     unmatched = []
 
     def dump():
         print(c)
-        print(unmatched[-10:])
+        print('   ' + str(unmatched[-10:]))
 
     for i, line in enumerate(it):
         if i % 10000 == 0:
-            dump()
+            pass
+            # dump()
         url = line.strip()
         nurl = canonify(url)
+        udom = nurl[:nurl.find('/')]
+        if dom not in udom:
+            continue
+
         pat = None
         for p in PATTERNS:
             m = re.fullmatch(p, nurl)
@@ -581,7 +630,12 @@ def groups(it):
         c[pat] += 1
         if pat is None:
             unmatched.append(nurl)
+    for u in sorted(unmatched):
+        print(u)
     dump()
+    nones = c[None]
+    # TODO print link examples alongside?
+    print(f"Unmatched: {nones / sum(c.values()):.3f}%")
 
 
 def display(it, args): # TODO better name?
