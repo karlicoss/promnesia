@@ -36,8 +36,15 @@ def try_cutr(suffix, s):
 
 dom_subst = [
     ('m.youtube.'     , 'youtube.'),
+
     ('mobile.twitter.', 'twitter.'),
     ('m.twitter.'     , 'twitter.'),
+
+    ('m.reddit.'      , 'reddit.'),
+    ('old.reddit.'    , 'reddit.'),
+    ('i.reddit.'      , 'reddit.'),
+    ('pay.reddit.'    , 'reddit.'),
+    ('np.reddit.'     , 'reddit.'),
 ]
 
 def canonify_domain(dom: str):
@@ -592,9 +599,40 @@ TW_PATTERNS = [
     r'(dev|api|analytics|developer|help|support|blog|anywhere|careers|pic).twitter.com/.*',
 ]
 
+RD_PATTERNS = [
+    {
+        'U'  : r'[\w-]+',
+        'S'  : r'\w+',
+        'PID': r'\w+',
+        'PT' : r'\w+',
+        'CID': r'\w+',
+    },
+    r'reddit.com/(user|u)/U',
+    r'reddit.com/user/U/(comments|saved|posts)',
+    r'reddit.com/r/S(/(top|new|hot|about|search|submit|rising))?',
+    r'reddit.com/r/S/comments/PID/PT',
+    r'reddit.com/r/S/duplicates/PID/PT',
+    r'reddit.com/r/S/comments/PID/PT/CID',
+    r'reddit.com/r/S/wiki(/.*)?',
+
+    r'reddit.com/comments/PID',
+    r'reddit.com/(subreddits|submit|search|top|original|premium|gilded|gold|gilding)',
+    r'reddit.com/subreddits/mine',
+    r'reddit.com',
+    r'reddit.com/(settings|prefs)(/.*)?',
+    r'reddit.com/message/(unread|inbox|messages|compose|sent|newsletter)',
+    r'reddit.com/me/.*',
+    r'reddit.com/login',
+
+    r'ssl.reddit.com/api/v1/authorize',
+    r'reddit.com/dev/api',
+    r'reddit.com/api/v1/authorize',
+    r'reddit.com/domain/.*',
+]
 
 PATTERNS = {
     'twitter': TW_PATTERNS,
+    'reddit' : RD_PATTERNS,
 }
 
 
@@ -602,6 +640,7 @@ def get_patterns():
     def repl(p, dct):
         for k, v in dct.items():
             p = p.replace(k, v)
+        # TODO FIXME unreplaced upper?
         return p
 
     def handle(stuff):
@@ -646,11 +685,12 @@ def groups(it, args):
         udom = nurl[:nurl.find('/')]
         patterns = None
         for dom, pats in all_pats.items():
-            if dom in udom:
+            if dom in udom.split('.'):
                 patterns = pats
                 break
         else:
-            reg(nurl, None)
+            # TODO should just be ignored?
+            # reg(nurl, None)
             continue
 
         pat = None
@@ -666,7 +706,7 @@ def groups(it, args):
     dump()
     nones = c[None]
     # TODO print link examples alongside?
-    print(f"Unmatched: {nones / sum(c.values()):.3f}%")
+    print(f"Unmatched: {nones / sum(c.values()) * 100:.1f}%")
 
 
 def display(it, args): # TODO better name?
