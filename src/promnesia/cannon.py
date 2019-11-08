@@ -9,6 +9,7 @@ are same content, but you can't tell that by URL equality. Even canonical urls a
 
 Also some experiments to establish 'links' hierarchy.
 """
+import re
 from typing import Iterable
 
 import urllib.parse
@@ -18,6 +19,8 @@ from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, S
 # I guess i'll stick to default for now, until it's a critical bottleneck
 # https://github.com/commonsearch/urlparse4
 # rom urllib.parse import urlparse
+
+# TODO perhaps archive.org contributes to both?
 
 def try_cutl(prefix, s):
     if s.startswith(prefix):
@@ -528,6 +531,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('input', nargs='?')
     p.add_argument('--human', action='store_true')
+    p.add_argument('--groups', action='store_true')
     args = p.parse_args()
 
     it: Iterable[str]
@@ -537,6 +541,54 @@ def main():
     else:
         it = [args.input]
 
+    if args.groups:
+        groups(it)
+    else:
+        display(it, args)
+
+
+
+PATTERNS = [
+    r'twitter.com/(\w+)/status/\d+',
+    r'twitter.com/(\w+)',
+    r'twitter.com/(\w+)/likes',
+    # r'twitter.com/.*',
+    # r'mobile.twitter.com/.*',
+]
+
+def groups(it):
+    from collections import Counter
+    c = Counter()
+    unmatched = []
+
+    def dump():
+        print(c)
+        print(unmatched[-10:])
+
+    for i, line in enumerate(it):
+        if i % 10000 == 0:
+            dump()
+        url = line.strip()
+        nurl = canonify(url)
+        pat = None
+        for p in PATTERNS:
+            m = re.fullmatch(p, nurl)
+            if m is None:
+                continue
+            pat = p
+            break
+        c[pat] += 1
+        if pat is None:
+            unmatched.append(nurl)
+    dump()
+
+
+def display(it, args): # TODO better name?
+    import difflib
+    # pylint: disable=import-error
+    from termcolor import colored as C # type: ignore
+    from sys import stdout
+
     for line in it:
         line = line.strip()
         if args.human:
@@ -544,11 +596,7 @@ def main():
             print(line)
         can = canonify(line)
         # TODO use textual diff?
-        import difflib
         sm = difflib.SequenceMatcher(None, line, can)
-        # pylint: disable=import-error
-        from termcolor import colored as C # type: ignore
-        from sys import stdout
 
         org_ = ""
         can_ = ""
@@ -612,6 +660,5 @@ if __name__ == '__main__':
 
 # TODO for debugging, have special mode that only uses query param trimming one by one
 
-
 # TODO running comparison:
- # sqlite3 /L/data/wereyouhere/visits.sqlite 'select orig_url from visits where orig_url like "%reddit%"' | ./canonify.py
+# sqlite3 /L/data/promnesia/promnesia.sqlite 'select distinct orig_url from visits where norm_url like "%twitter%" order by orig_url' | src/promnesia/cannon.py
