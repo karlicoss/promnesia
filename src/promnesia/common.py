@@ -288,7 +288,7 @@ class PathWithMtime(NamedTuple):
 
 
 class Indexer:
-    def __init__(self, ff, *args, src: str, **kwargs):
+    def __init__(self, ff, *args, src: str, **kwargs) -> None:
         self.ff = ff
         self.args = args
         self.kwargs = kwargs

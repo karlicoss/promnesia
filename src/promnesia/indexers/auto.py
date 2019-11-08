@@ -10,6 +10,7 @@ import csv
 from datetime import datetime
 import json
 from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator
+from fnmatch import fnmatch
 from pathlib import Path
 from functools import lru_cache
 
@@ -219,42 +220,57 @@ IGNORE = [
 ]
 
 
-def index(path: Union[List[PathIsh], PathIsh], follow=True) -> Iterator[Extraction]:
-    logger = get_logger()
-
+def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True) -> Iterator[Extraction]:
+    # TODO *args?
     # TODO meh, unify with glob traversing..
-    if isinstance(path, list):
-        for p in path:
-            yield from index(p, follow=follow)
-        return
+    paths = path if isinstance(path, list) else [path]
+    ignored = (ignored,) if isinstance(ignored, str) else ignored
+    opts = Options(
+        ignored=ignored,
+        follow=follow,
+    )
+    for p in paths:
+        yield from _index(Path(p), opts=opts)
 
-    pp = Path(path)
+
+class Options(NamedTuple):
+    ignored: Sequence[str]
+    follow: bool
+    # TODO option to add ignores? not sure..
+
+
+def _index(path: Path, opts: Options) -> Iterator[Extraction]:
+    logger = get_logger()
+    pp = path # ugh, for historic reasons..
 
     if pp.name in IGNORE:
-        logger.debug('ignoring %s', pp)
+        logger.debug('ignoring %s: default ignore rules', pp)
+        return
+    if any(fnmatch(str(pp), o) for o in opts.ignored):
+        logger.debug('ignoring %s: user ignore rules', pp)
         return
 
     if pp.is_dir():
         paths = list(pp.glob('*')) # meh
         for p in paths:
-            yield from index(p, follow=follow)
+            yield from _index(p, opts=opts)
         return
 
     if pp.is_symlink():
-        if follow:
-            yield from index(pp.resolve(), follow=follow)
+        if opts.follow:
+            yield from _index(pp.resolve(), opts=opts)
         else:
             logger.debug('ignoring symlink %s', pp)
         return
 
     try:
-        yield from _index_file(pp, follow=follow)
+        yield from _index_file(pp, opts=opts)
     except Exception as e:
         # quite likely due to unavoidable race conditions
         yield e
 
 
-def _index_file(pp: Path, follow=True) -> Iterator[Extraction]:
+def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
     logger = get_logger()
     # TODO use kompress?
     # TODO not even sure if it's used...
@@ -267,7 +283,7 @@ def _index_file(pp: Path, follow=True) -> Iterator[Extraction]:
         with lzma.open(pp, 'rb') as cf:
             with uncomp.open('wb') as fb:
                 fb.write(cf.read())
-        yield from index(path=uncomp, follow=follow)
+        yield from _index(path=uncomp, opts=opts)
         return
 
     # TODO dispatch org mode here?
@@ -284,6 +300,7 @@ def _index_file(pp: Path, follow=True) -> Iterator[Extraction]:
     else:
         ip = SMAP.get(suf, None)
     if ip is None:
+        # TODO only log once?
         logger.debug('file type suppressed: %s', pp)
         return
 
