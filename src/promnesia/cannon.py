@@ -548,6 +548,7 @@ def main():
     p.add_argument('input', nargs='?')
     p.add_argument('--human', action='store_true')
     p.add_argument('--groups', action='store_true')
+    p.add_argument('--domains', action='store_true')
     args = p.parse_args()
 
     it: Iterable[str]
@@ -559,6 +560,8 @@ def main():
 
     if args.groups:
         groups(it, args)
+    if args.domains:
+        domains(it)
     else:
         display(it, args)
 
@@ -637,7 +640,7 @@ GH_PATTERNS = [
     {
         'U': r'[\w-]+',
         'R': r'[\w\.-]+',
-        'B': r'[\w-]+',
+        'b': r'[\w-]+',
         'X': r'(/.*)?',
         'C': r'\w+',
         'G': r'\w+',
@@ -708,6 +711,24 @@ def get_patterns():
         for p in pats:
             yield repl(p, rdict)
     return {k: list(handle(v)) for k, v in PATTERNS.items()}
+
+
+def domains(it):
+    from collections import Counter
+    c = Counter()
+    for line in it:
+        url = line.strip()
+        try:
+            nurl = canonify(url)
+        except CanonifyException as e:
+            print(f"ERROR while normalising! {nurl} {e}")
+            c['ERROR'] += 1
+            continue
+        else:
+            udom = nurl[:nurl.find('/')]
+            c[udom] += 1
+    from pprint import pprint
+    pprint(c.most_common(10))
 
 
 def groups(it, args):
@@ -845,3 +866,6 @@ if __name__ == '__main__':
 
 # TODO running comparison:
 # sqlite3 /L/data/promnesia/promnesia.sqlite 'select distinct orig_url from visits where norm_url like "%twitter%" order by orig_url' | src/promnesia/cannon.py
+
+# TODO sqlite3 /L/data/promnesia/promnesia.sqlite 'select orig_url from visits' | src/promnesia/cannon.py --domains
+# TODO show percents?
