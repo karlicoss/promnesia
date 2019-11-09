@@ -36,6 +36,7 @@ def try_cutr(suffix, s):
 
 dom_subst = [
     ('m.youtube.'     , 'youtube.'),
+    ('studio.youtube.', 'youtube.'),
 
     ('mobile.twitter.', 'twitter.'),
     ('m.twitter.'     , 'twitter.'),
@@ -67,6 +68,7 @@ default_qremove = {
     'utm_content',
     'utm_medium',
     'utm_term',
+    'utm_umg_et',
 
     # https://moz.com/blog/decoding-googles-referral-string-or-how-i-survived-secure-search
     # some google referral
@@ -127,9 +129,19 @@ specs = {
             'v',
         }, # TODO FIXME frozenset
         qremove={
-            'time_continue', 'index', 'feature', 't', 'lc', 'app', 'start_radio', 'pbjreload', 'annotation_id',
+            't', # TODO not so sure about it
+
+
+            'time_continue', 'index', 'feature', 'lc', 'app', 'start_radio', 'pbjreload', 'annotation_id',
             'flow', 'sort', 'view',
             'enablejsapi', 'wmode', 'html5', 'autoplay', 'ar',
+
+            'gl', # gl=GB??
+            'sub_confirmation', 'shelf_id', 'disable_polymer', 'spfreload', 'src_vid', 'origin', 'rel', 'shuffle',
+            'nohtml5',
+            'showinfo', 'ab_channel', 'start', 'ebc', 'ref', 'view_as', 'fr', 'redirect_to_creator',
+            'sp', # TODO ??
+            'noapp', 'client', 'sa', 'ob', 'fbclid', 'noredirect', 'zg_or', 'ved',
         } # TODO not so sure about t
     ),
     # TODO shit. for playlist don't need to remove 'list'...
@@ -688,6 +700,28 @@ GH_PATTERNS = [
     # same as https://gist.github.com/2258454
 ]
 
+YT_PATTERNS = [
+    {
+        'V': r'[\w-]+',
+        'L': r'[\w-]+',
+        'U': r'[\w-]+',
+        'C': r'[\w-]+',
+    },
+    r'youtube.com/watch\?v=V',
+    r'youtube.com/watch\?list=L&v=V',
+    r'youtube.com/watch\?list=L',
+    r'youtube.com/playlist\?list=L',
+    r'youtube.com/user/U(/(videos|playlists|feautred|channels|featured))?',
+    r'youtube.com/(channel|c)/C(/(videos|playlists))?',
+
+    r'accounts.youtube.com/.*',
+    r'youtube.com/signin\?.*',
+    r'youtube.com/redirect\?.*',
+    r'youtube.com/results\?(search_query|q)=.*',
+    r'youtube.com/feed/(subscriptions|library|trending|history)',
+    r'youtube.com',
+    r'youtube.com/(post_login|upload)',
+]
 
 EMPTY = []
 
@@ -695,6 +729,7 @@ PATTERNS = {
     'twitter'   : TW_PATTERNS,
     'reddit'    : RD_PATTERNS,
     'github.com': GH_PATTERNS,
+    'youtube'   : YT_PATTERNS,
     # 'facebook'  : EMPTY,
 }
 
