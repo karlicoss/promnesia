@@ -746,6 +746,16 @@ SO_PATTERNS = [
     SOP,
 ]
 
+WKP = r'(^|.+\.)wikipedia.org'
+
+WK_PATTERNS = [
+    {
+        'AN': r'[\w%.-]+',
+    },
+    WKP + '/wiki/AN',
+    WKP,
+]
+
 EMPTY = []
 
 PATTERNS = {
@@ -755,6 +765,7 @@ PATTERNS = {
     'youtube'   : YT_PATTERNS,
     'stackoverflow': SO_PATTERNS,
     # 'facebook'  : EMPTY,
+    'wikipedia' : WK_PATTERNS,
 }
 
 
