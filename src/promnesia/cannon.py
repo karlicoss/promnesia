@@ -46,6 +46,8 @@ dom_subst = [
     ('i.reddit.'      , 'reddit.'),
     ('pay.reddit.'    , 'reddit.'),
     ('np.reddit.'     , 'reddit.'),
+
+    ('m.facebook.'    , 'facebook.'),
 ]
 
 def canonify_domain(dom: str):
@@ -157,6 +159,10 @@ specs = {
             'set', 'type', 'fref', 'locale2', '__tn__', 'notif_t', 'ref', 'notif_id', 'hc_ref', 'acontext', 'multi_permalinks', 'no_hist', 'next', 'bucket_id',
             'eid',
             'tab', 'active_tab',
+
+            'source', 'tsid', 'refsrc', 'pnref', 'rc', '_rdr', 'src', 'hc_location', 'section', 'permPage', 'soft', 'pn_ref', 'action',
+            'ti', 'aref', 'event_time_id', 'action_history', 'filter', 'ref_notif_type', 'has_source', 'source_newsfeed_story_type',
+            'ref_notif_type',
         },
     ),
     'physicstravelguide.com': S(fkeep=True), # TODO instead, pass fkeep marker object for shorter spec?
@@ -756,6 +762,34 @@ WK_PATTERNS = [
     WKP,
 ]
 
+FB_PATTERNS = [
+    {
+        'F': 'facebook.com',
+        'U': r'[\w\.-]+',
+        'P': r'\d+',
+        'I': r'\d+',
+        'CI': r'\d+',
+    },
+    r'F',
+    r'F/U',
+    r'F/U/(posts|videos)/P',
+    r'F/U/posts/P\?comment_id=CI',
+    r'F/photo.php\?fbid=I',
+    r'F/photo.php\?fbid=I&id=I',
+    r'F/profile.php\?fbid=I',
+    r'F/profile.php\?id=I',
+    r'F/groups/U',
+    r'F/search/.*',
+    r'F/events/I',
+    r'F/events/I/permalink/I',
+    r'F/events/I/I',
+    r'F/U/photos/pcb.I/I',
+
+    r'F/pages/U/P',
+    r'F/stories/I',
+    r'F/notes/U/P',
+]
+
 EMPTY = []
 
 PATTERNS = {
@@ -764,7 +798,7 @@ PATTERNS = {
     'github.com': GH_PATTERNS,
     'youtube'   : YT_PATTERNS,
     'stackoverflow': SO_PATTERNS,
-    # 'facebook'  : EMPTY,
+    'facebook'  : FB_PATTERNS,
     'wikipedia' : WK_PATTERNS,
 }
 
@@ -807,7 +841,7 @@ def domains(it):
             udom = nurl[:nurl.find('/')]
             c[udom] += 1
     from pprint import pprint
-    pprint(c.most_common(10))
+    pprint(c.most_common(20))
 
 
 def groups(it, args):
@@ -864,6 +898,9 @@ def groups(it, args):
     nones = c[None]
     # TODO print link examples alongside?
     print(f"Unmatched: {nones / sum(c.values()) * 100:.1f}%")
+    uc = Counter([u.split('/')[:2][-1] for u in unmatched]).most_common(10)
+    from pprint import pprint
+    pprint(uc)
 
 
 def display(it, args): # TODO better name?
