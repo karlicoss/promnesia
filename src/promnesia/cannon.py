@@ -288,6 +288,7 @@ def canonify(url: str) -> str:
     frag = ''
 
     qq = [(k, v) for k, v in qq if spec.keep_query(k)]
+    qq = list(sorted(qq)) # order matters in theory, but definitely not by default
     # TODO still not sure what we should do..
     # quote_plus replaces %20 with +, not sure if we want it...
     query = urlencode(qq, quote_via=quote_via)
@@ -321,7 +322,7 @@ import pytest # type: ignore
 
 @pytest.mark.parametrize('url,expected', [
     ( "https://www.youtube.com/watch?v=1NHbPN9pNPM&index=63&list=WL&t=491s"
-    , "youtube.com/watch?v=1NHbPN9pNPM&list=WL" # TODO not so sure about &t, it's sort of useful
+    , "youtube.com/watch?list=WL&v=1NHbPN9pNPM" # TODO not so sure about &t, it's sort of useful
     ),
     ( "youtube.com/watch?v=wHrCkyoe72U&feature=share&time_continue=6"
     , "youtube.com/watch?v=wHrCkyoe72U"
@@ -461,6 +462,14 @@ def test_reddit(url, expected):
 
     ( 'https://google.co.uk/amp/s/amp.reddit.com/r/androidapps/comments/757e2t/swiftkey_or_gboard'
     , 'reddit.com/r/androidapps/comments/757e2t/swiftkey_or_gboard'
+    ),
+
+    # should sort query params
+    ( 'https://www.youtube.com/watch?v=hvoQiF0kBI8&list=WL&index=2'
+    , 'youtube.com/watch?list=WL&v=hvoQiF0kBI8',
+    ),
+    ( 'https://www.youtube.com/watch?list=WL&v=hvoQiF0kBI8&index=2'
+    , 'youtube.com/watch?list=WL&v=hvoQiF0kBI8',
     )
 
     # ( "gwern.net/DNB+FAQ"
