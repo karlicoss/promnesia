@@ -723,6 +723,29 @@ YT_PATTERNS = [
     r'youtube.com/(post_login|upload)',
 ]
 
+SOP = r'(^|\w+\.)stackoverflow.com'
+
+SO_PATTERNS = [
+    {
+        # TODO just replace with identifier? should be quite unambiguous
+        'QI': r'\d+',
+        'QT': r'[\w-]+',
+        'A' : r'\d+',
+        'UI': r'\d+',
+        'U' : r'[\w-]+',
+    },
+    SOP + r'/questions/QI/QT',
+    SOP + r'/questions/QI/QT/A',
+    SOP + r'/q/QI',
+    SOP + r'/q/QI/A',
+    SOP + r'/a/QI',
+    SOP + r'/a/QI/A',
+    SOP + r'/search',
+    SOP + r'/users/UI',
+    SOP + r'/users/UI/U',
+    SOP,
+]
+
 EMPTY = []
 
 PATTERNS = {
@@ -730,6 +753,7 @@ PATTERNS = {
     'reddit'    : RD_PATTERNS,
     'github.com': GH_PATTERNS,
     'youtube'   : YT_PATTERNS,
+    'stackoverflow': SO_PATTERNS,
     # 'facebook'  : EMPTY,
 }
 
