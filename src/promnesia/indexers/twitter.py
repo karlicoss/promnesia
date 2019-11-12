@@ -18,7 +18,9 @@ def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
 
     logger = get_logger()
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
+    processed = 0
     for t in tw.tweets_all():
+        processed += 1
         try:
             ets = t.entities
             if ets is not None:
@@ -45,6 +47,7 @@ def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
                 context=t.text,
                 locator=loc,
             )
+    logger.info('processed %d tweets', processed)
 
 
 # ok, so it doesn't necessarily have everything in entities, eg.
