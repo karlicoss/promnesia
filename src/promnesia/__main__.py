@@ -21,7 +21,6 @@ def _do_index():
 
     logger = get_logger()
 
-    fallback_tz = cfg.FALLBACK_TIMEZONE
     indexers = cfg.INDEXERS
 
     output_dir = Path(cfg.OUTPUT_DIR)
@@ -135,7 +134,7 @@ def main():
         if args.mode == 'index':
             do_index(config_file=args.config)
         elif args.mode == 'serve':
-            do_serve(port=args.port, config=args.config, quiet=args.quiet)
+            do_serve(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
         elif args.mode == 'adhoc':
             do_adhoc(args.indexer, *args.params)
         else:

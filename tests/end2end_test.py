@@ -215,8 +215,7 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browse
     tdir = Path(tmp_path)
 
     indexer(tdir)
-    config = tdir / 'test_config.py'
-    with wserver(config=config) as srv, get_webdriver(browser=browser) as driver:
+    with wserver(db=tdir / 'promnesia.sqlite') as srv, get_webdriver(browser=browser) as driver:
         port = srv.port
         configure_extension(driver, port=port, show_dots=show_dots)
         sleep(0.5)

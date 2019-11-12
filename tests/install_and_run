@@ -9,9 +9,7 @@ from tempfile import TemporaryDirectory
 
 CONFIG = """
 
-FALLBACK_TIMEZONE = 'Europe/Moscow'
 INDEXERS = []
-FILTERS = []  #  TODO FIXME get rid of filters? not sure if they hurt, check perf with/without them. could also reuse blacklists?
 
 OUTPUT_DIR = {output_dir}
 
@@ -42,7 +40,8 @@ def run(tdir: Path):
     run_bin(
         'setup_server',
         '--unit-name', 'promnesia-test.service',
-        '--config', cfg_file,
+        '--db', str(tdir / 'promnesia.sqlite'),
+        '--timezone', 'Europe/Moscow',
         '--port', '17777', # TODO get free port?
     )
 
@@ -72,6 +71,7 @@ def run(tdir: Path):
     check_call([
         'systemctl', '--no-pager', '--user', 'is-active', 'promnesia-test.service',
     ])
+    print("Test succeeded!")
 
 
 def main():

@@ -1,7 +1,5 @@
 from pathlib import Path
 
-FALLBACK_TIMEZONE = 'Europe/London'
-
 from promnesia.common import Indexer as I
 from promnesia.indexers.plaintext import extract_from_path
 import promnesia.indexers.shellcmd as shellcmd # type: ignore

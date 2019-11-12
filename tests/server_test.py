@@ -39,14 +39,14 @@ def tmp_popen(*args, **kwargs):
 
 
 @contextmanager
-def wserver(config: Path): # TODO err not sure what type should it be... -> ContextManager[Helper]:
+def wserver(db: Path): # TODO err not sure what type should it be... -> ContextManager[Helper]:
     port = str(next_port())
     path = (Path(__file__).parent.parent / 'run').absolute()
     cmd = [
         str(path), 'serve',
         '--quiet',
         '--port', port,
-        '--config', str(config),
+        '--db', str(db),
     ]
     with tmp_popen(cmd) as server:
         print("Giving few secs to start server up")
@@ -78,7 +78,7 @@ CACHE_DIR  = '{cache_dir}'
     path = (Path(__file__).parent.parent / 'run').absolute()
     check_call([str(path), 'index', '--config', config])
 
-    with wserver(config=config) as srv:
+    with wserver(db=tdir / 'promnesia.sqlite') as srv:
         yield srv
 
 
@@ -97,7 +97,7 @@ def test_query_instapaper(tmp_path):
     tdir = Path(tmp_path)
     index_hypothesis(tdir)
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
-    with wserver(config=tdir / 'test_config.py') as helper:
+    with wserver(db=tdir / 'promnesia.sqlite') as helper:
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
         assert len(response['visits']) > 5
         # TODO actually test response?
@@ -116,7 +116,7 @@ def test_search(tmp_path):
     tdir = Path(tmp_path)
     index_hypothesis(tdir)
     test_url = "http://www.e-flux.com"
-    with wserver(config=tdir / 'test_config.py') as helper:
+    with wserver(db=tdir / 'promnesia.sqlite') as helper:
         response = post(f'http://localhost:{helper.port}/search', f'url={test_url}')
         assert len(response['visits']) == 8
 
@@ -134,7 +134,7 @@ def test_search_around(tmp_path):
     test_ts = int(datetime.strptime("2017-05-22T10:58:14.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
     # test_ts = int(datetime(2016, 12, 13, 12, 31, 4, 229275, tzinfo=pytz.utc).timestamp())
     # TODO hmm. perhaps it makes more sense to run query in different process and server in main process for testing??
-    with wserver(config=tdir / 'test_config.py') as helper:
+    with wserver(db=tdir / 'promnesia.sqlite') as helper:
         response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={test_ts}')
         # TODO highlight original url in extension??
         assert 5 < len(response['visits']) < 20
@@ -151,7 +151,7 @@ def test_visits_hier(tdir):
     }
     indexer = index_urls(urls)
     indexer(tdir)
-    with wserver(config=tdir / 'test_config.py') as helper:
+    with wserver(db=tdir / 'promnesia.sqlite') as helper:
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
         assert {v['context'] for v in response['visits']} == {'parent url', 'Some context'}
 

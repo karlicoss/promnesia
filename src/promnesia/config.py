@@ -8,7 +8,6 @@ from .common import PathIsh
 
 
 class Config(NamedTuple):
-    FALLBACK_TIMEZONE: Union[str, pytz.BaseTzInfo]
     OUTPUT_DIR: PathIsh
     INDEXERS: List
     CACHE_DIR: Optional[PathIsh] = None

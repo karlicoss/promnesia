@@ -17,7 +17,6 @@ def index(cfg: Path):
 
 
 base_config = """
-FALLBACK_TIMEZONE = 'Europe/Moscow'
 INDEXERS = []
 FILTERS = []
 """

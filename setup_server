@@ -32,7 +32,7 @@ def setup(args):
 
     server_bin = (Path(__file__).parent / 'run').absolute()
 
-    extra_args = f'serve --config {args.config} --port {args.port}'
+    extra_args = f'serve --db {args.db} --timezone {args.timezone} --port {args.port}'
 
     out.parent.mkdir(parents=True, exist_ok=True) # TODO not sure if there is a more standard way of ensuring
     out.write_text(SYSTEMD_CONFIG.format(

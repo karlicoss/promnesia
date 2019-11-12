@@ -61,8 +61,4 @@ FILTERS = [
 ]
 
 
-FALLBACK_TIMEZONE = pytz.timezone('Europe/London')
-
-
-
 # TODO just keep CACHE_DIR as /tmp/promnesia in default config

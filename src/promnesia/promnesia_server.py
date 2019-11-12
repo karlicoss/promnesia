@@ -3,7 +3,7 @@ __package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
 import argparse
 import os
-import sys
+import json
 from datetime import timedelta, datetime
 from pathlib import Path
 import logging
@@ -14,6 +14,7 @@ from typing import Collection, List, NamedTuple, Dict
 from cachew import NTBinder
 
 import pytz
+from pytz.tzinfo import BaseTzInfo # type: ignore
 
 import hug # type: ignore
 import hug.types as T # type: ignore
@@ -22,14 +23,13 @@ from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, a
 from sqlalchemy import Column, Table, func # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger
-from . import config as cfg
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh
 from .normalise import normalise_url
 
 _ENV_CONFIG = 'PROMNESIA_CONFIG'
 
 
-# TODO not sure about utc in database... keep orig timezone?
+# TODO FIXME not sure about utc in database... keep orig timezone?
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
@@ -39,28 +39,33 @@ def get_logger():
     return logger
 
 
+class ServerConfig(NamedTuple):
+    db: Path
+    timezone: BaseTzInfo
+
+    @classmethod
+    def make(cls, db: PathIsh, timezone: str) -> 'ServerConfig':
+        tz = pytz.timezone(timezone)
+        return cls(db=Path(db), timezone=tz)
+
+
 @lru_cache(1)
-def _get_config(mpath: PathWithMtime) -> cfg.Config:
-    get_logger().info('Reloading config: %s', mpath)
-    cfg.load_from(mpath.path) # TODO err, not sure if should really bother with hot reloading; it would assert?
-    return cfg.get()
+def get_config() -> ServerConfig:
+    cfg = os.environ.get(_ENV_CONFIG)
+    assert cfg is not None
+    return ServerConfig.make(**json.loads(cfg))
 
-
-def get_config() -> cfg.Config:
-    cp = os.environ.get(_ENV_CONFIG)
-    assert cp is not None
-    return _get_config(PathWithMtime.make(Path(cp)))
 
 # TODO use that?? https://github.com/timothycrosley/hug/blob/develop/tests/test_async.py
 
 # TODO how to return exception in error?
 
 def as_json(v: DbVisit) -> Dict:
-    # TODO check utc
+    # TODO FIXME check utc
     # TODO also local should be suppressed if any other src with this timestamp is present
     dts = v.dt.strftime('%d %b %Y %H:%M')
     loc = v.locator
-    # # TODO is locator always present??
+    # TODO is locator always present??
     return {
         # TODO do not display year if it's current year??
         'dt': dts,
@@ -78,9 +83,9 @@ def as_json(v: DbVisit) -> Dict:
 
 def get_db_path() -> Path:
     config = get_config()
-    db_path = Path(config.OUTPUT_DIR) / 'promnesia.sqlite'
-    assert db_path.exists()
-    return db_path
+    db = config.db
+    assert db.exists()
+    return db
 
 
 # TODO maybe, keep db connection? need to recycle it properly..
@@ -131,10 +136,7 @@ def search_common(url: str, where):
     for vis in visits:
         dt = vis.dt
         if dt.tzinfo is None:
-            # TODO hmm. I guess server and indexer should better agree on timezone...
-            # TODO use lazy property in config for indexers?
-            ftz = config.FALLBACK_TIMEZONE
-            tz = pytz.timezone(ftz) if isinstance(ftz, str) else ftz
+            tz = config.timezone
             dt = tz.localize(dt)
             vis = vis._replace(dt=dt)
         vlist.append(vis)
@@ -244,11 +246,13 @@ SELECT queried
     return results
 
 
-def run(port: str, config: Path, quiet: bool):
+def run(*, port: str, db: Path, timezone: str, quiet: bool):
     logger = get_logger()
-    env = os.environ.copy()
-    # # not sure if there is a simpler way to communicate with the server...
-    env[_ENV_CONFIG] = str(config)
+    env = {
+        **os.environ,
+        # not sure if there is a simpler way to communicate with hug..
+        _ENV_CONFIG: json.dumps({'db': str(db), 'timezone': timezone}),
+    }
     args = [
         'promnesia-server',
         *(['--silent'] if quiet else []),
@@ -262,10 +266,23 @@ def run(port: str, config: Path, quiet: bool):
 _DEFAULT_CONFIG = Path('config.py')
 
 
+def get_system_tz() -> str:
+    logger = get_logger()
+    try:
+        import tzlocal # type: ignore
+        return tzlocal.get_localzone().zone
+    except Exception as e:
+        logger.exception(e)
+        logger.error("Couldn't determine system timezone. Falling back to UTC")
+        return 'UTC'
+
+
 def setup_parser(p):
-    p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension')
-    p.add_argument('--config', type=Path, default=_DEFAULT_CONFIG, help='Path to config')
-    p.add_argument('--quiet', action='store_true')
+    p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension, default: %(default)s')
+    # TODO mm. should add fallback timezone to frontend instead I guess?
+    p.add_argument('--db', type=Path, required=True, help='Path to the database')
+    p.add_argument('--timezone', type=str, default=get_system_tz(), help='Fallback timezone, defaults to system timezone (%(default)s) if not specified')
+    p.add_argument('--quiet', action='store_true') # TODO silent??
 
 
 def main():
@@ -273,7 +290,7 @@ def main():
     p = argparse.ArgumentParser('promnesia server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     setup_parser(p)
     args = p.parse_args()
-    run(port=args.port, config=args.config, quiet=args.quiet)
+    run(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
 
 
 if __name__ == '__main__':
