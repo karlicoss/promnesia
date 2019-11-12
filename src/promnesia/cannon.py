@@ -10,7 +10,8 @@ are same content, but you can't tell that by URL equality. Even canonical urls a
 Also some experiments to establish 'links' hierarchy.
 """
 import re
-from typing import Iterable, NamedTuple, Set, Optional
+import typing
+from typing import Iterable, NamedTuple, Set, Optional, List
 
 import urllib.parse
 from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
@@ -790,8 +791,6 @@ FB_PATTERNS = [
     r'F/notes/U/P',
 ]
 
-EMPTY = []
-
 PATTERNS = {
     'twitter'   : TW_PATTERNS,
     'reddit'    : RD_PATTERNS,
@@ -828,7 +827,7 @@ def get_patterns():
 
 def domains(it):
     from collections import Counter
-    c = Counter()
+    c: typing.Counter[str] = Counter()
     for line in it:
         url = line.strip()
         try:
@@ -848,8 +847,8 @@ def groups(it, args):
     all_pats = get_patterns()
 
     from collections import Counter
-    c = Counter()
-    unmatched = []
+    c: typing.Counter[Optional[str]] = Counter()
+    unmatched: List[str] = []
 
     def dump():
         print(c)
