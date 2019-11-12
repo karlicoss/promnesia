@@ -38,17 +38,14 @@ def _do_index():
 
     for extractor in indexers:
         ex = extractor
-        # TODO isinstance indexer?
-        # TODO make more defensive?
-        einfo: str
-        if isinstance(ex, Indexer):
-            einfo = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs}'
-        else:
-            einfo = f'{ex.__module__}:{ex.__name__}'
-
+        if callable(ex):
+            # lazy indexers
+            ex = ex()
         assert isinstance(ex, Indexer)
 
-        hist, errors = previsits_to_history(extractor, src=ex.src)
+        einfo = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs}'
+
+        hist, errors = previsits_to_history(ex, src=ex.src)
         all_errors.extend(errors)
         all_histories.append((einfo, hist))
 

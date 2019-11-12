@@ -89,7 +89,8 @@ hyp_extractor = I(
     src='hyp',
 )
 
-INDEXERS = [hyp_extractor]
+# in addition, test for lazy indexers. useful for importing packages
+INDEXERS = [lambda: hyp_extractor]
     """)
     index(cfg)
 
