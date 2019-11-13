@@ -1,54 +1,33 @@
 # extracts stuff from hypothes.is json backup
 from pathlib import Path
-import json
 import logging
-from datetime import datetime
 from typing import NamedTuple, List, Optional, Union, Iterable
 
-from ..common import PathIsh, PreVisit, get_logger, Loc
+from ..common import PathIsh, Visit, get_logger, Loc
 
-# TODO extract to a separate hypothesis provider; reuse in my module?
-# TODO yeah, would be really nice to reuse hypexport model
-def extract(json_path: PathIsh) -> Iterable[PreVisit]:
+# pylint: disable=import-error
+from my.hypothesis import get_highlights # type: ignore
+
+
+def extract(json_path: PathIsh) -> Iterable[Visit]:
+    # TODO FIXME use json_path
     logger = get_logger()
 
-    j = json.loads(Path(json_path).read_text())
-    # TODO use model instead?
-    annotations = j if isinstance(j, list) else j['annotations']
-
-    # TODO what I really need is my hypothesis provider... is it possible to share somehow?
-    for x in annotations:
-        [tg] = x['target'] # hopefully it's always single element
-        assert tg['source'] == x['uri'] # why would they not be equal???
-        url = tg['source']
-
-
-        in_context = x['links']['incontext']
-
-        # TODO ok, it might not have selector if it's a page annotation
-        sel = tg.get('selector', None)
+    # TODO FIXME careful, need defensive error handling?
+    for h in get_highlights():
+        hl = h.highlight
+        ann = h.annotation
         cparts = []
-        if sel is not None:
-            highlights = [s['exact'] for s in sel if 'exact' in s]
-            # TODO make it a class and use self.logger?
-            if len(highlights) != 1:
-                logger.warning(f'{url}: weird number of highlights: {highlights}')
-                # if 0, it could be an orphan. maybe safe to ignore? dunno.
-
-            cparts.extend(highlights)
-
-        comment = x['text'].strip()
-        if comment:
-            cparts.append('comment: ' + comment)
-
-        # TODO extract tags too?
-        v = PreVisit(
-            url=tg['source'],
-            dt=x['created'], # TODO 'updated'? # 2019-02-15T18:24:16.874113+00:00
+        if hl is not None:
+            cparts.append(hl)
+        if ann is not None:
+            cparts.extend(['comment: ' + ann])
+        yield Visit(
+            url=h.page_link,
+            dt=h.dt,
             context='\n\n'.join(cparts),
             locator=Loc.make(
                 title='hypothesis',
-                href=in_context,
-            ),
+                href=h.hyp_link,
+            )
         )
-        yield v
