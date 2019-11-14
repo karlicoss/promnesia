@@ -6,15 +6,17 @@ from typing import NamedTuple, List, Optional, Union, Iterable
 from ..common import PathIsh, Visit, get_logger, Loc
 
 # pylint: disable=import-error
-from my.hypothesis import get_highlights # type: ignore
+import my.hypothesis as hyp # type: ignore
 
 
-def extract(json_path: PathIsh) -> Iterable[Visit]:
-    # TODO FIXME use json_path
+# TODO perhaps configuring should be external? e.g. in config, although it'd probably not propagate?
+def index(**kwargs) -> Iterable[Visit]:
+    hyp.configure(**kwargs)
+
     logger = get_logger()
 
     # TODO FIXME careful, need defensive error handling?
-    for h in get_highlights():
+    for h in hyp.get_highlights():
         hl = h.highlight
         ann = h.annotation
         cparts = []
