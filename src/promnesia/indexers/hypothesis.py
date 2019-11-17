@@ -3,20 +3,22 @@ from pathlib import Path
 import logging
 from typing import NamedTuple, List, Optional, Union, Iterable
 
-from ..common import PathIsh, Visit, get_logger, Loc
+from ..common import PathIsh, Visit, Extraction, get_logger, Loc
 
 # pylint: disable=import-error
 import my.hypothesis as hyp # type: ignore
 
 
 # TODO perhaps configuring should be external? e.g. in config, although it'd probably not propagate?
-def index(**kwargs) -> Iterable[Visit]:
+def index(**kwargs) -> Iterable[Extraction]:
     hyp.configure(**kwargs)
 
     logger = get_logger()
 
-    # TODO FIXME careful, need defensive error handling?
     for h in hyp.get_highlights():
+        if isinstance(h, Exception):
+            yield h
+            continue
         hl = h.highlight
         ann = h.annotation
         cparts = []
