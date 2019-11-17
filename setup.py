@@ -50,6 +50,9 @@ if __name__ == "__main__":
             'org': [
                 'orgparse',
             ],
+            'my': [
+                'my @ git+https://github.com/karlicoss/my.git',
+            ],
         },
         package_data={name: ['py.typed']},
     )
