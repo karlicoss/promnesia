@@ -75,6 +75,16 @@ INDEXERS = [indexer]
 
 
 def index_hypothesis(tdir: Path):
+    # TODO meh..
+    hypexport_path = str(tdir / 'hypexport')
+    check_call([
+        'git',
+        'clone',
+        # TODO do I need --recursive here?? I guess it's only for fetching new data?
+        'https://github.com/karlicoss/hypexport',
+        hypexport_path,
+    ])
+
     cfg = tdir / 'test_config.py'
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
@@ -83,8 +93,9 @@ from promnesia.common import Indexer as I
 import promnesia.indexers.hypothesis as hypothesis
 
 hyp_extractor = I(
-    hypothesis.extract,
-    '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json',
+    hypothesis.index,
+    export_path='{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json',
+    hypexport_path='{hypexport_path}',
     src='hyp',
 )
 
