@@ -1,17 +1,17 @@
+from pathlib import Path
 from typing import Iterator, Optional
 
 from ..common import Extraction, get_logger, Visit, Loc, PathIsh
 
-# TODO run mypy during linting?
-# pylint: disable=import-error
-from my.pocket import get_articles # type: ignore
+from my.pocket import get_articles
 
 
 def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
+    assert export_path is not None
     # TODO
     # ip.configure(export_path=export_path)
 
-    for a in get_articles(export_path):
+    for a in get_articles(Path(export_path)):
         # TODO not sure if can make more specific link on pocket?
         loc = Loc.make(title='pocket', href=a.pocket_link)
         hls = a.highlights
