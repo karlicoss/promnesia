@@ -2,9 +2,7 @@ from typing import Iterator, Optional
 
 from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
 
-# TODO run mypy during linting?
-# pylint: disable=import-error
-import my.tweets as tw # type: ignore
+import my.tweets as tw
 
 
 def get(o, k):

@@ -5,8 +5,7 @@ from typing import NamedTuple, List, Optional, Union, Iterable
 
 from ..common import PathIsh, Visit, Extraction, get_logger, Loc
 
-# pylint: disable=import-error
-import my.hypothesis as hyp # type: ignore
+import my.hypothesis as hyp
 
 
 # TODO perhaps configuring should be external? e.g. in config, although it'd probably not propagate?

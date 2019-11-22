@@ -2,9 +2,7 @@ from typing import Iterator, Optional
 
 from ..common import Extraction, get_logger, Visit, Loc, PathIsh
 
-# TODO run mypy during linting?
-# pylint: disable=import-error
-import my.instapaper as ip # type: ignore
+import my.instapaper as ip
 
 
 def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
