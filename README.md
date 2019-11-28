@@ -22,7 +22,14 @@ Indexer can run against:
 
 See more in [sources.md](sources.md).
 
-# Demo (as of v 0.8)
+# Demo 
+![screenshot](https://user-images.githubusercontent.com/291333/69828210-3755ac80-121b-11ea-9d1e-e5086cc9feda.png)
+
+- You can see that I sent the link to someone on telegram
+- I've annotated the link on instapaper and highlights (yellow) are shown inline on the page
+- I've also added link to my personal notes at some point, selected text was matched and highlighted as well
+
+# Older demo (as of v 0.8)
 ![Demo screenshot](https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG)
 
 Apologies for design, I'm not great at it :)
