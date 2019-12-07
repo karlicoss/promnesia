@@ -5,6 +5,7 @@ import dataset # type: ignore
 
 from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction, echain
 
+# TODO potentially, belongs to my. package
 
 T = TypeVar('T')
 def unwrap(res: Union[T, Exception]) -> T:
