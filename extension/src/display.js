@@ -15,6 +15,7 @@ export function _fmt(dt: Date): [string, string] {
 }
 
 type Params = {
+    idx: ?number;
     timestamp: Date;
     original_url: ?Url;
     normalised_url: ?Url;
@@ -53,6 +54,7 @@ export class Binder {
         times: string,
         tags: Array<Src>,
         {
+            idx,
             timestamp,
             original_url,
             normalised_url,
@@ -69,6 +71,7 @@ export class Binder {
         const relative_c = child(header, 'span');
         relative_c.id = 'relative_indicator';
         const tags_c = child(header, 'span');
+
         const dt_c = child(header, 'span', ['datetime']);
         const time_c = child(dt_c, 'span', ['time']);
         const date_c = child(dt_c, 'span', ['date']);
@@ -76,6 +79,11 @@ export class Binder {
 
         tchild(relative_c, '⤑⤑');
 
+        const idx_c = child(tags_c, 'span', ['index']);
+        idx_c.title = 'index (for easier match against highlights)';
+        if (idx != null) {
+            tchild(idx_c, String(idx));
+        }
         for (const tag of tags) {
             const tag_c = child(tags_c, 'span', ['src', tag]);
             tchild(tag_c, tag);
@@ -113,6 +121,7 @@ export class Binder {
                 tchild(loc_c, loc.title);
             } else {
                 const link = child(loc_c, 'a');
+                link.title = 'Jump to the context';
                 // $FlowFixMe
                 link.href = loc.href;
                 tchild(link, loc.title);

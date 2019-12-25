@@ -39,14 +39,19 @@ a {
 }
 
 
-#visits  .context {
+#visits .context {
     padding-left: 1em;
 }
 
-#visits  .locator {
+/* TODO FIXME use proper flex layout... */
+#visits .locator {
     padding-left: 1em;
 }
 
+#visits .index {
+    min-width: 1em; /* TODO meh, to make consistent with rest */
+    display: inline-block;
+}
 
 
 #visits {

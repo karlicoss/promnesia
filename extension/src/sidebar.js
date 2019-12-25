@@ -65,6 +65,8 @@ class Sidebar {
             show_dots.addEventListener('click', defensify(async () => {
                 await chromeRuntimeSendMessage({method: Methods.SHOW_DOTS});
             }, 'show_dots.onClick'));
+            // TODO maybe highlight or just use custom class for that?
+            show_dots.title = "Mark visited links on the current page with dots";
             cbody.appendChild(show_dots);
         }
         {
@@ -234,6 +236,7 @@ function _highlight(text: string, idx: number) {
 }
 
 function tryHighlight(text: string, idx: number) {
+    // TODO sidebar could also display if highlight matched or if it's "orphaned"
     // TODO use tag color for background?
     try {
         _highlight(text, idx);
@@ -329,19 +332,21 @@ async function bindSidebarData(response: Visits) {
     }
 
 
-    for (const [idx, v] of with_ctx.entries()) {
+    for (const [idx0, v] of with_ctx.entries()) {
+        const idx1 = idx0 + 1; // eh, I guess that makes more sense for humans
         const ctx = unwrap(v.context);
 
         // TODO hmm. hopefully chrome visits wouldn't get highlighted here?
         const relative = v.normalised_url != response.normalised_url;
 
         if (!relative && opts.highlight_on) {
-            tryHighlight(ctx, idx);
+            tryHighlight(ctx, idx1);
         }
 
 
         const [dates, times] = _fmt(v.time);
         binder.render(items, dates, times, v.tags, {
+            idx           : idx1,
             timestamp     : v.time,
             original_url  : null,
             normalised_url: null,
@@ -399,6 +404,7 @@ async function bindSidebarData(response: Visits) {
         const tags = [...tset].sort();
         const ctx = total_dur == null ? null : `Time spent: ${format_duration(total_dur)}`;
         binder.render(items, dates, times, tags, {
+            idx: null,
             timestamp: first.time,
             original_url  : null,
             normalised_url: null,
