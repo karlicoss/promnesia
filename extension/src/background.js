@@ -636,27 +636,48 @@ const onCommandCallback = defensify(async cmd => {
 }, 'onCommand');
 
 
-async function blackListDomain(e): Promise<void> {
+async function blacklist(e): Promise<void> {
     const url = unwrap(e.pageUrl);
+    const atab = await getActiveTab();
+    const tabId = unwrap(atab.id);
+
     const hostname = normalisedURLHostname(url);
 
-    console.debug('blacklisting %s', hostname);
+    // TODO I'm really not sure it's the right way to do this..
+    // TODO doesn't trigger the first time???
+
+    const to_blacklist = await chromeTabsExecuteScriptAsync(tabId, {
+        // TODO just give few examples?
+        code: `prompt("Blacklist:", "${hostname}");`
+    });
+    if (to_blacklist == null) {
+        console.info('user chose not to blacklist %s', url);
+    }
+
+    // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
+    console.debug('blacklisting %s', to_blacklist);
+
+    // TODO normally: domain check
+    // TODO if stars are present: glob check?
+    // also / / -- regex??
+    // TODO for starters, ignore regexes?
 
     const opts = await get_options_async();
-    opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + hostname;
+    opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + to_blacklist;
 
     const ll = opts.blacklist.split(/\n/).length;
-    await showActiveTabNotification(`Added ${hostname} to blacklist (${ll} items now)`, 'blue');
+    // TODO could open sidebar here and display blacklist??
+    await showActiveTabNotification(`Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue');
     await setOptions(opts);
 }
 
-const BLACKLIST_DOMAIN_MENU = 'blacklist-domain';
+const BLACKLIST_MENU = 'blacklist';
 
 
 // looks like onClicked is more portable...
 const onMenuClickedCallback = defensify(async (info) => {
-    if (info.menuItemId === BLACKLIST_DOMAIN_MENU) {
-        await blackListDomain(info);
+    if (info.menuItemId === BLACKLIST_MENU) {
+        await blacklist(info);
     }
 }, 'onMenuClicked');
 
@@ -684,17 +705,11 @@ async function initBackground() {
     if (!android) {
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
         chrome.contextMenus.create({
-            'id'      : BLACKLIST_DOMAIN_MENU,
-            'title'   : "Blacklist domain",
+            'id'      : BLACKLIST_MENU,
+            'title'   : "Blacklist (domain/URL)",
         });
     }
     // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
-    // chrome.contextMenus.create({
-    //     "title"   : "Blacklist page",
-    //     // $FlowFixMe
-    //     "onclick" : blackListPage,
-    // });
-
     // chrome.contextMenus.create({
     //     "title"   : "Whitelist page",
     //     "onclick" : clickHandler,

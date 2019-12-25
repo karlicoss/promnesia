@@ -11,12 +11,24 @@ STRIP_RULES = [
     [[R('.*')                     , R('(www|ww|amp)\\.'  )]],
     [[R('.*')                     , R('[&#].*$'          )]],
     [
+        // TODO get rid of these...
         [R('^(youtube|urbandictionary|tesco|scottaaronson|answers.yahoo.com|code.google.com)') , null],
         [R('.*'), R('[\\?].*$')],
     ],
     [[R('.*')                     , R('/$'               )]],
 ]
 ; // TODO perhaps that should be semi-configurable
+
+// TODO maybe use that normalisation library and then adjust query params etc
+
+/*
+  I think, most common usecases are:
+  - blacklisting whole domain (e.g. for privacy reasons, like bank/etc or if something is broken)
+  - blacklisting specific pages (e.g. reddit/twitter/fb main page so it doesn't result it too many child contexts)
+  For that current approach is fine.
+*/
+
+// TODO careful about dots etc?
 
 export function normalise_url(url: string): string {
     let cur = url;
