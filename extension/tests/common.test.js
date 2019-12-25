@@ -30,19 +30,30 @@ import {isBlacklistedHelper} from '../src/normalise.js';
 
 
 test('blacklist membership', () => {
+    // TODO make tests literate so they contribute to help docs?
     const bl = `
 reddit.com
 https://vk.com
+**github.com/issues**
+/github.com/issues.*/
 `;
 
     // TODO eh, doesn't work with links without schema; not sure if it's ok
     expect(isBlacklistedHelper('http://instagram.com/', bl)).toBe(null);
 
     // whole domain is blocked
-    expect(isBlacklistedHelper('http://reddit.com/u/karlicoss', bl)).toEqual(expect.anything());
+    expect(isBlacklistedHelper('http://reddit.com/u/karlicoss', bl)).toContain('domain');
 
 
     // specific page is blocked
-    expect(isBlacklistedHelper('https://vk.com', bl)).toEqual(expect.anything());
+    expect(isBlacklistedHelper('https://vk.com', bl)).toContain('page');
     expect(isBlacklistedHelper('https://vk.com/user/whatever', bl)).toBe(null);
+
+
+    // wildcard blockig
+    expect(isBlacklistedHelper('http://github.com/', bl)).toBe(null);
+    expect(isBlacklistedHelper('http://github.com/issues/hello/123', bl)).toContain('regex');
+
+    // TODO later, doesn't work ATM
+    // expect(isBlacklistedHelper('http://github.com/issues/hello/123', bl)).toContain('wildcard');
 });

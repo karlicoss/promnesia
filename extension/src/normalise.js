@@ -64,17 +64,33 @@ export function normalisedURLHostname(url: Url): string {
 
 
 export function isBlacklistedHelper(url: Url, blacklist: string): ?string {
+    // https://github.com/gorhill/uBlock/wiki/How-to-whitelist-a-web-site kind of following this logic and syntax
+
     // TODO need to be careful about normalising domains here; e.g. cutting off amp/www could be bit unexpected...
     const bl = asList(blacklist);
     if (bl.includes(url)) {
-        return "User-defined blacklist";
+        return "User-defined blacklist (exact page)";
     }
 
     const hostname = normalisedURLHostname(url);
-    console.log(hostname, bl);
     if (bl.includes(hostname)) {
-        return "User-defined blacklist"; // TODO maybe supply item number?
-    } else {
-        return null;
+        return "User-defined blacklist (domain)"; // TODO maybe supply item number?
     }
+
+    // TODO eh, it's a bit annoying; it tries to handle path segments which we don't really want...
+    // const mm = require('micromatch');
+    // // console.log(pm.isMatch('http://github.com/issues', ['*github.com/issues*']));
+    // if (mm.isMatch(url, bl, {contains: true})) {
+    //     return "User-defined blacklist (wildcard)";
+    // }
+
+    const regexes = bl.filter(s => s[0] == '/');
+    console.log(regexes);
+    for (const regex of regexes) {
+        if (url.search(RegExp(regex)) >= 0) {
+            return `User-defined blacklist (regex: ${regex})`;
+        }
+    }
+
+    return null;
 }
