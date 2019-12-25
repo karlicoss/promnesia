@@ -197,8 +197,8 @@ function findText(elem: Node, text: string): ?Node {
     return res;
 }
 
-// TODO not very effecient; replace with something existing
-function _highlight(text: string) {
+// TODO not very effecient; replace with something existing (Hypothesis??)
+function _highlight(text: string, idx: number) {
     for (const line of text.split('\n')) {
         // TODO filter too short strings? or maybe only pick the longest one?
         const found = findText(unwrap(doc.body), line);
@@ -224,17 +224,19 @@ function _highlight(text: string) {
             continue;
         }
 
-        // TODO use css?
-        let style = target.getAttribute('style') || '';
-        style += '; background-color: #ffff6688';
-        target.setAttribute('style', style);
+        target.classList.add('promnesia-highlight');
+        const ref = doc.createElement('span');
+        ref.classList.add('promnesia-highlight-ref');
+        ref.classList.add('nonselectable');
+        ref.appendChild(doc.createTextNode(String(idx)));
+        target.insertAdjacentElement('beforeend', ref);
     }
 }
 
-function tryHighlight(text: string) {
+function tryHighlight(text: string, idx: number) {
     // TODO use tag color for background?
     try {
-        _highlight(text);
+        _highlight(text, idx);
     } catch (error) {
         console.error('Error while highlighting %s: %o', text, error); // TODO come up with something better..
     }
@@ -327,14 +329,14 @@ async function bindSidebarData(response: Visits) {
     }
 
 
-    for (const v of with_ctx) {
+    for (const [idx, v] of with_ctx.entries()) {
         const ctx = unwrap(v.context);
 
         // TODO hmm. hopefully chrome visits wouldn't get highlighted here?
         const relative = v.normalised_url != response.normalised_url;
 
         if (!relative && opts.highlight_on) {
-            tryHighlight(ctx);
+            tryHighlight(ctx, idx);
         }
 
 

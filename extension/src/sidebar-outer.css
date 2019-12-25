@@ -34,3 +34,27 @@ body.promnesia {
     padding-top   : calc(var(--top)    * var(--size));
     padding-bottom: calc(var(--bottom) * var(--size));
 }
+
+
+/* TODO expose this in settings ? */
+.promnesia-highlight {
+    background-color: #ffff6688;
+}
+
+
+.nonselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.promnesia-highlight-ref {
+    color: orange;
+    font-weight: bold;
+    /* vertical-align: super; */
+    margin: 0.1em;
+}
