@@ -1,8 +1,8 @@
 /* @flow */
 
 import type {Locator, Src, Url, Second} from './common';
-import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
-import {normalisedURLHostname} from './normalise';
+import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn, asList} from './common';
+import {normalisedURLHostname, isBlacklistedHelper} from './normalise';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
@@ -124,26 +124,24 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 
 type Reason = string;
 
-function asList(bl: string): Array<string> {
-    return bl.split(/\n/).filter(s => s.length > 0);
-}
-
 async function isBlacklisted(url: Url): Promise<?Reason> {
     /*
       TODO ''.split('\n') gives an emptly line, which would block local files
       will fix later if necessary, it's not a big issue I guess
     */
 
-
-    // TODO perhaps use binary search?
-    const hostname = normalisedURLHostname(url);
     const opts = await get_options_async();
     // for now assumes it's exact domain match domain level
-    if (asList(opts.blacklist).includes(hostname)) {
-        return "User-defined blacklist"; // TODO maybe supply item number?
+    const user_blacklisted = isBlacklistedHelper(url, opts.blacklist);
+    // TODO test shallalist etc as well?
+    if (user_blacklisted !== null) {
+        return user_blacklisted;
     }
 
+    const hostname = normalisedURLHostname(url);
+    // TODO perhaps use binary search?
     // TODO FIXME not very efficient... I guess I need to refresh it straight from github now and then?
+    // TODO keep cache in local storage or something?
     for (let [bname, bfile] of [
         ['Webmail', 'shallalist/webmail/domains'],
         ['Banking', 'shallalist/finance/banking/domains'],

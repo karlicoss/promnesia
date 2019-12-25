@@ -24,3 +24,17 @@ test('normalisedURLHostname', () => {
     expect(normalisedURLHostname('https://www.reddit.com/whatever')).toBe('reddit.com');
     expect(normalisedURLHostname('file:///usr/share/doc/python3/html/index.html')).toBe('');
 });
+
+
+import {isBlacklistedHelper} from '../src/normalise.js';
+
+
+test('blacklist membership', () => {
+    const bl = `
+reddit.com
+`;
+
+    // TODO eh, doesn't work with links without schema; not sure if it's ok
+    expect(isBlacklistedHelper('http://reddit.com/u/karlicoss', bl)).toEqual(expect.anything());
+    expect(isBlacklistedHelper('http://instagram.com/', bl)).toBe(null);
+});

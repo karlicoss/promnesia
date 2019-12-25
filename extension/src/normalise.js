@@ -1,6 +1,8 @@
 /* @flow */
-import {unwrap} from './common';
+import {unwrap, asList} from './common';
 import type {Url} from './common';
+
+// TODO should probably be merged with common or something...
 
 //
 var R = RegExp;
@@ -58,4 +60,16 @@ export function normalisedURLHostname(url: Url): string {
     const _hostname = new URL(url).hostname;
     const hostname = normaliseHostname(_hostname);
     return hostname;
+}
+
+
+export function isBlacklistedHelper(url: Url, blacklist: string): ?string {
+    const hostname = normalisedURLHostname(url);
+    const bl = asList(blacklist);
+    console.log(hostname, bl);
+    if (bl.includes(hostname)) {
+        return "User-defined blacklist"; // TODO maybe supply item number?
+    } else {
+        return null;
+    }
 }
