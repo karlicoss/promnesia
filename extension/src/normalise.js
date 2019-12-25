@@ -64,8 +64,13 @@ export function normalisedURLHostname(url: Url): string {
 
 
 export function isBlacklistedHelper(url: Url, blacklist: string): ?string {
-    const hostname = normalisedURLHostname(url);
+    // TODO need to be careful about normalising domains here; e.g. cutting off amp/www could be bit unexpected...
     const bl = asList(blacklist);
+    if (bl.includes(url)) {
+        return "User-defined blacklist";
+    }
+
+    const hostname = normalisedURLHostname(url);
     console.log(hostname, bl);
     if (bl.includes(hostname)) {
         return "User-defined blacklist"; // TODO maybe supply item number?

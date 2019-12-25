@@ -32,9 +32,17 @@ import {isBlacklistedHelper} from '../src/normalise.js';
 test('blacklist membership', () => {
     const bl = `
 reddit.com
+https://vk.com
 `;
 
     // TODO eh, doesn't work with links without schema; not sure if it's ok
-    expect(isBlacklistedHelper('http://reddit.com/u/karlicoss', bl)).toEqual(expect.anything());
     expect(isBlacklistedHelper('http://instagram.com/', bl)).toBe(null);
+
+    // whole domain is blocked
+    expect(isBlacklistedHelper('http://reddit.com/u/karlicoss', bl)).toEqual(expect.anything());
+
+
+    // specific page is blocked
+    expect(isBlacklistedHelper('https://vk.com', bl)).toEqual(expect.anything());
+    expect(isBlacklistedHelper('https://vk.com/user/whatever', bl)).toBe(null);
 });
