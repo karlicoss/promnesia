@@ -646,10 +646,11 @@ async function blacklist(e): Promise<void> {
 
     const to_blacklist = await chromeTabsExecuteScriptAsync(tabId, {
         // TODO just give few examples?
-        code: `prompt("Blacklist:", "${hostname}");`
+        code: `prompt("Blacklist (domain.name or http://exact/match or /re.g.*ex/):", "${url}");`
     });
     if (to_blacklist == null) {
         console.info('user chose not to blacklist %s', url);
+        return;
     }
 
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?

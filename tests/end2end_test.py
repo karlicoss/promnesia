@@ -368,6 +368,11 @@ def test_add_to_blacklist(tmp_path, browser):
             offset = 0
         pyautogui.typewrite(['up'] + ['up'] * offset + ['enter'], interval=0.5)
 
+        confirm('shows prompt with alert to enter pattern to block?')
+        driver.switch_to.alert.accept()
+        # ugh, seems necessary to guard with sleep; otherwise racey
+        sleep(0.5)
+
         driver.get(driver.current_url)
         confirm('page should be blacklisted (black icon)')
 

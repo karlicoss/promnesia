@@ -47,6 +47,7 @@ https://vk.com
 
     // specific page is blocked
     expect(isBlacklistedHelper('https://vk.com', bl)).toContain('page');
+    // TODO test with trailing slash as well??
     expect(isBlacklistedHelper('https://vk.com/user/whatever', bl)).toBe(null);
 
 
