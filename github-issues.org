@@ -1,0 +1,85 @@
+#+todo: OPEN | CLOSED
+* Issues of promnesia
+:PROPERTIES:
+:since:    
+:url:      https://api.github.com/repos/karlicoss/promnesia
+:END:
+** OPEN Find a way to disable extensions on security critical websites (e.g. banks)
+:PROPERTIES:
+:tags:     ("enhancement" "security")
+:id:       2
+:date-modification: 2019-12-26T13:24:49+0000
+:date-creation: 2019-07-14T14:23:44+0100
+:author:   "karlicoss"
+:END:
+: Since extension is sending urls to the backend, it's potentially not secure to do so on websites like banks. While extension supports blacklisting it's not really great to rely on user to do so.
+: 
+: Perhaps some of these lists https://github.com/cbuijs/shallalist would be a good start, unclear how often is it updated though. 
+: 
+: Also need to add a UI explanation if the link is blacklisted; and an option to whitelist urls from the 'default' lists in case user really really wants it.
+: 
+** CLOSED my test issue
+:PROPERTIES:
+:id:       10
+:date-modification: 2019-12-26T13:44:46+0000
+:date-creation: 2019-12-26T13:26:11+0000
+:author:   "karlicoss"
+:END:
+** CLOSED dummy
+:PROPERTIES:
+:id:       1
+:date-modification: 2019-12-26T13:44:45+0000
+:date-creation: 2019-07-07T18:11:42+0100
+:author:   "karlicoss"
+:END:
+** CLOSED Run install
+:PROPERTIES:
+:id:       3
+:date-modification: 2019-12-26T13:24:53+0000
+:date-creation: 2019-08-31T13:01:41+0100
+:author:   "karlicoss"
+:END:
+** CLOSED Run install
+:PROPERTIES:
+:id:       4
+:date-modification: 2019-12-26T13:24:53+0000
+:date-creation: 2019-08-31T13:17:05+0100
+:author:   "karlicoss"
+:END:
+** CLOSED Move org mode extractor from private config
+:PROPERTIES:
+:id:       6
+:date-modification: 2019-12-26T13:24:52+0000
+:date-creation: 2019-11-05T22:40:14+0000
+:author:   "karlicoss"
+:END:
+** CLOSED Auto extractor
+:PROPERTIES:
+:id:       7
+:date-modification: 2019-12-26T13:24:52+0000
+:date-creation: 2019-11-06T00:08:48+0000
+:author:   "karlicoss"
+:END:
+** CLOSED fix hypothesis tests
+:PROPERTIES:
+:id:       8
+:date-modification: 2019-12-26T13:24:51+0000
+:date-creation: 2019-11-17T14:32:58+0000
+:author:   "karlicoss"
+:END:
+** CLOSED Use my. package during linting and type checking
+:PROPERTIES:
+:id:       9
+:date-modification: 2019-12-26T13:24:50+0000
+:date-creation: 2019-11-22T22:52:03+0000
+:author:   "karlicoss"
+:END:
+** CLOSED screnshot
+:PROPERTIES:
+:id:       5
+:date-modification: 2019-12-26T13:24:49+0000
+:date-creation: 2019-09-06T12:16:40+0100
+:author:   "karlicoss"
+:END:
+: ![promnesia](https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG)
+: 
