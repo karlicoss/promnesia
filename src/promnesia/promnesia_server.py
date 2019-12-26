@@ -61,9 +61,8 @@ def get_config() -> ServerConfig:
 # TODO how to return exception in error?
 
 def as_json(v: DbVisit) -> Dict:
-    # TODO FIXME check utc
-    # TODO also local should be suppressed if any other src with this timestamp is present
-    dts = v.dt.strftime('%d %b %Y %H:%M')
+    # yep, this is NOT %Y-%m-%d as is seems to be the only format with timezone that Date.parse in JS accepts. Just forget it.
+    dts = v.dt.strftime('%d %b %Y %H:%M:%S %z')
     loc = v.locator
     # TODO is locator always present??
     return {

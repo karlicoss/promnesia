@@ -20,6 +20,27 @@ async function isAndroid() {
     }
 }
 
+
+// TODO ugh. en-GB etc can't be parsed by Date.parse afterwards...
+
+// TODO allow to configure in options/or even use local tz
+const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const tz_fmt = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: systemTz,
+    day   : 'numeric',
+    month : 'numeric',
+    year  : 'numeric',
+    hour  : 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+});
+
+function normTz(dt: Date): Date {
+    // TODO ugh, merge for dt_formatter??
+    return new Date(tz_fmt.format(dt));
+}
+
+
 async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction>> {
     const res = [chrome.browserAction];
 
@@ -37,11 +58,8 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
 function rawToVisits(vis): Visits {
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
-        // TODO wonder if server is returning utc...
-        // TODO server should return tz aware, probably...
-        const dts = v['dt'] + ' UTC'; // jeez. seems like it's the easiest way...
-
-        const dt: Date = new Date(dts);
+        const dts = v['dt'];
+        const dt: Date = normTz(new Date(dts));
         const vtags: Array<Src> = [v['src']]; // TODO hmm. shouldn't be array?
         const vourl: string = v['original_url'];
         const vnurl: string = v['normalised_url'];
@@ -109,14 +127,13 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     // $FlowFixMe
     const results = await new Promise((cb) => chrome.history.getVisits({url: url}, cb));
 
-    // without delay you will always be seeing it as visited
-    // but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
+    // without delay you will always be seeing website as visited
+    // TODO but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
     const delay = getDelayMs();
-    const current = new Date();
+    const current = normTz(new Date());
 
-    // ok, visitTime returns epoch which gives the correct time combined with new Date
-
-    const times: Array<Date> = results.map(r => new Date(r['visitTime'])).filter(dt => current - dt > delay);
+    // NOTE: visitTime returns UTC epoch
+    const times: Array<Date> = results.map(r => normTz(new Date(r['visitTime']))).filter(dt => current - dt > delay);
     // TODO FIXME not sure if need to normalise..
     const visits = times.map(t => new Visit(url, url, t, [LOCAL_TAG]));
     return new Visits(url, url, visits);
@@ -638,8 +655,6 @@ async function blacklist(e): Promise<void> {
     const url = unwrap(e.pageUrl);
     const atab = await getActiveTab();
     const tabId = unwrap(atab.id);
-
-    const hostname = normalisedURLHostname(url);
 
     // TODO I'm really not sure it's the right way to do this..
     // TODO doesn't trigger the first time???
