@@ -1,9 +1,18 @@
-#+todo: OPEN | CLOSED
+#+TODO: OPEN | CLOSED
 * Issues of promnesia
 :PROPERTIES:
 :since:    
 :url:      https://api.github.com/repos/karlicoss/promnesia
 :END:
+** OPEN Make it less spammy on network errors on phone
+:PROPERTIES:
+:id:       11
+:date-modification: 2019-12-26T17:25:48+0000
+:date-creation: 2019-12-26T17:23:55+0000
+:author:   "karlicoss"
+:END:
+: System wide notifications are def too much considering how flaky is mobile connectivity. Maybe just changing indicator is ok?
+: 
 ** OPEN Find a way to disable extensions on security critical websites (e.g. banks)
 :PROPERTIES:
 :tags:     ("enhancement" "security")

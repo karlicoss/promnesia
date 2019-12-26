@@ -8,7 +8,8 @@ from my.pocket import get_articles
 
 def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
     assert export_path is not None
-    # TODO
+    # TODO FIXME
+    # TODO use docstring from my. module? E.g. describing which pocket format is expected
     # ip.configure(export_path=export_path)
 
     for a in get_articles(Path(export_path)):

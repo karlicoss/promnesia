@@ -65,7 +65,8 @@ def do_index(config_file: Path):
 
 
 def adhoc_indexers():
-    from .indexers import auto, browser, takeout
+    # TODO careful, make sure it doesn't fail? make fully dynamic?
+    from .indexers import auto, browser, takeout, telegram
     return {
         'auto': auto.index,
         # TODO org mode
@@ -74,6 +75,7 @@ def adhoc_indexers():
         # 'chrome' : browser.chrome,
         # 'firefox': browser.firefox,
         'takeout': takeout.extract,
+        'telegram': telegram.index,
     }
 
 
@@ -107,6 +109,9 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
             logger.warning("Port isn't specified, not serving!")
         else:
             do_serve(port=port, db=outdir / 'promnesia.sqlite', timezone='Europe/London', quiet=False) # TODO FIXME TZ
+
+        if sys.stdin.isatty():
+            input("Press any key when ready")
 
 
 
