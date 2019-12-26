@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, Union, Iterable, TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
@@ -7,6 +8,7 @@ from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoc
 
 # TODO potentially, belongs to my. package
 
+# TODO FIXME kython?
 T = TypeVar('T')
 def unwrap(res: Union[T, Exception]) -> T:
     if isinstance(res, Exception):
@@ -15,11 +17,22 @@ def unwrap(res: Union[T, Exception]) -> T:
         return res
 
 
-def extract(database: PathIsh) -> Iterable[Extraction]:
+# TODO move to common?
+def dataset_readonly(db: Path):
+    # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
+    import sqlite3
+    creator = lambda: sqlite3.connect(f'file:{db}?mode=ro', uri=True)
+    return dataset.connect('sqlite:///' , engine_kwargs={'creator': creator})
+
+
+def index(database: PathIsh) -> Iterable[Extraction]:
     logger = get_logger()
 
+    path = Path(database)
+    assert path.is_file()
+
     # TODO context manager?
-    db = dataset.connect(f'sqlite:///{str(database)}')
+    db = dataset_readonly(path)
 
     def make_query(text_query: str):
         return f"""
