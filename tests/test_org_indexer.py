@@ -14,6 +14,8 @@ def test_org_indexer_2():
     items = list(extract_from_file(tdata('auto/orgs/file3.org')))
 
     assert len(items) == 6
+    for i in items:
+        assert i.dt.tzinfo is None, i
     assert items[0].url == 'https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i'
     assert items[1].url == 'https://link.com'
     assert items[-2].url == 'https://en.wikipedia.org/wiki/Resilio_Sync'

@@ -7,7 +7,6 @@ from pathlib import Path
 from ..common import PreVisit, get_logger, Extraction, Url, Loc, from_epoch, echain, extract_urls, PathIsh
 
 
-import pytz
 import orgparse # type: ignore
 from orgparse.date import gene_timestamp_regex, OrgDate # type: ignore
 from orgparse.node import OrgNode # type: ignore
@@ -99,13 +98,15 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
 
 
 def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
+    """
+    Note that org-mode doesn't keep timezone, so we don't really have choice but make it tz-agnostic
+    """
     fpath = Path(fname)
     o = orgparse.loads(fpath.read_text())
     # meh. but maybe ok to start with?
     root = o.root
 
-    # TODO FIXME rely on fallback tz? also utcfromtimestamp?
-    fallback_dt = datetime.fromtimestamp(fpath.stat().st_mtime, tz=pytz.utc)
+    fallback_dt = datetime.fromtimestamp(fpath.stat().st_mtime)
 
     ex = RuntimeError(f'while extracting from {fname}')
 
