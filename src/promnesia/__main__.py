@@ -6,6 +6,7 @@ import sys
 from typing import List, Tuple, Optional, Dict
 from pathlib import Path
 from datetime import datetime
+from tempfile import TemporaryDirectory
 
 
 from .common import PathIsh, History, Filter, make_filter, get_logger, get_tmpdir
@@ -76,29 +77,38 @@ def adhoc_indexers():
     }
 
 
-def do_adhoc(indexer: str, *args):
+from .promnesia_server import setup_parser, run as do_serve
+
+
+def do_adhoc(indexer: str, *args, port: Optional[str]):
     logger = get_logger()
     from pprint import pprint
     # TODO logging?
     idx = adhoc_indexers()[indexer]
-    visits = idx(*args)
-    cnt = 0
 
-    errors = []
-    for visit in visits:
-        if isinstance(visit, Exception):
-            logger.warning(visit)
-            errors.append(visit)
-        else:
-            logger.info(visit)
-            cnt += 1
+    idxr = Indexer(idx, *args, src='adhoc')
+    hist, errors = previsits_to_history(idxr, src=idxr.src)
+
     for e in errors:
         logger.error(e)
-    print("Finished indexing {} {}, {} total".format(indexer, args, cnt))
+    logger.info("Finished indexing {} {}, {} total".format(indexer, args, len(hist)))
     # TODO color?
+    from . import config
+    with TemporaryDirectory() as tdir:
+        outdir = Path(tdir)
+        cfg = config.Config(
+            OUTPUT_DIR=outdir,
+            INDEXERS=[],
+        )
+        config.instance = cfg
+        dump_histories([('adhoc', hist)])
+
+        if port is None:
+            logger.warning("Port isn't specified, not serving!")
+        else:
+            do_serve(port=port, db=outdir / 'promnesia.sqlite', timezone='Europe/London', quiet=False) # TODO FIXME TZ
 
 
-from .promnesia_server import setup_parser, run as do_serve
 
 def main():
     from .common import setup_logger
@@ -117,6 +127,7 @@ def main():
  # TODO not sure what would be a good name?
     ap = subp.add_parser('adhoc')
     # TODO use docstring or something?
+    ap.add_argument('--port', type=str, help='Port to serve (omit in order to index only)', required=False)
     ap.add_argument(
         'indexer',
         choices=list(sorted(adhoc_indexers().keys())),
@@ -136,7 +147,7 @@ def main():
         elif args.mode == 'serve':
             do_serve(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
         elif args.mode == 'adhoc':
-            do_adhoc(args.indexer, *args.params)
+            do_adhoc(args.indexer, *args.params, port=args.port)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 
