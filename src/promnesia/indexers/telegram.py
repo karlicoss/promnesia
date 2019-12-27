@@ -48,8 +48,10 @@ SELECT src.display_name AS chatname
      , {text_query}     AS text
      , M.id             AS mid
 FROM messages AS M
-LEFT JOIN entities AS src    ON M.source_type = src.type AND M.source_id = src.id
-LEFT JOIN entities AS snd    ON 'dialog'      = snd.type AND M.sender_id = snd.id
+                                                                    /* chat types are 'dialog' (1-1), 'group' and 'supergroup' */
+                                                                    /* this is abit hacky way to handle all groups in one go */
+LEFT JOIN entities AS src    ON M.source_id = src.id AND src.type = (CASE M.source_type WHEN 'supergroup' THEN 'group' ELSE M.source_type END)
+LEFT JOIN entities AS snd    ON M.sender_id = snd.id AND snd.type = 'dialog'
 WHERE
     M.message_type NOT IN ('service_message', 'empty_message')
 /* used to do this, but doesn't really give much of a speedup */
