@@ -290,3 +290,6 @@ def extract(takeout_path_: PathIsh) -> Iterable[PreVisit]:
         _merge(search_myactivity, read_search_activity(tr))
         _merge(browser_history_json, read_browser_history_json(tr))
     return itertools.chain(chrome_myactivity.values(), search_myactivity.values(), browser_history_json.values())
+
+
+index = extract # TODO deprecate 'extract'
