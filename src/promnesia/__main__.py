@@ -64,18 +64,27 @@ def do_index(config_file: Path):
         config.reset()
 
 
+
+
 def adhoc_indexers():
-    # TODO careful, make sure it doesn't fail? make fully dynamic?
-    from .indexers import auto, browser, takeout, telegram
+    def lazy(name: str):
+        # helper to avoid failed imports etc, since people might be lacking necessary dependencies
+        def inner(*args, **kwargs):
+            from . import indexers
+            module = getattr(indexers, name)
+            return module.index
+        return inner
+
     return {
-        'auto': auto.index,
-        # TODO org mode
 
         # TODO ugh, this runs against merged db
         # 'chrome' : browser.chrome,
         # 'firefox': browser.firefox,
-        'takeout': takeout.extract,
-        'telegram': telegram.index,
+        'auto'    : lazy('auto'),
+        # TODO org mode
+
+        'takeout' : lazy('takeout'),
+        'telegram': lazy('telegram'),
     }
 
 
@@ -86,7 +95,7 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
     logger = get_logger()
     from pprint import pprint
     # TODO logging?
-    idx = adhoc_indexers()[indexer]
+    idx = adhoc_indexers()[indexer]()
 
     idxr = Indexer(idx, *args, src='adhoc')
     hist, errors = previsits_to_history(idxr, src=idxr.src)
