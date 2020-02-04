@@ -1,1 +1,1 @@
-from .common import last, PathIsh, Visit, Indexer
+from .common import PathIsh, Visit, Indexer, last

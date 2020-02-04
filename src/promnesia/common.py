@@ -336,16 +336,14 @@ def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List
     return h.visits, errors
 
 
-def setup_logger(logger, level=logging.DEBUG):
-    import logzero # type: ignore
-    logzero.setup_logger(logger.name, level=level)
+# NOTE: used in configs...
+def last(path: PathIsh, *parts: str) -> Path:
+    pp = os.path.join(str(path), *parts)
+    return Path(max(glob(pp, recursive=True)))
 
+
+from .kython.klogging2 import setup_logger
 
 def echain(ex: Exception, cause: Exception) -> Exception:
     ex.__cause__ = cause
     return ex
-
-
-def last(path: PathIsh, *parts: str) -> Path:
-    pp = os.path.join(str(path), *parts)
-    return Path(max(glob(pp, recursive=True)))

@@ -25,9 +25,12 @@ if __name__ == "__main__":
             # TODO could be optional?
             'python-magic', # for detecting mime types
             'dateparser', # TODO careful, might need python3-dev due to regex dependency?
-            'logzero', # pretty colored logging
         ],
         extras_require={
+            # TODO make cachew optional?
+            'optional': [
+                'logzero', # pretty colored logging
+            ],
             'testing': [
                  'pytest',
                  'pytest-xdist',
