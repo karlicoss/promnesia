@@ -26,8 +26,8 @@ def index(**kwargs) -> Iterable[Extraction]:
         if ann is not None:
             cparts.extend(['comment: ' + ann])
         yield Visit(
-            url=h.page_link,
-            dt=h.dt,
+            url=h.url,
+            dt=h.created,
             context='\n\n'.join(cparts),
             locator=Loc.make(
                 title='hypothesis',
