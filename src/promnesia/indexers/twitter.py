@@ -2,7 +2,7 @@ from typing import Iterator, Optional
 
 from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
 
-import my.tweets as tw
+import my.twitter as tw
 
 
 def get(o, k):
@@ -17,7 +17,7 @@ def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
     logger = get_logger()
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0
-    for t in tw.tweets_all():
+    for t in tw.tweets():
         processed += 1
         try:
             ets = t.entities

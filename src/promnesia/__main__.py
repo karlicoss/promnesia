@@ -71,8 +71,9 @@ def adhoc_indexers():
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
         def inner(*args, **kwargs):
             from . import indexers
-            module = getattr(indexers, name)
-            return module.index
+            import importlib
+            module = importlib.import_module('promnesia.indexers' + '.' + name)
+            return getattr(module, 'index')
         return inner
 
     return {
