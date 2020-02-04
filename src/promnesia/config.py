@@ -46,6 +46,7 @@ def reset() -> None:
 def import_config(config_file: PathIsh) -> Config:
     p = Path(config_file)
 
+    # TODO just exec??
     name = p.stem
     spec = importlib.util.spec_from_file_location(name, p) # type: ignore
     mod = importlib.util.module_from_spec(spec)

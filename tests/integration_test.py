@@ -86,21 +86,36 @@ def index_hypothesis(tdir: Path):
     ])
 
     cfg = tdir / 'test_config.py'
+    # TODO ok, need to simplify this...
     cfg.write_text(base_config + f"""
 OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Indexer as I
-import promnesia.indexers.hypothesis as hypothesis
 
-hyp_extractor = I(
-    hypothesis.index,
-    export_path='{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json',
-    hypexport_path='{hypexport_path}',
-    src='hyp',
-)
+def hyp_extractor():
+    class hypothesis:
+        export_path = '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json'
+
+    from my import mycfg
+    mycfg.paths.hypothesis = hypothesis
+
+    from promnesia.kython.kimport import import_from
+    he = import_from('/L/tmp', 'hypexport')
+    base = 'mycfg.repos'
+    import importlib
+    importlib.import_module(base)  # need to warm up, otherwise import fails..
+    # TODO could warm up in mypkg as well?
+    import sys
+    sys.modules[base + '.hypexport'] = he
+
+    import promnesia.indexers.hypothesis as hypi
+    return I(
+        hypi.index,
+        src='hyp',
+    )
 
 # in addition, test for lazy indexers. useful for importing packages
-INDEXERS = [lambda: hyp_extractor]
+INDEXERS = [hyp_extractor]
     """)
     index(cfg)
 
