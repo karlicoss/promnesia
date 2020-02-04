@@ -1,18 +1,15 @@
 # extracts stuff from hypothes.is json backup
-from pathlib import Path
-import logging
-from typing import NamedTuple, List, Optional, Union, Iterable
+from typing import Iterable
 
-from ..common import PathIsh, Visit, Extraction, get_logger, Loc
+from ..common import Visit, Extraction, get_logger, Loc
 
+# TODO this makes more sense to keep insude index() function?
 import my.hypothesis as hyp
 
 
 # TODO perhaps configuring should be external? e.g. in config, although it'd probably not propagate?
-def index(**kwargs) -> Iterable[Extraction]:
-    hyp.configure(**kwargs)
-
-    logger = get_logger()
+def index() -> Iterable[Extraction]:
+    logger = get_logger() # TODO use dynamic logger?
 
     for h in hyp.get_highlights():
         if isinstance(h, Exception):
