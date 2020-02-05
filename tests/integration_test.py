@@ -76,13 +76,13 @@ INDEXERS = [indexer]
 
 def index_hypothesis(tdir: Path):
     # TODO meh..
-    hypexport_path = str(tdir / 'hypexport')
+    hypexport_path = Path(tdir) / 'hypexport'
     check_call([
         'git',
         'clone',
         # TODO do I need --recursive here?? I guess it's only for fetching new data?
         'https://github.com/karlicoss/hypexport',
-        hypexport_path,
+        str(hypexport_path),
     ])
 
     cfg = tdir / 'test_config.py'
@@ -96,14 +96,15 @@ def hyp_extractor():
     class hypothesis:
         export_path = '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json'
 
-    from my import mycfg
+    import my
+    mycfg = my.mycfg
     mycfg.paths.hypothesis = hypothesis
 
     from promnesia.kython.kimport import import_from
-    he = import_from('/L/tmp', 'hypexport')
+    he = import_from('{hypexport_path.parent}', 'hypexport')
     base = 'mycfg.repos'
     import importlib
-    importlib.import_module(base)  # need to warm up, otherwise import fails..
+    importlib.import_module(base)  # need to warm up, otherwise later import of 'mycfg.repos.<repo>' fails
     # TODO could warm up in mypkg as well?
     import sys
     sys.modules[base + '.hypexport'] = he
