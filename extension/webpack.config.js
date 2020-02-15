@@ -1,6 +1,6 @@
 const webpack = require('webpack'),
       path = require('path'),
-      CleanWebpackPlugin = require('clean-webpack-plugin'),
+      {CleanWebpackPlugin} = require('clean-webpack-plugin'),
       CopyWebpackPlugin = require('copy-webpack-plugin'),
       WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 
@@ -177,7 +177,7 @@ const options = {
     ]
   },
   plugins: [
-   new CleanWebpackPlugin([buildPath + "/*"]),
+   new CleanWebpackPlugin(), // ok, respects symlinks
    new CopyWebpackPlugin([
       { from: 'images/*' },
        // TODO compress maybe...
