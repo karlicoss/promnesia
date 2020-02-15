@@ -16,8 +16,7 @@
         "js": ["background_injector.js"]
     }],
     "options_ui": {
-        "page": "options_page.html",
-        "chrome_style": true
+        "page": "options_page.html"
     },
 
     "permissions": [
@@ -37,6 +36,5 @@
     "icons": {
         "48": "images/ic_not_visited_48.png"
     },
-    "manifest_version": 2,
-    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+    "manifest_version": 2
 }
