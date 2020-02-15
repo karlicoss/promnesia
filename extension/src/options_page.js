@@ -4,9 +4,6 @@ import {get_options_async, setOptions} from './options';
 import {defensifyAlert, alertError} from './notifications';
 
 // $FlowFixMe
-import reqwest from 'reqwest';
-
-// $FlowFixMe
 import CodeMirror from 'codemirror/lib/codemirror.js';
 // $FlowFixMe
 import 'codemirror/mode/css/css.js';
@@ -112,24 +109,41 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     });
 }));
 
+// https://stackoverflow.com/questions/46946380/fetch-api-request-timeout
+// not fully correct, need to cancel request; but hopefully ok for now
+function fetchTimeout(url, options, timeout) {
+    return new Promise((resolve, reject) => {
+        fetch(url, options).then(resolve, reject);
+
+        if (timeout) {
+            const e = new Error("Connection timed out");
+            setTimeout(reject, timeout, e);
+        }
+    });
+}
+
 unwrap(document.getElementById('backend_status_id')).addEventListener('click', defensifyAlert(async() => {
     const host = getHost().value;
     const token = getToken().value;
 
-    await reqwest({
-        url: `${host}/status`,
-        method: 'post',
+    const second = 1000;
+    await fetchTimeout(`${host}/status`, {
+        method: 'POST',
         headers: {
             'Authorization': "Basic " + btoa(token),
         },
-        timeout: 1000, // 1s
-    }).then(res => {
-        console.log(res);
-        alert(`Success! ${JSON.stringify(res)}`);
+    }, second).then(res => {
+        if (!res.ok) {
+            throw `Backend error: {res.status} {res.statusText}` // TODO
+        }
+        return res;
+    }).then(async res => {
+        // TODO ugh. need to reject if ok is false...
+        const resj = await res.json()
+        // TODO log debug?
+        alert(`Success! ${JSON.stringify(resj)}`)
     }, err => {
-        // TODO ugh. unclear how to transform error object, nothing seemed to work.
-        // that results in two error alerts, but I guess thats' not so bad..
-        alertError(`${err.status} ${err.statusText} ${err.response}`);
+        alertError(err);
     });
 }));
 
