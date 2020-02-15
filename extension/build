@@ -9,6 +9,7 @@ from pathlib import Path
 IDS = {
     'firefox'       : '{07c6b8e1-94f7-4bbf-8e91-26c0a8992ab5}',
     'firefox-mobile': '{7598eb04-9381-4436-be8e-2bbe002ef776}',
+    'chrome'        : 'kdmegllpofldcpaclldkopnnjjljoiio',
 }
 
 
@@ -79,17 +80,33 @@ def main():
         )
     if args.publish:
         assert args.release
-        if target not in ['firefox', 'firefox-mobile']:
-            raise RuntimeError("{target} is not supported for publishing yet".format(target=target))
-        from firefox_dev_secrets import API_KEY, API_SECRET
-        # TODO --channel listed??
+
         src_dir = build_dir.resolve() # TODO ugh. webext can't into symlinks???
-        check_call([
-            'npm', 'run', 'release:amo',
-            '--',
-            '--source-dir', str(src_dir),
-            *webext_args(),
-        ])
+
+        if target in ['firefox', 'firefox-mobile']:
+            # TODO --channel listed??
+            check_call([
+                'npm', 'run', 'release:amo',
+                '--',
+                '--source-dir', str(src_dir),
+                *webext_args(),
+            ])
+        elif target == 'chrome':
+            from chrome_dev_secrets import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
+            check_call([
+                'npm', 'run', 'release:cws',
+                '--',
+                'upload',
+                # '--auto-publish',
+                '--source'        , str(src_dir),
+                '--client-id'     , CLIENT_ID,
+                '--client-secret' , CLIENT_SECRET,
+                '--refresh--token', REFRESH_TOKEN,
+                '--extension-id'  , IDS[target],
+                # TODO trusted testers?
+            ])
+        else:
+            raise RuntimeError("{target} is not supported for publishing yet".format(target=target))
 
 if __name__ == '__main__':
     main()
