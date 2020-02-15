@@ -15,6 +15,7 @@ import 'codemirror/mode/javascript/javascript.js';
 // err. that's a bit stupid, js injected css? surely it can be done via webpacke and static files...
 // $FlowFixMe
 import 'codemirror/lib/codemirror.css';
+// TODO right, I suppose that's why I need style bunder?
 // turned out more tedious than expected... https://github.com/codemirror/CodeMirror/issues/5484#issue-338185331
 
 
