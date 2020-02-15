@@ -10,6 +10,7 @@
     "dev": "npm run watch",
     "eslint": "eslint src",
     "flow": "flow",
+    "web-ext": "web-ext",
     "release:amo": "web-ext-submit"
   },
   "repository": {
@@ -48,6 +49,7 @@
     "flow-interfaces-chrome": "^0.6.0",
     "jest": "^24.8.0",
     "style-loader": "^1.1.3",
+    "web-ext": "^4.1.0",
     "web-ext-submit": "^4.1.0",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",

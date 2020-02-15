@@ -29,7 +29,9 @@ def main():
     src_dir = build_dir.resolve() # TODO ugh. webext can't into symlinks???
     def webext(*args, **kwargs):
         check_call([
-            'web-ext',
+            # TODO use npm run web-ext??
+            'npm', 'run', 'web-ext',
+            '--',
             '--source-dir', str(src_dir),
             *args,
         ], **kwargs)
@@ -40,7 +42,7 @@ def main():
         **os.environ,
     }
     check_call([
-        'npm', 'run-script', 'build',
+        'npm', 'run', 'build',
     ], env=env, cwd=str(Path(__file__).absolute().parent))
 
     if args.lint:
@@ -49,8 +51,7 @@ def main():
         webext('lint')
 
     if args.release:
-        pass
-        # assert args.lint # TODO not sure..
+        assert args.lint # TODO not sure..
 
     def webext_args():
         from firefox_dev_secrets import API_KEY, API_SECRET
@@ -60,6 +61,8 @@ def main():
             '--api-secret'   , API_SECRET,
         ]
     if args.sign:
+        # https://github.com/fregante/web-ext-submit#web-ext-submit- hmmm maybe I don't even need sign??
+        # Mozilla’s web-ext sign successfully submits an extension for review, but then it throws an error. This wrapper executes the same command, but then it prevents the unrelated "it could not be signed" error.
         assert args.release
         if target not in ['firefox', 'firefox-mobile']:
             raise RuntimeError("{target} is not supported for signing yet".format(target=target))
@@ -70,9 +73,10 @@ def main():
         )
     if args.publish:
         assert args.release
-        if target not in ['firefox', 'firefox-mobile']:
+        if target not in ['firefox']:
             raise RuntimeError("{target} is not supported for publishing yet".format(target=target))
         from firefox_dev_secrets import API_KEY, API_SECRET
+        # TODO --channel listed??
         check_call([
             'npm', 'run', 'release:amo',
             '--',
