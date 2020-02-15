@@ -38,11 +38,12 @@ jobs:
       - checkout:
           path: ~/project
 
+      - run: sudo npm install -g npm web-ext
       # TODO not sure if should update shallalist?
       - run: npm install
       - run:
           name: build
-          command: ./build --firefox --release
+          command: ./build --firefox --release --lint
       - run:
           name: js flow
           command: npm run flow # TODO use flow discovery or something??

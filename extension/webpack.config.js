@@ -1,8 +1,13 @@
-const path = require('path'),
-      webpack = require('webpack'),
+const webpack = require('webpack'),
+      path = require('path'),
+      {CleanWebpackPlugin} = require('clean-webpack-plugin'),
       CopyWebpackPlugin = require('copy-webpack-plugin'),
-      CleanWebpackPlugin = require("clean-webpack-plugin"),
       WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+
+const T = {
+    CHROME  : 'chrome',
+    FIREFOX: 'firefox',
+};
 
 const env = {
     TARGET : process.env.TARGET,
@@ -12,13 +17,19 @@ const env = {
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
 
-const target = env.TARGET; // TODO erm didn't work?? assert(target != null);
 const release = env.RELEASE == 'YES' ? true : false;
+const dev = !release; // meh. maybe make up my mind?
+const target = env.TARGET; // TODO erm didn't work?? assert(target != null);
 
+// see this for up to date info on the differences..
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
+const isMobile = target.includes('mobile');
+
+const name = 'Promnesia' + (isMobile ? ' mobile' : '') + (dev ? ' [dev]' : '');
 
 // Firefox wouldn't let you rebind its default shortcuts most of which use Shift
 // On the other hand, Chrome wouldn't let you use Alt
-const modifier = target === 'chrome' ? 'Shift' : 'Alt';
+const modifier = target === T.CHROME ? 'Shift' : 'Alt';
 
 // ugh. declarative formats are shit.
 const commandsExtra = {
@@ -49,10 +60,6 @@ const commandsExtra = {
 };
 
 
-// see this for up to date info on the differences..
-// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
-const isMobile = target.includes('mobile');
-
 // TODO ugh it's getting messy...
 const action = {
     "default_icon": "images/ic_not_visited_48.png",
@@ -76,21 +83,18 @@ if (!isMobile) {
     );
 }
 
-let name = "Promnesia";
-if (isMobile) {
-    name += " mobile";
-}
-if (!release) {
-    name += " (dev)";
-}
-
 const manifestExtra = {
-    version: pkg.version,
     name: name,
+    version: pkg.version,
+    // TODO description??
     browser_action: action,
     permissions: permissionsExtra,
     options_ui: {},
 };
+
+if (dev) {
+    manifestExtra.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self'";
+}
 
 if (!isMobile) {
     manifestExtra.commands = commandsExtra;
@@ -109,7 +113,7 @@ if (isMobile) {
 }
 
 
-if (target === 'chrome') {
+if (target === T.CHROME) {
     manifestExtra.options_ui.chrome_style = true;
 } else if (target.includes('firefox')) {
     // TODO not sure if should do anything special for mobile
@@ -124,7 +128,7 @@ if (!isMobile) {
 }
 
 
-if (target.includes('firefox') && !release) {
+if (target.includes('firefox') && dev) {
     // TODO not sure if should use AMO id?
     manifestExtra.browser_specific_settings = {
         "gecko": {
@@ -138,8 +142,7 @@ if (target.includes('firefox') && !release) {
 const buildPath = path.join(__dirname, 'dist', target);
 
 const options = {
-  mode: 'development',
-
+  mode: dev ? 'development' : 'production',
   entry: {
     background   : path.join(__dirname, './src/background'),
     options_page : path.join(__dirname, './src/options_page'),
@@ -167,21 +170,22 @@ const options = {
       },
       {
           test: /\.html$/,
-          loader: "html-loader",
+          loader: 'html-loader',
           exclude: /node_modules/
       }
     ]
   },
   plugins: [
-   new CleanWebpackPlugin([buildPath + "/*"]),
+   new CleanWebpackPlugin(), // ok, respects symlinks
    new CopyWebpackPlugin([
       { from: 'images/*' },
        // TODO compress maybe...
       { from: 'shallalist/finance/banking/domains', to: 'shallalist/finance/banking' },
       { from: 'shallalist/webmail/domains'        , to: 'shallalist/webmail' },
-      { from: 'src/*.html' , flatten: true},
-      { from: 'src/*.css' , flatten: true},
-      { from: 'src/toastify.js', flatten: true},
+      { from: 'src/*.html'     , flatten: true},
+      { from: 'src/*.css'      , flatten: true},
+      { from: 'src/toastify.js', flatten: true}, // TODO my version is tweaked, right?
+      // { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'},
     ]),
     new WebpackExtensionManifestPlugin({
         config: {

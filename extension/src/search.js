@@ -106,7 +106,7 @@ async function doSearch (...args) {
     }
 }
 
-unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event) => {
+unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event: Event) => {
     event.preventDefault();
     // TODO make ctx first configurable?
     await doSearch(

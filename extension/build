@@ -4,17 +4,34 @@ import os
 from subprocess import check_call
 from pathlib import Path
 
+
+
+
+TARGETS = ['chrome', 'firefox', 'firefox-mobile']
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--target', type=str)
     p.add_argument('--release', action='store_true')
     p.add_argument('--sign', action='store_true')
-    for b in ['chrome', 'firefox', 'firefox-mobile']:
-        p.add_argument('--' + b, action='store_const', const=b, dest='target')
+    p.add_argument('--lint', action='store_true') # TODO handle
+
+    tg = p.add_mutually_exclusive_group(required=True)
+    tg.add_argument('--target', type=str, choices=TARGETS)
+    for b in TARGETS:
+        tg.add_argument('--' + b, action='store_const', const=b, dest='target')
     args = p.parse_args()
     target = args.target
 
     assert target is not None
+
+    dist_dir = Path(__file__).absolute().parent / 'dist'
+    build_dir = dist_dir / target
+    def webext(*args, **kwargs):
+        src_dir = build_dir.resolve() # TODO ugh. webext can't into symlinks???
+        check_call([
+            'web-ext',
+            '--source-dir', str(src_dir),
+            *args,
+        ], **kwargs)
 
     env = {
         'TARGET': target,
@@ -25,24 +42,26 @@ def main():
         'npm', 'run-script', 'build',
     ], env=env, cwd=str(Path(__file__).absolute().parent))
 
+    if args.lint:
+        # TODO --self-hosted
+        # TODO warnings as errors??
+        webext('lint')
+
+    if args.release:
+        assert args.lint # TODO not sure..
+
     if args.sign:
         assert args.release
         if target not in ['firefox', 'firefox-mobile']:
             raise RuntimeError("{target} is not supported for signing yet".format(target=target))
 
-
-        dist_dir = Path(__file__).absolute().parent / 'dist'
-        src_dir = dist_dir / target
-
         from firefox_dev_secrets import API_KEY, API_SECRET
-        check_call([
-            'web-ext',
-            '--source-dir'   , str(src_dir),
+        webext(
             '--artifacts-dir', str(dist_dir),
             '--api-key'      , API_KEY,
             '--api-secret'   , API_SECRET,
             'sign',
-        ])
+        )
 
 if __name__ == '__main__':
     main()
