@@ -171,7 +171,7 @@ const options = {
       },
       {
           test: /\.html$/,
-          loader: "html-loader",
+          loader: 'html-loader',
           exclude: /node_modules/
       }
     ]
