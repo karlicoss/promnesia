@@ -128,15 +128,12 @@ if (!isMobile) {
 }
 
 
-if (target.includes('firefox') && dev) {
-    // TODO not sure if should use AMO id?
+if (dev) {
+    // necessary for browser tests; don't remember why
     manifestExtra.browser_specific_settings = {
-        "gecko": {
-            "id": "promnesia@karlicoss.github.com"
-        }
-    };
+        'gecko': {'id': 'promnesia@karlicoss.github.com'}
+    }
 }
-
 
 
 const buildPath = path.join(__dirname, 'dist', target);

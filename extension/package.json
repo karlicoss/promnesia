@@ -1,6 +1,6 @@
 {
   "name": "promnesia",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "description": "Recall what you already visited, why and in which context",
   "main": "dist/background.js",
   "scripts": {
@@ -9,7 +9,9 @@
     "watch": "webpack --watch --progress --colors",
     "dev": "npm run watch",
     "eslint": "eslint src",
-    "flow": "flow"
+    "flow": "flow",
+    "web-ext": "web-ext",
+    "release:amo": "web-ext-submit"
   },
   "repository": {
     "type": "git",
@@ -47,9 +49,12 @@
     "flow-interfaces-chrome": "^0.6.0",
     "jest": "^24.8.0",
     "style-loader": "^1.1.3",
+    "web-ext": "^4.1.0",
+    "web-ext-submit": "^4.1.0",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3",
     "webpack-extension-manifest-plugin": "^0.5.0"
-  }
+  },
+  "private": "true"
 }

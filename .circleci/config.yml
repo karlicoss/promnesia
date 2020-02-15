@@ -38,7 +38,6 @@ jobs:
       - checkout:
           path: ~/project
 
-      - run: sudo npm install -g npm web-ext
       # TODO not sure if should update shallalist?
       - run: npm install
       - run:
