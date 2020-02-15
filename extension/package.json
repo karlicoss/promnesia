@@ -1,6 +1,6 @@
 {
   "name": "promnesia",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "Recall what you already visited, why and in which context",
   "main": "dist/background.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "eslint": "eslint src",
     "flow": "flow",
     "web-ext": "web-ext",
+    "release:cws": "webstore",
     "release:amo": "web-ext-submit"
   },
   "repository": {
@@ -38,6 +39,7 @@
     "@babel/preset-react": "^7.8.3",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^8.0.6",
+    "chrome-webstore-upload-cli": "^1.2.0",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",
