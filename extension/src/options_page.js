@@ -4,9 +4,6 @@ import {get_options_async, setOptions} from './options';
 import {defensifyAlert, alertError} from './notifications';
 
 // $FlowFixMe
-import reqwest from 'reqwest';
-
-// $FlowFixMe
 import CodeMirror from 'codemirror/lib/codemirror.js';
 // $FlowFixMe
 import 'codemirror/mode/css/css.js';
@@ -116,20 +113,26 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
     const host = getHost().value;
     const token = getToken().value;
 
-    await reqwest({
-        url: `${host}/status`,
-        method: 'post',
+    await fetch(`${host}/status`, {
+        method: 'POST',
         headers: {
             'Authorization': "Basic " + btoa(token),
         },
-        timeout: 1000, // 1s
+        // TODO think about bringing back timeout...
+        // https://stackoverflow.com/questions/46946380/fetch-api-request-timeout
+        // timeout: 1000, // 1s
     }).then(res => {
-        console.log(res);
-        alert(`Success! ${JSON.stringify(res)}`);
+        if (!res.ok) {
+            throw `Backend error: {res.status} {res.statusText}` // TODO
+        }
+        return res;
+    }).then(async res => {
+        // TODO ugh. need to reject if ok is false...
+        const resj = await res.json()
+        // TODO log debug?
+        alert(`Success! ${JSON.stringify(resj)}`)
     }, err => {
-        // TODO ugh. unclear how to transform error object, nothing seemed to work.
-        // that results in two error alerts, but I guess thats' not so bad..
-        alertError(`${err.status} ${err.statusText} ${err.response}`);
+        alertError(err);
     });
 }));
 
