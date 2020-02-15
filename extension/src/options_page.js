@@ -109,19 +109,30 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     });
 }));
 
+// https://stackoverflow.com/questions/46946380/fetch-api-request-timeout
+// not fully correct, need to cancel request; but hopefully ok for now
+function fetchTimeout(url, options, timeout) {
+    return new Promise((resolve, reject) => {
+        fetch(url, options).then(resolve, reject);
+
+        if (timeout) {
+            const e = new Error("Connection timed out");
+            setTimeout(reject, timeout, e);
+        }
+    });
+}
+
 unwrap(document.getElementById('backend_status_id')).addEventListener('click', defensifyAlert(async() => {
     const host = getHost().value;
     const token = getToken().value;
 
-    await fetch(`${host}/status`, {
+    const second = 1000;
+    await fetchTimeout(`${host}/status`, {
         method: 'POST',
         headers: {
             'Authorization': "Basic " + btoa(token),
         },
-        // TODO think about bringing back timeout...
-        // https://stackoverflow.com/questions/46946380/fetch-api-request-timeout
-        // timeout: 1000, // 1s
-    }).then(res => {
+    }, second).then(res => {
         if (!res.ok) {
             throw `Backend error: {res.status} {res.statusText}` // TODO
         }
