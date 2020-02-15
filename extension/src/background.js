@@ -6,8 +6,6 @@ import {normalisedURLHostname, isBlacklistedHelper} from './normalise';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
-// $FlowFixMe
-import reqwest from 'reqwest';
 
 async function isAndroid() {
     try {
@@ -55,7 +53,9 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
     return res;
 }
 
-function rawToVisits(vis): Visits {
+type Json = any;
+
+function rawToVisits(vis: Json): Visits {
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
         const dts = v['dt'];
@@ -81,18 +81,25 @@ function rawToVisits(vis): Visits {
 async function queryBackendCommon(params, endp: string) {
     const opts = await get_options_async();
     const endpoint = `${opts.host}/${endp}`;
-    // TODO reqwest logging??
-    const response = await reqwest({
-        url: endpoint,
-        method: 'post',
-        contentType: 'application/json',
+    // TODO cors mode?
+    const response = await fetch(endpoint, {
+        method: 'POST',
         headers: {
+            'Content-Type' : 'application/json',
             'Authorization': "Basic " + btoa(opts.token),
         },
-        data: JSON.stringify(params)
+        body: JSON.stringify(params)
+    }).then(response => {
+        // right, fetch API doesn't reject on HTTP error status...
+        const ok = response.ok;
+        if (!ok) {
+            throw response.statusText; // TODO...
+        }
+        return response;
     });
-    ldebug(`success: ${response}`);
-    return response;
+    // TODO it's a promise..
+    // ldebug(`success: ${response}`);
+    return response.json();
 }
 
 async function getBackendVisits(u: Url) {
