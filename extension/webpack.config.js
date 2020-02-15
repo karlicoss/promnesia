@@ -143,7 +143,6 @@ const buildPath = path.join(__dirname, 'dist', target);
 
 const options = {
   mode: dev ? 'development' : 'production',
-
   entry: {
     background   : path.join(__dirname, './src/background'),
     options_page : path.join(__dirname, './src/options_page'),
@@ -185,7 +184,8 @@ const options = {
       { from: 'shallalist/webmail/domains'        , to: 'shallalist/webmail' },
       { from: 'src/*.html'     , flatten: true},
       { from: 'src/*.css'      , flatten: true},
-      { from: 'src/toastify.js', flatten: true},
+      { from: 'src/toastify.js', flatten: true}, // TODO my version is tweaked, right?
+      // { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'},
     ]),
     new WebpackExtensionManifestPlugin({
         config: {
