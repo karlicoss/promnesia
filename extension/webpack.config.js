@@ -128,14 +128,11 @@ if (!isMobile) {
 }
 
 
-// TODO different for firefox mobile
-const specific = {
-    'firefox': {'gecko': {'id': '{07c6b8e1-94f7-4bbf-8e91-26c0a8992ab5}'}},
-};
-
-if (release) {
-    const s = specific[target]; if (s == null) throw "";
-    manifestExtra.browser_specific_settings = s;
+if (dev) {
+    // necessary for browser tests; don't remember why
+    manifestExtra.browser_specific_settings = {
+        'gecko': {'id': 'promnesia@karlicoss.github.com'}
+    }
 }
 
 
