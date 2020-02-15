@@ -11,8 +11,9 @@ TARGETS = ['chrome', 'firefox', 'firefox-mobile']
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--release', action='store_true')
-    p.add_argument('--sign', action='store_true')
-    p.add_argument('--lint', action='store_true') # TODO handle
+    p.add_argument('--sign'   , action='store_true')
+    p.add_argument('--lint'   , action='store_true')
+    p.add_argument('--publish', action='store_true')
 
     tg = p.add_mutually_exclusive_group(required=True)
     tg.add_argument('--target', type=str, choices=TARGETS)
@@ -25,8 +26,8 @@ def main():
 
     dist_dir = Path(__file__).absolute().parent / 'dist'
     build_dir = dist_dir / target
+    src_dir = build_dir.resolve() # TODO ugh. webext can't into symlinks???
     def webext(*args, **kwargs):
-        src_dir = build_dir.resolve() # TODO ugh. webext can't into symlinks???
         check_call([
             'web-ext',
             '--source-dir', str(src_dir),
@@ -48,20 +49,36 @@ def main():
         webext('lint')
 
     if args.release:
-        assert args.lint # TODO not sure..
+        pass
+        # assert args.lint # TODO not sure..
 
+    def webext_args():
+        from firefox_dev_secrets import API_KEY, API_SECRET
+        return [
+            '--artifacts-dir', str(dist_dir),
+            '--api-key'      , API_KEY,
+            '--api-secret'   , API_SECRET,
+        ]
     if args.sign:
         assert args.release
         if target not in ['firefox', 'firefox-mobile']:
             raise RuntimeError("{target} is not supported for signing yet".format(target=target))
 
-        from firefox_dev_secrets import API_KEY, API_SECRET
         webext(
-            '--artifacts-dir', str(dist_dir),
-            '--api-key'      , API_KEY,
-            '--api-secret'   , API_SECRET,
+            *webext_args(),
             'sign',
         )
+    if args.publish:
+        assert args.release
+        if target not in ['firefox', 'firefox-mobile']:
+            raise RuntimeError("{target} is not supported for publishing yet".format(target=target))
+        from firefox_dev_secrets import API_KEY, API_SECRET
+        check_call([
+            'npm', 'run', 'release:amo',
+            '--',
+            '--source-dir', str(src_dir),
+            *webext_args(),
+        ])
 
 if __name__ == '__main__':
     main()
