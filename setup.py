@@ -12,7 +12,14 @@ except VersionConflict:
 
 name = 'promnesia'
 
+
+def building_for_pypi() -> bool:
+    return sys.argv[1] == 'sdist'
+
+
 if __name__ == "__main__":
+    for_pypi = building_for_pypi()
+
     setup(
         use_pyscaffold=True,
         install_requires=[
@@ -54,7 +61,9 @@ if __name__ == "__main__":
                 'orgparse',
             ],
             'my': [
-                'my @ git+https://github.com/karlicoss/my.git',
+                *([]
+                  if for_pypi else # pypi doesn't like git dependencies... will think after that later
+                  ['my @ git+https://github.com/karlicoss/my.git'])
             ],
         },
         package_data={name: ['py.typed']},
