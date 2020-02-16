@@ -64,7 +64,7 @@ def do_index(config_file: Path):
         config.reset()
 
 
-def adhoc_indexers():
+def demo_indexers():
     def lazy(name: str):
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
         def inner(*args, **kwargs):
@@ -88,13 +88,13 @@ def adhoc_indexers():
 
 
 
-def do_adhoc(indexer: str, *args, port: Optional[str]):
+def do_demo(indexer: str, *args, port: Optional[str]):
     logger = get_logger()
     from pprint import pprint
     # TODO logging?
-    idx = adhoc_indexers()[indexer]()
+    idx = demo_indexers()[indexer]()
 
-    idxr = Indexer(idx, *args, src='adhoc')
+    idxr = Indexer(idx, *args, src='demo')
     hist, errors = previsits_to_history(idxr, src=idxr.src)
 
     for e in errors:
@@ -108,7 +108,7 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
             INDEXERS=[],
         )
         config.instance = cfg
-        dump_histories([('adhoc', hist)])
+        dump_histories([('demo', hist)])
 
         if port is None:
             logger.warning("Port isn't specified, not serving!")
@@ -137,12 +137,12 @@ def main():
     server.setup_parser(sp)
 
     # TODO not sure what would be a good name? rename to 'demo'?
-    ap = subp.add_parser('adhoc', help='Demo mode: index and serve a directory in single command', formatter_class=F)
+    ap = subp.add_parser('demo', help='Demo mode: index and serve a directory in single command', formatter_class=F)
     # TODO use docstring or something?
     ap.add_argument('--port', type=str, help='Port to serve. If omitted, will index only without serving.', required=False)
     ap.add_argument(
         'indexer',
-        choices=list(sorted(adhoc_indexers().keys())),
+        choices=list(sorted(demo_indexers().keys())),
         help='Indexer name',
     )
     ap.add_argument('params', nargs='*')
@@ -167,8 +167,8 @@ def main():
              do_index(config_file=args.config)
         elif args.mode == 'serve':
             server.run(args)
-        elif args.mode == 'adhoc':
-            do_adhoc(args.indexer, *args.params, port=args.port)
+        elif args.mode == 'demo':
+            do_demo(args.indexer, *args.params, port=args.port)
         elif args.mode == 'install-server':
             install_server.install(args)
         else:
