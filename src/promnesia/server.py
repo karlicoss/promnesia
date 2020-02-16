@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 __package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
-import argparse
 import os
 import json
 from datetime import timedelta, datetime
@@ -245,7 +244,7 @@ SELECT queried
     return results
 
 
-def run(*, port: str, db: Path, timezone: str, quiet: bool):
+def _run(*, port: str, db: Path, timezone: str, quiet: bool):
     logger = get_logger()
     env = {
         **os.environ,
@@ -253,13 +252,18 @@ def run(*, port: str, db: Path, timezone: str, quiet: bool):
         _ENV_CONFIG: json.dumps({'db': str(db), 'timezone': timezone}),
     }
     args = [
-        'promnesia-server',
+        'python3',
+        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess..
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,
     ]
     logger.info('Running server: %s', args)
-    os.execvpe('hug', args, env)
+    os.execvpe('python3', args, env)
+
+
+def run(args):
+    _run(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
 
 
 _DEFAULT_CONFIG = Path('config.py')
@@ -277,22 +281,9 @@ def get_system_tz() -> str:
 
 
 def setup_parser(p):
-    p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension, default: %(default)s')
+    p.add_argument('--port'    , type=str , default='13131', help='Port for communicating with extension')
     # TODO mm. should add fallback timezone to frontend instead I guess?
-    p.add_argument('--db', type=Path, required=True, help='Path to the database')
-    p.add_argument('--timezone', type=str, default=get_system_tz(), help='Fallback timezone, defaults to system timezone (%(default)s) if not specified')
-    p.add_argument('--quiet', action='store_true') # TODO silent??
-
-
-def main():
-    # setup_logzero(logging.getLogger('sqlalchemy.engine'), level=logging.DEBUG)
-    p = argparse.ArgumentParser('promnesia server', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    setup_parser(p)
-    args = p.parse_args()
-    run(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
-
-
-if __name__ == '__main__':
-    main()
-
+    p.add_argument('--db'      , type=Path, required=True  , help='Path to the link database (required)')
+    p.add_argument('--timezone', type=str , default=get_system_tz(), help='Fallback timezone, defaults to the system timezone if not specified')
+    p.add_argument('--quiet'              , action='store_true', help='Less logging')
 
