@@ -1,5 +1,5 @@
 import argparse
-import os.path
+import os
 import logging
 import inspect
 import sys
@@ -9,12 +9,12 @@ from datetime import datetime
 from tempfile import TemporaryDirectory
 
 
-from .common import PathIsh, History, Filter, make_filter, get_logger, get_tmpdir
 from . import config
-from .dump import dump_histories
-
+from . import server
+from .misc import install_server
+from .common import PathIsh, History, make_filter, get_logger, get_tmpdir
 from .common import previsits_to_history, Indexer
-
+from .dump import dump_histories
 
 
 def _do_index():
@@ -64,8 +64,6 @@ def do_index(config_file: Path):
         config.reset()
 
 
-
-
 def adhoc_indexers():
     def lazy(name: str):
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
@@ -89,8 +87,6 @@ def adhoc_indexers():
     }
 
 
-from .promnesia_server import setup_parser, run as do_serve
-
 
 def do_adhoc(indexer: str, *args, port: Optional[str]):
     logger = get_logger()
@@ -105,7 +101,6 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
         logger.error(e)
     logger.info("Finished indexing {} {}, {} total".format(indexer, args, len(hist)))
     # TODO color?
-    from . import config
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
         cfg = config.Config(
@@ -118,11 +113,10 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
         if port is None:
             logger.warning("Port isn't specified, not serving!")
         else:
-            do_serve(port=port, db=outdir / 'promnesia.sqlite', timezone='Europe/London', quiet=False) # TODO FIXME TZ
+            server._run(port=port, db=outdir / 'promnesia.sqlite', timezone='Europe/London', quiet=False) # TODO FIXME TZ
 
         if sys.stdin.isatty():
             input("Press any key when ready")
-
 
 
 def main():
@@ -130,26 +124,31 @@ def main():
     from .common import setup_logger
     setup_logger(get_logger(), level=logging.DEBUG)
 
-    p = argparse.ArgumentParser()
-    subp = p.add_subparsers(dest='mode')
-    ep = subp.add_parser('index', help='Create/update the link database')
+    F = argparse.ArgumentDefaultsHelpFormatter
+    p = argparse.ArgumentParser(formatter_class=F)
+    # p.add_argument('--hello', required=False, default='YES', help='alala')
+    subp = p.add_subparsers(dest='mode', )
+    ep = subp.add_parser('index', help='Create/update the link database', formatter_class=F)
     ep.add_argument('--config', type=Path, default=Path('config.py'))
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False)
 
-    sp = subp.add_parser('serve', help='Serve a link database')
-    setup_parser(sp)
+    sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F)
+    server.setup_parser(sp)
 
     # TODO not sure what would be a good name? rename to 'demo'?
-    ap = subp.add_parser('adhoc', help='Demo mode: index and serve a directory in single command')
+    ap = subp.add_parser('adhoc', help='Demo mode: index and serve a directory in single command', formatter_class=F)
     # TODO use docstring or something?
-    ap.add_argument('--port', type=str, help='Port to serve (omit in order to index only)', required=False)
+    ap.add_argument('--port', type=str, help='Port to serve. If omitted, will index only without serving.', required=False)
     ap.add_argument(
         'indexer',
         choices=list(sorted(adhoc_indexers().keys())),
         help='Indexer name',
     )
     ap.add_argument('params', nargs='*')
+
+    isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
+    install_server.setup_parser(isp)
 
     args = p.parse_args()
 
@@ -165,11 +164,13 @@ def main():
 
     with get_tmpdir() as tdir: # TODO??
         if args.mode == 'index':
-            do_index(config_file=args.config)
+             do_index(config_file=args.config)
         elif args.mode == 'serve':
-            do_serve(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
+            server.run(args)
         elif args.mode == 'adhoc':
             do_adhoc(args.indexer, *args.params, port=args.port)
+        elif args.mode == 'install-server':
+            install_server.install(args)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 

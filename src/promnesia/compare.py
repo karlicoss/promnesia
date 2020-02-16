@@ -139,7 +139,7 @@ def compare_files(*files: Path, log=True) -> Iterator[Tuple[str, DbVisit]]:
         name = f.name
         this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
 
-        from promnesia.promnesia_server import _get_stuff # TODO ugh
+        from promnesia.server import _get_stuff # TODO ugh
         engine, binder, table = _get_stuff(PathWithMtime.make(f))
 
         with engine.connect() as conn:

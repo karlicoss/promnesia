@@ -30,12 +30,14 @@ def run(tdir: Path):
     cfg_file = tdir / 'config.py'
     cfg_file.write_text(cfg)
 
-    check_call(['promnesia', 'index', '--config', cfg_file])
+
+    promnesia = Path(__file__).absolute().parent.parent / 'scripts/promnesia'
+
+    check_call([promnesia, 'index', '--config', cfg_file])
     # TODO (cron env??)
 
-    # TODO uninstall too?
     check_call([
-        Path(__file__).absolute().parent.parent / 'setup_server', # TODO move to scripts or something?
+        promnesia, 'install-server',
         '--unit-name', 'promnesia-test.service',
         '--db', str(tdir / 'promnesia.sqlite'),
         '--timezone', 'Europe/Moscow',

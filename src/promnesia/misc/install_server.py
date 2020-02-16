@@ -4,9 +4,7 @@ import argparse
 from pathlib import Path
 from subprocess import check_call, run
 
-# TODO move the script to the main package? make sure it also works with arbitrary path?
-# or just rely on editable...
-from promnesia.promnesia_server import setup_parser
+from .. import server
 
 SYSTEMD_CONFIG = """
 [Unit]
@@ -27,17 +25,20 @@ def systemd(*args, method=check_call):
         'systemctl', '--no-pager', '--user', *args,
     ])
 
-def setup(args):
+
+def install(args):
     unit_name = args.unit_name
     out = Path(f'~/.config/systemd/user/{unit_name}').expanduser()
     print(f"Writing systemd config to {out}:")
 
+    # TODO FIXME not sure what it should rely on...
+    # TODO also should it really use /bin/bash -l -c??
     # should be installed by pip by now?
     server_bin = 'promnesia'
 
     extra_args = f'serve --db {args.db} --timezone {args.timezone} --port {args.port}'
 
-    out.parent.mkdir(parents=True, exist_ok=True) # TODO not sure if there is a more standard way of ensuring
+    out.parent.mkdir(parents=True, exist_ok=True) # sometimes systemd dir doesn't exist
     out.write_text(SYSTEMD_CONFIG.format(
         server=server_bin,
         extra_args=extra_args,
@@ -50,17 +51,10 @@ def setup(args):
         systemd('start' , unit_name)
         systemd('status', unit_name)
     except Exception as e:
-        print(f"Something has gone wrong... you might want to use 'journalctl --user -u {unit_name}' to debug")
+        print(f"Something has gone wrong... you might want to use 'journalctl --user -u {unit_name}' to investigate")
         raise e
 
-def main():
-    p = argparse.ArgumentParser('promnesia server setup', formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=100)) # type: ignore
+
+def setup_parser(p: argparse.ArgumentParser):
     p.add_argument('--unit-name', type=str, default='promnesia.service', help='Systemd unit name')
-    setup_parser(p)
-    args = p.parse_args()
-    setup(args)
-
-if __name__ == '__main__':
-    main()
-
-# TODO eh, move somewhere common??
+    server.setup_parser(p)
