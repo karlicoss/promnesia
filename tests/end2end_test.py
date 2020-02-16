@@ -14,7 +14,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-from common import skip_if_ci, uses_x
+from common import under_ci, skip_if_ci, uses_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from firefox_helper import open_extension_page
@@ -29,8 +29,7 @@ class Browser(NamedTuple):
         return self.dist.split('-')[0] # TODO meh
 
     def skip_ci_x(self):
-        import os
-        if 'CI' in os.environ and not self.headless:
+        if under_ci() and not self.headless:
             pytest.skip("Only can't use headless browser on CI")
 
 

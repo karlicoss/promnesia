@@ -95,7 +95,7 @@ jobs:
           name: 'setup python'
           command: |
             pyenv global 3.7.0
-            pip3 install --user --upgrade pip
+            pip3 install --upgrade pip
 
       # - run: curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3 # right, this container is quite old and doesn't have python3-pip package..
 
@@ -103,8 +103,10 @@ jobs:
       # WARNING: The script hug is installed in '/home/circleci/.local/bin' which is not on PATH.
       # Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
 
-      - run: python3 -m pip install --user pytest # TODO FIXME canonify imports it...
-      - run: python3 -m pip install --user . # TODO meh
+      # right, since we're using pyenv now, we should be doing global install apaprently, otherwise hug is shadowed
+      # TODO FIXME canonify imports it...
+      - run: python3 -m pip install pytest
+      - run: python3 -m pip install . # TODO meh
       - run: tests/install_and_run
 
 

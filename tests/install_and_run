@@ -18,32 +18,29 @@ INDEXERS = []
 
 """
 
-
-def run_bin(name: str, *args):
-    # TODO install binary or something? not sure...
-    binary = Path(__file__).absolute().parent.parent / name
-    check_call(
-        [str(x) for x in [binary, *args]],
-        env={'PYTHONPATH': 'src', **os.environ}, # TODO hacky...
-    )
+def systemctl(*args):
+    check_call([
+        'systemctl', '--no-pager', '--user', *args,
+    ])
 
 
+# TODO do it in pipenv?
 def run(tdir: Path):
     cfg = CONFIG.format(output_dir=f'"{tdir}"')
     cfg_file = tdir / 'config.py'
     cfg_file.write_text(cfg)
 
-    run_bin('run', 'index', '--config', cfg_file)
+    check_call(['promnesia', 'index', '--config', cfg_file])
     # TODO (cron env??)
 
     # TODO uninstall too?
-    run_bin(
-        'setup_server',
+    check_call([
+        Path(__file__).absolute().parent.parent / 'setup_server', # TODO move to scripts or something?
         '--unit-name', 'promnesia-test.service',
         '--db', str(tdir / 'promnesia.sqlite'),
         '--timezone', 'Europe/Moscow',
         '--port', '17777', # TODO get free port?
-    )
+    ])
 
     response = None
     for x in range(10):
@@ -68,10 +65,12 @@ def run(tdir: Path):
     }
 
     time.sleep(1)
-    check_call([
-        'systemctl', '--no-pager', '--user', 'is-active', 'promnesia-test.service',
-    ])
+    systemctl('is-active', 'promnesia-test.service')
     print("Test succeeded!")
+
+    # TODO prompt for cleanup?
+    systemctl('stop'   , 'promnesia-test.service')
+    systemctl('disable', 'promnesia-test.service')
 
 
 def main():
