@@ -84,12 +84,18 @@ def _plaintext(path: Path) -> Iterator[Extraction]:
     from . import shellcmd
     from .plaintext import extract_from_path
     logger = get_logger()
+    # TODO eh? shellcmd?
     yield from shellcmd.extract(extract_from_path(path))
 
 
 def _markdown(path: Path) -> Iterator[Extraction]:
     # TODO for now handled as plaintext
     yield from _plaintext(path)
+
+
+def _html(path: Path) -> Iterator[Extraction]:
+    from . import html
+    yield from html.extract_from_file(path)
 
 
 @lru_cache(1)
@@ -136,8 +142,8 @@ SMAP = {
     # TODO could have stricter url extraction for that; always using http/https?
     # '.ipynb'      : _json,
 
-    '.html'    : _plaintext,
-    'text/html': _plaintext,
+    '.html'    : _html,
+    'text/html': _html,
 
 
     # TODO not sure about these:

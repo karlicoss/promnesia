@@ -35,6 +35,7 @@ def extract(command: str) -> Iterator[Visit]:
             lineno = int(linenos)
             url = split_by[1:] + parts[1]
 
+        # TODO is it really necessary with locator?
         context = f"{fname}:{lineno}" if fname and lineno else None
 
         # TODO not sure if even necessary? not that I use canonify
