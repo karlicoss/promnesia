@@ -38,26 +38,16 @@ def tmp_popen(*args, **kwargs):
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
 
 # meh
-def promnesia_bin(method, *args, **kwargs):
+def promnesia_bin(*args):
     # not sure it's a good idea to diverge, but not sure if there's a better way either?
-    cmd: List[str]
-    mpp: Dict[str, str]
     if under_ci():
         # should be able to use the installed version
-        cmd = ['promnesia', *args]
-        mpp = {}
+        return ['promnesia', *args]
     else:
-        # use version in the repository
-        cmd = ['python3', '-m', 'promnesia', *args]
-        src_dir = Path(__file__).parent.parent / 'src'
-        assert src_dir.exists()
-        pp = os.environ.get('PYTHONPATH')
-        pp = str(src_dir) + ('' if pp is None else ':' + pp)
-        mpp = {'PYTHONPATH': pp}
-    return method(cmd, env={
-        **os.environ,
-        **mpp,
-    }, **kwargs)
+        # use version from the repository
+        root = Path(__file__).parent.parent
+        pm = root / 'scripts/promnesia'
+        return [pm, *args]
 
 
 @contextmanager
@@ -69,7 +59,7 @@ def wserver(db: Path): # TODO err not sure what type should it be... -> ContextM
         '--port', port,
         '--db'  , str(db),
     ]
-    with promnesia_bin(tmp_popen, *cmd) as server:
+    with tmp_popen(promnesia_bin(*cmd)) as server:
         print("Giving few secs to start server up")
         time.sleep(3)
         print("Started server up")
@@ -96,7 +86,7 @@ OUTPUT_DIR = '{tdir}'
 CACHE_DIR  = '{cache_dir}'
 """)
 
-    promnesia_bin(check_call, 'index', '--config', config)
+    check_call(promnesia_bin('index', '--config', config))
 
     with wserver(db=tdir / 'promnesia.sqlite') as srv:
         yield srv
