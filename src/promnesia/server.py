@@ -252,13 +252,14 @@ def _run(*, port: str, db: Path, timezone: str, quiet: bool):
         _ENV_CONFIG: json.dumps({'db': str(db), 'timezone': timezone}),
     }
     args = [
-        'promnesia-server',
+        'python3',
+        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess..
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,
     ]
     logger.info('Running server: %s', args)
-    os.execvpe('hug', args, env)
+    os.execvpe('python3', args, env)
 
 
 def run(args):

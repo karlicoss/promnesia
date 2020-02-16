@@ -38,9 +38,9 @@ def install(args):
         launcher = str(root() / 'scripts/promnesia')
     else:
         # must be installed, so available in PATH
-        launcher = 'promnesia'
-
-    # TODO also should it really use /bin/bash -l -c??
+        import distutils.spawn
+        exe = distutils.spawn.find_executable('promnesia'); assert exe is not None
+        launcher = exe # older systemd wants absolute paths..
 
     extra_args = f'serve --db {args.db} --timezone {args.timezone} --port {args.port}'
 

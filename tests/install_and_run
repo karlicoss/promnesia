@@ -76,6 +76,10 @@ def run(tdir: Path):
 
 
 def main():
+    if 'CI' in os.environ:
+        # ugh. otherwise systemd doesn't know of pyenv :((
+        check_call('sudo ln -sf /opt/circleci/.pyenv/versions/3.7.0/bin/python3 /usr/bin/python3', shell=True)
+
     with TemporaryDirectory() as tdir:
         run(Path(tdir))
 
