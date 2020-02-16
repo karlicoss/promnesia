@@ -30,7 +30,8 @@ def setup(args):
     out = Path(f'~/.config/systemd/user/{unit_name}').expanduser()
     print(f"Writing systemd config to {out}:")
 
-    server_bin = (Path(__file__).parent / 'run').absolute()
+    # should be installed by pip by now?
+    server_bin = 'promnesia'
 
     extra_args = f'serve --db {args.db} --timezone {args.timezone} --port {args.port}'
 

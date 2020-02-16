@@ -28,6 +28,7 @@ def run_bin(name: str, *args):
     )
 
 
+# TODO do it in pipenv?
 def run(tdir: Path):
     cfg = CONFIG.format(output_dir=f'"{tdir}"')
     cfg_file = tdir / 'config.py'
