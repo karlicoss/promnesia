@@ -1,0 +1,16 @@
+#!/bin/bash
+# runs promnesia from current repository instead of the installed version
+set -eu
+
+# TODO not sure if should cd; some paths might be relative..
+DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
+
+if [[ -n "${PYTHONPATH:=}" ]]; then
+    PPATH=":$PYTHONPATH"
+else
+    PPATH=""
+fi
+
+PPATH="$DIR/src$PPATH"
+
+PYTHONPATH="$PPATH" exec python3 -m promnesia "$@"
