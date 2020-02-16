@@ -10,6 +10,12 @@ def is_git_repo(p: str) -> bool:
     return False
 
 
+def is_web_page(p: str) -> bool:
+    if p.startswith('http'):
+        return True
+    return False
+
+
 def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
     ps = str(path)
     # TODO better url detection
@@ -18,7 +24,10 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
     if is_git_repo(ps):
         from . import vcs
         index_ = vcs.index
+    elif is_web_page(ps):
+        from . import webpage
+        index_ = webpage.index
     else:
         from . import auto
         index_ = auto.index
-    return index_(path, *args, **kwargs)
+    yield from index_(path, *args, **kwargs)

@@ -2,14 +2,7 @@ from pathlib import Path
 from subprocess import check_call
 from typing import Iterable
 
-from ..common import Extraction, PathIsh, get_tmpdir
-
-
-def slugify(x: str) -> str:
-    # https://stackoverflow.com/a/38766141/706389
-    import re
-    valid_file_name = re.sub(r'[^\w_.)( -]', '', x)
-    return valid_file_name
+from ..common import Extraction, PathIsh, get_tmpdir, slugify
 
 
 def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
@@ -21,4 +14,4 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
     check_call(['git', 'clone', repo, tp])
 
     from . import auto
-    return auto.index(tp, *args, **kwargs)
+    yield from auto.index(tp, *args, **kwargs)

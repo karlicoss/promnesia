@@ -136,9 +136,11 @@ SMAP = {
     # TODO could have stricter url extraction for that; always using http/https?
     # '.ipynb'      : _json,
 
+    '.html'    : _plaintext,
+    'text/html': _plaintext,
+
+
     # TODO not sure about these:
-    'html': None,
-    'text/html': None,
     'text/xml': None,
     'text/x-python': None,
     'text/x-tex': None,
@@ -151,6 +153,7 @@ SMAP = {
     'text/x-makefile': None,
     # TODO could reuse magic lib?
 
+    # TODO def could extract from source code...
     '.tex': None, # TODO not sure..
     '.css': None,
     '.sh' : None,
@@ -276,7 +279,7 @@ def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
     # TODO not even sure if it's used...
     suf = pp.suffix.lower()
 
-    if suf == '.xz':
+    if suf == '.xz': # TODO zstd?
         import lzma
         uname = pp.name[:-len('.xz')]
         uncomp = Path(get_tmpdir().name) / uname

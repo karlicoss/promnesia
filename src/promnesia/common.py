@@ -347,3 +347,11 @@ from .kython.klogging2 import setup_logger
 def echain(ex: Exception, cause: Exception) -> Exception:
     ex.__cause__ = cause
     return ex
+
+
+def slugify(x: str) -> str:
+    # https://stackoverflow.com/a/38766141/706389
+    import re
+    valid_file_name = re.sub(r'[^\w_.)( -]', '', x)
+    return valid_file_name
+
