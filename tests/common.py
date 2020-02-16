@@ -4,8 +4,13 @@ from pathlib import Path
 
 import pytest # type: ignore
 
+
+def under_ci():
+    return 'CI' in os.environ
+
+
 def skip_if_ci(reason):
-    return pytest.mark.skipif('CI' in os.environ, reason=reason)
+    return pytest.mark.skipif(under_ci(), reason=reason)
 
 
 def uses_x(f):
@@ -14,7 +19,6 @@ def uses_x(f):
     def ff(*args, **kwargs):
         return f(*args, **kwargs)
     return ff
-
 
 
 @pytest.fixture

@@ -12,7 +12,7 @@ from typing import NamedTuple, ContextManager
 import pytz
 
 from integration_test import index_hypothesis, index_urls
-from common import tdir
+from common import tdir, under_ci
 
 
 class Helper(NamedTuple):
@@ -37,18 +37,39 @@ def tmp_popen(*args, **kwargs):
             # ugh. otherwise was getting orphaned children...
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
 
+# meh
+def promnesia_bin(method, *args, **kwargs):
+    # not sure it's a good idea to diverge, but not sure if there's a better way either?
+    cmd: List[str]
+    mpp: Dict[str, str]
+    if under_ci():
+        # should be able to use the installed version
+        cmd = ['promnesia', *args]
+        mpp = {}
+    else:
+        # use version in the repository
+        cmd = ['python3', '-m', 'promnesia', *args]
+        src_dir = Path(__file__).parent.parent / 'src'
+        assert src_dir.exists()
+        pp = os.environ.get('PYTHONPATH')
+        pp = str(src_dir) + ('' if pp is None else ':' + pp)
+        mpp = {'PYTHONPATH': pp}
+    return method(cmd, env={
+        **os.environ,
+        **mpp,
+    }, **kwargs)
+
 
 @contextmanager
 def wserver(db: Path): # TODO err not sure what type should it be... -> ContextManager[Helper]:
     port = str(next_port())
-    path = (Path(__file__).parent.parent / 'run').absolute()
     cmd = [
-        str(path), 'serve',
+        'serve',
         '--quiet',
         '--port', port,
-        '--db', str(db),
+        '--db'  , str(db),
     ]
-    with tmp_popen(cmd) as server:
+    with promnesia_bin(tmp_popen, *cmd) as server:
         print("Giving few secs to start server up")
         time.sleep(3)
         print("Started server up")
@@ -75,8 +96,7 @@ OUTPUT_DIR = '{tdir}'
 CACHE_DIR  = '{cache_dir}'
 """)
 
-    path = (Path(__file__).parent.parent / 'run').absolute()
-    check_call([str(path), 'index', '--config', config])
+    promnesia_bin(check_call, 'index', '--config', config)
 
     with wserver(db=tdir / 'promnesia.sqlite') as srv:
         yield srv

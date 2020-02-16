@@ -4,6 +4,8 @@ import argparse
 from pathlib import Path
 from subprocess import check_call, run
 
+# TODO move the script to the main package? make sure it also works with arbitrary path?
+# or just rely on editable...
 from promnesia.promnesia_server import setup_parser
 
 SYSTEMD_CONFIG = """
