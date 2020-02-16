@@ -277,11 +277,11 @@ def get_system_tz() -> str:
 
 
 def setup_parser(p):
-    p.add_argument('--port', type=str, default='13131', help='Port for communicating with extension, default: %(default)s')
+    p.add_argument('--port'    , type=str , default='13131', help='Port for communicating with extension, default: %(default)s')
     # TODO mm. should add fallback timezone to frontend instead I guess?
-    p.add_argument('--db', type=Path, required=True, help='Path to the database')
-    p.add_argument('--timezone', type=str, default=get_system_tz(), help='Fallback timezone, defaults to system timezone (%(default)s) if not specified')
-    p.add_argument('--quiet', action='store_true') # TODO silent??
+    p.add_argument('--db'      , type=Path, required=True  , help='Path to the link database')
+    p.add_argument('--timezone', type=str , default=get_system_tz(), help='Fallback timezone, defaults to the system timezone (%(default)s) if not specified')
+    p.add_argument('--quiet'              , action='store_true') # TODO silent??
 
 
 def main():

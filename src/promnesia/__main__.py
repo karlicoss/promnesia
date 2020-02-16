@@ -126,21 +126,22 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
 
 
 def main():
+    # TODO longer, literate description?
     from .common import setup_logger
     setup_logger(get_logger(), level=logging.DEBUG)
 
     p = argparse.ArgumentParser()
     subp = p.add_subparsers(dest='mode')
-    ep = subp.add_parser('index')
+    ep = subp.add_parser('index', help='Create/update the link database')
     ep.add_argument('--config', type=Path, default=Path('config.py'))
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False)
 
-    sp = subp.add_parser('serve')
+    sp = subp.add_parser('serve', help='Serve a link database')
     setup_parser(sp)
 
- # TODO not sure what would be a good name?
-    ap = subp.add_parser('adhoc')
+    # TODO not sure what would be a good name? rename to 'demo'?
+    ap = subp.add_parser('adhoc', help='Demo mode: index and serve a directory in single command')
     # TODO use docstring or something?
     ap.add_argument('--port', type=str, help='Port to serve (omit in order to index only)', required=False)
     ap.add_argument(
@@ -151,6 +152,12 @@ def main():
     ap.add_argument('params', nargs='*')
 
     args = p.parse_args()
+
+    # TODO is there a way to print full help? i.e. for all subparsers
+    if args.mode is None:
+        print('ERROR: Please specify a mode', file=sys.stderr)
+        p.print_help(sys.stderr)
+        sys.exit(1)
 
     # TODO maybe, it's better for server to compute intermediate represetnation?
     # the only downside is storage. dunno.
