@@ -1,0 +1,7 @@
+#!/bin/bash
+set -eu
+
+# pip3 install --user hatch
+# you might need to run hatch config --restore first to generate config
+hatch build   --verbose --clean
+hatch release --strict "$@"

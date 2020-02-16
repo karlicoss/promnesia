@@ -67,4 +67,7 @@ if __name__ == "__main__":
             ],
         },
         package_data={name: ['py.typed']},
+        entry_points={
+            'console_scripts': ['promnesia=promnesia.__main__:main'],
+        }
     )
