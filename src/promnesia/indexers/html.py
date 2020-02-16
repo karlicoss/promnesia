@@ -5,7 +5,35 @@ from typing import Iterable, List, Tuple
 
 from ..common import PathIsh, Visit, Loc, Extraction
 
-# eh. it's not really going to work well because of 
+# TODO present error summary in the very end; import errors -- makes sense to show 
+
+# TODO on some exceptions, request a fallback to text?
+
+# TODO not sure if import should be inside extract_from_file or here...
+from bs4 import BeautifulSoup # type: ignore[import]
+
+def extract_from_file(fname: PathIsh) -> Iterable[Extraction]:
+
+    ts = datetime.fromtimestamp(Path(fname).stat().st_mtime)
+    # TODO just allow passing file as timestamp?
+
+    soup = BeautifulSoup(Path(fname).read_text(), 'lxml')
+    for a in soup.find_all('a'):
+        href = a.attrs.get('href')
+        if href is None:
+            # TODO ignore #?
+            continue
+        text = a.text
+
+        yield Visit(
+            url=href,
+            dt=ts,
+            locator=Loc.file(fname),
+            context=text,
+        )
+
+
+# eh. it's not really going to work well because of nesting inside <a> tags..
 # class Parser(HTMLParser):
 #     results: List[Tuple[str, str]] = []
 #
@@ -36,27 +64,3 @@ from ..common import PathIsh, Visit, Loc, Extraction
 #             self.links.append((self.link, self.title))
 #         self.link = None
 
-
-# TODO present error summary in the very end; import errors -- makes sense to show 
-
-# TODO on some exceptions, request a fallback to text?
-def extract_from_file(fname: PathIsh) -> Iterable[Extraction]:
-    from bs4 import BeautifulSoup # type: ignore[import]
-
-    ts = datetime.fromtimestamp(Path(fname).stat().st_mtime)
-    # TODO just allow passing file as timestamp?
-
-    soup = BeautifulSoup(Path(fname).read_text(), 'lxml')
-    for a in soup.find_all('a'):
-        href = a.attrs.get('href')
-        if href is None:
-            # TODO ignore #?
-            continue
-        text = a.text
-
-        yield Visit(
-            url=href,
-            dt=ts,
-            locator=Loc.file(fname),
-            context=text,
-        )

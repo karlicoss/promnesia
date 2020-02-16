@@ -12,7 +12,7 @@ import json
 from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator
 from fnmatch import fnmatch
 from pathlib import Path
-from functools import lru_cache
+from functools import lru_cache, wraps
 
 import pytz
 
@@ -88,35 +88,40 @@ def _plaintext(path: Path) -> Iterator[Extraction]:
     yield from shellcmd.extract(extract_from_path(path))
 
 
+# TODO think about the type
+# TODO could pass fallback reason to the results as well?
+def fallback(ex):
+    """Falls back to plaintext in case of issues"""
+    @wraps(ex)
+    def wrapped(path: Path):
+        try:
+            it = ex(path)
+            # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
+            yield from it
+        except ModuleNotFoundError as me:
+            logger = get_logger()
+            logger.exception(me)
+            logger.warning('%s not found, so falling back to plaintext! "pip3 install --user %s" for better support!', me.name, me.name)
+            yield me
+            yield from _plaintext(path)
+    return wrapped
+
+@fallback
 def _markdown(path: Path) -> Iterator[Extraction]:
     # TODO for now handled as plaintext
     yield from _plaintext(path)
 
 
+@fallback
 def _html(path: Path) -> Iterator[Extraction]:
     from . import html
     yield from html.extract_from_file(path)
 
 
-@lru_cache(1)
-def _extract_org():
-    try:
-        from .org import extract_from_file
-        return extract_from_file
-    except ImportError as e:
-        logger = get_logger()
-        logger.exception(e)
-        logger.warning('Falling back to plaintext for Org mode! Install orgparse for better support!')
-        return None
-
-
+@fallback
 def _org(path: Path) -> Iterator[Extraction]:
-    eo = _extract_org()
-    if eo is None:
-        yield from _plaintext(path)
-    else:
-        res = list(eo(path))
-        yield from res
+    from . import org
+    return org.extract_from_file(path)
 
 
 SMAP = {
