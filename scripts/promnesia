@@ -13,4 +13,6 @@ fi
 
 PPATH="$DIR/src$PPATH"
 
+export DIRTY_RUN='YES' # ugh.
+
 PYTHONPATH="$PPATH" exec python3 -m promnesia "$@"

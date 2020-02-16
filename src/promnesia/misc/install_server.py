@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 
+import os
 from pathlib import Path
 from subprocess import check_call, run
 
+from .. import root
 from .. import server
 
 SYSTEMD_CONFIG = """
@@ -14,7 +16,7 @@ Description=Promnesia browser extension backend
 WantedBy=default.target
 
 [Service]
-ExecStart=/bin/bash -l -c '{server} $@' promnesia-server {extra_args}
+ExecStart={launcher} {extra_args}
 Type=simple
 Restart=always
 """
@@ -31,16 +33,20 @@ def install(args):
     out = Path(f'~/.config/systemd/user/{unit_name}').expanduser()
     print(f"Writing systemd config to {out}:")
 
-    # TODO FIXME not sure what it should rely on...
+    # ugh. we want to know whether we're invoked 'properly' as an executable or ad-hoc via scripts/promnesia
+    if os.environ.get('DIRTY_RUN') is not None:
+        launcher = str(root() / 'scripts/promnesia')
+    else:
+        # must be installed, so available in PATH
+        launcher = 'promnesia'
+
     # TODO also should it really use /bin/bash -l -c??
-    # should be installed by pip by now?
-    server_bin = 'promnesia'
 
     extra_args = f'serve --db {args.db} --timezone {args.timezone} --port {args.port}'
 
     out.parent.mkdir(parents=True, exist_ok=True) # sometimes systemd dir doesn't exist
     out.write_text(SYSTEMD_CONFIG.format(
-        server=server_bin,
+        launcher=launcher,
         extra_args=extra_args,
     ))
 
