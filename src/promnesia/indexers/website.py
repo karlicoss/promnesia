@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 from subprocess import check_call, run
 from typing import Iterable
 
@@ -34,9 +35,19 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
         # rest of the errors are a bit more critical..
         res.check_returncode()
 
+    def replacer(p: PathIsh, prefix=str(tp), url=url) -> str:
+        ps = str(p)
+        pos = ps.find(prefix)
+        if pos == -1:
+            return ps
+        rest = ps[pos + len(prefix):]
+        # now this should look kinda like /domain.tld/rest (due to the way wget downloads stuff)
+        rest = re.sub(r'/.*?/', '/', rest)
+        return url + rest
+
     # TODO create a file that maps prefix?
     # TODO ugh. it creates a directory with a domain... how to map it to http/https properly?
 
     # TODO smarter html handling
     from . import auto
-    yield from auto.index(tp, *args, **kwargs)
+    yield from auto.index(tp, *args, replacer=replacer, **kwargs)
