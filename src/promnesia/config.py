@@ -4,7 +4,7 @@ import importlib.util
 
 import pytz
 
-from .common import PathIsh
+from .common import PathIsh, get_tmpdir
 
 
 class Config(NamedTuple):

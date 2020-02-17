@@ -11,7 +11,7 @@ _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@
 
 # -n to output line numbers so we could restore context
 # -I to ignore binaries
-_GREP_CMD = r"""grep --color=never -Eo -I {grep_args} --exclude="*.html~" --exclude="*.html" --exclude-dir=".git" '{regex}' {path} || true"""
+_GREP_CMD = r"""grep --color=never -Eo -I {grep_args} --exclude-dir=".git" '{regex}' {path} || true"""
 
 
 def _extract_from_dir(path: str) -> str:

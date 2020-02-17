@@ -62,10 +62,10 @@ indexer = Indexer(
     lambda: [PreVisit(
         url=url,
         dt=datetime.min + timedelta(days=5000),
-        locator=Loc.make('adhoc'),
+        locator=Loc.make('test'),
         context=ctx,
     ) for url, ctx in {urls}.items()],
-    src='adhoc',
+    src='test',
 )
 
 INDEXERS = [indexer]

@@ -9,10 +9,10 @@ Tries to index as much as it can:
 import csv
 from datetime import datetime
 import json
-from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator
+from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Callable, Any, Dict
 from fnmatch import fnmatch
 from pathlib import Path
-from functools import lru_cache
+from functools import lru_cache, wraps
 
 import pytz
 
@@ -84,33 +84,44 @@ def _plaintext(path: Path) -> Iterator[Extraction]:
     from . import shellcmd
     from .plaintext import extract_from_path
     logger = get_logger()
+    # TODO eh? shellcmd?
     yield from shellcmd.extract(extract_from_path(path))
 
 
+# TODO think about the type
+# TODO could pass fallback reason to the results as well?
+def fallback(ex):
+    """Falls back to plaintext in case of issues"""
+    @wraps(ex)
+    def wrapped(path: Path):
+        try:
+            it = ex(path)
+            # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
+            yield from it
+        except ModuleNotFoundError as me:
+            logger = get_logger()
+            logger.exception(me)
+            logger.warning('%s not found, so falling back to plaintext! "pip3 install --user %s" for better support!', me.name, me.name)
+            yield me
+            yield from _plaintext(path)
+    return wrapped
+
+@fallback
 def _markdown(path: Path) -> Iterator[Extraction]:
     # TODO for now handled as plaintext
     yield from _plaintext(path)
 
 
-@lru_cache(1)
-def _extract_org():
-    try:
-        from .org import extract_from_file
-        return extract_from_file
-    except ImportError as e:
-        logger = get_logger()
-        logger.exception(e)
-        logger.warning('Falling back to plaintext for Org mode! Install orgparse for better support!')
-        return None
+@fallback
+def _html(path: Path) -> Iterator[Extraction]:
+    from . import html
+    yield from html.extract_from_file(path)
 
 
+@fallback
 def _org(path: Path) -> Iterator[Extraction]:
-    eo = _extract_org()
-    if eo is None:
-        yield from _plaintext(path)
-    else:
-        res = list(eo(path))
-        yield from res
+    from . import org
+    return org.extract_from_file(path)
 
 
 SMAP = {
@@ -136,9 +147,11 @@ SMAP = {
     # TODO could have stricter url extraction for that; always using http/https?
     # '.ipynb'      : _json,
 
+    '.html'    : _html,
+    'text/html': _html,
+
+
     # TODO not sure about these:
-    'html': None,
-    'text/html': None,
     'text/xml': None,
     'text/x-python': None,
     'text/x-tex': None,
@@ -151,6 +164,7 @@ SMAP = {
     'text/x-makefile': None,
     # TODO could reuse magic lib?
 
+    # TODO def could extract from source code...
     '.tex': None, # TODO not sure..
     '.css': None,
     '.sh' : None,
@@ -220,7 +234,9 @@ IGNORE = [
 ]
 
 
-def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True) -> Iterator[Extraction]:
+Replacer = Optional[Callable[[str], str]]
+
+def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Iterator[Extraction]:
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
@@ -228,6 +244,7 @@ def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], 
     opts = Options(
         ignored=ignored,
         follow=follow,
+        replacer=replacer,
     )
     for p in paths:
         yield from _index(Path(p), opts=opts)
@@ -237,6 +254,7 @@ class Options(NamedTuple):
     ignored: Sequence[str]
     follow: bool
     # TODO option to add ignores? not sure..
+    replacer: Replacer
 
 
 def _index(path: Path, opts: Options) -> Iterator[Extraction]:
@@ -276,7 +294,7 @@ def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
     # TODO not even sure if it's used...
     suf = pp.suffix.lower()
 
-    if suf == '.xz':
+    if suf == '.xz': # TODO zstd?
         import lzma
         uname = pp.name[:-len('.xz')]
         uncomp = Path(get_tmpdir().name) / uname
@@ -309,13 +327,28 @@ def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
 
     fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
     loc = Loc.file(pp)
+    replacer = opts.replacer
     for r in indexer:
+        if isinstance(r, Exception):
+            yield r
+            continue
         if isinstance(r, EUrl):
-            yield Visit(
+            v = Visit(
                 url=r.url,
                 dt=fallback_dt,
                 locator=loc,
                 context='::'.join(r.ctx),
             )
         else:
-            yield r
+            v = r
+        if replacer is not None:
+            upd: Dict[str, Any] = {}
+            href = v.locator.href
+            if href is not None:
+                upd['locator'] = v.locator._replace(href=replacer(href), title=replacer(v.locator.title))
+            ctx = v.context
+            if ctx is not None:
+                # TODO in context, http is unnecessary
+                upd['context'] = replacer(ctx)
+            v = v._replace(**upd)
+        yield v

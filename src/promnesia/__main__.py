@@ -3,7 +3,7 @@ import os
 import logging
 import inspect
 import sys
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Sequence
 from pathlib import Path
 from datetime import datetime
 from tempfile import TemporaryDirectory
@@ -64,7 +64,7 @@ def do_index(config_file: Path):
         config.reset()
 
 
-def adhoc_indexers():
+def demo_indexers():
     def lazy(name: str):
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
         def inner(*args, **kwargs):
@@ -75,7 +75,6 @@ def adhoc_indexers():
         return inner
 
     return {
-
         # TODO ugh, this runs against merged db
         # 'chrome' : browser.chrome,
         # 'firefox': browser.firefox,
@@ -84,22 +83,23 @@ def adhoc_indexers():
 
         'takeout' : lazy('takeout'),
         'telegram': lazy('telegram'),
+        'guess'   : lazy('guess')
     }
 
 
 
-def do_adhoc(indexer: str, *args, port: Optional[str]):
+def do_demo(index_as: str, params: Sequence[str], port: Optional[str]):
     logger = get_logger()
     from pprint import pprint
     # TODO logging?
-    idx = adhoc_indexers()[indexer]()
+    idx = demo_indexers()[index_as]()
 
-    idxr = Indexer(idx, *args, src='adhoc')
+    idxr = Indexer(idx, *params, src='demo')
     hist, errors = previsits_to_history(idxr, src=idxr.src)
 
     for e in errors:
         logger.error(e)
-    logger.info("Finished indexing {} {}, {} total".format(indexer, args, len(hist)))
+    logger.info("Finished indexing {} {}, {} total".format(index_as, params, len(hist)))
     # TODO color?
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
@@ -108,7 +108,7 @@ def do_adhoc(indexer: str, *args, port: Optional[str]):
             INDEXERS=[],
         )
         config.instance = cfg
-        dump_histories([('adhoc', hist)])
+        dump_histories([('demo', hist)])
 
         if port is None:
             logger.warning("Port isn't specified, not serving!")
@@ -137,15 +137,16 @@ def main():
     server.setup_parser(sp)
 
     # TODO not sure what would be a good name? rename to 'demo'?
-    ap = subp.add_parser('adhoc', help='Demo mode: index and serve a directory in single command', formatter_class=F)
+    ap = subp.add_parser('demo', help='Demo mode: index and serve a directory in single command', formatter_class=F)
     # TODO use docstring or something?
-    ap.add_argument('--port', type=str, help='Port to serve. If omitted, will index only without serving.', required=False)
+    ap.add_argument('--port', type=str, help='Port to serve. If omitted, will only create the index without serving.', required=False)
     ap.add_argument(
-        'indexer',
-        choices=list(sorted(adhoc_indexers().keys())),
-        help='Indexer name',
+        '--as',
+        choices=list(sorted(demo_indexers().keys())),
+        default='guess',
+        help='Index the path as',
     )
-    ap.add_argument('params', nargs='*')
+    ap.add_argument('params', nargs='*', help='Optional extra params for the indexer')
 
     isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
     install_server.setup_parser(isp)
@@ -167,8 +168,8 @@ def main():
              do_index(config_file=args.config)
         elif args.mode == 'serve':
             server.run(args)
-        elif args.mode == 'adhoc':
-            do_adhoc(args.indexer, *args.params, port=args.port)
+        elif args.mode == 'demo':
+            do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port)
         elif args.mode == 'install-server':
             install_server.install(args)
         else:

@@ -35,16 +35,17 @@ if __name__ == "__main__":
         ],
         extras_require={
             # TODO make cachew optional?
+            # althrough server uses it so not sure...
             'optional': [
                 'logzero', # pretty colored logging
             ],
             'testing': [
                  'pytest',
-                 'pytest-xdist',
+                 'pytest-xdist', # why??
 
-                 'httpie',
-                 'selenium',
-                 'click', # end2end test
+                 'httpie',   # nicer http requests (replace with curl?)
+                 'selenium', # browser automations
+                 'click',    # confirmations for end2end test (might remove dependency)
             ],
             'linting': [
                  'pytest',
@@ -59,6 +60,9 @@ if __name__ == "__main__":
             ],
             'org': [
                 'orgparse',
+            ],
+            'html': [
+                'beautifulsoup4', # extracting links from the page
             ],
             'my': [
                 *([]
