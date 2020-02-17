@@ -34,6 +34,9 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
         # rest of the errors are a bit more critical..
         res.check_returncode()
 
+    # TODO create a file that maps prefix?
+    # TODO ugh. it creates a directory with a domain... how to map it to http/https properly?
+
     # TODO smarter html handling
     from . import auto
     yield from auto.index(tp, *args, **kwargs)

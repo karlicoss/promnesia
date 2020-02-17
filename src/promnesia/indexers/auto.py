@@ -9,7 +9,7 @@ Tries to index as much as it can:
 import csv
 from datetime import datetime
 import json
-from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator
+from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Callable, Any, Dict
 from fnmatch import fnmatch
 from pathlib import Path
 from functools import lru_cache, wraps
@@ -234,7 +234,9 @@ IGNORE = [
 ]
 
 
-def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True) -> Iterator[Extraction]:
+Replacer = Optional[Callable[[str], str]]
+
+def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Iterator[Extraction]:
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
@@ -242,6 +244,7 @@ def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], 
     opts = Options(
         ignored=ignored,
         follow=follow,
+        replacer=replacer,
     )
     for p in paths:
         yield from _index(Path(p), opts=opts)
@@ -251,6 +254,7 @@ class Options(NamedTuple):
     ignored: Sequence[str]
     follow: bool
     # TODO option to add ignores? not sure..
+    replacer: Replacer
 
 
 def _index(path: Path, opts: Options) -> Iterator[Extraction]:
@@ -323,13 +327,28 @@ def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
 
     fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
     loc = Loc.file(pp)
+    replacer = opts.replacer
     for r in indexer:
+        if isinstance(r, Exception):
+            yield r
+            continue
         if isinstance(r, EUrl):
-            yield Visit(
+            v = Visit(
                 url=r.url,
                 dt=fallback_dt,
                 locator=loc,
                 context='::'.join(r.ctx),
             )
         else:
-            yield r
+            v = r
+        if replacer is not None:
+            upd: Dict[str, Any] = {}
+            href = v.locator.href
+            if href is not None:
+                upd['locator'] = v.locator._replace(href=replacer(href), title=replacer(v.locator.title))
+            ctx = v.context
+            if ctx is not None:
+                # TODO in context, http is unnecessary
+                upd['context'] = replacer(ctx)
+            v = v._replace(**upd)
+        yield v
