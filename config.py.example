@@ -17,6 +17,7 @@ If not set, the script will just skip it.
 [(tag, path)]
 """
 CHROME_HISTORY_DBS: Optional[List[Tuple[str, str]]] = None
+# TODO remove this
 
 """
 This is the source for takeout.google.com
@@ -27,6 +28,7 @@ The path is one of the following:
 If not set, the script will just skip it.
 """
 GOOGLE_TAKEOUT_PATH: Optional[str] = None
+# TODO remove this
 
 
 """

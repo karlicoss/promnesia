@@ -1,0 +1,169 @@
+#+OPTIONS: num:nil
+
+#+html: CI: <a href="https://circleci.com/gh/karlicoss/promnesia"><img src="https://circleci.com/gh/karlicoss/promnesia/tree/master.svg?style=svg"></a>
+
+Promnesia is a browser extension (Chrome/Firefox/Firefox mobile) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience. 
+
+*TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
+This is unlike most modern browsers, where you can only see when you visited the link.
+
+It allows you to answer different questions about the current web page:
+
+- have I been here before? When?
+- why have I bookmarked it?
+- how did I get on it? Which page has led to it?
+- who sent me this link? Can I just jump to the message?
+- which links on this page have I already explored?
+- which posts from this blog page have I already read?
+
+You can jump straight to the [[#demo][Demo]] and [[#install][Install]] sections if you're already overexcited.
+
+* Motivation
+
+Has it ever occurred to you that you were reading an old bookmark or some lengthy blog post and suddenly realized you had read it already before? It would be fairly easy to search in chrome history, however, it is only stored locally for three months. 
+
+Or perhaps you even have a habit of annotating and making notes elsewhere? And you wanna know quickly if you have the current page annotated and display the annotations.
+
+Or you have this feeling that someone sent you this link ages ago, but you don't remember who and where.
+
+Or you finally got to watch that thing in your 'Watch later' youtube playlist, that's been there for three years, and now you want to know why did you add it in the first place.
+
+Then this tool is for you.
+
+It consists of two parts:
+
+- the extension: talks to the backend and neatly displays the history in a sidebar and shows you whether you visited a page
+- the backend. It can run locally as a simple Python program (you don't need to host it, although you can).
+
+The backend regularly processes various *data sources* like:
+
+- data exports from online services: Reddit/Twitter/Hackernews/Telegram/Messenger/Hypothesis/Pocket/Instapaper, etc.
+- Markdown/org-mode/HTML or any other plaintext on your disk
+- Google Takeout/Activity backups
+- in general, anything that can be parsed, it's easily extensible
+
+# TODO mentioned some motivation for the backend
+
+* Demo 
+  :PROPERTIES:
+  :CUSTOM_ID: demo
+  :END:
+https://user-images.githubusercontent.com/291333/69828210-3755ac80-121b-11ea-9d1e-e5086cc9feda.png
+
+- You can see that I sent the link to someone on telegram
+- I've annotated the link on instapaper and highlights (yellow) are shown inline on the page
+- I've also added link to my personal notes at some point, selected text was matched and highlighted as well
+
+** Older demo (as of v 0.8)
+https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG
+
+Some explanations:
+
+- green eye indicates that the link was visited, so after you click it, you get the sidebar with more information
+- Visits: I have this link added in my Pinboard, and visited it a few times from different computers.
+- Contexts
+
+  - I chatted with some of my friends and sent them the link at some point. If I click the context, my Emacs will jump right at the point where the link was in the Telegram backup file. Json is clearly not the most convenient way to go through conversations with friends, but that's a matter of representing chats in a plaintext form. The benefit though is that once you have any sort of grepable source it's super easy to feed it into the plugin.
+  - I had this link stored somewhere in my org mode notes in readlater.org file.
+  - I also have this link annotated via [[https://hypothes.is][Hypothesis]]
+
+* Install
+  :PROPERTIES:
+  :CUSTOM_ID: install
+  :END:
+  
+- extension: TODO add links once it's published
+- backend: =pip3 install --user promnesia=
+
+  Alternatively, you can clone this repository and run it as ~scripts/promnesia~
+  
+* Try it out
+Easiest way to try out Promnesia is a demo mode, it can give you a sense of what Promnesia is doing with minimal configuration.
+
+# TODO use smth different
+1. [[#install][Install]] the extension and the backend in case you haven't already
+2. Run ~promnesia demo --port 16789 https://beepb00p.xyz~
+
+   This downloads the pages from the link ([[https://beepb00p.xyz][my website]] in this case), extracts the URLs, and runs on the port =16789=
+
+3. In the extension settings, set "Host" to =http://localhost:16789= and save.
+
+4. After that, visit https://www.gwern.net . If you press the extension icon, you will see the pages from my blog where I link to articles on Gwern's site.
+  
+* Extended backend setup
+# TODO mention where they get the database  
+
+- create your own config
+  =cp config.py.example config.py=, edit =config.py=, and configure existing or custom indexers
+  
+- run the indexer =promnesia index --config /path/to/config.py=
+  You might want to schedule it on cron to run few times a day to keep the index database up to date
+  
+- run the server =promnesia serve --db /path/to/database=.
+
+  You only have to start it once, it will automatically detect index changes.
+- [optional] autostart the server with =promnesia install-server=
+
+# TODO Frontend -- mention what settings are possible?
+
+* Extension permissions
+  
+- =file/http/https=: the extension is meant to work on any page, so 
+  In the future this might be changed to an optional permission and requested on demand if people feel it's worth it
+- =activeTab=: getting current tab info and adding the sidebar
+- =tabs=: making the extension work without an explicit user action
+  It's meant to be an assistant first of all.
+- =webNavigation=: watching page state changes (to trigger the extension on page load)
+- =storage=: for settings
+- =history=: to use local browsing history
+  Might be optional in future
+- =contextMenus=: Promnesia context menu
+- =notifications=: showing notifications
+
+# TODO tabs could be optional in the future?  
+
+* Develop
+** Run backend  
+   During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
+
+   I'll add more instructions, but check out =.circleci/config.yml= in the meantime.
+   
+   To relase on PIP, use =./release= script.
+
+** Build extension
+   
+   : cd extension
+   : ./build --firefox # you can also use --chrome and --firefox-mobile
+   :         --release # [optional], pass to build in the release mode (with optimizations)
+   :         --publish # [optional], pass to release to the Chrome Web Store/Mozilla addons
+   
+   You'll find the result in =dist/firefox=. After that, you can load it in your browser and develop.
+   
+** Running end-to-end tests
+
+   You need:
+
+   - firefox dev edition (standard wouldn't let you install unsigned extensions) and =geckodriver=
+   - TODO chromedriver?
+   - =pip3 install pyautogui= for keyboard automation
+   
+   Example of running a test:
+
+   : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
+
+* TODO todos :noexport:
+** STRT be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
+   :LOGBOOK:
+   - State "STRT"       from              [2020-02-18 Tue 22:06]
+   :END:
+   * maybe icons for mobile/desktop?
+** STRT [#C] use some sort of smarter matching, e.g. no difference between http and https; normalize, remove trailing slash, etc, ignore some schemas/urls
+   :LOGBOOK:
+   - State "STRT"       from              [2020-02-18 Tue 22:06]
+   :END:
+   * use some python lib to extract normalized urls? there must be something.. however normalization has to be simple enough, so JS site could use it too.
+** better regex fox url extraction
+ eh, urls can have commas...  e.g. http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
+ so, for csv need a separate extractor.
+** TODO [#B] describe why and what for each permission used
+** old temporary name: wereyouhere
