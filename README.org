@@ -106,11 +106,29 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
 
 # TODO Frontend -- mention what settings are possible?
 
+* Extension permissions
+  
+- =file/http/https=: the extension is meant to work on any page, so 
+  In the future this might be changed to an optional permission and requested on demand if people feel it's worth it
+- =activeTab=: getting current tab info and adding the sidebar
+- =tabs=: making the extension work without an explicit user action
+  It's meant to be an assistant first of all.
+- =webNavigation=: watching page state changes (to trigger the extension on page load)
+- =storage=: for settings
+- =history=: to use local browsing history
+  Might be optional in future
+- =contextMenus=: Promnesia context menu
+- =notifications=: showing notifications
+
+# TODO tabs could be optional in the future?  
+
 * Develop
 ** Run backend  
    During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
 
    I'll add more instructions, but check out =.circleci/config.yml= in the meantime.
+   
+   To relase on PIP, use =./release= script.
 
 ** Build extension
    
