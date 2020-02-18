@@ -156,6 +156,6 @@ export function asList(bl: string): Array<string> {
 
 export function addStyle(doc: Document, css: string) {
     const st = doc.createElement('style');
-    st.innerHTML = css;
+    st.appendChild(doc.createTextNode(css));
     unwrap(doc.head).appendChild(st);
 }
