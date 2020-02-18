@@ -1,6 +1,6 @@
 /* @flow */
 
-import {unwrap} from './common';
+import {unwrap, addStyle} from './common';
 import type {Visits, Visit} from './common';
 import {get_options_async} from './options';
 import {searchVisits, searchAround} from './background';
@@ -121,9 +121,7 @@ unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event:
 
 window.onload = async () => {
     const opts = await get_options_async();
-    const style = doc.createElement('style');
-    style.innerHTML = opts.extra_css;
-    unwrap(doc.head).appendChild(style);
+    addStyle(doc, opts.extra_css);
 
     const url = new URL(window.location);
     const params = url.searchParams;

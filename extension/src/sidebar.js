@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_duration, Methods} from './common';
+import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './common';
 import type {Second} from './common';
 import {get_options_async} from './options';
 import type {Options} from './options';
@@ -49,9 +49,7 @@ class Sidebar {
         link.rel = "stylesheet";
         head.appendChild(link);
 
-        const style = cdoc.createElement('style');
-        style.innerHTML = this.opts.extra_css;
-        head.appendChild(style);
+        addStyle(cdoc, this.opts.extra_css);
 
         // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
         const base = cdoc.createElement('base');
