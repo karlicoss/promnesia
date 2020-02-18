@@ -82,7 +82,14 @@
       }
 
       // Adding the toast message
-      divElement.innerHTML = this.options.text;
+      const tags = new DOMParser()
+            .parseFromString(this.options.text, 'text/html')
+            .getElementsByTagName('body')[0]
+            .childNodes;
+      // TODO eh. if I just use for (t of tags), it doesn't iterate over <br>. wtf??
+      for (const t of Array.from(tags)) {
+        divElement.appendChild(t);
+      }
 
       if (this.options.avatar !== "") {
         var avatarElement = document.createElement("img");
