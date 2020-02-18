@@ -153,3 +153,9 @@ export const lerror = log; // TODO
 export function asList(bl: string): Array<string> {
     return bl.split(/\n/).filter(s => s.length > 0);
 }
+
+export function addStyle(doc: Document, css: string) {
+    const st = doc.createElement('style');
+    st.appendChild(doc.createTextNode(css));
+    unwrap(doc.head).appendChild(st);
+}
