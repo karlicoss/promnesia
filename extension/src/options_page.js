@@ -3,18 +3,10 @@ import {unwrap} from './common';
 import {get_options_async, setOptions} from './options';
 import {defensifyAlert, alertError} from './notifications';
 
-// $FlowFixMe
-import CodeMirror from 'codemirror/lib/codemirror.js';
-// $FlowFixMe
-import 'codemirror/mode/css/css.js';
-// $FlowFixMe
-import 'codemirror/mode/javascript/javascript.js';
-// err. that's a bit stupid, js injected css? surely it can be done via webpacke and static files...
-// $FlowFixMe
-import 'codemirror/lib/codemirror.css';
+// re: codemirror imports
+// err. that's a bit stupid, js injected css? surely it can be done via webpack and static files...
 // TODO right, I suppose that's why I need style bunder?
 // turned out more tedious than expected... https://github.com/codemirror/CodeMirror/issues/5484#issue-338185331
-
 
 function getInputElement(element_id: string): HTMLInputElement {
     return ((document.getElementById(element_id): any): HTMLInputElement);
@@ -82,6 +74,35 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     getContextsPopupOn().checked = opts.contexts_popup_on;
 
     getHighlightOn().checked = opts.highlight_on;
+
+    // TODO I don't really understand, what's up with these fucking chunks and their naming
+    // at least it reduces size of the options page
+
+    const CM = await import(
+        /* webpackChunkName: "codemirror-main" */
+        // $FlowFixMe
+        'codemirror/lib/codemirror.js'
+    );
+    const CodeMirror = CM.default; // ???
+
+    // TODO just copy css in webpack directly??
+    await import(
+        /* webpackChunkName: "codemirror.css" */
+        // $FlowFixMe
+        'codemirror/lib/codemirror.css'
+    );
+
+    await import(
+        /* webpackChunkName: "codemirror-css-module" */
+        // $FlowFixMe
+        'codemirror/mode/css/css.js'
+    );
+
+    await import(
+        /* webpackChunkName: "codemirror-js-module" */
+        // $FlowFixMe
+        'codemirror/mode/javascript/javascript.js'
+    );
 
     // getDots().checked    = opts.dots;
     CodeMirror(getBlackList(), {
