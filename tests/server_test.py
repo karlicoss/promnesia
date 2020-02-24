@@ -62,7 +62,7 @@ def wserver(db: Path): # TODO err not sure what type should it be... -> ContextM
     with tmp_popen(promnesia_bin(*cmd)) as server:
         print("Giving few secs to start server up")
         time.sleep(3)
-        print("Started server up")
+        print("Started server up, db: {db}".format(db=db))
 
         yield Helper(port=port)
 

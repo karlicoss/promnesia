@@ -52,6 +52,8 @@ function defaultOptions(): Options {
         // TODO FIXME do something if value is invalid?..
         // TODO make it literate from test?
         // TODO hmm. not sure if I can get rid of :root thing without relying on JS?
+        // TODO would be nice to use true/false, but that prob. won't work
+        // TODO add docs on positioning
         position_css: `
 .promnesia {
     --right: 1;
@@ -59,6 +61,14 @@ function defaultOptions(): Options {
 
     background-color: rgba(236, 236, 236, 0.4);
 }
+
+/* uncomment this to suppress the notification popup
+   (will be more tweakable in the future)
+   .toastify {
+     display: none !important;
+   }
+*/
+
 `.trim(),
         // TODO not sure why that in background was necessary..  none repeat scroll 0% 0%;
 
