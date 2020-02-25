@@ -56,6 +56,11 @@ def main():
         # TODO warnings as errors??
         webext('lint')
 
+        if target == 'firefox':
+            # FIXME move somewhere more appropriate..
+            webext('build')
+
+
     if args.release:
         assert args.lint # TODO not sure..
 

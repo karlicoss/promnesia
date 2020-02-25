@@ -62,6 +62,7 @@ export async function _showTabNotification(tabId: number, text: string, color: s
 
     await chromeTabsExecuteScriptAsync(tabId, {file: 'toastify.js'});
     await chromeTabsInsertCSS(tabId, {file: 'toastify.css'});
+    // TODO extract toast settings somewhere...
     await chromeTabsExecuteScriptAsync(tabId, { code: `
 Toastify({
   text: "${text}",
