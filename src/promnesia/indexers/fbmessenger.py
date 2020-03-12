@@ -3,13 +3,13 @@ from typing import Iterator, Optional
 
 from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
 
-from my.fbmessenger import iter_all_messages
+from my.fbmessenger import messages
 
 
 # TODO FIXME rename Extraction to smth shorter? even Result is good enough?
 def index() -> Iterator[Extraction]:
     # TODO add db path?
-    for m in iter_all_messages():
+    for m in messages():
         text = m.text
         if text is None:
             continue
