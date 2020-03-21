@@ -37,6 +37,6 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]):
             # pylint: disable=no-value-for-parameter
             conn.execute(table.insert().values(bound))
 
-    shutil.move(tpath, db_path)
+    shutil.move(str(tpath), str(db_path))
 
     logger.info('saved database to %s', db_path)
