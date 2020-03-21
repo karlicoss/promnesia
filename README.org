@@ -2,7 +2,7 @@
 
 #+html: CI: <a href="https://circleci.com/gh/karlicoss/promnesia"><img src="https://circleci.com/gh/karlicoss/promnesia/tree/master.svg?style=svg"></a>
 
-Promnesia is a browser extension (Chrome/Firefox/Firefox mobile) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience. 
+Promnesia is a browser extension ([[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]/Firefox mobile) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
 
 *TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
 This is unlike most modern browsers, where you can only see when you visited the link.
@@ -72,7 +72,12 @@ Some explanations:
   :CUSTOM_ID: install
   :END:
   
-- extension: TODO add links once it's published
+- extension:
+
+  - [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]
+  - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
+  - Firefox mobile: not released in the store yet, but you can build it yourself
+   
 - backend: =pip3 install --user promnesia=
 
   Alternatively, you can clone this repository and run it as ~scripts/promnesia~
