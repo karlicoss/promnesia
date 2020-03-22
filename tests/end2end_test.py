@@ -486,7 +486,15 @@ def test_unreachable(tmp_path, browser):
 @uses_x
 @browsers(FF, CH)
 def test_stress(tmp_path, browser):
-    url = PYTHON_DOC_URL
+    page = tmp_path / 'dummy.html'
+    page.write_text('''
+<html>
+<head>HI</head>
+<body>test</body>
+</html>
+    ''')
+    url = f'file://{page}'
+
     urls = [
         (url, f'ctx {i}' if i < 20 else None) for i in range(10000)
     ]
