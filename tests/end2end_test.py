@@ -485,6 +485,20 @@ def test_unreachable(tmp_path, browser):
 
 @uses_x
 @browsers(FF, CH)
+def test_stress(tmp_path, browser):
+    url = PYTHON_DOC_URL
+    urls = [
+        (url, f'ctx {i}' if i < 20 else None) for i in range(10000)
+    ]
+    with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
+        # TODO so, should the response be immediate?
+        # TODO shouldn't do any work if we don't open the sidebar
+        confirm('is performance reasonable?')
+
+    
+
+@uses_x
+@browsers(FF, CH)
 def test_fuzz(tmp_path, browser):
     urls = {
         'https://www.iana.org/domains/reserved': 'IANA',

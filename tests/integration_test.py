@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import check_call, run
-from typing import Set, Dict, Optional
+from typing import Set, Dict, Optional, Union, Sequence, Tuple
 
 from indexer_test import populate_db
 from common import tdir
@@ -49,8 +49,15 @@ def _get_stuff(outdir: Path):
 
     return engine, binder, table
 
+# TODO a bit shit... why did I make it dict at first??
+Urls = Union[
+              Dict[str, Optional[str]],
+    Sequence[Tuple[str, Optional[str]]],
+]
 
-def index_urls(urls: Dict[str, Optional[str]]):
+def index_urls(urls: Urls):
+    uuu = list(urls.items()) if isinstance(urls, dict) else urls
+
     def idx(tdir: Path):
         cfg = tdir / 'test_config.py'
         cfg.write_text(base_config + f"""
@@ -61,10 +68,10 @@ from datetime import datetime, timedelta
 indexer = Indexer(
     lambda: [PreVisit(
         url=url,
-        dt=datetime.min + timedelta(days=5000),
+        dt=datetime.min + timedelta(days=5000) + timedelta(hours=i),
         locator=Loc.make('test'),
         context=ctx,
-    ) for url, ctx in {urls}.items()],
+    ) for i, (url, ctx) in enumerate({uuu})],
     src='test',
 )
 
