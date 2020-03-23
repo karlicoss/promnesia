@@ -355,29 +355,29 @@ async function bindSidebarData(response: Visits) {
     }
 
 
-    var groups = [];
-    var group = [];
-
-    function dump_group () {
+    function* groups() {
+        let group = [];
+        const delta = 20 * 60 * 1000;
+        for (const v of no_ctx) {
+            const last = group.length == 0 ? v : group[group.length - 1];
+            if (last.time - v.time > delta) {
+                if (group.length > 0) {
+                    yield group;
+                }
+                group.length = 0
+            }
+            group.push(v);
+        }
         if (group.length > 0) {
-            groups.push(group);
-            group = [];
+            yield group;
         }
+        group.length = 0
     }
-
-    const delta = 20 * 60 * 1000;
-    for (const v of no_ctx) {
-        const last = group.length == 0 ? v : group[group.length - 1];
-        if (last.time - v.time > delta) {
-            dump_group();
-        }
-        group.push(v);
-    }
-    dump_group();
 
     const tag_map = opts.src_map;
     // TODO group ones with no ctx..
-    for (const group of groups) {
+    for (const group of groups()) {
+
         const first = group[0];
         const last  = group[group.length - 1];
         // eslint-disable-next-line no-unused-vars
