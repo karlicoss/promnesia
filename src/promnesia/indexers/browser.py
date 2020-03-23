@@ -19,7 +19,7 @@ def browser_extract(histfile: PathIsh, cols, row_handler) -> Iterator[PreVisit]:
     # engine = create_engine('sqlite:///{histfile}', echo=True)
     # meta = MetaData()
     # visits = Table('visits', meta, autoload=True, autoload_with=engine)
-    # TODO FIXME contextmanager
+    # TODO contextmanager
     conn = sqlite3.connect(str(histfile))
 
     for row in conn.execute(f"SELECT {', '.join(cols)} FROM visits"):

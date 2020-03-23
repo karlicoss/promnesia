@@ -7,7 +7,6 @@ from common import tdata
 sa2464 = 'https://www.scottaaronson.com/blog/?p=2464'
 
 _JSON_URLS = {
-    # TODO FIXME only extract one of them?
     'https://johncarlosbaez.wordpress.com/2016/09/09/struggles-with-the-continuum-part-2/',
     sa2464,
 }

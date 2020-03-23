@@ -240,7 +240,6 @@ def test_custom():
     ))
     # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
     assert len(hist) == 5
-    # TODO FIXME https and http are same; also trailing slash and no trailing slash
 
 
 

@@ -57,7 +57,7 @@ def get_extension_page_firefox(driver):
             break
 
     addon_name = 'temporary_addon'
-    # TODO FIXME ok, apparently I should add it to tips on using or something..
+    # TODO ok, apparently I should add it to tips on using or something..
     addon_name = 'promnesia@karlicoss.github.com'
 
     addon_id = None

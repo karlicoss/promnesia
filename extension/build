@@ -57,7 +57,7 @@ def main():
         webext('lint')
 
         if target == 'firefox':
-            # FIXME move somewhere more appropriate..
+            # TODO move somewhere more appropriate..
             webext('build')
 
 

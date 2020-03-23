@@ -8,7 +8,7 @@ from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoc
 
 # TODO potentially, belongs to my. package
 
-# TODO FIXME kython?
+# TODO kython?
 T = TypeVar('T')
 def unwrap(res: Union[T, Exception]) -> T:
     if isinstance(res, Exception):

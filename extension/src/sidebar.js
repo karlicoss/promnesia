@@ -294,7 +294,7 @@ async function bindSidebarData(response: Visits) {
         }
     }
 
-    // TODO FIXME instead, use checkboxes and get checked values
+    // TODO instead, use checkboxes and get checked values
     // TODO not sure if should ignore things without contexts here... how to fit everything?
     const all_tags = new Map();
     for (const v of with_ctx) {

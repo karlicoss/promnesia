@@ -18,8 +18,9 @@ from common import tdir, under_ci
 class Helper(NamedTuple):
     port: str
 
-TEST_PORT = 16556 # TODO FIXME use proper random port
-# search for Serving on :16556
+
+# TODO use proper random port
+TEST_PORT = 16556
 
 
 def next_port():

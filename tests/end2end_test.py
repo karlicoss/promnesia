@@ -71,7 +71,8 @@ def get_hotkey(driver, cmd: str) -> str:
         #    },
         cmd_map = {cmd['command_name']: k.split(':')[-1] for k, cmd in prefs['extensions']['commands'].items()}
     else:
-        # TODO FIXME
+        # TODO remove hardcoding somehow...
+        # perhaps should be extracted somewhere..
         cmd_map = {
             'show_dots'              : 'Ctrl+Alt+V',
             '_execute_browser_action': 'Ctrl+Alt+E',

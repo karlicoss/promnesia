@@ -6,7 +6,7 @@ from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
 from my.fbmessenger import messages
 
 
-# TODO FIXME rename Extraction to smth shorter? even Result is good enough?
+# TODO rename Extraction to smth shorter? even Result is good enough?
 def index() -> Iterator[Extraction]:
     # TODO add db path?
     for m in messages():

@@ -141,7 +141,7 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 
     // NOTE: visitTime returns UTC epoch
     const times: Array<Date> = results.map(r => normTz(new Date(r['visitTime']))).filter(dt => current - dt > delay);
-    // TODO FIXME not sure if need to normalise..
+    // TODO not sure if need to normalise..
     const visits = times.map(t => new Visit(url, url, t, [LOCAL_TAG]));
     return new Visits(url, url, visits);
 }
@@ -164,7 +164,7 @@ async function isBlacklisted(url: Url): Promise<?Reason> {
 
     const hostname = normalisedURLHostname(url);
     // TODO perhaps use binary search?
-    // TODO FIXME not very efficient... I guess I need to refresh it straight from github now and then?
+    // TODO not very efficient... I guess I need to refresh it straight from github now and then?
     // TODO keep cache in local storage or something?
     for (let [bname, bfile] of [
         ['Webmail', 'shallalist/webmail/domains'],
@@ -296,7 +296,7 @@ async function updateState (tab: chrome$Tab) {
     }
 
     // TODO ok, only show it if there are visits? and only on android?
-    // TODO FIXME write that icon can't be changed on android
+    // TODO write that icon can't be changed on android
 
     if (icon === 'images/ic_visited_48.png') { // ugh. pretty hacky
         // TODO do I need to hide?
@@ -341,7 +341,7 @@ async function updateState (tab: chrome$Tab) {
 }
 
 // TODO check for blacklist here as well
-// TODO FIXME ugh. this can be tested on some static page... I guess?
+// TODO ugh. this can be tested on some static page... I guess?
 async function showDots(tabId) {
     // TODO can be tested
 
@@ -574,7 +574,7 @@ async function handleShowDots() {
 }
 
 async function handleOpenSearch() {
-    // TODO FIXME get current tab url and pass as get parameter?
+    // TODO get current tab url and pass as get parameter?
     chrome.tabs.create({ url: "search.html" });
 }
 
