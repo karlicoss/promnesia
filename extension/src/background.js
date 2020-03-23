@@ -320,7 +320,7 @@ async function updateState (tab: chrome$Tab) {
             const msg = `${locs.length} contexts!\n${locs.join('\n')}`;
             if (isOk) {
                 if (opts.contexts_popup_on) {
-                    showTabNotification(tabId, msg);
+                    await showTabNotification(tabId, msg);
                 }
             } else {
                 notify(msg);
@@ -328,6 +328,9 @@ async function updateState (tab: chrome$Tab) {
         }
 
         if (isOk) {
+            // TODO even compiling this takes 50ms if 10K visits??
+            // faster means of communication are going to require
+            // so perhaps instead, truncate and suggest to use 'search-like' interface
             await chromeTabsExecuteScriptAsync(tabId, {
                 code: `bindSidebarData(${JSON.stringify(visits)})`
             });

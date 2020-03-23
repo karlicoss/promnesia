@@ -28,6 +28,7 @@ const date_formatter =
             minute: 'numeric',
         });
 
+// manual formatting is like 3x faster... but don't think this is the ultimate bottleneck.
 // UGH there are no decent custom time format functions in JS..
 export function format_dt(dt: Date): string {
     const dts = date_formatter.format(dt);
