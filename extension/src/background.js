@@ -729,8 +729,9 @@ async function initBackground() {
     if (!android) {
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
         chrome.contextMenus.create({
-            'id'      : BLACKLIST_MENU,
-            'title'   : "Blacklist (domain/URL)",
+            'id'       : BLACKLIST_MENU,
+            'contexts' : ['page', 'browser_action'],
+            'title'    : "Blacklist (domain/URL)",
         });
     }
     // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
