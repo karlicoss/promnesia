@@ -667,11 +667,18 @@ async function blacklist(e): Promise<void> {
     const tabId = unwrap(atab.id);
 
     // TODO I'm really not sure it's the right way to do this..
-    // TODO doesn't trigger the first time???
+
+    let prompt = `Blacklist. Supported formats:
+- domain.name, e.g.: web.telegram.org
+  Will exclude whole Telegram website.
+- http://exact/match, e.g.: http://github.com
+  Will only exclude Github main page. Subpages will still work.
+- /regul.r.*expression/, e.g.: /github.*/username/
+  Quick way to exclude your own Github repostitories.
+`;
 
     const to_blacklist = await chromeTabsExecuteScriptAsync(tabId, {
-        // TODO just give few examples?
-        code: `prompt("Blacklist (domain.name or http://exact/match or /re.g.*ex/):", "${url}");`
+        code: `prompt(\`${prompt}\`, "${url}");`
     });
     if (to_blacklist == null) {
         console.info('user chose not to blacklist %s', url);
@@ -680,11 +687,6 @@ async function blacklist(e): Promise<void> {
 
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
     console.debug('blacklisting %s', to_blacklist);
-
-    // TODO normally: domain check
-    // TODO if stars are present: glob check?
-    // also / / -- regex??
-    // TODO for starters, ignore regexes?
 
     const opts = await get_options_async();
     opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + to_blacklist;
@@ -731,7 +733,7 @@ async function initBackground() {
         chrome.contextMenus.create({
             'id'       : BLACKLIST_MENU,
             'contexts' : ['page', 'browser_action'],
-            'title'    : "Blacklist (domain/URL)",
+            'title'    : "Blacklist (domain/specific page/subpages)",
         });
     }
     // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated

@@ -84,7 +84,7 @@ export function isBlacklistedHelper(url: Url, blacklist: string): ?string {
     //     return "User-defined blacklist (wildcard)";
     // }
 
-    const regexes = bl.filter(s => s[0] == '/');
+    const regexes = bl.filter(s => s[0] == '/' && s.slice(-1) == '/');
     for (const regex of regexes) {
         if (url.search(RegExp(regex)) >= 0) {
             return `User-defined blacklist (regex: ${regex})`;

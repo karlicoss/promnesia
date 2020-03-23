@@ -32,7 +32,7 @@ import {isBlacklistedHelper} from '../src/normalise.js';
 test('blacklist membership', () => {
     // TODO make tests literate so they contribute to help docs?
     const bl = `
-reddit.com
+mail.google.com
 https://vk.com
 **github.com/issues**
 /github.com/issues.*/
@@ -42,7 +42,7 @@ https://vk.com
     expect(isBlacklistedHelper('http://instagram.com/', bl)).toBe(null);
 
     // whole domain is blocked
-    expect(isBlacklistedHelper('http://reddit.com/u/karlicoss', bl)).toContain('domain');
+    expect(isBlacklistedHelper('https://mail.google.com/mail/u/0/#inbox', bl)).toContain('domain');
 
 
     // specific page is blocked
