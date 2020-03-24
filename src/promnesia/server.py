@@ -168,7 +168,10 @@ def visits(
     return search_common(
         url=url,
         # odd, doesn't work just with: x or (y and z)
-        where=lambda table, url: or_(table.c.norm_url == url, and_(table.c.context != None, table.c.norm_url.like(url + '%'))),
+        where=lambda table, url: or_(
+            table.c.norm_url == url,
+            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True))
+        ),
     )
 
 
@@ -180,7 +183,7 @@ def search(
     # TODO rely on hug logger for query
     return search_common(
         url=url,
-        where=lambda table, url: table.c.norm_url.like('%' + url + '%'), # TODO FIXME what if url contains %? (and it will!)
+        where=lambda table, url: table.c.norm_url.contains(url, autoescape=True),
     )
 
 
