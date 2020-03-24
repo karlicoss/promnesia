@@ -59,7 +59,7 @@ WHERE
 ORDER BY time;
     """.strip()
 
-    # TODO FIXME yield error if chatname or chat or smth else is null?
+    # TODO yield error if chatname or chat or smth else is null?
     for row in db.query(make_query('M.text')):
         try:
             yield from _handle_row(row)

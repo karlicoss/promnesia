@@ -130,7 +130,7 @@ specs = {
         qkeep={
             'list', # TODO hmm. list is kinda important for playlist urls...
             'v',
-        }, # TODO FIXME frozenset
+        }, # TODO frozenset?
         qremove={
             't', # TODO not so sure about it
 

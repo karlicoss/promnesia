@@ -28,7 +28,7 @@ from .normalise import normalise_url
 _ENV_CONFIG = 'PROMNESIA_CONFIG'
 
 
-# TODO FIXME not sure about utc in database... keep orig timezone?
+# TODO not sure about utc in database... keep orig timezone?
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
