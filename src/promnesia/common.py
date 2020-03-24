@@ -54,10 +54,10 @@ class Loc(NamedTuple):
 
 
 # TODO serialize unions? Might be a bit mad...
-# TODO FIXME need to discard cache...
 class PreVisit(NamedTuple):
     url: Url
-    dt: datetime # TODO FIXME back to DatetimeIsh, but somehow make compatible to dbcache
+    # TODO back to DatetimeIsh, but somehow make compatible to dbcache?
+    dt: datetime
     locator: Loc
     context: Optional[Context] = None
     duration: Optional[Second] = None
