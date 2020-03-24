@@ -63,6 +63,7 @@ if __name__ == "__main__":
             ],
             'html': [
                 'beautifulsoup4', # extracting links from the page
+                'lxml', # bs4 backend
             ],
             'my': [
                 *([]
