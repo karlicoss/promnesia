@@ -8,7 +8,10 @@ from common import tdir
 import pytest
 
 
-testdata = Path(__file__).absolute().parent.parent / 'testdata'
+# TODO move to common?
+ROOT = Path(__file__).absolute().parent.parent
+
+testdata = ROOT / 'testdata'
 
 
 def index(cfg: Path):
@@ -16,15 +19,18 @@ def index(cfg: Path):
     do_index(cfg)
 
 
-base_config = """
-INDEXERS = []
-FILTERS = []
-"""
+def test_example_config(tdir):
+    example = ROOT / 'config.py.example'
+    cfg = tdir / 'test_config.py'
+    cfg.write_text(example.read_text())
+    index(cfg)
 
 
+# TODO not sure if makes a lot of sense? maybe on no indexers should actually error
 def test_empty(tdir):
     cfg = tdir / 'test_config.py'
-    cfg.write_text(base_config + f"""
+    cfg.write_text(f"""
+INDEXERS = []
 OUTPUT_DIR = '{tdir}'
     """)
     index(cfg)
@@ -60,7 +66,7 @@ def index_urls(urls: Urls):
 
     def idx(tdir: Path):
         cfg = tdir / 'test_config.py'
-        cfg.write_text(base_config + f"""
+        cfg.write_text(f"""
 OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Indexer, PreVisit, Loc
@@ -94,7 +100,7 @@ def index_hypothesis(tdir: Path):
 
     cfg = tdir / 'test_config.py'
     # TODO ok, need to simplify this...
-    cfg.write_text(base_config + f"""
+    cfg.write_text(f"""
 OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Indexer as I
@@ -137,7 +143,7 @@ def index_local_chrome(tdir: Path):
     merged = Path('/L/data/promnesia/testdata/chrome.sqlite')
 
     cfg = tdir / 'test_config.py'
-    cfg.write_text(base_config + f"""
+    cfg.write_text(f"""
 OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Indexer as I
