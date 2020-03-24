@@ -113,7 +113,7 @@ def do_demo(index_as: str, params: Sequence[str], port: Optional[str]):
         if port is None:
             logger.warning("Port isn't specified, not serving!")
         else:
-            server._run(port=port, db=outdir / 'promnesia.sqlite', timezone='Europe/London', quiet=False) # TODO FIXME TZ
+            server._run(port=port, db=outdir / 'promnesia.sqlite', timezone=server.get_system_tz(), quiet=False)
 
         if sys.stdin.isatty():
             input("Press any key when ready")

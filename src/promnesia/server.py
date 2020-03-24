@@ -279,7 +279,7 @@ def get_system_tz() -> str:
         return tzlocal.get_localzone().zone
     except Exception as e:
         logger.exception(e)
-        logger.error("Couldn't determine system timezone. Falling back to UTC")
+        logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
         return 'UTC'
 
 
