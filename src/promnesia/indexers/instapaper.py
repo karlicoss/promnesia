@@ -5,9 +5,7 @@ from ..common import Extraction, get_logger, Visit, Loc, PathIsh
 import my.instapaper as ip
 
 
-def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
-    ip.configure(export_path=export_path)
-
+def index() -> Iterator[Extraction]:
     logger = get_logger()
 
     for p in ip.get_pages():

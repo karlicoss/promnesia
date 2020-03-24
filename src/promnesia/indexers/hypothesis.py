@@ -3,13 +3,11 @@ from typing import Iterable
 
 from ..common import Visit, Extraction, get_logger, Loc
 
-# TODO this makes more sense to keep insude index() function?
 import my.hypothesis as hyp
 
 
-# TODO perhaps configuring should be external? e.g. in config, although it'd probably not propagate?
 def index() -> Iterable[Extraction]:
-    logger = get_logger() # TODO use dynamic logger?
+    logger = get_logger()
 
     for h in hyp.get_highlights():
         if isinstance(h, Exception):
