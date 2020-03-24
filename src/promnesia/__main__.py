@@ -26,7 +26,7 @@ def _do_index():
 
     output_dir = Path(cfg.OUTPUT_DIR)
     if not output_dir.exists():
-        raise ValueError("Expecting OUTPUT_DIR to be set to a correct path!")
+        raise ValueError(f"Expected OUTPUT_DIR({output_dir}) to exist")
 
     filters = [make_filter(f) for f in cfg.FILTERS]
     for f in filters:
