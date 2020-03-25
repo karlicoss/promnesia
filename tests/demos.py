@@ -53,7 +53,7 @@ def demo_helper(*, tmp_path, browser, name: str, indexer=real_db):
             'wmctrl',
             '-i',
             '-r', wid,
-            '-e', f'0,0,0,{W // 2},{H}',
+            '-e', f'0,0,100,{W // 2},{H - 100}',
         ])
 
         configure_extension(
@@ -62,8 +62,8 @@ def demo_helper(*, tmp_path, browser, name: str, indexer=real_db):
             notification=False,
         )
         driver.get('about:blank')
-        # TODO resize window??
-        with hotkeys():
+        geometry = f'{W // 2}x300+0+{H - 300}'
+        with hotkeys(geometry=geometry):
             with record(name, wid=wid):
                 yield helper
 
