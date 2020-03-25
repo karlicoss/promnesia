@@ -43,10 +43,11 @@ def real_db():
 @browsers(FF, CH)
 def test_demo_show_dots(tmp_path, browser):
     url = 'https://slatestarcodex.com/'
-    with _test_helper(tmp_path, real_db(), url, browser=browser) as helper: # , record():
+    with _test_helper(tmp_path, real_db(), url, browser=browser) as helper, record('demos/show-dots.ogv'):
         sleep(1)
         helper.driver.get(url)
-        confirm('hi')
+        # TODO would be nice to actually generate subtitles??
+        # TODO not sure how long to wait...
         sleep(1)
 
 
