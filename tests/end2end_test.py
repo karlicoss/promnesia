@@ -5,7 +5,7 @@ from datetime import datetime
 from tempfile import TemporaryDirectory
 from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 import pytest # type: ignore
 
@@ -140,14 +140,20 @@ def save_settings(driver):
     driver.switch_to.alert.accept()
 
 
-def configure_extension(driver, *, host: str='http://localhost', port: str, show_dots: bool=True, blacklist=()):
+LOCALHOST = 'http://localhost'
+
+
+def configure_extension(driver, *, host: Optional[str]=LOCALHOST, port: Optional[str]=None, show_dots: bool=True, blacklist=()):
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
     open_extension_page(driver, page='options_page.html')
     sleep(1) # err, wtf? otherwise not always interacts with the elements correctly
 
-    set_host(driver=driver, host=host, port=port)
+    assert not (host is None) ^ (port is None), (host, port)
+    if host is not None:
+        assert port is not None
+        set_host(driver=driver, host=host, port=port)
 
     # dots = driver.find_element_by_id('dots_id')
     # if dots.is_selected() != show_dots:
@@ -217,7 +223,7 @@ def confirm(what: str):
 
 
 @contextmanager
-def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browser: Browser=FFH):
+def _test_helper(tmp_path, indexer, test_url: Optional[str], show_dots: bool=False, browser: Browser=FFH):
     tdir = Path(tmp_path)
 
     indexer(tdir)
@@ -226,8 +232,11 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browse
         configure_extension(driver, port=port, show_dots=show_dots)
         sleep(0.5)
 
-        driver.get(test_url)
-        sleep(3)
+        if test_url is not None:
+            driver.get(test_url)
+            sleep(3)
+        else:
+            driver.get('about:blank')
 
         yield TestHelper(driver=driver)
 

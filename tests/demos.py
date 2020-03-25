@@ -8,6 +8,7 @@ from end2end_test import FF, CH, browsers, _test_helper
 from end2end_test import PYTHON_DOC_URL
 from integration_test import index_urls
 from end2end_test import confirm
+from end2end_test import configure_extension
 
 from record import record
 
@@ -42,13 +43,22 @@ def real_db():
 @uses_x
 @browsers(FF, CH)
 def test_demo_show_dots(tmp_path, browser):
+    # TODO wonder if it's possible to mess with settings in local storage? unlikely...
     url = 'https://slatestarcodex.com/'
-    with _test_helper(tmp_path, real_db(), url, browser=browser) as helper, record('demos/show-dots.ogv'):
-        sleep(1)
+    with _test_helper(tmp_path, real_db(), None, browser=browser) as helper, record('demos/show-dots.ogv'):
+        # TODO make a method of helper??
+        configure_extension(
+            helper.driver,
+            host=None, port=None, # TODO meh
+        )
+        # TODO do it before recording??
+        helper.driver.get('about:blank')
+
+        confirm('continue?')
         helper.driver.get(url)
         # TODO would be nice to actually generate subtitles??
         # TODO not sure how long to wait...
-        sleep(1)
+        confirm('continue?')
 
 
 # TODO perhaps make them independent of network? Although useful for demos
