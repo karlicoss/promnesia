@@ -22,12 +22,13 @@ def hotkeys():
 
 
 @contextmanager
-def record(output: Optional[Path]=None):
+def record(output: Optional[Path]=None, wid: Optional[str]=None):
     assert output is not None, "TODO use tmp file or current dir??"
 
-    # TODO window-id
     ctx = Popen([
         'recordmydesktop',
+        *([] if wid is None else ['--windowid', wid]),
+
         '--no-sound',
         '--v_quality=1', # TODO fix quality later
         '--on-the-fly-encoding',
