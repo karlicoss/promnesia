@@ -242,6 +242,7 @@ class Command:
 def browsers(*br):
     from functools import wraps
     def dec(f):
+        @pytest.mark.with_browser
         @pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
         @wraps(f)
         def ff(*args, **kwargs):
