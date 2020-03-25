@@ -5,9 +5,15 @@ from datetime import datetime
 from tempfile import TemporaryDirectory
 from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 import pytest # type: ignore
+
+if __name__ == '__main__':
+    # TODO ugh need to figure out PATH
+    # python3 -m pytest -s tests/server_test.py::test_query
+    pytest.main(['-s', __file__])
+
 
 from selenium import webdriver # type: ignore
 from selenium.webdriver.common.keys import Keys
@@ -74,9 +80,9 @@ def get_hotkey(driver, cmd: str) -> str:
         # TODO remove hardcoding somehow...
         # perhaps should be extracted somewhere..
         cmd_map = {
-            'show_dots'              : 'Ctrl+Alt+V',
-            '_execute_browser_action': 'Ctrl+Alt+E',
-            'search'                 : 'Ctrl+Alt+H',
+            'show_dots'              : 'Ctrl+Alt+v',
+            '_execute_browser_action': 'Ctrl+Alt+e',
+            'search'                 : 'Ctrl+Alt+h',
         }
     return cmd_map[cmd].split('+')
 
@@ -134,33 +140,60 @@ def save_settings(driver):
     driver.switch_to.alert.accept()
 
 
-def configure_extension(driver, *, host: str='http://localhost', port: str, show_dots: bool=True, blacklist=()):
+LOCALHOST = 'http://localhost'
+
+
+def configure(
+        driver,
+        *,
+        host: Optional[str]=LOCALHOST,
+        port: Optional[str]=None,
+        show_dots: bool=True,
+        blacklist=None,
+        notification: Optional[bool]=None,
+):
+    def set_checkbox(cid: str, value: bool):
+        cb = driver.find_element_by_id(cid)
+        selected = cb.is_selected()
+        if selected != value:
+            cb.click()
+
+
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
     open_extension_page(driver, page='options_page.html')
     sleep(1) # err, wtf? otherwise not always interacts with the elements correctly
 
-    set_host(driver=driver, host=host, port=port)
+    assert not (host is None) ^ (port is None), (host, port)
+    if host is not None:
+        assert port is not None
+        set_host(driver=driver, host=host, port=port)
 
     # dots = driver.find_element_by_id('dots_id')
     # if dots.is_selected() != show_dots:
     #     dots.click()
     # assert dots.is_selected() == show_dots
-    verbose_errors = driver.find_element_by_id('verbose_errors_id')
-    if not verbose_errors.is_selected():
-        verbose_errors.click()
+    set_checkbox('verbose_errors_id', False)
 
-    bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
-    bl.click()
-    # ugh, that's hacky. presumably due to using Codemirror?
-    bla = driver.switch_to_active_element()
-    bla.send_keys('\n'.join(blacklist))
+    if notification is not None:
+        set_checkbox('contexts_popup_id', notification)
+
+    if blacklist is not None:
+        bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
+        bl.click()
+        # ugh, that's hacky. presumably due to using Codemirror?
+        bla = driver.switch_to_active_element()
+        bla.send_keys('\n'.join(blacklist))
 
     save_settings(driver)
 
 
-def focus_browser_window(driver):
+# legacy name
+configure_extension = configure
+
+
+def get_window_id(driver):
     if driver.name == 'firefox':
         pid = str(driver.capabilities['moz:processID'])
     else:
@@ -168,11 +201,21 @@ def focus_browser_window(driver):
         pid = check_output(['pgrep', '-f', 'chrome.*enable-automation']).decode('utf8').strip()
     # https://askubuntu.com/a/385037/427470
 
-    wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf-8').splitlines()
+    wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf8').splitlines()
     wids = [w.strip() for w in wids if len(w.strip()) > 0]
-    # some windows are not focusable or whatever (e.g. in chrome)? so just try all of them. hopefully on of them succeeds..
-    for wid in wids:
-        check_call(['xdotool', 'windowactivate', wid])
+
+    def has_wm_desktop(wid: str) -> bool:
+        # TODO no idea why is that important. found out experimentally
+        out = check_output(['xprop', '-id', wid, '_NET_WM_DESKTOP']).decode('utf8')
+        return 'not found' not in out
+
+    [wid] = filter(has_wm_desktop, wids)
+    return wid
+
+
+def focus_browser_window(driver):
+    wid = get_window_id(driver)
+    check_call(['xdotool', 'windowactivate', wid])
 
 
 def trigger_callback(driver, callback):
@@ -211,7 +254,7 @@ def confirm(what: str):
 
 
 @contextmanager
-def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browser: Browser=FFH):
+def _test_helper(tmp_path, indexer, test_url: Optional[str], show_dots: bool=False, browser: Browser=FFH):
     tdir = Path(tmp_path)
 
     indexer(tdir)
@@ -220,8 +263,11 @@ def _test_helper(tmp_path, indexer, test_url: str, show_dots: bool=False, browse
         configure_extension(driver, port=port, show_dots=show_dots)
         sleep(0.5)
 
-        driver.get(test_url)
-        sleep(3)
+        if test_url is not None:
+            driver.get(test_url)
+            sleep(3)
+        else:
+            driver.get('about:blank')
 
         yield TestHelper(driver=driver)
 
@@ -235,6 +281,7 @@ class Command:
 def browsers(*br):
     from functools import wraps
     def dec(f):
+        @pytest.mark.with_browser
         @pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
         @wraps(f)
         def ff(*args, **kwargs):
@@ -580,10 +627,4 @@ def test_duplicate_background_pages(tmp_path, browser):
 #     at notify (VM2056 notifications.js:17)
 #     at notifyError (VM2056 notifications.js:41)
 
-if __name__ == '__main__':
-    # TODO ugh need to figure out PATH
-    # python3 -m pytest -s tests/server_test.py::test_query 
-    pytest.main(['-s', __file__])
 
-
-# TODO perhaps make them independent of network? Although useful for demos
