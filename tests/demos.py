@@ -50,6 +50,7 @@ def test_demo_show_dots(tmp_path, browser):
         configure_extension(
             helper.driver,
             host=None, port=None, # TODO meh
+            notification=False,
         )
         # TODO do it before recording??
         helper.driver.get('about:blank')

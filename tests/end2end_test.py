@@ -143,7 +143,22 @@ def save_settings(driver):
 LOCALHOST = 'http://localhost'
 
 
-def configure_extension(driver, *, host: Optional[str]=LOCALHOST, port: Optional[str]=None, show_dots: bool=True, blacklist=()):
+def configure(
+        driver,
+        *,
+        host: Optional[str]=LOCALHOST,
+        port: Optional[str]=None,
+        show_dots: bool=True,
+        blacklist=None,
+        notification: Optional[bool]=None,
+):
+    def set_checkbox(cid: str, value: bool):
+        cb = driver.find_element_by_id(cid)
+        selected = cb.is_selected()
+        if selected != value:
+            cb.click()
+
+
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
@@ -159,17 +174,23 @@ def configure_extension(driver, *, host: Optional[str]=LOCALHOST, port: Optional
     # if dots.is_selected() != show_dots:
     #     dots.click()
     # assert dots.is_selected() == show_dots
-    verbose_errors = driver.find_element_by_id('verbose_errors_id')
-    if not verbose_errors.is_selected():
-        verbose_errors.click()
+    set_checkbox('verbose_errors_id', False)
 
-    bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
-    bl.click()
-    # ugh, that's hacky. presumably due to using Codemirror?
-    bla = driver.switch_to_active_element()
-    bla.send_keys('\n'.join(blacklist))
+    if notification is not None:
+        set_checkbox('contexts_popup_id', notification)
+
+    if blacklist is not None:
+        bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
+        bl.click()
+        # ugh, that's hacky. presumably due to using Codemirror?
+        bla = driver.switch_to_active_element()
+        bla.send_keys('\n'.join(blacklist))
 
     save_settings(driver)
+
+
+# legacy name
+configure_extension = configure
 
 
 def focus_browser_window(driver):
