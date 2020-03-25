@@ -20,7 +20,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-from record import record
 from common import under_ci, skip_if_ci, uses_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
@@ -589,23 +588,3 @@ def test_duplicate_background_pages(tmp_path, browser):
 #     at notifyError (VM2056 notifications.js:41)
 
 
-# TODO move to a separate file?
-@uses_x
-@browsers(FF, CH)
-def test_demo(tmp_path, browser):
-    tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
-    urls = {
-         tutorial                                                : 'TODO read this',
-        'file:///usr/share/doc/python3/html/reference/index.html': None,
-    }
-    url = PYTHON_DOC_URL
-    with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
-        with record():
-            sleep(1)
-            helper.driver.get(tutorial)
-            sleep(1)
-            # TODO wait??
-
-
-
-# TODO perhaps make them independent of network? Although useful for demos
