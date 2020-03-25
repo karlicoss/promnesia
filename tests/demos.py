@@ -35,8 +35,24 @@ def real_db():
     import shutil
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
+        # tdb.touch()
         shutil.copy(real_db_path, tdb)
     return indexer
+
+
+@contextmanager
+def demo_helper(*, tmp_path, browser, name: str, indexer=real_db):
+    with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
+        configure_extension(
+            helper.driver,
+            host=None, port=None, # TODO meh
+            notification=False,
+        )
+        helper.driver.get('about:blank')
+        # TODO resize window??
+        with hotkeys():
+            with record(name):
+                yield helper
 
 
 # TODO need to determine that uses X automatically
@@ -45,17 +61,8 @@ def real_db():
 def test_demo_show_dots(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
     url = 'https://slatestarcodex.com/'
-    with _test_helper(tmp_path, real_db(), None, browser=browser) as helper, hotkeys(), record('demos/show-dots.ogv'):
+    with demo_helper(tmp_path=tmp_path, browser=browser, name='demos/show-dots.ogv') as helper:
         driver = helper.driver
-        # TODO make a method of helper??
-        configure_extension(
-            driver,
-            host=None, port=None, # TODO meh
-            notification=False,
-        )
-        # TODO extract 'demo_helper' for now??
-        # TODO do it before recording??
-        driver.get('about:blank')
 
         confirm('continue?')
         driver.get(url)
