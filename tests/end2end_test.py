@@ -193,7 +193,7 @@ def configure(
 configure_extension = configure
 
 
-def focus_browser_window(driver):
+def get_window_id(driver):
     if driver.name == 'firefox':
         pid = str(driver.capabilities['moz:processID'])
     else:
@@ -201,11 +201,21 @@ def focus_browser_window(driver):
         pid = check_output(['pgrep', '-f', 'chrome.*enable-automation']).decode('utf8').strip()
     # https://askubuntu.com/a/385037/427470
 
-    wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf-8').splitlines()
+    wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf8').splitlines()
     wids = [w.strip() for w in wids if len(w.strip()) > 0]
-    # some windows are not focusable or whatever (e.g. in chrome)? so just try all of them. hopefully on of them succeeds..
-    for wid in wids:
-        check_call(['xdotool', 'windowactivate', wid])
+
+    def has_wm_desktop(wid: str) -> bool:
+        # TODO no idea why is that important. found out experimentally
+        out = check_output(['xprop', '-id', wid, '_NET_WM_DESKTOP']).decode('utf8')
+        return 'not found' not in out
+
+    [wid] = filter(has_wm_desktop, wids)
+    return wid
+
+
+def focus_browser_window(driver):
+    wid = get_window_id(driver)
+    check_call(['xdotool', 'windowactivate', wid])
 
 
 def trigger_callback(driver, callback):
