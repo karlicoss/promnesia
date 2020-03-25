@@ -82,7 +82,7 @@ def as_json(v: DbVisit) -> Dict:
 def get_db_path() -> Path:
     config = get_config()
     db = config.db
-    assert db.exists()
+    assert db.exists(), db
     return db
 
 
