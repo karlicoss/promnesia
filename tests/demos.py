@@ -231,3 +231,53 @@ Dots appear next to the ones I've already visited!
 
 
 # TODO perhaps make them independent of network? Although useful for demos
+
+# https://twitter.com/michael_nielsen/status/1162502843921600512
+@uses_x
+@browsers(FF, CH)
+def test_demo_child_visits(tmp_path, browser):
+    path = Path('demos/child-visits')
+    subs = path.with_suffix('.srt')
+
+    # TODO display subtitles below
+    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
+        driver = helper.driver
+        driver.get('https://twitter.com/michael_nielsen/status/1162502843921600512')
+
+        ann.annotate('''
+While browsing Twitter, I run into an account recomendation.
+''', length=3)
+        wait(3)
+
+        ann.annotate('''
+I value Michael Nielsen's opinion, so sure, let's check the account out.
+''', length=3)
+        wait(3) # TODO maybe, wait by default??
+
+        driver.get('https://twitter.com/eriktorenberg')
+
+        # TODO wait till loaded??
+
+        # TODO turn contexts notification on here?
+        ann.annotate('''
+Notice the eye icon highlighted as green.
+That means I've actually run into that account before!
+        ''', length=5)
+        wait(5)
+
+        wait(1)
+        trigger_command(driver, Command.ACTIVATE)
+        ann.annotate('''
+Let's see...
+        ''', length=3)
+        wait(3)
+
+        ann.annotate('''
+Apparently, I've already bookmarked something interesting from that guy before.
+Surely, I should follow him!
+        ''', length=8)
+        wait(8)
+
+        subs.write_text(ann.build())
+
+    subs.unlink()
