@@ -10,7 +10,7 @@ from end2end_test import FF, CH, browsers, _test_helper
 from end2end_test import PYTHON_DOC_URL
 from integration_test import index_urls
 from end2end_test import confirm, trigger_command, Command
-from end2end_test import configure_extension, get_window_id
+from end2end_test import configure, get_window_id
 
 from record import record, hotkeys
 
@@ -75,6 +75,13 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
         'bottomleft': 1,
     }.get(subs_position)
 
+    position = '''
+.promnesia {
+    --right: 1;
+    --size:  40%;
+}
+    '''
+
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
         driver = helper.driver
         wid = get_window_id(driver)
@@ -88,12 +95,14 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
             '-e', f'0,0,100,{W // 2},{H - 100}',
         ])
 
-        configure_extension(
+        configure(
             driver,
             host=None, port=None, # TODO meh
             notification=False,
             highlights=False,
+            position=position,
         )
+
         driver.get('about:blank')
         geometry = f'{W // 2}x200+0+{H - 200}'
         with hotkeys(geometry=geometry):

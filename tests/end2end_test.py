@@ -53,6 +53,17 @@ FFH = Browser('firefox', headless=True)
 FM  = Browser('firefox-mobile', headless=False)
 
 
+def browser_(driver):
+    name = driver.name
+    # TODO figure out headless??
+    if name == 'firefox':
+        return FF
+    elif name == 'chrome':
+        return CH
+    else:
+        raise AssertionError(driver)
+
+
 def get_addon_path(kind: str) -> Path:
     # TODO compile first?
     addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / kind).absolute()
@@ -152,6 +163,7 @@ def configure(
         highlights: Optional[bool]=None,
         blacklist=None,
         notification: Optional[bool]=None,
+        position: Optional[str]=None,
 ):
     def set_checkbox(cid: str, value: bool):
         cb = driver.find_element_by_id(cid)
@@ -182,6 +194,9 @@ def configure(
 
     if notification is not None:
         set_checkbox('contexts_popup_id', notification)
+
+    if position is not None:
+        set_position(driver, position)
 
     if blacklist is not None:
         bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
@@ -343,6 +358,24 @@ def test_backend_status(tmp_path, browser):
 
         # TODO implement positive check??
 
+def set_position(driver, settings: str):
+    browser = browser_(driver)
+
+    # TODO figure out browser from driver??
+    field = driver.find_element_by_xpath('//*[@id="position_css_id"]')
+    if browser.name == 'chrome':
+        # ugh... for some reason wouldn't send the keys...
+        field.click()
+        import pyautogui # type: ignore
+        pyautogui.press(['backspace'] * 100 + ['delete'] * 100)
+        pyautogui.typewrite(settings, interval=0.1)
+    else:
+        area = field.find_element_by_xpath('.//textarea')
+        area.send_keys([Keys.DELETE] * 500)
+        area.send_keys(settings)
+
+
+
 @browsers(FF, CH)
 def test_sidebar_bottom(browser):
     browser.skip_ci_x()
@@ -360,18 +393,7 @@ def test_sidebar_bottom(browser):
     --size: 20%;
 }"""
 
-        position_field = driver.find_element_by_xpath('//*[@id="position_css_id"]')
-        if browser.name == 'chrome':
-            # ugh... for some reason wouldn't send the keys...
-            position_field.click()
-            import pyautogui # type: ignore
-            pyautogui.press(['backspace'] * 100 + ['delete'] * 100)
-            pyautogui.typewrite(settings, interval=0.1)
-        else:
-            ares =  position_field.find_element_by_xpath('//textarea')
-            area.send_keys([Keys.DELETE] * 500)
-            area.send_keys(settings)
-
+        set_position(driver, settings)
 
         save_settings(driver)
 
