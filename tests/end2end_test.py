@@ -149,6 +149,7 @@ def configure(
         host: Optional[str]=LOCALHOST,
         port: Optional[str]=None,
         show_dots: bool=True,
+        highlights: Optional[bool]=None,
         blacklist=None,
         notification: Optional[bool]=None,
 ):
@@ -175,6 +176,9 @@ def configure(
     #     dots.click()
     # assert dots.is_selected() == show_dots
     set_checkbox('verbose_errors_id', False)
+
+    if highlights is not None:
+        set_checkbox('highlight_id', highlights)
 
     if notification is not None:
         set_checkbox('contexts_popup_id', notification)
