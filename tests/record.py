@@ -26,6 +26,9 @@ def hotkeys(geometry: Optional[str]=None):
 def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Optional[str]=None):
     assert output is not None, "TODO use tmp file or current dir??"
 
+    # TODO I think recordmydesktop dumps broken file. it's squeezed by ffmpeg somehow
+    # also there is something about broken frames???
+
     ctx = Popen([
         'recordmydesktop',
         *([] if wid     is None else ['--windowid' , wid]),

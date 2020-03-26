@@ -50,6 +50,7 @@ class Annotator:
     def annotate(self, text: str, length=2) -> None:
         # TODO how to display during recording??
         now = datetime.now()
+        print(f"ANNOTATING: {text}")
         self.l.append((now, text, length))
 
     def build(self):
@@ -102,6 +103,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
 
             check_call([
                 'ffmpeg',
+                '-hide_banner', '-loglevel', 'panic', # less spam
                 '-y', # allow overwrite
                 '-i', rpath,
                 '-vf', sub_settings,
@@ -131,6 +133,10 @@ def test_demo_show_dots(tmp_path, browser):
             return
         confirm(what)
 
+    def wait(x):
+        print(f"Sleeping for {x} seconds")
+        sleep(x)
+
 
     url = 'https://slatestarcodex.com/'
     with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
@@ -146,7 +152,7 @@ On the left you can see a blogroll with recommended blogs.
 Lots of sites there!
 ''', length=3)
 
-        sleep(3)
+        wait(3)
 
         ann.annotate('''
 You feel like reading something new.
@@ -155,7 +161,7 @@ Which are the ones you haven't seen before?
 
         # TODO rename to 'highlight visited'? or 'show visited'
 
-        sleep(3)
+        wait(3)
 
         # TODO request focus on 'prompt'??
         prompt('continue?')
@@ -167,13 +173,13 @@ Which are the ones you haven't seen before?
 The command displays dots next to the links you've already visited,
 so you don't have to search browser history all over for each of them.
         ''', length=3)
-        sleep(3)
+        wait(3)
 
         ann.annotate('''
 You can click straight on the ones you haven't seen before and start exploring!
-        ''', length=4)
+        ''', length=10)
 
-        sleep(4)
+        wait(10)
         prompt('continue?')
 
         # TODO would be nice to actually generate subtitles??
