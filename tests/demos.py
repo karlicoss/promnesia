@@ -42,7 +42,7 @@ def real_db():
 
 
 @contextmanager
-def demo_helper(*, tmp_path, browser, name: str, indexer=real_db):
+def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
         driver = helper.driver
         wid = get_window_id(driver)
@@ -64,8 +64,21 @@ def demo_helper(*, tmp_path, browser, name: str, indexer=real_db):
         driver.get('about:blank')
         geometry = f'{W // 2}x300+0+{H - 300}'
         with hotkeys(geometry=geometry):
-            with record(name, wid=wid):
+            rpath = path.with_suffix('.ogv')
+            with record(rpath, wid=wid):
                 yield helper
+
+            subs = path.with_suffix('.srt')
+            out  = path.with_suffix('.mp4')
+
+            check_call([
+                'ffmpeg',
+                '-y', # allow overwrite
+                '-i', rpath,
+                '-vf', f'subtitles={subs}',
+                out,
+            ])
+
 
 
 # TODO need to determine that uses X automatically
@@ -73,8 +86,28 @@ def demo_helper(*, tmp_path, browser, name: str, indexer=real_db):
 @browsers(FF, CH)
 def test_demo_show_dots(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
+
+    from srt import Subtitle, compose
+
+    from datetime import timedelta
+
+    subtitles = [
+        Subtitle(
+            index=i + 1,
+            start=timedelta(seconds=i),
+            end=timedelta(seconds=i + 0.5),
+            content=f'SUB {i}',
+        ) for i in range(5)
+    ]
+
+    path = Path('demos/show-dots')
+
+    subs = path.with_suffix('.srt')
+    subs.write_text(compose(subtitles))
+
+
     url = 'https://slatestarcodex.com/'
-    with demo_helper(tmp_path=tmp_path, browser=browser, name='demos/show-dots.ogv') as helper:
+    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as helper:
         driver = helper.driver
 
         confirm('continue?')

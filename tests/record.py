@@ -44,4 +44,4 @@ def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Option
         finally:
             # TODO check if it terminated gracefully?
             p.terminate()
-            # TODO ffmpeg  -i video.ogv video.mp4
+            p.wait(timeout=10)
