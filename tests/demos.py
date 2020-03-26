@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import timedelta, datetime
 from pathlib import Path
 from time import sleep
 from subprocess import check_call
@@ -41,6 +42,29 @@ def real_db():
     return indexer
 
 
+class Annotator:
+    def __init__(self):
+        self.start = datetime.now()
+        self.l = []
+
+    def annotate(self, text: str) -> None:
+        now = datetime.now()
+        self.l.append((now, text))
+
+    def build(self):
+        from srt import Subtitle, compose
+        subs = (
+            Subtitle(
+                index=i + 1,
+                start=t - self.start,
+                end  =t - self.start + timedelta(seconds=1),
+                content=text,
+            ) for i, (t, text) in enumerate(self.l)
+        )
+        return compose(subs)
+
+
+
 @contextmanager
 def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
@@ -66,7 +90,8 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
         with hotkeys(geometry=geometry):
             rpath = path.with_suffix('.ogv')
             with record(rpath, wid=wid):
-                yield helper
+                ann = Annotator()
+                yield helper, ann
 
             subs = path.with_suffix('.srt')
             out  = path.with_suffix('.mp4')
@@ -87,40 +112,36 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
 def test_demo_show_dots(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
 
-    from srt import Subtitle, compose
-
-    from datetime import timedelta
-
-    subtitles = [
-        Subtitle(
-            index=i + 1,
-            start=timedelta(seconds=i),
-            end=timedelta(seconds=i + 0.5),
-            content=f'SUB {i}',
-        ) for i in range(5)
-    ]
-
     path = Path('demos/show-dots')
-
     subs = path.with_suffix('.srt')
-    subs.write_text(compose(subtitles))
-
 
     url = 'https://slatestarcodex.com/'
-    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as helper:
+    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
         driver = helper.driver
 
-        confirm('continue?')
+        ann.annotate('hello')
+        # confirm('continue?')
+        sleep(2)
         driver.get(url)
 
         # TODO move driver inside??
         trigger_command(driver, Command.SHOW_DOTS)
 
-        confirm('continue?')
+        ann.annotate('hello 2')
+
+        sleep(3)
+        # confirm('continue?')
 
         # TODO would be nice to actually generate subtitles??
         # TODO not sure how long to wait...
-        confirm('continue?')
+        # confirm('continue?')
+
+        subs.write_text(ann.build())
+
+    # TODO not sure if should keep srt file around?
+    subs.unlink()
+
+
 
 
 # TODO perhaps make them independent of network? Although useful for demos
