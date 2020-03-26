@@ -68,7 +68,13 @@ class Annotator:
 
 
 @contextmanager
-def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
+def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft'):
+    # TODO literal type??
+    spos = {
+        'topleft'   : 5, # no ide why it's five
+        'bottomleft': 1,
+    }.get(subs_position)
+
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
         driver = helper.driver
         wid = get_window_id(driver)
@@ -99,7 +105,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
             subs = path.with_suffix('.srt')
             out  = path.with_suffix('.mp4')
 
-            sub_settings = f"subtitles={subs}:force_style='Alignment=5,PrimaryColour=&H00ff00&'"
+            sub_settings = f"subtitles={subs}:force_style='Alignment={spos},PrimaryColour=&H00ff00&'"
 
             check_call([
                 'ffmpeg',
@@ -239,8 +245,13 @@ def test_demo_child_visits(tmp_path, browser):
     path = Path('demos/child-visits')
     subs = path.with_suffix('.srt')
 
-    # TODO display subtitles below
-    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
+    # TODO make sidebar wider??
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+    ) as (helper, ann):
         driver = helper.driver
         driver.get('https://twitter.com/michael_nielsen/status/1162502843921600512')
 
@@ -255,6 +266,8 @@ I value Michael Nielsen's opinion, so sure, let's check the account out.
         wait(3) # TODO maybe, wait by default??
 
         driver.get('https://twitter.com/eriktorenberg')
+
+        wait(1)
 
         # TODO wait till loaded??
 
