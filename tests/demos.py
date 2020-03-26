@@ -32,13 +32,22 @@ def test_demo(tmp_path, browser):
 
 
 def real_db():
-    from private import real_db_path
+    from private import real_db_path, test_filter
     from tempfile import TemporaryDirectory
     import shutil
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
         # tdb.touch()
         shutil.copy(real_db_path, tdb)
+
+        filt = test_filter()
+        if filt is not None:
+            check_call([
+                'sqlite3',
+                tdb,
+                f'DELETE FROM visits WHERE NOT ( {filt} )',
+            ])
+
     return indexer
 
 
@@ -79,6 +88,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
 .promnesia {
     --right: 1;
     --size:  40%;
+    background-color: rgba(236, 236, 236, 0.6)
 }
     '''
 
@@ -254,7 +264,6 @@ def test_demo_child_visits(tmp_path, browser):
     path = Path('demos/child-visits')
     subs = path.with_suffix('.srt')
 
-    # TODO make sidebar wider??
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -265,12 +274,12 @@ def test_demo_child_visits(tmp_path, browser):
         driver.get('https://twitter.com/michael_nielsen/status/1162502843921600512')
 
         ann.annotate('''
-While browsing Twitter, I run into an account recomendation.
+While browsing Twitter, I see an account recomendation.
 ''', length=3)
         wait(3)
 
         ann.annotate('''
-I value Michael Nielsen's opinion, so sure, let's check the account out.
+I really value Michael Nielsen's opinion, so it's worth to check it out.
 ''', length=3)
         wait(3) # TODO maybe, wait by default??
 
@@ -282,20 +291,21 @@ I value Michael Nielsen's opinion, so sure, let's check the account out.
 
         # TODO turn contexts notification on here?
         ann.annotate('''
-Notice the eye icon highlighted as green.
-That means I've actually run into that account before!
+See the green eye icon in top right?
+That means I have run into that account before!
         ''', length=5)
         wait(5)
 
         wait(1)
-        trigger_command(driver, Command.ACTIVATE)
         ann.annotate('''
 Let's see...
-        ''', length=3)
-        wait(3)
+        ''', length=2)
+        wait(1)
+        trigger_command(driver, Command.ACTIVATE)
+        wait(1)
 
         ann.annotate('''
-Apparently, I've already bookmarked something interesting from that guy before.
+Right, I've already bookmarked something interesting from that guy before.
 Surely, I should follow him!
         ''', length=8)
         wait(8)
