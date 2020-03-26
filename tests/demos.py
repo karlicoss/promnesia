@@ -47,9 +47,10 @@ class Annotator:
         self.start = datetime.now()
         self.l = []
 
-    def annotate(self, text: str) -> None:
+    def annotate(self, text: str, length=2) -> None:
+        # TODO how to display during recording??
         now = datetime.now()
-        self.l.append((now, text))
+        self.l.append((now, text, length))
 
     def build(self):
         from srt import Subtitle, compose
@@ -57,9 +58,9 @@ class Annotator:
             Subtitle(
                 index=i + 1,
                 start=t - self.start,
-                end  =t - self.start + timedelta(seconds=1),
+                end  =t - self.start + timedelta(seconds=length),
                 content=text,
-            ) for i, (t, text) in enumerate(self.l)
+            ) for i, (t, text, length) in enumerate(self.l)
         )
         return compose(subs)
 
@@ -105,6 +106,9 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
             ])
 
 
+# TODO use ass?
+# https://trac.ffmpeg.org/wiki/HowToBurnSubtitlesIntoVideo
+
 
 # TODO need to determine that uses X automatically
 @uses_x
@@ -115,26 +119,62 @@ def test_demo_show_dots(tmp_path, browser):
     path = Path('demos/show-dots')
     subs = path.with_suffix('.srt')
 
+    # TODO fast mode??
+
+    demo = True
+
+    def prompt(what: str):
+        if demo:
+            return
+        confirm(what)
+
+
     url = 'https://slatestarcodex.com/'
     with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
         driver = helper.driver
 
-        ann.annotate('hello')
-        # confirm('continue?')
-        sleep(2)
+        prompt('continue?')
         driver.get(url)
+
+        # TODO display subs nicer??
+
+        ann.annotate('''
+On the left you can see a blogroll with recommended blogs.
+Lots of sites there!
+''', length=3)
+
+        sleep(3)
+
+        ann.annotate('''
+You feel like reading something new.
+Which are the ones you haven't seen before?
+        ''', length=3)
+
+        # TODO rename to 'highlight visited'? or 'show visited'
+
+        sleep(3)
+
+        # TODO request focus on 'prompt'??
+        prompt('continue?')
 
         # TODO move driver inside??
         trigger_command(driver, Command.SHOW_DOTS)
 
-        ann.annotate('hello 2')
-
+        ann.annotate('''
+The command displays dots next to the links you've already visited,
+so you don't have to search browser history all over for each of them.
+        ''', length=3)
         sleep(3)
-        # confirm('continue?')
+
+        ann.annotate('''
+You can click straight on the ones you haven't seen before and start exploring!
+        ''', length=4)
+
+        sleep(4)
+        prompt('continue?')
 
         # TODO would be nice to actually generate subtitles??
         # TODO not sure how long to wait...
-        # confirm('continue?')
 
         subs.write_text(ann.build())
 
