@@ -115,6 +115,21 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
 # https://trac.ffmpeg.org/wiki/HowToBurnSubtitlesIntoVideo
 
 
+demo = False
+
+
+def prompt(what: str):
+    if demo:
+        return
+    confirm(what)
+
+
+def wait(x):
+    print(f"Sleeping for {x} seconds")
+    sleep(x)
+
+
+
 # TODO need to determine that uses X automatically
 @uses_x
 @browsers(FF, CH)
@@ -125,19 +140,6 @@ def test_demo_show_dots(tmp_path, browser):
     subs = path.with_suffix('.srt')
 
     # TODO fast mode??
-
-    demo = True
-
-    def prompt(what: str):
-        if demo:
-            return
-        confirm(what)
-
-    def wait(x):
-        print(f"Sleeping for {x} seconds")
-        sleep(x)
-
-
     url = 'https://slatestarcodex.com/'
     with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
         driver = helper.driver
@@ -191,6 +193,41 @@ You can click straight on the ones you haven't seen before and start exploring!
     subs.unlink()
 
 
+@uses_x
+@browsers(FF, CH)
+def test_demo_show_dots_2(tmp_path, browser):
+    path = Path('demos/show-dots-2')
+    subs = path.with_suffix('.srt')
+
+    # TODO maybe test on Baez instead?
+    # TODO scroll to ?
+    url = 'https://www.lesswrong.com/posts/vwqLfDfsHmiavFAGP/the-library-of-scott-alexandria#IV__Medicine__Therapy__and_Human_Enhancement'
+    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
+        driver = helper.driver
+        driver.get(url)
+        # TODO eh. maybe should start recording after the URL has loaded
+
+        ann.annotate('''
+Lots of links to explore on this page.
+Which ones I haven't seen before?
+''', length=5)
+        wait(5)
+
+        trigger_command(driver, Command.SHOW_DOTS)
+        ann.annotate('''
+Hoteky press...
+        ''', length=1.5)
+        wait(1.5)
+
+        ann.annotate('''
+Dots appear next to the ones I've already visited!
+        ''', length=8)
+        wait(8)
+
+        # TODO contextmanager?
+        subs.write_text(ann.build())
+
+    subs.unlink()
 
 
 # TODO perhaps make them independent of network? Although useful for demos
