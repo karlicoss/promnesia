@@ -85,9 +85,10 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
             driver,
             host=None, port=None, # TODO meh
             notification=False,
+            highlights=False,
         )
         driver.get('about:blank')
-        geometry = f'{W // 2}x300+0+{H - 300}'
+        geometry = f'{W // 2}x200+0+{H - 200}'
         with hotkeys(geometry=geometry):
             rpath = path.with_suffix('.ogv')
             with record(rpath, wid=wid):
@@ -97,11 +98,13 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db):
             subs = path.with_suffix('.srt')
             out  = path.with_suffix('.mp4')
 
+            sub_settings = f"subtitles={subs}:force_style='Alignment=5,PrimaryColour=&H00ff00&'"
+
             check_call([
                 'ffmpeg',
                 '-y', # allow overwrite
                 '-i', rpath,
-                '-vf', f'subtitles={subs}',
+                '-vf', sub_settings,
                 out,
             ])
 
