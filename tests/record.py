@@ -13,6 +13,8 @@ def hotkeys(geometry: Optional[str]=None):
         '--no-detach',
         '--timeout', '2',
         '--key-mode', 'composed',
+        '--font-size', 'large',
+        # TODO font color?
         *([] if geometry is None else ['-g', geometry]),
     ])
     with ctx as p:

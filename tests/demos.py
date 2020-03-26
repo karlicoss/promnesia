@@ -45,7 +45,7 @@ def real_db():
             check_call([
                 'sqlite3',
                 tdb,
-                f'DELETE FROM visits WHERE NOT ( {filt} )',
+                filt,
             ])
 
     return indexer
@@ -114,7 +114,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
         )
 
         driver.get('about:blank')
-        geometry = f'{W // 2}x200+0+{H - 200}'
+        geometry = f'{W // 2}x400+0+{H - 400}'
         with hotkeys(geometry=geometry):
             rpath = path.with_suffix('.ogv')
             with record(rpath, wid=wid):
@@ -279,7 +279,7 @@ While browsing Twitter, I see an account recomendation.
         wait(3)
 
         ann.annotate('''
-I really value Michael Nielsen's opinion, so it's worth to check it out.
+I really value Michael Nielsen's opinion, so it's worth checking out.
 ''', length=3)
         wait(3) # TODO maybe, wait by default??
 
@@ -297,6 +297,7 @@ That means I have run into that account before!
         wait(5)
 
         wait(1)
+        # TODO make hotkey popup larger...
         ann.annotate('''
 Let's see...
         ''', length=2)
