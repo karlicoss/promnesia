@@ -12,7 +12,7 @@ from integration_test import index_urls
 from end2end_test import confirm, trigger_command, Command
 from end2end_test import configure, get_window_id
 
-from record import record, hotkeys
+from record import record, hotkeys, CURSOR_SCRIPT
 
 @uses_x
 @browsers(FF, CH)
@@ -149,7 +149,11 @@ def prompt(what: str):
     confirm(what)
 
 
+fast = False
+
 def wait(x):
+    if fast:
+        return
     print(f"Sleeping for {x} seconds")
     sleep(x)
 
@@ -257,7 +261,6 @@ Dots appear next to the ones I've already visited!
 
 # TODO perhaps make them independent of network? Although useful for demos
 
-# https://twitter.com/michael_nielsen/status/1162502843921600512
 @uses_x
 @browsers(FF, CH)
 def test_demo_child_visits(tmp_path, browser):
@@ -309,6 +312,82 @@ Let's see...
 Right, I've already bookmarked something interesting from that guy before.
 Surely, I should follow him!
         ''', length=8)
+        wait(8)
+
+        subs.write_text(ann.build())
+
+    subs.unlink()
+
+@uses_x
+@browsers(FF, CH)
+def test_demo_child_visits_2(tmp_path, browser):
+    path = Path('demos/child-visits-2')
+    subs = path.with_suffix('.srt')
+
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+    ) as (helper, ann):
+        driver = helper.driver
+        # TODO jeez. medium takes ages to load..
+        driver.get('https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7')
+        wait(1)
+
+        ann.annotate('''
+I ran into this cool post on Hackernews.
+Usually I'd also check out the author's blog for more content.
+''', length=4)
+        wait(4)
+
+        driver.get('https://medium.com/@justlv')
+        wait(1)
+
+        ann.annotate('''
+The icon is green.
+So I've interacted with the page before!
+''', length=4)
+        wait(4)
+
+        wait(1)
+        # TODO make hotkey popup larger...
+        ann.annotate('''
+Let's see...
+        ''', length=2)
+        wait(1)
+        trigger_command(driver, Command.ACTIVATE)
+        wait(1)
+
+        driver.switch_to.default_content()
+        driver.switch_to.frame('promnesia-sidebar')
+
+        def move_to(element):
+            from selenium.webdriver.common.action_chains import ActionChains
+            ActionChains(driver).move_to_element(element).perform()
+
+        driver.execute_script(CURSOR_SCRIPT)
+
+        tweet = driver.find_element_by_class_name('locator')
+        move_to(tweet)
+
+        ann.annotate('''
+Cool, I've even tweeted about one of the posts on this blog before!
+        ''', length=5)
+        wait(5)
+
+        # TODO original tweet -> smth else??
+        ann.annotate('''
+Clicking on 'context' will bring me straight to the original tweet.
+        ''', length=2)
+
+        a_tweet = tweet.find_element_by_tag_name('a')
+        move_to(a_tweet)
+
+        wait(2)
+
+        a_tweet.click()
+
         wait(8)
 
         subs.write_text(ann.build())
