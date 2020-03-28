@@ -53,6 +53,17 @@ FFH = Browser('firefox', headless=True)
 FM  = Browser('firefox-mobile', headless=False)
 
 
+def browser_(driver):
+    name = driver.name
+    # TODO figure out headless??
+    if name == 'firefox':
+        return FF
+    elif name == 'chrome':
+        return CH
+    else:
+        raise AssertionError(driver)
+
+
 def get_addon_path(kind: str) -> Path:
     # TODO compile first?
     addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / kind).absolute()
@@ -87,7 +98,7 @@ def get_hotkey(driver, cmd: str) -> str:
     return cmd_map[cmd].split('+')
 
 
-def _get_webdriver(tdir: Path, browser: Browser):
+def _get_webdriver(tdir: Path, browser: Browser, extension=True):
     addon = get_addon_path(kind=browser.dist)
     if browser.name == 'firefox':
         profile = webdriver.FirefoxProfile(str(tdir))
@@ -99,9 +110,11 @@ def _get_webdriver(tdir: Path, browser: Browser):
         # driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox', options=options)
         # TODO how to pass it here properly?
 
-        driver.install_addon(str(addon), temporary=True)
+        if extension:
+            driver.install_addon(str(addon), temporary=True)
     elif browser.name == 'chrome':
         # TODO ugh. very hacky...
+        assert extension, "TODO add support for extension arg"
         ex = tdir / 'extension.zip'
         files = [x.name for x in addon.iterdir()]
         check_call(['apack', '-q', str(ex), *files], cwd=addon)
@@ -117,10 +130,10 @@ def _get_webdriver(tdir: Path, browser: Browser):
 
 # TODO copy paste from grasp
 @contextmanager
-def get_webdriver(browser: Browser):
+def get_webdriver(browser: Browser, extension=True):
     with TemporaryDirectory() as td:
         tdir = Path(td)
-        driver = _get_webdriver(tdir, browser=browser)
+        driver = _get_webdriver(tdir, browser=browser, extension=extension)
         try:
             yield driver
         finally:
@@ -149,8 +162,10 @@ def configure(
         host: Optional[str]=LOCALHOST,
         port: Optional[str]=None,
         show_dots: bool=True,
+        highlights: Optional[bool]=None,
         blacklist=None,
         notification: Optional[bool]=None,
+        position: Optional[str]=None,
 ):
     def set_checkbox(cid: str, value: bool):
         cb = driver.find_element_by_id(cid)
@@ -176,8 +191,14 @@ def configure(
     # assert dots.is_selected() == show_dots
     set_checkbox('verbose_errors_id', False)
 
+    if highlights is not None:
+        set_checkbox('highlight_id', highlights)
+
     if notification is not None:
         set_checkbox('contexts_popup_id', notification)
+
+    if position is not None:
+        set_position(driver, position)
 
     if blacklist is not None:
         bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
@@ -246,6 +267,20 @@ class TestHelper(NamedTuple):
 
     def open_page(self, page: str) -> None:
         open_extension_page(self.driver, page)
+
+    def move_to(self, element):
+        from selenium.webdriver.common.action_chains import ActionChains # type: ignore
+        ActionChains(self.driver).move_to_element(element).perform()
+
+    def switch_to_sidebar(self):
+        self.driver.switch_to.default_content()
+        self.driver.switch_to.frame('promnesia-sidebar')
+
+    def command(self, cmd):
+        trigger_command(self.driver, cmd)
+
+    def activate(self):
+        self.command(Command.ACTIVATE)
 
 
 def confirm(what: str):
@@ -339,6 +374,24 @@ def test_backend_status(tmp_path, browser):
 
         # TODO implement positive check??
 
+def set_position(driver, settings: str):
+    browser = browser_(driver)
+
+    # TODO figure out browser from driver??
+    field = driver.find_element_by_xpath('//*[@id="position_css_id"]')
+    if browser.name == 'chrome':
+        # ugh... for some reason wouldn't send the keys...
+        field.click()
+        import pyautogui # type: ignore
+        pyautogui.press(['backspace'] * 100 + ['delete'] * 100)
+        pyautogui.typewrite(settings, interval=0.1)
+    else:
+        area = field.find_element_by_xpath('.//textarea')
+        area.send_keys([Keys.DELETE] * 500)
+        area.send_keys(settings)
+
+
+
 @browsers(FF, CH)
 def test_sidebar_bottom(browser):
     browser.skip_ci_x()
@@ -356,18 +409,7 @@ def test_sidebar_bottom(browser):
     --size: 20%;
 }"""
 
-        position_field = driver.find_element_by_xpath('//*[@id="position_css_id"]')
-        if browser.name == 'chrome':
-            # ugh... for some reason wouldn't send the keys...
-            position_field.click()
-            import pyautogui # type: ignore
-            pyautogui.press(['backspace'] * 100 + ['delete'] * 100)
-            pyautogui.typewrite(settings, interval=0.1)
-        else:
-            ares =  position_field.find_element_by_xpath('//textarea')
-            area.send_keys([Keys.DELETE] * 500)
-            area.send_keys(settings)
-
+        set_position(driver, settings)
 
         save_settings(driver)
 
