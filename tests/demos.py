@@ -15,22 +15,6 @@ from end2end_test import configure, get_window_id
 
 from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
 
-@uses_x
-@browsers(FF, CH)
-def test_demo(tmp_path, browser):
-    tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
-    urls = {
-         tutorial                                                : 'TODO read this',
-        'file:///usr/share/doc/python3/html/reference/index.html': None,
-    }
-    url = PYTHON_DOC_URL
-    with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
-        with record():
-            sleep(1)
-            helper.driver.get(tutorial)
-            sleep(1)
-            # TODO wait??
-
 
 def real_db():
     from private import real_db_path, test_filter
@@ -190,7 +174,6 @@ Six seven eight nine ten?
         wait(5)
 
 
-
 # TODO need to determine that uses X automatically
 @uses_x
 @browsers(FF, CH)
@@ -201,22 +184,24 @@ def test_demo_show_dots(tmp_path, browser):
 
     # TODO fast mode??
     url = 'https://slatestarcodex.com/'
-    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path) as (helper, annotate):
         driver = helper.driver
 
-        prompt('continue?')
         driver.get(url)
 
         # TODO display subs nicer??
 
-        ann.annotate('''
+        annotate('''
 On the left you can see a blogroll with recommended blogs.
 Lots of sites there!
 ''', length=3)
 
         wait(3)
 
-        ann.annotate('''
+        annotate('''
 You feel like reading something new.
 Which are the ones you haven't seen before?
         ''', length=3)
@@ -226,23 +211,22 @@ Which are the ones you haven't seen before?
         wait(3)
 
         # TODO request focus on 'prompt'??
-        prompt('continue?')
+        # prompt('continue?')
 
         # TODO move driver inside??
         trigger_command(driver, Command.SHOW_DOTS)
 
-        ann.annotate('''
+        annotate('''
 The command displays dots next to the links you've already visited,
 so you don't have to search browser history all over for each of them.
         ''', length=3)
         wait(3)
 
-        ann.annotate('''
+        annotate('''
 You can click straight on the ones you haven't seen before and start exploring!
         ''', length=10)
 
         wait(10)
-        prompt('continue?')
 
 
 @uses_x
@@ -253,24 +237,24 @@ def test_demo_show_dots_2(tmp_path, browser):
     # TODO maybe test on Baez instead?
     # TODO scroll to ?
     url = 'https://www.lesswrong.com/posts/vwqLfDfsHmiavFAGP/the-library-of-scott-alexandria#IV__Medicine__Therapy__and_Human_Enhancement'
-    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, ann):
+    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, annotate):
         driver = helper.driver
         driver.get(url)
         # TODO eh. maybe should start recording after the URL has loaded
 
-        ann.annotate('''
+        annotate('''
 Lots of links to explore on this page.
 Which ones I haven't seen before?
 ''', length=5)
         wait(5)
 
         trigger_command(driver, Command.SHOW_DOTS)
-        ann.annotate('''
+        annotate('''
 Hoteky press...
         ''', length=1.5)
         wait(1.5)
 
-        ann.annotate('''
+        annotate('''
 Dots appear next to the ones I've already visited!
         ''', length=8)
         wait(8)
@@ -287,16 +271,16 @@ def test_demo_child_visits(tmp_path, browser):
             browser=browser,
             path=path,
             subs_position='bottomleft',
-    ) as (helper, ann):
+    ) as (helper, annotate):
         driver = helper.driver
         driver.get('https://twitter.com/michael_nielsen/status/1162502843921600512')
 
-        ann.annotate('''
+        annotate('''
 While browsing Twitter, I see an account recomendation.
 ''', length=3)
         wait(3)
 
-        ann.annotate('''
+        annotate('''
 I really value Michael Nielsen's opinion, so it's worth checking out.
 ''', length=3)
         wait(3) # TODO maybe, wait by default??
@@ -308,7 +292,7 @@ I really value Michael Nielsen's opinion, so it's worth checking out.
         # TODO wait till loaded??
 
         # TODO turn contexts notification on here?
-        ann.annotate('''
+        annotate('''
 See the green eye icon in top right?
 That means I have run into that account before!
         ''', length=5)
@@ -316,14 +300,14 @@ That means I have run into that account before!
 
         wait(1)
         # TODO make hotkey popup larger...
-        ann.annotate('''
+        annotate('''
 Let's see...
         ''', length=2)
         wait(1)
         trigger_command(driver, Command.ACTIVATE)
         wait(1)
 
-        ann.annotate('''
+        annotate('''
 Right, I've already bookmarked something interesting from that guy before.
 Surely, I should follow him!
         ''', length=8)
@@ -340,13 +324,13 @@ def test_demo_child_visits_2(tmp_path, browser):
             browser=browser,
             path=path,
             subs_position='bottomleft',
-    ) as (helper, ann):
+    ) as (helper, annotate):
         driver = helper.driver
         # TODO jeez. medium takes ages to load..
         driver.get('https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7')
         wait(1)
 
-        ann.annotate('''
+        annotate('''
 I ran into this cool post on Hackernews.
 Usually I'd also check out the author's blog for more content.
 ''', length=4)
@@ -355,7 +339,7 @@ Usually I'd also check out the author's blog for more content.
         driver.get('https://medium.com/@justlv')
         wait(1)
 
-        ann.annotate('''
+        annotate('''
 The icon is green.
 So I've interacted with the page before!
 ''', length=4)
@@ -363,11 +347,11 @@ So I've interacted with the page before!
 
         wait(1)
         # TODO make hotkey popup larger...
-        ann.annotate('''
+        annotate('''
 Let's see...
         ''', length=2)
         wait(1)
-        trigger_command(driver, Command.ACTIVATE)
+        helper.activate()
         wait(1)
 
         helper.switch_to_sidebar()
@@ -378,13 +362,13 @@ Let's see...
         tweet = driver.find_element_by_class_name('locator')
         helper.move_to(tweet)
 
-        ann.annotate('''
+        annotate('''
 Cool, I've even tweeted about one of the posts on this blog before!
         ''', length=5)
         wait(5)
 
         # TODO original tweet -> smth else??
-        ann.annotate('''
+        annotate('''
 Clicking on 'context' will bring me straight to the original tweet.
         ''', length=2)
 
@@ -429,7 +413,7 @@ def test_demo_highlights(tmp_path, browser):
             path=path,
             subs_position='bottomleft',
             highlights=True,
-    ) as (helper, ann):
+    ) as (helper, annotate):
         # TODO is it possible to disable extension first??
         driver = helper.driver
 
@@ -442,7 +426,7 @@ def test_demo_highlights(tmp_path, browser):
 
         driver.get('https://instapaper.com/read/1257588750')
 
-        ann.annotate('''
+        annotate('''
 I'm using Instapaper to read and highlight articles while I'm offline on my phone.
         ''', length=5)
 
@@ -458,7 +442,7 @@ I'm using Instapaper to read and highlight articles while I'm offline on my phon
             driver2.get(ORIG)
 
             # TODO maybe, have annotation 'start' and 'interrupt'?
-            ann.annotate('''
+            annotate('''
 But if you open the original article, you can't see the annotations!
             ''', length=5)
 
@@ -467,7 +451,7 @@ But if you open the original article, you can't see the annotations!
             scroll_to_text(driver2, "As impossible as it sounds")
             wait(2.5)
 
-        ann.annotate('''
+        annotate('''
 Let's try it with Promnesia!
         ''', length=5)
 
@@ -477,7 +461,7 @@ Let's try it with Promnesia!
         scroll_to_text(driver, "As impossible as it sounds")
         wait(2.5)
 
-        ann.annotate('''
+        annotate('''
 Highlights are displayed within the original page!
         ''', length=3)
         wait(1)
@@ -485,12 +469,12 @@ Highlights are displayed within the original page!
         trigger_command(driver, Command.ACTIVATE)
         wait(2)
 
-        ann.annotate('''
+        annotate('''
 It works with any highlight source, whether it's Pocket, Hypothes.is or anything else.
         ''', length=4)
         wait(4)
 
-        ann.annotate('''
+        annotate('''
 Let me demonstrate...
         ''')
         wait(2)
@@ -500,7 +484,7 @@ Let me demonstrate...
         trigger_command(driver, Command.ACTIVATE)
 
         # TODO move cursor to the note?
-        ann.annotate('''
+        annotate('''
 This clipping is in my plaintext notes!
 It's not using any annotation service -- it's just an org-mode file!
         ''', length=5)
