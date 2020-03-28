@@ -381,6 +381,23 @@ Clicking on 'context' will bring me straight to the original tweet.
 from selenium import webdriver # type: ignore
 
 
+def scroll_to_text(driver, text: str):
+    # ActionChain doesn't work if the element isn't visible. ugh.
+    # https://stackoverflow.com/questions/3401343/scroll-element-into-view-with-selenium
+    # so have to resort to JS
+
+    element = driver.find_element_by_xpath(f"//*[contains(text(), '{text}')]")
+
+    loc = element.location
+    y = loc['y']
+
+    driver.execute_script(f'window.scrollTo(0, {y})')
+    # TODO a bit of wait??
+   
+
+from end2end_test import get_webdriver
+
+
 @uses_x
 @browsers(FF, CH)
 def test_demo_instapaper_highlights(tmp_path, browser):
@@ -405,20 +422,45 @@ def test_demo_instapaper_highlights(tmp_path, browser):
 
         driver.get('https://instapaper.com/read/1257588750')
 
+        ann.annotate('''
+I'm using Instapaper to read and highlight articles while I'm offline on my phone.
+        ''', length=5)
 
-        # TODO scroll to "That’s where things stood"
-        # then to "As impossible as it sounds"
-
-        breakpoint()
-
-        # However, if you open the original article, you can't see the annotations
+        scroll_to_text(driver, "where things stood")
+        wait(2.5)
+        scroll_to_text(driver, "As impossible as it sounds")
+        wait(2.5)
 
         # TODO go to div class="source" -> a class="original"
         # driver without the extension
-        driver2 = webdriver.Firefox()
+        ORIG = 'http://nautil.us/issue/66/clockwork/haunted-by-his-brother-he-revolutionized-physics-rp'
+        with get_webdriver(browser, extension=False) as driver2:
+            driver2.get(ORIG)
 
-        # TODO open in private window so the extension isn't active??
-        driver2.get('http://nautil.us/issue/66/clockwork/haunted-by-his-brother-he-revolutionized-physics-rp')
+            # TODO maybe, have annotation 'start' and 'interrupt'?
+            ann.annotate('''
+But if you open the original article, you can't see the annotations!
+            ''', length=5)
 
-        # TODO go to the same spot??
-        confirm('hi2')
+            scroll_to_text(driver2, "where things stood")
+            wait(2.5)
+            scroll_to_text(driver2, "As impossible as it sounds")
+            wait(2.5)
+
+        ann.annotate('''
+Let's try it with Promnesia!
+        ''', length=5)
+
+        driver.get(ORIG)
+        scroll_to_text(driver, "where things stood")
+        wait(2.5)
+        scroll_to_text(driver, "As impossible as it sounds")
+        wait(2.5)
+
+        ann.annotate('''
+Highlights are displayed within the original page!
+        ''', length=3)
+        wait(1)
+        # TODO encapsulate in come object instead?..
+        trigger_command(driver, Command.ACTIVATE)
+        wait(2)
