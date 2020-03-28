@@ -48,6 +48,9 @@ The backend regularly processes various *data sources* like:
   :PROPERTIES:
   :CUSTOM_ID: demo
   :END:
+You can find some short screencasts, demonstrating various features [[https://github.com/karlicoss/promnesia-demos][here]]
+
+  
 [[https://user-images.githubusercontent.com/291333/69828210-3755ac80-121b-11ea-9d1e-e5086cc9feda.png]]
 
 - You can see that I sent the link to someone on telegram
