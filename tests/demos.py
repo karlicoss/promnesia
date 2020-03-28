@@ -561,3 +561,68 @@ And here's the reference to the book!
             SELECT_SCRIPT + "\n" + "selectText(document.getElementsByTagName('dd')[17])"
         )
         wait(6)
+    # TODO mention that it's chrome history! so I wouldn't have it in my browser history in firefox
+
+
+
+@uses_x
+@browsers(FF, CH)
+def test_demo_watch_later(tmp_path, browser):
+    path = Path('demos/watch_later')
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+    ) as (helper, annotate):
+        driver = helper.driver
+
+        driver.get('https://www.youtube.com/watch?v=DvT-O_DI4t4')
+
+        annotate('''
+I have this video in my "Watch later" playlist.
+I wonder why?
+        ''', length=4)
+
+        helper.activate()
+        wait(1)
+
+        annotate('''
+Aha, my friend sent it to me on Telegram.
+The sidebar also conveniently displays the message that mentions it.
+        ''', length=5)
+        wait(5)
+
+        annotate('''
+Once I watched it, I want to discuss it with the friend.
+        ''', length=3)
+        wait(3)
+
+        helper.switch_to_sidebar()
+        driver.execute_script(CURSOR_SCRIPT)
+        loc = driver.find_element_by_class_name('locator')
+        helper.move_to(loc)
+
+        annotate('''
+Clicking on the "chat with" link will jump straight into that message, in Telegram web app.
+        ''', length=5)
+        wait(2)
+        a_loc = loc.find_element_by_tag_name('a')
+        helper.move_to(a_loc)
+        wait(3)
+
+        # TODO not actually clicking, becaus I have no idea how to censor Telegram into a proper demo
+        # document.getElementsByClassName('im_dialogs_col')[0].style.display = 'none'
+        # TODO get url
+
+        # TODO how to censor the link???
+
+        # driver.get('https://web.telegram.org')
+        # breakpoint()
+        #
+        # TODO hide im_message_from_photo
+        # .im_message_body {
+        #     color:
+        #     white;
+        # }
+        # TODO <span class="peer_initials nocopy im_message_from_photo user_bgcolor_4" data-content="initials_here"></span>
