@@ -268,6 +268,20 @@ class TestHelper(NamedTuple):
     def open_page(self, page: str) -> None:
         open_extension_page(self.driver, page)
 
+    def move_to(self, element):
+        from selenium.webdriver.common.action_chains import ActionChains # type: ignore
+        ActionChains(self.driver).move_to_element(element).perform()
+
+    def switch_to_sidebar(self):
+        self.driver.switch_to.default_content()
+        self.driver.switch_to.frame('promnesia-sidebar')
+
+    def command(self, cmd):
+        trigger_command(self.driver, cmd)
+
+    def activate(self):
+        self.command(Command.ACTIVATE)
+
 
 def confirm(what: str):
     import click # type: ignore

@@ -57,6 +57,9 @@ class Annotator:
         self.start = datetime.now()
         self.l = []
 
+    def __call__(self, *args, **kwargs) -> None:
+        return self.annotate(*args, **kwargs)
+
     def annotate(self, text: str, length=2) -> None:
         # TODO how to display during recording??
         now = datetime.now()
@@ -64,7 +67,7 @@ class Annotator:
         self.l.append((now, text, length))
 
     def build(self):
-        from srt import Subtitle, compose
+        from srt import Subtitle, compose # type: ignore
         subs = (
             Subtitle(
                 index=i + 1,
@@ -306,7 +309,8 @@ Surely, I should follow him!
         ''', length=8)
         wait(8)
 
-       
+
+
 @uses_x
 @browsers(FF, CH)
 def test_demo_child_visits_2(tmp_path, browser):
@@ -346,17 +350,13 @@ Let's see...
         trigger_command(driver, Command.ACTIVATE)
         wait(1)
 
-        driver.switch_to.default_content()
-        driver.switch_to.frame('promnesia-sidebar')
-
-        def move_to(element):
-            from selenium.webdriver.common.action_chains import ActionChains
-            ActionChains(driver).move_to_element(element).perform()
+        helper.switch_to_sidebar()
 
         driver.execute_script(CURSOR_SCRIPT)
+        # TODO move to helper??
 
         tweet = driver.find_element_by_class_name('locator')
-        move_to(tweet)
+        helper.move_to(tweet)
 
         ann.annotate('''
 Cool, I've even tweeted about one of the posts on this blog before!
@@ -369,7 +369,7 @@ Clicking on 'context' will bring me straight to the original tweet.
         ''', length=2)
 
         a_tweet = tweet.find_element_by_tag_name('a')
-        move_to(a_tweet)
+        helper.move_to(a_tweet)
 
         wait(2)
 
@@ -485,3 +485,35 @@ This clipping is in my plaintext notes!
 It's not using any annotation service -- it's just an org-mode file!
         ''', length=5)
         wait(7)
+
+
+# TODO https://www.youtube.com/watch?v=YKLpz025vYY
+# TODO https://www.youtube.com/watch?v=17Q0tJZcsnY
+# TODO https://en.wikipedia.org/wiki/SnapPea
+
+@uses_x
+@browsers(FF, CH)
+def test_demo_how_did_i_get_here(tmp_path, browser):
+    path = Path('demos/how_did_i_get_here')
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+    ) as (helper, annotate):
+        driver = helper.driver
+        driver.get('https://www.amazon.co.uk/Topoi-Categorial-Analysis-Logic-Mathematics/dp/0486450260')
+
+        annotate('''
+I found this link in my bookmarks.
+Why did I add it???
+        ''')
+        helper.activate()
+
+        helper.switch_to_sidebar()
+
+        driver.execute_script(CURSOR_SCRIPT)
+        last_dt = list(driver.find_elements_by_class_name('datetime'))[-1]
+        helper.move_to(last_dt)
+
+        breakpoint()
