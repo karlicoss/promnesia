@@ -78,19 +78,19 @@ class Annotator:
 
 
 @contextmanager
-def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft', **kwargs):
+def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft', size='40%', **kwargs):
     # TODO literal type??
     spos = {
         'topleft'   : 5, # no ide why it's five
         'bottomleft': 1,
     }.get(subs_position)
 
-    position = '''
-.promnesia {
+    position = f'''
+.promnesia {{
     --right: 1;
-    --size:  40%;
+    --size:  {size};
     background-color: rgba(236, 236, 236, 0.6)
-}
+}}
     '''
 
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
@@ -400,9 +400,9 @@ from end2end_test import get_webdriver
 
 @uses_x
 @browsers(FF, CH)
-def test_demo_instapaper_highlights(tmp_path, browser):
+def test_demo_highlights(tmp_path, browser):
     assert browser == FF, browser # because of the profile_dir hack
-    path = Path('demos/instapaper-highlights')
+    path = Path('demos/highlights')
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -464,3 +464,24 @@ Highlights are displayed within the original page!
         # TODO encapsulate in come object instead?..
         trigger_command(driver, Command.ACTIVATE)
         wait(2)
+
+        ann.annotate('''
+It works with any highlight source, whether it's Pocket, Hypothes.is or anything else.
+        ''', length=4)
+        wait(4)
+
+        ann.annotate('''
+Let me demonstrate...
+        ''')
+        wait(2)
+
+        driver.get('https://en.wikipedia.org/wiki/Empty_Spaces')
+        wait(3)
+        trigger_command(driver, Command.ACTIVATE)
+
+        # TODO move cursor to the note?
+        ann.annotate('''
+This clipping is in my plaintext notes!
+It's not using any annotation service -- it's just an org-mode file!
+        ''', length=5)
+        wait(7)
