@@ -122,6 +122,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
                 yield helper, ann
 
             subs = path.with_suffix('.srt')
+            subs.write_text(ann.build())
             out  = path.with_suffix('.mp4')
 
             sub_settings = f"subtitles={subs}:force_style='Alignment={spos},PrimaryColour=&H00ff00&'"
@@ -134,6 +135,9 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
                 '-vf', sub_settings,
                 out,
             ])
+
+            # TODO unlink subs here?
+            # subs.unlink()
 
 
 # TODO use ass?
@@ -166,7 +170,6 @@ def test_demo_show_dots(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
 
     path = Path('demos/show-dots')
-    subs = path.with_suffix('.srt')
 
     # TODO fast mode??
     url = 'https://slatestarcodex.com/'
@@ -213,20 +216,11 @@ You can click straight on the ones you haven't seen before and start exploring!
         wait(10)
         prompt('continue?')
 
-        # TODO would be nice to actually generate subtitles??
-        # TODO not sure how long to wait...
-
-        subs.write_text(ann.build())
-
-    # TODO not sure if should keep srt file around?
-    subs.unlink()
-
 
 @uses_x
 @browsers(FF, CH)
 def test_demo_show_dots_2(tmp_path, browser):
     path = Path('demos/show-dots-2')
-    subs = path.with_suffix('.srt')
 
     # TODO maybe test on Baez instead?
     # TODO scroll to ?
@@ -253,11 +247,6 @@ Dots appear next to the ones I've already visited!
         ''', length=8)
         wait(8)
 
-        # TODO contextmanager?
-        subs.write_text(ann.build())
-
-    subs.unlink()
-
 
 # TODO perhaps make them independent of network? Although useful for demos
 
@@ -265,8 +254,6 @@ Dots appear next to the ones I've already visited!
 @browsers(FF, CH)
 def test_demo_child_visits(tmp_path, browser):
     path = Path('demos/child-visits')
-    subs = path.with_suffix('.srt')
-
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -314,16 +301,11 @@ Surely, I should follow him!
         ''', length=8)
         wait(8)
 
-        subs.write_text(ann.build())
-
-    subs.unlink()
-
+       
 @uses_x
 @browsers(FF, CH)
 def test_demo_child_visits_2(tmp_path, browser):
     path = Path('demos/child-visits-2')
-    subs = path.with_suffix('.srt')
-
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -390,6 +372,4 @@ Clicking on 'context' will bring me straight to the original tweet.
 
         wait(8)
 
-        subs.write_text(ann.build())
 
-    subs.unlink()
