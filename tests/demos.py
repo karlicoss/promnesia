@@ -78,7 +78,7 @@ class Annotator:
 
 
 @contextmanager
-def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft'):
+def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft', **kwargs):
     # TODO literal type??
     spos = {
         'topleft'   : 5, # no ide why it's five
@@ -106,12 +106,16 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
             '-e', f'0,0,100,{W // 2},{H - 100}',
         ])
 
+        extras = kwargs
+        if 'highlights' not in extras:
+            extras['highlights'] = False
+
         configure(
             driver,
             host=None, port=None, # TODO meh
             notification=False,
-            highlights=False,
             position=position,
+            **extras,
         )
 
         driver.get('about:blank')
@@ -387,7 +391,7 @@ def test_demo_instapaper_highlights(tmp_path, browser):
             browser=browser,
             path=path,
             subs_position='bottomleft',
-            profile_dir='demos/firefox_profile',
+            highlights=True,
     ) as (helper, ann):
         # TODO is it possible to disable extension first??
         driver = helper.driver

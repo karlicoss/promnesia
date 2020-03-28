@@ -98,7 +98,7 @@ def get_hotkey(driver, cmd: str) -> str:
     return cmd_map[cmd].split('+')
 
 
-def _get_webdriver(tdir: Path, browser: Browser):
+def _get_webdriver(tdir: Path, browser: Browser, extension=True):
     addon = get_addon_path(kind=browser.dist)
     if browser.name == 'firefox':
         profile = webdriver.FirefoxProfile(str(tdir))
@@ -110,9 +110,11 @@ def _get_webdriver(tdir: Path, browser: Browser):
         # driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox', options=options)
         # TODO how to pass it here properly?
 
-        driver.install_addon(str(addon), temporary=True)
+        if extension:
+            driver.install_addon(str(addon), temporary=True)
     elif browser.name == 'chrome':
         # TODO ugh. very hacky...
+        assert extension, "TODO add support for extension arg"
         ex = tdir / 'extension.zip'
         files = [x.name for x in addon.iterdir()]
         check_call(['apack', '-q', str(ex), *files], cwd=addon)
@@ -128,10 +130,10 @@ def _get_webdriver(tdir: Path, browser: Browser):
 
 # TODO copy paste from grasp
 @contextmanager
-def get_webdriver(browser: Browser):
+def get_webdriver(browser: Browser, extension=True):
     with TemporaryDirectory() as td:
         tdir = Path(td)
-        driver = _get_webdriver(tdir, browser=browser)
+        driver = _get_webdriver(tdir, browser=browser, extension=extension)
         try:
             yield driver
         finally:
