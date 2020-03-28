@@ -3,6 +3,7 @@ from datetime import timedelta, datetime
 from pathlib import Path
 from time import sleep
 from subprocess import check_call
+from typing import Optional
 
 
 from common import uses_x
@@ -373,3 +374,47 @@ Clicking on 'context' will bring me straight to the original tweet.
         wait(8)
 
 
+from selenium import webdriver # type: ignore
+
+
+@uses_x
+@browsers(FF, CH)
+def test_demo_instapaper_highlights(tmp_path, browser):
+    assert browser == FF, browser # because of the profile_dir hack
+    path = Path('demos/instapaper-highlights')
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+            profile_dir='demos/firefox_profile',
+    ) as (helper, ann):
+        # TODO is it possible to disable extension first??
+        driver = helper.driver
+
+        from private import instapaper_cookies
+
+        # necessary to set cookies on instapaper..
+        driver.get('http://instapaper.com')
+        for cookie in instapaper_cookies():
+            driver.add_cookie(cookie)
+
+        driver.get('https://instapaper.com/read/1257588750')
+
+
+        # TODO scroll to "That’s where things stood"
+        # then to "As impossible as it sounds"
+
+        breakpoint()
+
+        # However, if you open the original article, you can't see the annotations
+
+        # TODO go to div class="source" -> a class="original"
+        # driver without the extension
+        driver2 = webdriver.Firefox()
+
+        # TODO open in private window so the extension isn't active??
+        driver2.get('http://nautil.us/issue/66/clockwork/haunted-by-his-brother-he-revolutionized-physics-rp')
+
+        # TODO go to the same spot??
+        confirm('hi2')
