@@ -13,7 +13,7 @@ from integration_test import index_urls
 from end2end_test import confirm, trigger_command, Command
 from end2end_test import configure, get_window_id
 
-from record import record, hotkeys, CURSOR_SCRIPT
+from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
 
 @uses_x
 @browsers(FF, CH)
@@ -506,14 +506,58 @@ def test_demo_how_did_i_get_here(tmp_path, browser):
 
         annotate('''
 I found this link in my bookmarks.
-Why did I add it???
-        ''')
+Hmmm, can't remember, why I added it.
+        ''', length=4)
+        wait(4)
+
         helper.activate()
+        wait(1)
+
+        annotate('''
+If you click on a timestamp, you'll jump straight into the place in timeline where the visit occured.
+        ''', length=6)
+        wait(2)
 
         helper.switch_to_sidebar()
 
         driver.execute_script(CURSOR_SCRIPT)
         last_dt = list(driver.find_elements_by_class_name('datetime'))[-1]
         helper.move_to(last_dt)
+        wait(4)
 
-        breakpoint()
+        # TODO helper to click 'the' link on the element??
+        # last_dt.find_element_by_tag_name('a').click()
+        # TODO highlight clicks??
+        last_dt.click()
+        driver.switch_to.window(driver.window_handles[-1])
+        driver.execute_script(CURSOR_SCRIPT)
+        wait(1)
+
+        annotate('''
+Looks like right before clicking on the Amazon link, I was reading
+a book on math.ucr.edu/home/baez/planck
+Let's see...
+        ''', length=7)
+        wait(3)
+        #
+        #
+        # meh..
+
+        node8 = 'math.ucr.edu/home/baez/planck/node8.html'
+        baez = driver.find_element_by_link_text(node8)
+        helper.move_to(baez)
+        wait(4)
+
+        # driver.execute_script(f"window.open('{node8}')")
+        # TODO encapsulate??
+        baez.click()
+        # driver.switch_to.window(driver.window_handles[-1])
+
+        annotate('''
+And here's the reference to the book!
+        ''', length=4)
+        driver.execute_script(
+            # meh
+            SELECT_SCRIPT + "\n" + "selectText(document.getElementsByTagName('dd')[17])"
+        )
+        wait(6)
