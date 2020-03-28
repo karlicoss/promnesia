@@ -170,6 +170,26 @@ def wait(x):
     sleep(x)
 
 
+@uses_x
+@browsers(FF, CH)
+def test_demo_quick(tmp_path, browser):
+    path = Path('demos/quick')
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+    ) as (helper, annotate):
+        driver = helper.driver
+
+        driver.get('https://en.wikipedia.org/wiki/Whatever_(slang)')
+        annotate('''
+One two three four five.
+Six seven eight nine ten?
+        ''', length=5)
+        wait(5)
+
+
 
 # TODO need to determine that uses X automatically
 @uses_x
