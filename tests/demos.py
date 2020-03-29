@@ -60,13 +60,15 @@ class Annotator:
                 text=text.replace('\n', r'\N'), # \N necessary for SSA files
             ) for t, text, length in self.l
         )
-        # TODO alignment needs to be applied here
         sf = SSAFile()
         style = sf.styles['Default'].copy()
+        style.fontsize = 16 # default is 20, bit too much??
         style.outlinecolor = Color(0, 0, 0, 50) # semitransparent
-        style.outline = 0.1
         style.shadow = 0.0
+
+        style.outline = 0.1
         style.borderstyle = 3 # no idea why 3, but it makes the background apperar in conjunction with outline
+
         for k, v in extra.items():
             setattr(style, k, v)
         sf.styles['Default'] = style
@@ -80,10 +82,14 @@ class Annotator:
 def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft', size='40%', **kwargs):
     # TODO literal type??
     # https://stackoverflow.com/a/25880038/706389
+    # 789
+    # 456
+    # 123
     spos = {
-        'topleft'   : 7,
-        'bottomleft': 1,
-    }.get(subs_position, 2) # default -- mid bottom
+        'topleft'    : 7,
+        'bottomleft' : 1,
+        'bottomright': 3,
+    }[subs_position]
 
     position = f'''
 .promnesia {{
@@ -128,7 +134,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
 
             subs = path.with_suffix('.ssa')
             subs.write_text(ann.build(alignment=spos))
-            out  = path.with_suffix('.mp4')
+            out  = path.with_suffix('.webm')
 
             check_call([
                 'ffmpeg',
@@ -198,7 +204,9 @@ def test_demo_show_dots(tmp_path, browser):
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
-            path=path) as (helper, annotate):
+            path=path,
+            subs_position='bottomright',
+    ) as (helper, annotate):
         driver = helper.driver
 
         driver.get(url)
@@ -224,14 +232,15 @@ Which are the ones you haven't seen before?
         # TODO request focus on 'prompt'??
         # prompt('continue?')
 
-        # TODO move driver inside??
-        trigger_command(driver, Command.SHOW_DOTS)
+        helper.show_visited()
+
+        wait(1)
 
         annotate('''
-The command displays dots next to the links you've already visited,
-so you don't have to search browser history all over for each of them.
-        ''', length=3)
-        wait(3)
+The command displays dots next to the links you've already visited.
+That way you don't have to search browser history all over for each of them!
+        ''', length=5)
+        wait(5)
 
         annotate('''
 You can click straight on the ones you haven't seen before and start exploring!

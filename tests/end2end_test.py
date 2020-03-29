@@ -282,6 +282,9 @@ class TestHelper(NamedTuple):
     def activate(self):
         self.command(Command.ACTIVATE)
 
+    def show_visited(self):
+        self.command(Command.SHOW_DOTS)
+
 
 def confirm(what: str):
     import click # type: ignore
