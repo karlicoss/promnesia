@@ -51,16 +51,19 @@ class Annotator:
         self.l.append((now, text, length))
 
     def build(self):
-        from srt import Subtitle, compose # type: ignore
+        from pysubs2 import SSAFile, SSAEvent # type: ignore[import]
+        millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
-            Subtitle(
-                index=i + 1,
-                start=t - self.start,
-                end  =t - self.start + timedelta(seconds=length),
-                content=text,
-            ) for i, (t, text, length) in enumerate(self.l)
+            SSAEvent(
+                start=millis(t - self.start),
+                end  =millis(t - self.start + timedelta(seconds=length)),
+                text=text.replace('\n', r'\N'), # \N necessary for SSA files
+            ) for t, text, length in self.l
         )
-        return compose(subs)
+        sf = SSAFile()
+        for s in subs:
+            sf.append(s)
+        return sf.to_string('ass')
 
 
 
@@ -113,11 +116,12 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
                 ann = Annotator()
                 yield helper, ann
 
-            subs = path.with_suffix('.srt')
+            subs = path.with_suffix('.ssa')
             subs.write_text(ann.build())
             out  = path.with_suffix('.mp4')
 
-            sub_settings = f"subtitles={subs}:force_style='Alignment={spos},PrimaryColour=&H00ff00&'"
+            # sub_settings = f"subtitles={subs}:force_style='Alignment={spos},PrimaryColour=&H00ff00&'"
+            sub_settings = f"ass={subs}"
 
             check_call([
                 'ffmpeg',
