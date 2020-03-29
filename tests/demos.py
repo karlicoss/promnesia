@@ -275,7 +275,7 @@ Hoteky press...
         wait(1.5)
 
         annotate('''
-Dots appear next to the ones I've already visited!
+Links I've already visited are marked with dots!
         ''', length=8)
         wait(8)
 
@@ -296,25 +296,27 @@ def test_demo_child_visits(tmp_path, browser):
         driver.get('https://twitter.com/michael_nielsen/status/1162502843921600512')
 
         annotate('''
-While browsing Twitter, I see an account recomendation.
-''', length=3)
-        wait(3)
+While browsing Twitter, I see an account recommendation.
+''', length=4)
+        wait(4)
 
         annotate('''
 I really value Michael Nielsen's opinion, so it's worth checking out.
-''', length=3)
-        wait(3) # TODO maybe, wait by default??
+''', length=5)
+        wait(5) # TODO maybe, wait by default??
+
+        # TODO move_to, etc. animate!
 
         driver.get('https://twitter.com/eriktorenberg')
 
-        wait(1)
+        wait(3)
 
         # TODO wait till loaded??
 
         # TODO turn contexts notification on here?
         annotate('''
 See the green eye icon in top right?
-That means I have run into that account before!
+It means I have run into this account before!
         ''', length=5)
         wait(5)
 
@@ -325,7 +327,7 @@ Let's see...
         ''', length=2)
         wait(1)
         trigger_command(driver, Command.ACTIVATE)
-        wait(1)
+        wait(2)
 
         annotate('''
 Right, I've already bookmarked something interesting from that guy before.
@@ -353,8 +355,8 @@ def test_demo_child_visits_2(tmp_path, browser):
         annotate('''
 I ran into this cool post on Hackernews.
 Usually I'd also check out the author's blog for more content.
-''', length=4)
-        wait(4)
+''', length=6)
+        wait(6)
 
         driver.get('https://medium.com/@justlv')
         wait(1)
@@ -362,8 +364,8 @@ Usually I'd also check out the author's blog for more content.
         annotate('''
 The icon is green.
 So I've interacted with the page before!
-''', length=4)
-        wait(4)
+''', length=5)
+        wait(5)
 
         wait(1)
         # TODO make hotkey popup larger...
@@ -390,7 +392,8 @@ Cool, I've even tweeted about one of the posts on this blog before!
         # TODO original tweet -> smth else??
         annotate('''
 Clicking on 'context' will bring me straight to the original tweet.
-        ''', length=2)
+        ''', length=4)
+        wait(2)
 
         a_tweet = tweet.find_element_by_tag_name('a')
         helper.move_to(a_tweet)
@@ -448,12 +451,13 @@ def test_demo_highlights(tmp_path, browser):
 
         annotate('''
 I'm using Instapaper to read and highlight articles while I'm offline on my phone.
-        ''', length=5)
+        ''', length=7)
+        wait(2)
 
         scroll_to_text(driver, "where things stood")
-        wait(2.5)
+        wait(3)
         scroll_to_text(driver, "As impossible as it sounds")
-        wait(2.5)
+        wait(3)
 
         # TODO go to div class="source" -> a class="original"
         # driver without the extension
@@ -464,42 +468,44 @@ I'm using Instapaper to read and highlight articles while I'm offline on my phon
             # TODO maybe, have annotation 'start' and 'interrupt'?
             annotate('''
 But if you open the original article, you can't see the annotations!
-            ''', length=5)
+            ''', length=7)
+            wait(2)
 
             scroll_to_text(driver2, "where things stood")
-            wait(2.5)
+            wait(3)
             scroll_to_text(driver2, "As impossible as it sounds")
-            wait(2.5)
+            wait(3)
 
         annotate('''
 Let's try it with Promnesia!
-        ''', length=5)
+        ''', length=7)
+        wait(2)
 
         driver.get(ORIG)
         scroll_to_text(driver, "where things stood")
-        wait(2.5)
+        wait(3)
         scroll_to_text(driver, "As impossible as it sounds")
-        wait(2.5)
+        wait(3)
 
         annotate('''
 Highlights are displayed within the original page!
-        ''', length=3)
-        wait(1)
+        ''', length=5)
+        wait(2)
         # TODO encapsulate in come object instead?..
         trigger_command(driver, Command.ACTIVATE)
-        wait(2)
+        wait(3)
 
         annotate('''
-It works with any highlight source, whether it's Pocket, Hypothes.is or anything else.
-        ''', length=4)
-        wait(4)
+It works with any highlight source, be it Pocket, Hypothes.is or anything else.
+        ''', length=5)
+        wait(5)
 
         annotate('''
 Let me demonstrate...
         ''')
         wait(2)
 
-        driver.get('https://en.wikipedia.org/wiki/Empty_Spaces')
+        driver.get('https://en.wikipedia.org/wiki/Empty_Spaces#Composition')
         wait(3)
         trigger_command(driver, Command.ACTIVATE)
 
@@ -507,8 +513,8 @@ Let me demonstrate...
         annotate('''
 This clipping is in my plaintext notes!
 It's not using any annotation service -- it's just an org-mode file!
-        ''', length=5)
-        wait(7)
+        ''', length=7)
+        wait(9)
 
 
 # TODO https://www.youtube.com/watch?v=YKLpz025vYY
@@ -531,8 +537,8 @@ def test_demo_how_did_i_get_here(tmp_path, browser):
         annotate('''
 I found this link in my bookmarks.
 Hmmm, can't remember, why I added it.
-        ''', length=4)
-        wait(4)
+        ''', length=6)
+        wait(6)
 
         helper.activate()
         wait(1)
@@ -561,10 +567,8 @@ If you click on a timestamp, you'll jump straight into the place in timeline whe
 Looks like right before clicking on the Amazon link, I was reading
 a book on math.ucr.edu/home/baez/planck
 Let's see...
-        ''', length=7)
-        wait(3)
-        #
-        #
+        ''', length=8)
+        wait(4)
         # meh..
 
         node8 = 'math.ucr.edu/home/baez/planck/node8.html'
@@ -577,14 +581,16 @@ Let's see...
         baez.click()
         # driver.switch_to.window(driver.window_handles[-1])
 
+        wait(2)
         annotate('''
 And here's the reference to the book!
-        ''', length=4)
+        ''', length=5)
+        wait(2)
         driver.execute_script(
             # meh
             SELECT_SCRIPT + "\n" + "selectText(document.getElementsByTagName('dd')[17])"
         )
-        wait(6)
+        wait(7)
     # TODO mention that it's chrome history! so I wouldn't have it in my browser history in firefox
 
 
@@ -607,13 +613,14 @@ def test_demo_watch_later(tmp_path, browser):
 I have this video in my "Watch later" playlist.
 I wonder why?
         ''', length=4)
+        wait(4)
 
         helper.activate()
         wait(1)
 
         annotate('''
 Aha, my friend sent it to me on Telegram.
-The sidebar also conveniently displays the message that mentions it.
+The sidebar also embeds the message that mentions it.
         ''', length=5)
         wait(5)
 
@@ -628,7 +635,7 @@ Once I watched it, I want to discuss it with the friend.
         helper.move_to(loc)
 
         annotate('''
-Clicking on the "chat with" link will jump straight into that message, in Telegram web app.
+Clicking on the "chat with" link will jump straight into that message in Telegram web app.
         ''', length=5)
         wait(2)
         a_loc = loc.find_element_by_tag_name('a')
