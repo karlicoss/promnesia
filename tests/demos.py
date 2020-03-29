@@ -136,13 +136,10 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
             subs.write_text(ann.build(alignment=spos))
             out  = path.with_suffix('.webm')
 
+            converter = Path(__file__).parent.absolute() / 'convert_screencast.py'
             check_call([
-                'ffmpeg',
-                '-hide_banner', '-loglevel', 'panic', # less spam
-                '-y', # allow overwrite
-                '-i', rpath,
-                '-vf', f"ass={subs}",
-                out,
+                converter,
+                path,
             ])
 
             # TODO unlink subs here?
@@ -392,7 +389,7 @@ Cool, I've even tweeted about one of the posts on this blog before!
         # TODO original tweet -> smth else??
         annotate('''
 Clicking on 'context' will bring me straight to the original tweet.
-        ''', length=4)
+        ''', length=6)
         wait(2)
 
         a_tweet = tweet.find_element_by_tag_name('a')
