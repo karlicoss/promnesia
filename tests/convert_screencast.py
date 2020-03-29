@@ -19,7 +19,12 @@ def convert(path: Path):
     # otherwise quiality sucks, e.g. letters are grainy
     for stage in [
             f'-b:v 0  -crf 30  -pass 1 -passlogfile {path.with_suffix(".pass0")} -an -f webm /dev/null',
-            f'-b:v 0  -crf 30  -pass 2 {webm}',
+            f'-b:v 0  -crf 30  -pass 2 {webm}' if all(
+                x not in str(ogv) for x in (
+                    # fucking hell, it segfaults...
+                    'child-visits-2',
+                    'highlights',
+                )) else str(webm),
     ]:
         check_call([
             'ffmpeg',

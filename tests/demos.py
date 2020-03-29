@@ -267,7 +267,7 @@ Which ones I haven't seen before?
 
         trigger_command(driver, Command.SHOW_DOTS)
         annotate('''
-Hoteky press...
+Hotkey press...
         ''', length=1.5)
         wait(1.5)
 
