@@ -50,8 +50,8 @@ class Annotator:
         print(f"ANNOTATING: {text}")
         self.l.append((now, text, length))
 
-    def build(self):
-        from pysubs2 import SSAFile, SSAEvent # type: ignore[import]
+    def build(self, **extra):
+        from pysubs2 import SSAFile, SSAEvent, Color # type: ignore[import]
         millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
             SSAEvent(
@@ -60,7 +60,16 @@ class Annotator:
                 text=text.replace('\n', r'\N'), # \N necessary for SSA files
             ) for t, text, length in self.l
         )
+        # TODO alignment needs to be applied here
         sf = SSAFile()
+        style = sf.styles['Default'].copy()
+        style.outlinecolor = Color(0, 0, 0, 50) # semitransparent
+        style.outline = 0.1
+        style.shadow = 0.0
+        style.borderstyle = 3 # no idea why 3, but it makes the background apperar in conjunction with outline
+        for k, v in extra.items():
+            setattr(style, k, v)
+        sf.styles['Default'] = style
         for s in subs:
             sf.append(s)
         return sf.to_string('ass')
@@ -70,10 +79,11 @@ class Annotator:
 @contextmanager
 def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft', size='40%', **kwargs):
     # TODO literal type??
+    # https://stackoverflow.com/a/25880038/706389
     spos = {
-        'topleft'   : 5, # no ide why it's five
+        'topleft'   : 7,
         'bottomleft': 1,
-    }.get(subs_position)
+    }.get(subs_position, 2) # default -- mid bottom
 
     position = f'''
 .promnesia {{
@@ -117,18 +127,15 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
                 yield helper, ann
 
             subs = path.with_suffix('.ssa')
-            subs.write_text(ann.build())
+            subs.write_text(ann.build(alignment=spos))
             out  = path.with_suffix('.mp4')
-
-            # sub_settings = f"subtitles={subs}:force_style='Alignment={spos},PrimaryColour=&H00ff00&'"
-            sub_settings = f"ass={subs}"
 
             check_call([
                 'ffmpeg',
                 '-hide_banner', '-loglevel', 'panic', # less spam
                 '-y', # allow overwrite
                 '-i', rpath,
-                '-vf', sub_settings,
+                '-vf', f"ass={subs}",
                 out,
             ])
 
@@ -166,7 +173,7 @@ def test_demo_quick(tmp_path, browser):
             tmp_path=tmp_path,
             browser=browser,
             path=path,
-            subs_position='bottomleft',
+            subs_position='topleft',
     ) as (helper, annotate):
         driver = helper.driver
 
