@@ -580,7 +580,7 @@ Let's see...
 
         wait(2)
         annotate('''
-And here's the reference to the book!
+Aha! Here's the reference to the book.
         ''', length=5)
         wait(2)
         driver.execute_script(
