@@ -1,0 +1,42 @@
+name: CI
+on: [push, pull_request]
+
+env:
+  # for tests
+  # not sure if tests should detect GITHUB_WORKFLOW instead??
+  CI: true
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # TODO matrix??
+      
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - run: ci/github-ci-compat
+
+    - run: |
+        python3 -m pip install --user tox
+        sudo apt install python3-dev # TODO ugh, regex (dateparser's dep needs it???)
+        sudo apt install python3-doc
+        python3 -m tox
+
+  install_and_run_test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - run: ci/github-ci-compat
+
+    - run: |
+        python3 -m pip install pytest
+        python3 -m pip install .
+        export PATH=ci/fake-systemd:$PATH
+        tests/install_and_run

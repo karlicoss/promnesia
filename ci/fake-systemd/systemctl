@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# dummy systemctl implementation that's capable of running the service and nothing else
+
+import argparse
+from pathlib import Path
+from subprocess import Popen
+import sys
+
+
+def main():
+    args = sys.argv[1:]
+    args = [x for x in args if not x.startswith('--')]
+
+    print(args)
+    cmd = args[0]
+    if cmd != 'start':
+        return
+
+    name = args[1]
+    sdir = Path('~/.config/systemd/user').expanduser()
+    unit = sdir / name
+
+    contents = unit.read_text()
+
+    ES = 'ExecStart='
+    command = None
+    for line in contents.splitlines():
+        if line.startswith(ES):
+            command = line[len(ES):]
+            break
+    assert command is not None, contents
+
+    # after that will be inherined by init
+    print('Running: ' + command)
+    Popen(command, shell=True)
+
+
+if __name__ == '__main__':
+    main()
