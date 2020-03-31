@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 cd ..
 
-act -P ubuntu-latest=ubuntu:bionic
+act -P ubuntu-latest=ubuntu:bionic "$@"
 
 # you can docker exec -it /bin/bash into the container and debug there
 

@@ -1,0 +1,27 @@
+#!/bin/bash -eux
+
+# install sudo if it's missing
+# probably means that we're running under local docker..
+if ! which sudo; then
+    apt update
+    apt -y install sudo
+fi
+
+# compensate for differences between ubuntu:bionic and github action image...
+
+# ugh. bionic image is on py3.6 by default..
+sudo apt -y install python3.7 python3.7-dev
+
+# meh
+sudo ln -sfT $(which python3.7) /usr/bin/python3
+
+# otherwise setuptools don't work..
+sudo apt -y install git
+
+# jq wants it??
+sudo apt -y install dh-autoreconf
+
+sudo apt -y install python3-pip
+
+# this is only necessary on gitlab CI apparently???
+sudo apt -y install python3-setuptools
