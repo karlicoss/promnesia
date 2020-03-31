@@ -26,6 +26,7 @@ jobs:
         python3 -m tox
 
   install_and_run_test:
+    # TODO run on macos too?
     runs-on: ubuntu-latest
 
     steps:
@@ -40,3 +41,15 @@ jobs:
         python3 -m pip install .
         export PATH=ci/fake-systemd:$PATH
         tests/install_and_run
+
+
+  run_demo:
+    strategy:
+      matrix:
+        platform: [macos-latest] # ubuntu-latest,
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - run: |
+        pip3 install --user promnesia
+        promnesia demo --port 16789 https://github.com/karlicoss/exobrain
