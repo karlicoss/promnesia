@@ -94,7 +94,7 @@ def do_demo(index_as: str, params: Sequence[str], port: Optional[str]):
     # TODO logging?
     idx = demo_sources()[index_as]()
 
-    idxr = Source(idx, *params, name='demo')
+    idxr = Source(idx, *params)
     hist, errors = previsits_to_history(idxr, src=idxr.src)
 
     for e in errors:

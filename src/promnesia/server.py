@@ -67,7 +67,8 @@ def as_json(v: DbVisit) -> Dict:
     return {
         # TODO do not display year if it's current year??
         'dt': dts,
-        'src': v.src,
+        # TODO the frontend had some bug with handling empty string as src. fix that later
+        'src': v.src or 'unnamed',
         'context': v.context,
         'duration': v.duration,
         'locator': {
