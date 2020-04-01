@@ -108,8 +108,6 @@ jobs:
       # Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
 
       # right, since we're using pyenv now, we should be doing global install apaprently, otherwise hug is shadowed
-      # TODO FIXME canonify imports it...
-      - run: python3 -m pip install pytest
       - run: python3 -m pip install . # TODO meh
       - run: tests/install_and_run
 
