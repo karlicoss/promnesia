@@ -245,6 +245,10 @@ async function updateState (tab: chrome$Tab) {
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
 
+    if (visits instanceof Visits) {
+        title = `${title}\nCanonical: ${visits.normalised_url}`;
+    }
+
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
     // TODO not sure if can benefit from setPopup?
     for (const action of (await actions())) {

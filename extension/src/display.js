@@ -149,6 +149,8 @@ export class Binder {
             det.appendChild(doc.createTextNode(context));
             */
         }
+
+        // right, this is for search..
         if (normalised_url != null) {
             const nurl_c = child(item, 'div', ['normalised_url']);
             const link = child(nurl_c, 'a');
