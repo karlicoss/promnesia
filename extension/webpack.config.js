@@ -40,8 +40,8 @@ const commandsExtra = {
             "mac":  `Command+${modifier}+E`
         }
     },
-    "show_dots": {
-        "description": "Activate dots for visited urls",
+    "mark_visited": {
+        "description": "Mark visited link on the current page",
         "suggested_key": {
             "default": `Ctrl+${modifier}+V`,
             "mac":  `Command+${modifier}+V`

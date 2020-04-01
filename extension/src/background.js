@@ -1,11 +1,11 @@
 /* @flow */
 
 import type {Locator, Src, Url, Second} from './common';
-import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn, asList} from './common';
-import {normalisedURLHostname, isBlacklistedHelper} from './normalise';
+import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
+import {Blacklist} from './blacklist';
 
 async function isAndroid() {
     try {
@@ -146,44 +146,22 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     return new Visits(url, url, visits);
 }
 
-type Reason = string;
 
-async function isBlacklisted(url: Url): Promise<?Reason> {
-    /*
-      TODO ''.split('\n') gives an emptly line, which would block local files
-      will fix later if necessary, it's not a big issue I guess
-    */
+// TODO think about caching blacklist on background page?
+// although need to be careful and invalidate it. ugh.
 
+// TODO ugh. can't keep get_options_async in blacklist.js because jest complains..
+async function Blacklist_get(): Promise<Blacklist> {
     const opts = await get_options_async();
-    // for now assumes it's exact domain match domain level
-    const user_blacklisted = isBlacklistedHelper(url, opts.blacklist);
-    // TODO test shallalist etc as well?
-    if (user_blacklisted !== null) {
-        return user_blacklisted;
-    }
-
-    const hostname = normalisedURLHostname(url);
-    // TODO perhaps use binary search?
-    // TODO not very efficient... I guess I need to refresh it straight from github now and then?
-    // TODO keep cache in local storage or something?
-    for (let [bname, bfile] of [
-        ['Webmail', 'shallalist/webmail/domains'],
-        ['Banking', 'shallalist/finance/banking/domains'],
-    ]) {
-        const domains_url = chrome.runtime.getURL(bfile);
-        const resp = await fetch(domains_url);
-        const domains = asList(await resp.text());
-        if (domains.includes(hostname)) {
-            return `'${bname}' blacklist`;
-        }
-    }
-    return null;
+    return new Blacklist(opts.blacklist);
 }
+
 
 type Result = Visits | Blacklisted;
 
 export async function getVisits(url: Url): Promise<Result> {
-    const bl = await isBlacklisted(url);
+    const blacklist = await Blacklist_get();
+    const bl = await blacklist.contains(url);
     if (bl != null) {
         return new Blacklisted(url, bl);
     }
@@ -267,6 +245,10 @@ async function updateState (tab: chrome$Tab) {
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
 
+    if (visits instanceof Visits) {
+        title = `${title}\nCanonical: ${visits.normalised_url}`;
+    }
+
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
     // TODO not sure if can benefit from setPopup?
     for (const action of (await actions())) {
@@ -340,11 +322,9 @@ async function updateState (tab: chrome$Tab) {
     }
 }
 
-// TODO check for blacklist here as well
-// TODO ugh. this can be tested on some static page... I guess?
-async function showDots(tabId) {
-    // TODO can be tested
 
+// todo ugh. this can be tested on some static page... I guess?
+async function markVisited(tabId) {
     const mresults = await chromeTabsExecuteScriptAsync(tabId, {
         code: `
      link_elements = document.getElementsByTagName("a");
@@ -358,14 +338,23 @@ async function showDots(tabId) {
         return u === '#' || u.startsWith('javascript:');
     }
     // not sure why it's returning array..
-    const good_urls = new Set(unwrap(mresults[0]).filter(u => !is_bad(u)));
+    const results = unwrap(mresults[0]);
 
-    const res = Array.from(good_urls);
-    // TODO FIXME filter these by blacklist as well?
+    const unique = Array.from(new Set(results));
+    const good_urls = unique.filter(u => !is_bad(u));
+
+    const blacklist = await Blacklist_get();
+    // TODO ugh. filter can't be async, so we have to do this separately...
+    const res = [];
+    for (const u of good_urls) {
+        const ur = await blacklist.contains(u);
+        if (ur === null) {
+            res.push(u);
+        }
+    }
 
     // TODO check if zero? not sure if necessary...
     // TODO maybe, I need a per-site extension?
-
     const resp = await queryBackendCommon({
         urls: res,
     }, 'visited');
@@ -379,6 +368,7 @@ async function showDots(tabId) {
     }
     // TODO make a map from it..
     // TODO use CSS from settings?
+    // TODO document how it can be configured
     await chromeTabsInsertCSS(tabId, {
         code: `
 .promnesia-visited:after {
@@ -396,7 +386,7 @@ async function showDots(tabId) {
     });
     await chromeTabsExecuteScriptAsync(tabId, {
         code: `
-vis = ${JSON.stringify(vis)}; // madness! FIXME could be potentially unsafe
+vis = ${JSON.stringify(vis)}; // madness!
 {
 for (var i = 0; i < link_elements.length; i++) {
     const a_tag = link_elements[i];
@@ -468,7 +458,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
         // https://kk.org/thetechnium/
         ldebug('finished loading DOM %s', detail);
 
-        showDots(detail.tabId, opts);
+        markVisited(detail.tabId, opts);
         // updateState();
     });
 });
@@ -555,8 +545,8 @@ async function showActiveTabNotification(text: string, color: string): Promise<v
     await showTabNotification(unwrap(atab.id), text, color);
 }
 
-async function handleShowDots() {
-    // TODO actually use show dots setting?
+async function handleMarkVisited() {
+    // TODO actually use mark visited setting?
     // const opts = await get_options_async();
     const atab = await getActiveTab();
     const url = unwrap(atab.url);
@@ -564,11 +554,12 @@ async function handleShowDots() {
     if (ignored(url)) {
         await showIgnoredNotification(tid, url);
     } else {
-        const bl = await isBlacklisted(url);
+        const blacklist = await Blacklist_get();
+        const bl = await blacklist.contains(url);
         if (bl != null) {
             await showBlackListedNotification(tid, new Blacklisted(url, bl));
         } else {
-            await showDots(tid);
+            await markVisited(tid);
         }
     }
 }
@@ -607,8 +598,8 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         params.append('timestamp', timestamp.toString());
         const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
         chrome.tabs.create({'url': search_url});
-    } else if (method == Methods.SHOW_DOTS) {
-        await handleShowDots();
+    } else if (method == Methods.MARK_VISITED) {
+        await handleMarkVisited();
     } else if (method == Methods.OPEN_SEARCH) {
         await handleOpenSearch();
     }
@@ -633,7 +624,8 @@ async function registerActions() {
                 notify(`${url} can't be handled`);
                 return;
             }
-            const bl = await isBlacklisted(url);
+            const blacklist = await Blacklist_get();
+            const bl = await blacklist.contains(url);
             if (bl != null) {
                 await showBlackListedNotification(tid, new Blacklisted(url, bl));
                 // TODO show popup; suggest to whitelist?
@@ -647,12 +639,16 @@ async function registerActions() {
 }
 
 
+// TODO reuse these in webpack config...
+const COMMAND_SEARCH       = 'search';
+const COMMAND_MARK_VISITED = 'mark_visited';
+
 const onCommandCallback = defensify(async cmd => {
     // ok apparently background page shouldn't communicate with itself via messages. wonder how could it work for me before..
     // https://stackoverflow.com/a/35858654/706389
-    if (cmd === 'show_dots') {
-        await handleShowDots();
-    } else if (cmd === 'search') {
+    if (cmd === COMMAND_MARK_VISITED) {
+        await handleMarkVisited();
+    } else if (cmd === COMMAND_SEARCH) {
         await handleOpenSearch();
     } else {
         // TODO throw?
@@ -691,19 +687,31 @@ async function blacklist(e): Promise<void> {
     const opts = await get_options_async();
     opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + to_blacklist;
 
+    /*
+    TODO ''.split('\n') gives an emptly line, which would block local files
+    will fix later if necessary, it's not a big issue I guess
+    */
     const ll = opts.blacklist.split(/\n/).length;
     // TODO could open sidebar here and display blacklist??
     await showActiveTabNotification(`Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue');
     await setOptions(opts);
 }
 
-const BLACKLIST_MENU = 'blacklist';
+
+const MENU_BLACKLIST   = 'menu_blacklist';
+const MENU_MARK_VISITS = 'menu_mark_visits';
+const MENU_SEARCH      = 'menu_search'
 
 
 // looks like onClicked is more portable...
 const onMenuClickedCallback = defensify(async (info) => {
-    if (info.menuItemId === BLACKLIST_MENU) {
+    const mid = info.menuItemId;
+    if (       mid === MENU_BLACKLIST) {
         await blacklist(info);
+    } else if (mid === MENU_MARK_VISITS) {
+        await handleMarkVisited();
+    } else if (mid === MENU_SEARCH) {
+        await handleOpenSearch();
     }
 }, 'onMenuClicked');
 
@@ -731,16 +739,21 @@ async function initBackground() {
     if (!android) {
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
         chrome.contextMenus.create({
-            'id'       : BLACKLIST_MENU,
+            'id'       : MENU_BLACKLIST,
             'contexts' : ['page', 'browser_action'],
             'title'    : "Blacklist (domain/specific page/subpages)",
         });
+        chrome.contextMenus.create({
+            'id'       : MENU_MARK_VISITS,
+            'contexts' : ['page', 'browser_action'],
+            'title'    : "Mark visited urls",
+        });
+        chrome.contextMenus.create({
+            'id'       : MENU_SEARCH,
+            'contexts' : ['page', 'browser_action'],
+            'title'    : "Search in browsing history",
+        })
     }
-    // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
-    // chrome.contextMenus.create({
-    //     "title"   : "Whitelist page",
-    //     "onclick" : clickHandler,
-    // });
 
     if (!android) {
         // $FlowFixMe // err, complains at Promise but nevertheless works

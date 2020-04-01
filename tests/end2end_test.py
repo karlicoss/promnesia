@@ -91,7 +91,7 @@ def get_hotkey(driver, cmd: str) -> str:
         # TODO remove hardcoding somehow...
         # perhaps should be extracted somewhere..
         cmd_map = {
-            'show_dots'              : 'Ctrl+Alt+v',
+            Command.SHOW_DOTS        : 'Ctrl+Alt+v',
             '_execute_browser_action': 'Ctrl+Alt+e',
             'search'                 : 'Ctrl+Alt+h',
         }
@@ -310,7 +310,7 @@ def _test_helper(tmp_path, indexer, test_url: Optional[str], show_dots: bool=Fal
         yield TestHelper(driver=driver)
 
 class Command:
-    SHOW_DOTS = 'show_dots'
+    SHOW_DOTS = 'mark_visited'
     ACTIVATE  = '_execute_browser_action'
     SEARCH    = 'search'
 # TODO assert this against manifest?

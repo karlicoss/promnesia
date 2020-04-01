@@ -26,35 +26,37 @@ test('normalisedURLHostname', () => {
 });
 
 
-import {isBlacklistedHelper} from '../src/normalise.js';
+import {Blacklist} from '../src/blacklist.js';
 
 
 test('blacklist membership', () => {
     // TODO make tests literate so they contribute to help docs?
-    const bl = `
+    const bl_string = `
 mail.google.com
 https://vk.com
 **github.com/issues**
 /github.com/issues.*/
 `;
 
+    const b = new Blacklist(bl_string);
+
     // TODO eh, doesn't work with links without schema; not sure if it's ok
-    expect(isBlacklistedHelper('http://instagram.com/', bl)).toBe(null);
+    expect(b._helper('http://instagram.com/')).toBe(null);
 
     // whole domain is blocked
-    expect(isBlacklistedHelper('https://mail.google.com/mail/u/0/#inbox', bl)).toContain('domain');
+    expect(b._helper('https://mail.google.com/mail/u/0/#inbox')).toContain('domain');
 
 
     // specific page is blocked
-    expect(isBlacklistedHelper('https://vk.com', bl)).toContain('page');
+    expect(b._helper('https://vk.com')).toContain('page');
     // TODO test with trailing slash as well??
-    expect(isBlacklistedHelper('https://vk.com/user/whatever', bl)).toBe(null);
+    expect(b._helper('https://vk.com/user/whatever')).toBe(null);
 
 
     // wildcard blockig
-    expect(isBlacklistedHelper('http://github.com/', bl)).toBe(null);
-    expect(isBlacklistedHelper('http://github.com/issues/hello/123', bl)).toContain('regex');
+    expect(b._helper('http://github.com/')).toBe(null);
+    expect(b._helper('http://github.com/issues/hello/123')).toContain('regex');
 
     // TODO later, doesn't work ATM
-    // expect(isBlacklistedHelper('http://github.com/issues/hello/123', bl)).toContain('wildcard');
+    // expect(b._helper('http://github.com/issues/hello/123', bl)).toContain('wildcard');
 });

@@ -77,7 +77,12 @@ export class Binder {
         const date_c = child(dt_c, 'span', ['date']);
         item.setAttribute('sources', tags.join(' '));
 
-        tchild(relative_c, '⤑⤑');
+        const child_link = child(relative_c, 'a');
+        // ugh. not sure why opening in new tab doesn't work :(
+        // https://stackoverflow.com/questions/12454382/target-blank-is-not-working-in-firefox/12454474#12454474
+        // child_link.target = '_blank';
+        child_link.href = original_url;
+        tchild(child_link, '➤➤');
 
         const idx_c = child(tags_c, 'span', ['index']);
         idx_c.title = 'index (for easier match against highlights)';
@@ -144,6 +149,8 @@ export class Binder {
             det.appendChild(doc.createTextNode(context));
             */
         }
+
+        // right, this is for search..
         if (normalised_url != null) {
             const nurl_c = child(item, 'div', ['normalised_url']);
             const link = child(nurl_c, 'a');

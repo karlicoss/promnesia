@@ -59,10 +59,10 @@ class Sidebar {
         const cbody = unwrap(cdoc.body);
         {
             const show_dots = cdoc.createElement('button');
-            show_dots.appendChild(cdoc.createTextNode('Show dots'));
+            show_dots.appendChild(cdoc.createTextNode('Mark visited'));
             show_dots.addEventListener('click', defensify(async () => {
-                await chromeRuntimeSendMessage({method: Methods.SHOW_DOTS});
-            }, 'show_dots.onClick'));
+                await chromeRuntimeSendMessage({method: Methods.MARK_VISITED});
+            }, 'mark_visited.onClick'));
             // TODO maybe highlight or just use custom class for that?
             show_dots.title = "Mark visited links on the current page with dots";
             cbody.appendChild(show_dots);
@@ -346,8 +346,8 @@ async function bindSidebarData(response: Visits) {
         binder.render(items, dates, times, v.tags, {
             idx           : idx1,
             timestamp     : v.time,
-            original_url  : null,
-            normalised_url: null,
+            original_url  : v.original_url,
+            normalised_url: null, // hmm, looks like i'm relying on normalised set to null..
             context       : v.context,
             locator       : v.locator,
             relative      : relative,
