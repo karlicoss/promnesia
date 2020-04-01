@@ -16,6 +16,16 @@ from typing import Iterable, NamedTuple, Set, Optional, List
 import urllib.parse
 from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
 
+
+import sys
+# make sure it doesn't need pytest in prod
+if 'pytest' in sys.modules:
+    import pytest # type: ignore
+else:
+    from unittest.mock import Mock
+    pytest = Mock()
+
+
 # this has some benchmark, but quite a few librarires seem unmaintained, sadly
 # I guess i'll stick to default for now, until it's a critical bottleneck
 # https://github.com/commonsearch/urlparse4
@@ -331,10 +341,6 @@ def canonify(url: str) -> str:
 # https://www.scottaaronson.com/blog/?p=3167#comment-1731882 is kinda hierarchy of scottaaronson.com, post 3167 and comment 1731882
 # but when working with it from server, would be easier to just do multiple queries I guess..
 # https://www.scottaaronson.com/blog/?p=3167 is kind ahierarchy of scottaaronson.com ; 
-
-
-import pytest # type: ignore
-
 
 
 # https://youtu.be/iCvmsMzlF7o

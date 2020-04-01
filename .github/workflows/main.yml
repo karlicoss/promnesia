@@ -1,5 +1,7 @@
 name: CI
-on: [push, pull_request]
+on: [push]
+
+# TODO add pull_request too? not sure if necessary
 
 env:
   # for tests
@@ -37,8 +39,6 @@ jobs:
     - run: ci/github-ci-compat
 
     - run: |
-        # TODO FIXME cannon imports it..
-        python3 -m pip install pytest
         python3 -m pip install .
         export PATH=ci/fake-systemd:$PATH
         tests/install_and_run
@@ -58,8 +58,6 @@ jobs:
     # uncomment to debug via SSH
     # - uses: mxschmitt/action-tmate@v2
     - run: |
-        # TODO FIXME cannon imports it..
-        pip3 install --user pytest
         pip3 install --user promnesia
 
         # TODO ugh. that action was meant to set up PATH, but it's still not there :(
@@ -75,8 +73,6 @@ jobs:
 
     - run: |
         # just index
-        # TODO FIXME cannon imports it..
-        pip3 install --user pytest
         pip3 install --user .
         pip3 install --user .[org] # just so it doesn't spam
         scripts/promnesia demo https://github.com/karlicoss/exobrain
