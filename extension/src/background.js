@@ -698,17 +698,20 @@ async function blacklist(e): Promise<void> {
 }
 
 
-const MENU_BLACKLIST = 'blacklist';
-const MENU_MARK_VISITS = 'mark_visits';
+const MENU_BLACKLIST   = 'menu_blacklist';
+const MENU_MARK_VISITS = 'menu_mark_visits';
+const MENU_SEARCH      = 'menu_search'
 
 
 // looks like onClicked is more portable...
 const onMenuClickedCallback = defensify(async (info) => {
     const mid = info.menuItemId;
-    if (mid === MENU_BLACKLIST) {
+    if (       mid === MENU_BLACKLIST) {
         await blacklist(info);
     } else if (mid === MENU_MARK_VISITS) {
         await handleMarkVisited();
+    } else if (mid === MENU_SEARCH) {
+        await handleOpenSearch();
     }
 }, 'onMenuClicked');
 
@@ -745,6 +748,11 @@ async function initBackground() {
             'contexts' : ['page', 'browser_action'],
             'title'    : "Mark visited urls",
         });
+        chrome.contextMenus.create({
+            'id'       : MENU_SEARCH,
+            'contexts' : ['page', 'browser_action'],
+            'title'    : "Search in browsing history",
+        })
     }
 
     if (!android) {
