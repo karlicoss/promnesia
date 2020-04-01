@@ -46,6 +46,13 @@ export class Blacklist {
     }
 
     async contains(url: Url): Promise<?Reason> {
+        try {
+            new URL(url);
+        } catch {
+            // TODO test this?
+            return "invalid URL";
+        }
+
         // for now assumes it's exact domain match domain level
         const user_blacklisted = this._helper(url);
         // TODO test shallalist etc as well?
@@ -65,6 +72,7 @@ export class Blacklist {
             // TODO do we really need await here??
             const resp = await fetch(domains_url);
             const domains = asList(await resp.text());
+            // TODO make loading lazy; cache in this class?
             if (domains.includes(hostname)) {
                 return `'${bname}' blacklist`;
             }

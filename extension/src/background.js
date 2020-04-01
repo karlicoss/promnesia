@@ -315,11 +315,9 @@ async function updateState (tab: chrome$Tab) {
     }
 }
 
-// TODO check for blacklist here as well
-// TODO ugh. this can be tested on some static page... I guess?
-async function showDots(tabId) {
-    // TODO can be tested
 
+// todo ugh. this can be tested on some static page... I guess?
+async function showDots(tabId) {
     const mresults = await chromeTabsExecuteScriptAsync(tabId, {
         code: `
      link_elements = document.getElementsByTagName("a");
@@ -333,14 +331,23 @@ async function showDots(tabId) {
         return u === '#' || u.startsWith('javascript:');
     }
     // not sure why it's returning array..
-    const good_urls = new Set(unwrap(mresults[0]).filter(u => !is_bad(u)));
+    const results = unwrap(mresults[0]);
 
-    const res = Array.from(good_urls);
-    // TODO FIXME filter these by blacklist as well?
+    const unique = Array.from(new Set(results));
+    const good_urls = unique.filter(u => !is_bad(u));
+
+    const blacklist = await Blacklist_get();
+    // TODO ugh. filter can't be async, so we have to do this separately...
+    const res = [];
+    for (const u of good_urls) {
+        const ur = await blacklist.contains(u);
+        if (ur === null) {
+            res.push(u);
+        }
+    }
 
     // TODO check if zero? not sure if necessary...
     // TODO maybe, I need a per-site extension?
-
     const resp = await queryBackendCommon({
         urls: res,
     }, 'visited');
@@ -372,7 +379,7 @@ async function showDots(tabId) {
     });
     await chromeTabsExecuteScriptAsync(tabId, {
         code: `
-vis = ${JSON.stringify(vis)}; // madness! FIXME could be potentially unsafe
+vis = ${JSON.stringify(vis)}; // madness!
 {
 for (var i = 0; i < link_elements.length; i++) {
     const a_tag = link_elements[i];
