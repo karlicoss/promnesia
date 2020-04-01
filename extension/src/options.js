@@ -50,7 +50,7 @@ function defaultOptions(): Options {
          * TODO shit, somehow this was breaking on Android... I guess keep it aside
          */
 
-        // TODO FIXME do something if value is invalid?..
+        // TODO do something defensive if value ended up as invalid?..
         // TODO make it literate from test?
         // TODO hmm. not sure if I can get rid of :root thing without relying on JS?
         // TODO would be nice to use true/false, but that prob. won't work

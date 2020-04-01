@@ -346,8 +346,8 @@ async function bindSidebarData(response: Visits) {
         binder.render(items, dates, times, v.tags, {
             idx           : idx1,
             timestamp     : v.time,
-            original_url  : null,
-            normalised_url: null,
+            original_url  : v.original_url,
+            normalised_url: null, // hmm, looks like i'm relying on normalised set to null..
             context       : v.context,
             locator       : v.locator,
             relative      : relative,
