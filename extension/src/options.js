@@ -19,6 +19,7 @@ export type Options = {
     highlight_on: boolean;
 
     dots: boolean;
+    // this is kept as string to preserve formatting and comments
     blacklist: string;
     src_map: SrcMap;
 

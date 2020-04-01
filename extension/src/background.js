@@ -1,12 +1,11 @@
 /* @flow */
 
 import type {Locator, Src, Url, Second} from './common';
-import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn, asList} from './common';
-import {normalisedURLHostname, isBlacklistedHelper} from './normalise';
+import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {get_options_async, setOptions} from './options';
-import type {Options} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
+import {Blacklist} from './blacklist';
 
 async function isAndroid() {
     try {
@@ -147,53 +146,18 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     return new Visits(url, url, visits);
 }
 
-type Reason = string;
 
-class Blacklist {
-    opts: Options
-
-    constructor(opts: Options) {
-        this.opts = opts;
-        // TODO load blacklist here??
-    }
-
-    static async get(): Promise<Blacklist> {
-        const opts = await get_options_async();
-        return new Blacklist(opts);
-    }
-
-    async contains(url: Url): Promise<?Reason> {
-        // for now assumes it's exact domain match domain level
-        const user_blacklisted = isBlacklistedHelper(url, this.opts.blacklist);
-        // TODO test shallalist etc as well?
-        if (user_blacklisted !== null) {
-            return user_blacklisted;
-        }
-
-        const hostname = normalisedURLHostname(url);
-        // TODO perhaps use binary search?
-        // TODO not very efficient... I guess I need to refresh it straight from github now and then?
-        // TODO keep cache in local storage or something?
-        for (let [bname, bfile] of [
-            ['Webmail', 'shallalist/webmail/domains'],
-            ['Banking', 'shallalist/finance/banking/domains'],
-        ]) {
-            const domains_url = chrome.runtime.getURL(bfile);
-            // TODO do we really need await here??
-            const resp = await fetch(domains_url);
-            const domains = asList(await resp.text());
-            if (domains.includes(hostname)) {
-                return `'${bname}' blacklist`;
-            }
-        }
-        return null;
-    }
+// TODO ugh. can't keep get_options_async in blacklist.js because jest complains..
+async function Blacklist_get(): Promise<Blacklist> {
+    const opts = await get_options_async();
+    return new Blacklist(opts.blacklist);
 }
+
 
 type Result = Visits | Blacklisted;
 
 export async function getVisits(url: Url): Promise<Result> {
-    const blacklist = await Blacklist.get();
+    const blacklist = await Blacklist_get();
     const bl = await blacklist.contains(url);
     if (bl != null) {
         return new Blacklisted(url, bl);
@@ -576,7 +540,7 @@ async function handleShowDots() {
     if (ignored(url)) {
         await showIgnoredNotification(tid, url);
     } else {
-        const blacklist = await Blacklist.get();
+        const blacklist = await Blacklist_get();
         const bl = await blacklist.contains(url);
         if (bl != null) {
             await showBlackListedNotification(tid, new Blacklisted(url, bl));
@@ -646,7 +610,7 @@ async function registerActions() {
                 notify(`${url} can't be handled`);
                 return;
             }
-            const blacklist = await Blacklist.get();
+            const blacklist = await Blacklist_get();
             const bl = await blacklist.contains(url);
             if (bl != null) {
                 await showBlackListedNotification(tid, new Blacklisted(url, bl));
