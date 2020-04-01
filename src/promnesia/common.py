@@ -25,7 +25,7 @@ Res = Union[T, Exception]
 PathIsh = Union[str, Path]
 
 Url = str
-Source = str
+SourceName = str
 DatetimeIsh = Union[datetime, date, str]
 Context = str
 Second = int
@@ -75,12 +75,12 @@ class DbVisit(NamedTuple):
     orig_url: Url
     dt: datetime
     locator: Loc
-    src: Optional[Source] = None
+    src: Optional[SourceName] = None
     context: Optional[Context] = None
     duration: Optional[Second] = None
 
     @staticmethod
-    def make(p: PreVisit, src: Source) -> Res['DbVisit']:
+    def make(p: PreVisit, src: SourceName) -> Res['DbVisit']:
         try:
             if isinstance(p.dt, datetime):
                 dt = p.dt
@@ -156,7 +156,7 @@ class History(Sized):
     def add_filter(cls, filterish):
         cls.FILTERS.append(make_filter(filterish))
 
-    def __init__(self, *, src: Source):
+    def __init__(self, *, src: SourceName):
         self.vmap: Dict[PreVisit, DbVisit] = {}
         # TODO err... why does it map from previsit???
         self.logger = get_logger()
@@ -296,7 +296,7 @@ class Indexer:
 
 
 # TODO do we really need it?
-def previsits_to_history(extractor, *, src: Source) -> Tuple[List[DbVisit], List[Exception]]:
+def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], List[Exception]]:
     ex = extractor
     # TODO isinstance wrapper?
     # TODO make more defensive?
