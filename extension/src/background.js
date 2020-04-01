@@ -324,7 +324,7 @@ async function updateState (tab: chrome$Tab) {
 
 
 // todo ugh. this can be tested on some static page... I guess?
-async function showDots(tabId) {
+async function markVisited(tabId) {
     const mresults = await chromeTabsExecuteScriptAsync(tabId, {
         code: `
      link_elements = document.getElementsByTagName("a");
@@ -458,7 +458,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
         // https://kk.org/thetechnium/
         ldebug('finished loading DOM %s', detail);
 
-        showDots(detail.tabId, opts);
+        markVisited(detail.tabId, opts);
         // updateState();
     });
 });
@@ -545,8 +545,8 @@ async function showActiveTabNotification(text: string, color: string): Promise<v
     await showTabNotification(unwrap(atab.id), text, color);
 }
 
-async function handleShowDots() {
-    // TODO actually use show dots setting?
+async function handleMarkVisited() {
+    // TODO actually use mark visited setting?
     // const opts = await get_options_async();
     const atab = await getActiveTab();
     const url = unwrap(atab.url);
@@ -559,7 +559,7 @@ async function handleShowDots() {
         if (bl != null) {
             await showBlackListedNotification(tid, new Blacklisted(url, bl));
         } else {
-            await showDots(tid);
+            await markVisited(tid);
         }
     }
 }
@@ -598,8 +598,8 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         params.append('timestamp', timestamp.toString());
         const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
         chrome.tabs.create({'url': search_url});
-    } else if (method == Methods.SHOW_DOTS) {
-        await handleShowDots();
+    } else if (method == Methods.MARK_VISITED) {
+        await handleMarkVisited();
     } else if (method == Methods.OPEN_SEARCH) {
         await handleOpenSearch();
     }
@@ -639,12 +639,16 @@ async function registerActions() {
 }
 
 
+// TODO reuse these in webpack config...
+const COMMAND_SEARCH       = 'search';
+const COMMAND_MARK_VISITED = 'mark_visited';
+
 const onCommandCallback = defensify(async cmd => {
     // ok apparently background page shouldn't communicate with itself via messages. wonder how could it work for me before..
     // https://stackoverflow.com/a/35858654/706389
-    if (cmd === 'show_dots') {
-        await handleShowDots();
-    } else if (cmd === 'search') {
+    if (cmd === COMMAND_MARK_VISITED) {
+        await handleMarkVisited();
+    } else if (cmd === COMMAND_SEARCH) {
         await handleOpenSearch();
     } else {
         // TODO throw?
@@ -704,7 +708,7 @@ const onMenuClickedCallback = defensify(async (info) => {
     if (mid === MENU_BLACKLIST) {
         await blacklist(info);
     } else if (mid === MENU_MARK_VISITS) {
-        await handleShowDots();
+        await handleMarkVisited();
     }
 }, 'onMenuClicked');
 

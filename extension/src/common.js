@@ -129,7 +129,7 @@ export class Blacklisted {
 export const Methods = {
     GET_SIDEBAR_VISITS  : 'getActiveTabVisitsForSidebar',
     SEARCH_VISITS_AROUND: 'searchVisitsAround',
-    SHOW_DOTS           : 'showDots',
+    MARK_VISITED        : 'markVisited',
     OPEN_SEARCH         : 'openSearch',
 };
 
