@@ -693,13 +693,18 @@ async function blacklist(e): Promise<void> {
     await setOptions(opts);
 }
 
-const BLACKLIST_MENU = 'blacklist';
+
+const MENU_BLACKLIST = 'blacklist';
+const MENU_MARK_VISITS = 'mark_visits';
 
 
 // looks like onClicked is more portable...
 const onMenuClickedCallback = defensify(async (info) => {
-    if (info.menuItemId === BLACKLIST_MENU) {
+    const mid = info.menuItemId;
+    if (mid === MENU_BLACKLIST) {
         await blacklist(info);
+    } else if (mid === MENU_MARK_VISITS) {
+        await handleShowDots();
     }
 }, 'onMenuClicked');
 
@@ -727,16 +732,16 @@ async function initBackground() {
     if (!android) {
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
         chrome.contextMenus.create({
-            'id'       : BLACKLIST_MENU,
+            'id'       : MENU_BLACKLIST,
             'contexts' : ['page', 'browser_action'],
             'title'    : "Blacklist (domain/specific page/subpages)",
         });
+        chrome.contextMenus.create({
+            'id'       : MENU_MARK_VISITS,
+            'contexts' : ['page', 'browser_action'],
+            'title'    : "Mark visited urls",
+        });
     }
-    // TODO make sure it's consistent with rest of blacklisting and precedence clearly stated
-    // chrome.contextMenus.create({
-    //     "title"   : "Whitelist page",
-    //     "onclick" : clickHandler,
-    // });
 
     if (!android) {
         // $FlowFixMe // err, complains at Promise but nevertheless works
