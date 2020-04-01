@@ -10,6 +10,7 @@ import logging
 from functools import lru_cache
 import traceback
 import pytz
+import warnings
 
 from .normalise import normalise_url
 from .cannon import CanonifyException
@@ -287,12 +288,19 @@ class PathWithMtime(NamedTuple):
         )
 
 
-class Indexer:
-    def __init__(self, ff, *args, src: str, **kwargs) -> None:
+class Source:
+    # TODO make sure it works with empty src?
+    # TODO later, make it properly optional?
+    def __init__(self, ff, *args, src: SourceName='', name: SourceName='', **kwargs) -> None:
         self.ff = ff
         self.args = args
         self.kwargs = kwargs
-        self.src = src
+        if src is not None:
+            warnings.warn("'src' argument is deprecated, please use 'name' instead", DeprecationWarning)
+        self.src = name or src
+
+# TODO deprecated
+Indexer = Source
 
 
 # TODO do we really need it?

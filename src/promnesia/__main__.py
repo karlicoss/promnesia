@@ -22,7 +22,7 @@ def _do_index():
 
     logger = get_logger()
 
-    indexers = cfg.INDEXERS
+    indexers = cfg.sources
 
     output_dir = Path(cfg.OUTPUT_DIR)
     if not output_dir.exists():

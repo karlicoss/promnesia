@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional, Union, NamedTuple
 import importlib.util
+import warnings
 
 import pytz
 
@@ -9,9 +10,18 @@ from .common import PathIsh, get_tmpdir
 
 class Config(NamedTuple):
     OUTPUT_DIR: PathIsh
-    INDEXERS: List
+    # TODO make sources non-optional once INDEXERS is removed
+    SOURCES: Optional[List] = None
+    INDEXERS: Optional[List] = None
     CACHE_DIR: Optional[PathIsh] = None
     FILTERS: List[str] = []
+
+    @property
+    def sources(self):
+        if self.INDEXERS is not None:
+            warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
+
+        return self.SOURCES or self.INDEXERS
 
     @property
     def cache_dir(self) -> Path:

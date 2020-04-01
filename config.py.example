@@ -5,17 +5,17 @@ OUTPUT_DIR = '/tmp'
 
 
 
-from promnesia import Indexer
+from promnesia import Source
+# TODO rename indexers to sources?
 from promnesia.indexers import auto
 
 
 '''
-List of indexers to use
+List of sources to use
 '''
-INDEXERS = [
-    Indexer(
+SOURCES = [
+    Source(
         auto.index,
         '/usr/share/doc/python3/html/faq',
-        src='python-faq',
     )
 ]
