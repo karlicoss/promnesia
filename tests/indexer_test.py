@@ -91,7 +91,7 @@ def test_takeout(adhoc_config, tmp_path):
     tdir = Path(tmp_path)
 
     test_takeout_path = "testdata/takeout"
-    import promnesia.indexers.takeout as tex
+    import promnesia.sources.takeout as tex
     tex._get_cache_dir = lambda: tdir
 
     visits = history(W(tex.extract, test_takeout_path))
@@ -120,7 +120,7 @@ def test_with_error():
 
 def test_takeout_new_zip(adhoc_config):
     test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
-    import promnesia.indexers.takeout as tex
+    import promnesia.sources.takeout as tex
     visits = history(lambda: tex.extract(test_takeout_path))
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
@@ -142,7 +142,7 @@ def test_takeout_new_zip(adhoc_config):
 # TODO run condition?? and flag to force all
 @skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
 def test_chrome(tmp_path):
-    from promnesia.indexers.browser import chrome
+    from promnesia.sources.browser import chrome
     tdir = Path(tmp_path)
 
     path = tdir / 'history'
@@ -170,8 +170,8 @@ def test_firefox(tmp_path):
 
 
 def test_plaintext_path_extractor():
-    import promnesia.indexers.shellcmd as custom_gen
-    from promnesia.indexers.plaintext import extract_from_path
+    import promnesia.sources.shellcmd as custom_gen
+    from promnesia.sources.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
         extract_from_path('testdata/custom'),
@@ -188,8 +188,8 @@ def test_plaintext_path_extractor():
 
 # TODO perhaps it belongs to canonify?
 def test_normalise():
-    import promnesia.indexers.shellcmd as custom_gen
-    from promnesia.indexers.plaintext import extract_from_path
+    import promnesia.sources.shellcmd as custom_gen
+    from promnesia.sources.plaintext import extract_from_path
 
     visits = history(W(custom_gen.extract,
         extract_from_path('testdata/normalise'),
@@ -207,8 +207,8 @@ def test_normalise():
 
 
 def test_normalise_weird():
-    import promnesia.indexers.shellcmd as custom_gen
-    from promnesia.indexers.plaintext import extract_from_path
+    import promnesia.sources.shellcmd as custom_gen
+    from promnesia.sources.plaintext import extract_from_path
 
     visits = history(W(
         custom_gen.extract,
@@ -223,8 +223,8 @@ def test_normalise_weird():
 
 @skip("use a different way to specify filter other than class variable..")
 def test_filter():
-    import promnesia.indexers.shellcmd as custom_gen
-    from promnesia.indexers.plaintext import extract_from_path
+    import promnesia.sources.shellcmd as custom_gen
+    from promnesia.sources.plaintext import extract_from_path
 
     History.add_filter(r'some-weird-domain')
     hist = custom_gen.get_custom_history(
@@ -233,7 +233,7 @@ def test_filter():
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
-    import promnesia.indexers.shellcmd as custom_gen
+    import promnesia.sources.shellcmd as custom_gen
 
     hist = history(W(custom_gen.extract,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
@@ -302,7 +302,7 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
-    import promnesia.indexers.chrome as chrome_ex
+    import promnesia.sources.chrome as chrome_ex
 
     hist = history(W(chrome_ex.extract, mfile))
     assert len(hist) > 0

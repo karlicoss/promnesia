@@ -13,7 +13,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, History, make_filter, get_logger, get_tmpdir
-from .common import previsits_to_history, Indexer
+from .common import previsits_to_history, Source
 from .dump import dump_histories
 
 
@@ -22,7 +22,7 @@ def _do_index():
 
     logger = get_logger()
 
-    indexers = cfg.INDEXERS
+    indexers = cfg.sources
 
     output_dir = Path(cfg.OUTPUT_DIR)
     if not output_dir.exists():
@@ -41,7 +41,7 @@ def _do_index():
         if callable(ex):
             # lazy indexers
             ex = ex()
-        assert isinstance(ex, Indexer)
+        assert isinstance(ex, Source)
 
         einfo = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs}'
 
@@ -64,13 +64,13 @@ def do_index(config_file: Path):
         config.reset()
 
 
-def demo_indexers():
+def demo_sources():
     def lazy(name: str):
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
         def inner(*args, **kwargs):
-            from . import indexers
+            from . import sources
             import importlib
-            module = importlib.import_module('promnesia.indexers' + '.' + name)
+            module = importlib.import_module('promnesia.sources' + '.' + name)
             return getattr(module, 'index')
         return inner
 
@@ -92,9 +92,9 @@ def do_demo(index_as: str, params: Sequence[str], port: Optional[str]):
     logger = get_logger()
     from pprint import pprint
     # TODO logging?
-    idx = demo_indexers()[index_as]()
+    idx = demo_sources()[index_as]()
 
-    idxr = Indexer(idx, *params, src='demo')
+    idxr = Source(idx, *params)
     hist, errors = previsits_to_history(idxr, src=idxr.src)
 
     for e in errors:
@@ -105,7 +105,7 @@ def do_demo(index_as: str, params: Sequence[str], port: Optional[str]):
         outdir = Path(tdir)
         cfg = config.Config(
             OUTPUT_DIR=outdir,
-            INDEXERS=[],
+            SOURCES=[],
         )
         config.instance = cfg
         dump_histories([('demo', hist)])
@@ -142,7 +142,7 @@ def main():
     ap.add_argument('--port', type=str, help='Port to serve. If omitted, will only create the index without serving.', required=False)
     ap.add_argument(
         '--as',
-        choices=list(sorted(demo_indexers().keys())),
+        choices=list(sorted(demo_sources().keys())),
         default='guess',
         help='Index the path as',
     )

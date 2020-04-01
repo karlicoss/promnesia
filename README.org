@@ -1,7 +1,5 @@
 #+OPTIONS: num:nil
 
-#+html: CI: <a href="https://circleci.com/gh/karlicoss/promnesia"><img src="https://circleci.com/gh/karlicoss/promnesia/tree/master.svg?style=svg"></a>
-
 Promnesia is a browser extension ([[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]/Firefox mobile) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
 
 *TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
@@ -104,7 +102,7 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
 # TODO mention where they get the database  
 
 - create your own config
-  =cp config.py.example config.py=, edit =config.py=, and configure existing or custom indexers
+  =cp config.py.example config.py=, edit =config.py=, and configure existing or custom sources
   
 - run the indexer =promnesia index --config /path/to/config.py=
   You might want to schedule it on cron to run few times a day to keep the index database up to date

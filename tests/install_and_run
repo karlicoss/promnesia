@@ -10,12 +10,10 @@ from tempfile import TemporaryDirectory
 # TODO reuse example config?
 CONFIG = """
 
-INDEXERS = []
-
 OUTPUT_DIR = {output_dir}
 
-# TODO add dummy indexer
-INDEXERS = []
+# TODO add some dummy source. maybe python configs?
+SOURCES = []
 
 """
 
@@ -35,7 +33,6 @@ def run(tdir: Path):
     promnesia = Path(__file__).absolute().parent.parent / 'scripts/promnesia'
 
     check_call([promnesia, 'index', '--config', cfg_file])
-    # TODO (cron env??)
 
     check_call([
         promnesia, 'install-server',
@@ -77,13 +74,9 @@ def run(tdir: Path):
 
 
 def main():
-    # TODO move that to yaml?
-    if 'CIRCLECI' in os.environ:
-        # ugh. otherwise systemd doesn't know of pyenv :((
-        check_call('sudo ln -sf /opt/circleci/.pyenv/versions/3.7.0/bin/python3 /usr/bin/python3', shell=True)
-
     with TemporaryDirectory() as tdir:
         run(Path(tdir))
+
 
 if __name__ == '__main__':
     main()

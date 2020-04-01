@@ -30,7 +30,7 @@ def test_example_config(tdir):
 def test_empty(tdir):
     cfg = tdir / 'test_config.py'
     cfg.write_text(f"""
-INDEXERS = []
+SOURCES = []
 OUTPUT_DIR = '{tdir}'
     """)
     index(cfg)
@@ -69,19 +69,19 @@ def index_urls(urls: Urls):
         cfg.write_text(f"""
 OUTPUT_DIR = '{tdir}'
 
-from promnesia.common import Indexer, PreVisit, Loc
+from promnesia.common import Source, PreVisit, Loc
 from datetime import datetime, timedelta
-indexer = Indexer(
+indexer = Source(
     lambda: [PreVisit(
         url=url,
         dt=datetime.min + timedelta(days=5000) + timedelta(hours=i),
         locator=Loc.make('test'),
         context=ctx,
     ) for i, (url, ctx) in enumerate({uuu})],
-    src='test',
+    name='test',
 )
 
-INDEXERS = [indexer]
+SOURCES = [indexer]
 """)
         index(cfg)
     return idx
@@ -122,14 +122,14 @@ def hyp_extractor():
     import sys
     sys.modules[base + '.hypexport'] = he
 
-    import promnesia.indexers.hypothesis as hypi
+    import promnesia.sources.hypothesis as hypi
     return I(
         hypi.index,
         src='hyp',
     )
 
 # in addition, test for lazy indexers. useful for importing packages
-INDEXERS = [hyp_extractor]
+SOURCES = [hyp_extractor]
     """)
     index(cfg)
 
@@ -147,11 +147,11 @@ def index_local_chrome(tdir: Path):
 OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Indexer as I
-from promnesia.indexers.browser import chrome
+from promnesia.sources.browser import chrome
 
 chrome_extractor = I(chrome, '{merged}', src='chrome')
 
-INDEXERS = [chrome_extractor]
+SOURCES = [chrome_extractor]
 """)
     index(cfg)
 
