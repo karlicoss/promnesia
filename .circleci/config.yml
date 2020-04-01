@@ -107,6 +107,9 @@ jobs:
       # WARNING: The script hug is installed in '/home/circleci/.local/bin' which is not on PATH.
       # Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
 
+       # ugh. otherwise systemd doesn't know of pyenv :((
+      - run: sudo ln -sf /opt/circleci/.pyenv/versions/3.7.0/bin/python3 /usr/bin/python3
+
       # right, since we're using pyenv now, we should be doing global install apaprently, otherwise hug is shadowed
       - run: python3 -m pip install . # TODO meh
       - run: tests/install_and_run

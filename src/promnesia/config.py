@@ -10,9 +10,9 @@ from .common import PathIsh, get_tmpdir
 
 class Config(NamedTuple):
     OUTPUT_DIR: PathIsh
-    # TODO make sources non-optional once INDEXERS is removed
-    SOURCES: Optional[List] = None
-    INDEXERS: Optional[List] = None
+    # TODO remove default from sources once migrated
+    SOURCES: List = []
+    INDEXERS: List = []
     CACHE_DIR: Optional[PathIsh] = None
     FILTERS: List[str] = []
 
@@ -21,7 +21,10 @@ class Config(NamedTuple):
         if self.INDEXERS is not None:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 
-        return self.SOURCES or self.INDEXERS
+        res = self.SOURCES or self.INDEXERS
+        # TODO enable it?
+        # assert len(res) > 0, "Expected some sources"
+        return res
 
     @property
     def cache_dir(self) -> Path:

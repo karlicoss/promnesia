@@ -1,6 +1,6 @@
 from itertools import groupby
 
-from promnesia.indexers import auto
+from promnesia.sources import auto
 
 from common import tdata
 

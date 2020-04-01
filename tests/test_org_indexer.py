@@ -1,4 +1,4 @@
-from promnesia.indexers.org import extract_from_file
+from promnesia.sources.org import extract_from_file
 
 from common import tdata
 

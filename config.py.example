@@ -6,8 +6,7 @@ OUTPUT_DIR = '/tmp'
 
 
 from promnesia import Source
-# TODO rename indexers to sources?
-from promnesia.indexers import auto
+from promnesia.sources import auto
 
 
 '''
