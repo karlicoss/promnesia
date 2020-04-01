@@ -90,9 +90,11 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
 
 # TODO use smth different
 1. [[#install][Install]] the extension and the backend in case you haven't already
-2. Run ~promnesia demo --port 16789 https://beepb00p.xyz~
+2. Run ~promnesia demo --port 16789 https://github.com/karlicoss/exobrain~
 
-   This downloads the pages from the link ([[https://beepb00p.xyz][my website]] in this case), extracts the URLs, and runs on the port =16789=
+   This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =16789=
+
+   You can also use a path on your local filesystem, or a website URL.
 
 3. In the extension settings, set "Host" to =http://localhost:16789= and save.
 

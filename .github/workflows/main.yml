@@ -26,6 +26,7 @@ jobs:
         python3 -m tox
 
   install_and_run_test:
+    # TODO run on macos too?
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +37,46 @@ jobs:
     - run: ci/github-ci-compat
 
     - run: |
+        # TODO FIXME cannon imports it..
         python3 -m pip install pytest
         python3 -m pip install .
         export PATH=ci/fake-systemd:$PATH
         tests/install_and_run
+
+
+  run_demo:
+    strategy:
+      matrix:
+        # TODO this should def just run on either platform
+        platform: [macos-latest] # ubuntu-latest,
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    # uncomment to debug via SSH
+    # - uses: mxschmitt/action-tmate@v2
+    - run: |
+        # TODO FIXME cannon imports it..
+        pip3 install --user pytest
+        pip3 install --user promnesia
+
+        # TODO ugh. that action was meant to set up PATH, but it's still not there :(
+        # /Users/runner/Library/Python/3.7/bin
+
+        # no idea why that's not in PATH either...
+        /Users/runner/.local/bin/promnesia demo --port 16789 https://github.com/karlicoss/exobrain & \
+           sleep 10 && curl 'http://localhost:16789/search' --data 'url=github.com'
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - run: |
+        # just index
+        # TODO FIXME cannon imports it..
+        pip3 install --user pytest
+        pip3 install --user .
+        pip3 install --user .[org] # just so it doesn't spam
+        scripts/promnesia demo https://github.com/karlicoss/exobrain
