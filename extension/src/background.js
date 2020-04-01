@@ -4,6 +4,7 @@ import type {Locator, Src, Url, Second} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn, asList} from './common';
 import {normalisedURLHostname, isBlacklistedHelper} from './normalise';
 import {get_options_async, setOptions} from './options';
+import type {Options} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 
@@ -148,42 +149,52 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 
 type Reason = string;
 
-async function isBlacklisted(url: Url): Promise<?Reason> {
-    /*
-      TODO ''.split('\n') gives an emptly line, which would block local files
-      will fix later if necessary, it's not a big issue I guess
-    */
+class Blacklist {
+    opts: Options
 
-    const opts = await get_options_async();
-    // for now assumes it's exact domain match domain level
-    const user_blacklisted = isBlacklistedHelper(url, opts.blacklist);
-    // TODO test shallalist etc as well?
-    if (user_blacklisted !== null) {
-        return user_blacklisted;
+    constructor(opts: Options) {
+        this.opts = opts;
+        // TODO load blacklist here??
     }
 
-    const hostname = normalisedURLHostname(url);
-    // TODO perhaps use binary search?
-    // TODO not very efficient... I guess I need to refresh it straight from github now and then?
-    // TODO keep cache in local storage or something?
-    for (let [bname, bfile] of [
-        ['Webmail', 'shallalist/webmail/domains'],
-        ['Banking', 'shallalist/finance/banking/domains'],
-    ]) {
-        const domains_url = chrome.runtime.getURL(bfile);
-        const resp = await fetch(domains_url);
-        const domains = asList(await resp.text());
-        if (domains.includes(hostname)) {
-            return `'${bname}' blacklist`;
+    static async get(): Promise<Blacklist> {
+        const opts = await get_options_async();
+        return new Blacklist(opts);
+    }
+
+    async contains(url: Url): Promise<?Reason> {
+        // for now assumes it's exact domain match domain level
+        const user_blacklisted = isBlacklistedHelper(url, this.opts.blacklist);
+        // TODO test shallalist etc as well?
+        if (user_blacklisted !== null) {
+            return user_blacklisted;
         }
+
+        const hostname = normalisedURLHostname(url);
+        // TODO perhaps use binary search?
+        // TODO not very efficient... I guess I need to refresh it straight from github now and then?
+        // TODO keep cache in local storage or something?
+        for (let [bname, bfile] of [
+            ['Webmail', 'shallalist/webmail/domains'],
+            ['Banking', 'shallalist/finance/banking/domains'],
+        ]) {
+            const domains_url = chrome.runtime.getURL(bfile);
+            // TODO do we really need await here??
+            const resp = await fetch(domains_url);
+            const domains = asList(await resp.text());
+            if (domains.includes(hostname)) {
+                return `'${bname}' blacklist`;
+            }
+        }
+        return null;
     }
-    return null;
 }
 
 type Result = Visits | Blacklisted;
 
 export async function getVisits(url: Url): Promise<Result> {
-    const bl = await isBlacklisted(url);
+    const blacklist = await Blacklist.get();
+    const bl = await blacklist.contains(url);
     if (bl != null) {
         return new Blacklisted(url, bl);
     }
@@ -379,6 +390,7 @@ async function showDots(tabId) {
     }
     // TODO make a map from it..
     // TODO use CSS from settings?
+    // TODO document how it can be configured
     await chromeTabsInsertCSS(tabId, {
         code: `
 .promnesia-visited:after {
@@ -564,7 +576,8 @@ async function handleShowDots() {
     if (ignored(url)) {
         await showIgnoredNotification(tid, url);
     } else {
-        const bl = await isBlacklisted(url);
+        const blacklist = await Blacklist.get();
+        const bl = await blacklist.contains(url);
         if (bl != null) {
             await showBlackListedNotification(tid, new Blacklisted(url, bl));
         } else {
@@ -633,7 +646,8 @@ async function registerActions() {
                 notify(`${url} can't be handled`);
                 return;
             }
-            const bl = await isBlacklisted(url);
+            const blacklist = await Blacklist.get();
+            const bl = await blacklist.contains(url);
             if (bl != null) {
                 await showBlackListedNotification(tid, new Blacklisted(url, bl));
                 // TODO show popup; suggest to whitelist?
@@ -691,6 +705,10 @@ async function blacklist(e): Promise<void> {
     const opts = await get_options_async();
     opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + to_blacklist;
 
+    /*
+    TODO ''.split('\n') gives an emptly line, which would block local files
+    will fix later if necessary, it's not a big issue I guess
+    */
     const ll = opts.blacklist.split(/\n/).length;
     // TODO could open sidebar here and display blacklist??
     await showActiveTabNotification(`Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue');
