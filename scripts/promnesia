@@ -1,9 +1,8 @@
 #!/bin/bash
-# runs promnesia from current repository instead of the installed version
+# runs promnesia from the current repository (instead of the installed version)
 set -eu
 
-# TODO not sure if should cd; some paths might be relative..
-DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
+ROOT="$(cd "$(dirname "$0")" && git rev-parse --show-toplevel)"
 
 if [[ -n "${PYTHONPATH:=}" ]]; then
     PPATH=":$PYTHONPATH"
@@ -11,7 +10,7 @@ else
     PPATH=""
 fi
 
-PPATH="$DIR/src$PPATH"
+PPATH="$ROOT/src$PPATH"
 
 export DIRTY_RUN='YES' # ugh.
 
