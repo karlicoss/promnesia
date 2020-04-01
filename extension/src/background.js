@@ -147,6 +147,9 @@ async function getChromeVisits(url: Url): Promise<Visits> {
 }
 
 
+// TODO think about caching blacklist on background page?
+// although need to be careful and invalidate it. ugh.
+
 // TODO ugh. can't keep get_options_async in blacklist.js because jest complains..
 async function Blacklist_get(): Promise<Blacklist> {
     const opts = await get_options_async();

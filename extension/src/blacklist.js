@@ -1,6 +1,6 @@
 /* @flow */
 import type {Url} from './common';
-import {asList} from './common';
+import {asList, log} from './common';
 import {normalisedURLHostname} from './normalise';
 
 type Reason = string;
@@ -9,9 +9,11 @@ type Reason = string;
 export class Blacklist {
     // TODO use Set?
     blacklist: Array<string>;
+    lists: Map<string, Set<string>>;
 
     constructor(blacklist_string: string) {
         this.blacklist = asList(blacklist_string);
+        this.lists = new Map();
     }
 
     _helper(url: Url): ?string {
@@ -45,6 +47,22 @@ export class Blacklist {
         return null;
     }
 
+    async _list(name: string, file: string): Promise<Set<string>> {
+        let list = this.lists.get(name);
+        if (list != null) {
+            return list;
+        }
+
+        log('loading %s from %s', name, file);
+
+        const domains_url = chrome.runtime.getURL(file);
+        // TODO do we really need await here??
+        const resp = await fetch(domains_url);
+        list = new Set(asList(await resp.text()));
+        this.lists.set(name, list);
+        return list;
+    }
+
     async contains(url: Url): Promise<?Reason> {
         try {
             new URL(url);
@@ -68,12 +86,8 @@ export class Blacklist {
             ['Webmail', 'shallalist/webmail/domains'],
             ['Banking', 'shallalist/finance/banking/domains'],
         ]) {
-            const domains_url = chrome.runtime.getURL(bfile);
-            // TODO do we really need await here??
-            const resp = await fetch(domains_url);
-            const domains = asList(await resp.text());
-            // TODO make loading lazy; cache in this class?
-            if (domains.includes(hostname)) {
+            const domains = await this._list(bname, bfile);
+            if (domains.has(hostname)) {
                 return `'${bname}' blacklist`;
             }
         }
