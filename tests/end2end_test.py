@@ -221,7 +221,10 @@ def get_window_id(driver):
         # ugh nothing in capabilities...
         pid = check_output(['pgrep', '-f', 'chrome.*enable-automation']).decode('utf8').strip()
     # https://askubuntu.com/a/385037/427470
+    return get_wid_by_pid(pid)
 
+
+def get_wid_by_pid(pid: str):
     wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf8').splitlines()
     wids = [w.strip() for w in wids if len(w.strip()) > 0]
 

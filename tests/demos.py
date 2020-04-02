@@ -101,16 +101,25 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
 
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
         driver = helper.driver
-        wid = get_window_id(driver)
+        driver_wid = get_window_id(driver)
 
+        # full display resolution
         W = 2560
         H = 1440
-        check_call([
-            'wmctrl',
-            '-i',
-            '-r', wid,
-            '-e', f'0,0,100,{W // 2},{H - 100}',
-        ])
+
+        # TODO it always ends up as 2, 90??
+        margin = 90 # make up space for panel etc... figure that out properly later
+
+        w = W // 2
+        h = H - margin
+        def set_geometry(wid: str):
+            check_call([
+                'wmctrl',
+                '-i',
+                '-r', wid,
+                '-e', f'0,0,0,{w},{h}',
+            ])
+        set_geometry(wid=driver_wid)
 
         extras = kwargs
         if 'highlights' not in extras:
@@ -125,10 +134,12 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
         )
 
         driver.get('about:blank')
-        geometry = f'{W // 2}x400+0+{H - 400}'
+        # TODO eh. not sure if this geometry is consistent with ffmpeg...
+        geometry = f'{w}x400+0+{h - 400}'
         with hotkeys(geometry=geometry):
-            rpath = path.with_suffix('.ogv')
-            with record(rpath, wid=wid):
+            # TODO record directly in webm? but need to set quality
+            rpath = path.with_suffix('.mp4')
+            with record(rpath, wid=driver_wid):
                 ann = Annotator()
                 yield helper, ann
 

@@ -5,22 +5,24 @@ from subprocess import check_call
 
 
 def convert(path: Path):
-    if path.suffix == '.ogv':
+    suf = '.mp4'
+    if path.suffix == suf:
         # makes it easier for shell globbing...
         path = path.with_suffix('')
 
-    ogv  = path.with_suffix('.ogv')
-    assert ogv.exists(), ogv
+    inp  = path.with_suffix(suf)
+    assert inp.exists(), inp
     subs = path.with_suffix('.ssa')
     webm = path.with_suffix('.webm')
 
 
     # jeez... https://video.stackexchange.com/a/28276/29090
     # otherwise quiality sucks, e.g. letters are grainy
+    passfile = path.with_suffix(".pass0")
     for stage in [
-            f'-b:v 0  -crf 30  -pass 1 -passlogfile {path.with_suffix(".pass0")} -an -f webm /dev/null',
-            f'-b:v 0  -crf 30  -pass 2 {webm}' if all(
-                x not in str(ogv) for x in (
+            f'-b:v 0  -crf 30  -pass 1 -passlogfile {passfile} -an -f webm /dev/null',
+            f'-b:v 0  -crf 30  -pass 2 -passlogfile {passfile} {webm}' if all(
+                x not in str(inp) for x in (
                     # fucking hell, it segfaults...
                     'child-visits-2',
                     'highlights',
@@ -31,7 +33,7 @@ def convert(path: Path):
             # TODO display banner if running interactively??
             '-hide_banner', '-loglevel', 'panic', # less spam
             '-y', # allow overwrite
-            '-i', ogv,
+            '-i', inp,
             '-vf', f"ass={subs}",
             *stage.split(),
         ]) # TODO cwd??
