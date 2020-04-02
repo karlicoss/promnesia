@@ -93,6 +93,7 @@ def main():
             check_call([
                 'npm', 'run', 'release:amo',
                 '--',
+                # '--channel', 'unlisted',
                 '--source-dir', str(src_dir),
                 *webext_args(),
             ])

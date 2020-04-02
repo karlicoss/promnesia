@@ -31,7 +31,7 @@ def convert(path: Path):
         check_call([
             'ffmpeg',
             # TODO display banner if running interactively??
-            '-hide_banner', '-loglevel', 'panic', # less spam
+            # '-hide_banner', '-loglevel', 'panic', # less spam
             '-y', # allow overwrite
             '-i', inp,
             '-vf', f"ass={subs}",
