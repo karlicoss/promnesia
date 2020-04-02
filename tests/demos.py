@@ -79,7 +79,7 @@ class Annotator:
 
 
 @contextmanager
-def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position='topleft', size='40%', **kwargs):
+def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, subs_position='topleft', size='40%', **kwargs):
     # TODO literal type??
     # https://stackoverflow.com/a/25880038/706389
     # 789
@@ -135,6 +135,10 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
         )
 
         driver.get('about:blank')
+
+        if before is not None:
+            before(driver)
+
         # TODO eh. not sure if this geometry is consistent with ffmpeg...
         geometry = f'{w}x400+0+{h - 400}'
         with hotkeys(geometry=geometry):
@@ -206,10 +210,10 @@ demos = Path('demos')
 # TODO need to determine that uses X automatically
 @uses_x
 @browsers(FF, CH)
-def test_demo_show_dots(tmp_path, browser):
+def test_demo_mark_visited(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
 
-    path = demos / 'show-dots'
+    path = demos / 'mark-visited'
 
     # TODO fast mode??
     url = 'https://slatestarcodex.com/'
@@ -237,8 +241,6 @@ You feel like reading something new.
 Which are the ones you haven't seen before?
         ''', length=3)
 
-        # TODO rename to 'highlight visited'? or 'show visited'
-
         wait(3)
 
         # TODO request focus on 'prompt'??
@@ -248,18 +250,17 @@ Which are the ones you haven't seen before?
 
         wait(1)
 
-        # TODO move to helper?
-        # TODO make screen after the annotation?
-        driver.save_screenshot(str(demos / 'mark_visited.png'))
+        # TODO somehow mark images with the same annotations??
+        helper.screenshot(path.with_suffix('.png'))
 
         annotate('''
 The command marks links you've already visited with dots.
-That way you don't have to search browser history all over for each of them!
+This way you don't have to search your browser history all over for each of them!
         ''', length=5)
         wait(5)
 
         annotate('''
-You can click straight on the ones you haven't seen before and start exploring!
+You can click right on the ones you haven't seen before and start exploring!
         ''', length=10)
 
         wait(10)
@@ -267,20 +268,24 @@ You can click straight on the ones you haven't seen before and start exploring!
 
 @uses_x
 @browsers(FF, CH)
-def test_demo_show_dots_2(tmp_path, browser):
-    path = demos / 'show-dots-2'
+def test_demo_mark_visited_2(tmp_path, browser):
+    path = demos / 'mark-visited-2'
 
     # TODO maybe test on Baez instead?
     # TODO scroll to ?
     url = 'https://www.lesswrong.com/posts/vwqLfDfsHmiavFAGP/the-library-of-scott-alexandria#IV__Medicine__Therapy__and_Human_Enhancement'
-    with demo_helper(tmp_path=tmp_path, browser=browser, path=path) as (helper, annotate):
-        driver = helper.driver
+
+    def before(driver):
         driver.get(url)
-        # TODO eh. maybe should start recording after the URL has loaded
+
+    with demo_helper(tmp_path=tmp_path, browser=browser, path=path, before=before) as (helper, annotate):
+        driver = helper.driver
+       
+        wait(2)
 
         annotate('''
 Lots of links to explore on this page.
-Which ones I haven't seen before?
+Which ones haven't I seen before?
 ''', length=5)
         wait(5)
 
@@ -294,7 +299,7 @@ Hotkey press...
 Links I've already visited are marked with dots!
         ''', length=8)
         wait(2)
-        driver.save_screenshot(str(demos / 'mark-visited-2.png'))
+        helper.screenshot(path.with_suffix('.png'))
 
         wait(6)
 
@@ -345,12 +350,14 @@ It means I have run into this account before!
 Let's see...
         ''', length=2)
         wait(1)
-        driver.activate()
+        helper.activate()
         wait(2)
+
+        helper.screenshot(path.with_suffix('.png'))
 
         annotate('''
 Right, I've already bookmarked something interesting from that guy before.
-Surely, I should follow him!
+I guess I should follow him!
         ''', length=8)
         wait(8)
 
@@ -360,16 +367,20 @@ Surely, I should follow him!
 @browsers(FF, CH)
 def test_demo_child_visits_2(tmp_path, browser):
     path = Path('demos/child-visits-2')
+
+    def before(driver):
+        # jeez. medium takes, like, 15 seconds to load
+        driver.get('https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7')
+
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
             path=path,
             subs_position='bottomleft',
+            before=before,
     ) as (helper, annotate):
         driver = helper.driver
-        # TODO jeez. medium takes ages to load..
-        driver.get('https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7')
-        wait(1)
+        wait(2)
 
         annotate('''
 I ran into this cool post on Hackernews.
@@ -391,9 +402,9 @@ So I've interacted with the page before!
         annotate('''
 Let's see...
         ''', length=2)
-        wait(1)
+        wait(2)
         helper.activate()
-        wait(1)
+        wait(2)
 
         helper.switch_to_sidebar()
 
@@ -407,6 +418,8 @@ Let's see...
 Cool, I've even tweeted about one of the posts on this blog before!
         ''', length=5)
         wait(5)
+
+        helper.screenshot(path.with_suffix('.png'))
 
         # TODO original tweet -> smth else??
         annotate('''
@@ -449,16 +462,9 @@ from end2end_test import get_webdriver
 def test_demo_highlights(tmp_path, browser):
     assert browser == FF, browser # because of the profile_dir hack
     path = demos / 'highlights'
-    with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomleft',
-            highlights=True,
-    ) as (helper, annotate):
-        # TODO is it possible to disable extension first??
-        driver = helper.driver
 
+
+    def before(driver):
         from private import instapaper_cookies
 
         # necessary to set cookies on instapaper..
@@ -467,6 +473,20 @@ def test_demo_highlights(tmp_path, browser):
             driver.add_cookie(cookie)
 
         driver.get('https://instapaper.com/read/1257588750')
+
+
+    with demo_helper(
+            tmp_path=tmp_path,
+            browser=browser,
+            path=path,
+            subs_position='bottomleft',
+            highlights=True,
+            before=before,
+    ) as (helper, annotate):
+        # TODO is it possible to disable extension first??
+        driver = helper.driver
+
+        wait(2)
 
         annotate('''
 I'm using Instapaper to read and highlight articles while I'm offline on my phone.
@@ -510,10 +530,10 @@ Let's try it with Promnesia!
 Highlights are displayed within the original page!
         ''', length=5)
         wait(2)
-        driver.activate()
+        helper.activate()
         wait(3)
 
-        driver.save_screenshot(str(demos / 'highlights.png'))
+        helper.screenshot(path.with_suffix('.png'))
 
         annotate('''
 It works with any highlight source, be it Pocket, Hypothes.is or anything else.
@@ -527,7 +547,7 @@ Let me demonstrate...
 
         driver.get('https://en.wikipedia.org/wiki/Empty_Spaces#Composition')
         wait(3)
-        driver.activate()
+        helper.activate()
 
         # TODO move cursor to the note?
         annotate('''
@@ -564,7 +584,7 @@ Hmmm, can't remember, why I added it.
         wait(1)
 
         annotate('''
-If you click on a timestamp, you'll jump straight into the place in timeline where the visit occured.
+If you click on a timestamp, you'll jump straight to the visit you your timeline.
         ''', length=6)
         wait(2)
 
@@ -596,7 +616,7 @@ Let's see...
         helper.move_to(baez)
         wait(4)
 
-        driver.save_screenshot(str(demos / 'search.png'))
+        helper.screenshot(path.with_suffix('.png'))
 
         # driver.execute_script(f"window.open('{node8}')")
         # TODO encapsulate??
@@ -656,7 +676,7 @@ Once I watched it, I want to discuss it with the friend.
         loc = driver.find_element_by_class_name('locator')
         helper.move_to(loc)
 
-        driver.save_screenshot(str(demos / 'im.png'))
+        helper.screenshot(path.with_suffix('.png'))
 
         annotate('''
 Clicking on the "chat with" link will jump straight into that message in Telegram web app.

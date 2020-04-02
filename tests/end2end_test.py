@@ -288,6 +288,13 @@ class TestHelper(NamedTuple):
     def mark_visited(self):
         self.command(Command.SHOW_DOTS)
 
+    def wid(self) -> str:
+        return get_window_id(self.driver)
+
+    def screenshot(self, path):
+        # ugh, webdriver's save_screenshot doesn't behave well with frames
+        check_call(['import', '-window', self.wid(), path])
+
 
 def confirm(what: str):
     import click # type: ignore
