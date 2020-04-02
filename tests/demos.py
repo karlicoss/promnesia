@@ -232,13 +232,13 @@ Which are the ones you haven't seen before?
         # TODO request focus on 'prompt'??
         # prompt('continue?')
 
-        helper.show_visited()
+        helper.mark_visited()
 
         wait(1)
 
         # TODO move to helper?
         # TODO make screen after the annotation?
-        driver.save_screenshot(str(demos / 'show_visited.png'))
+        driver.save_screenshot(str(demos / 'mark_visited.png'))
 
         annotate('''
 The command marks links you've already visited with dots.
@@ -256,7 +256,7 @@ You can click straight on the ones you haven't seen before and start exploring!
 @uses_x
 @browsers(FF, CH)
 def test_demo_show_dots_2(tmp_path, browser):
-    path = Path('demos/show-dots-2')
+    path = demos / 'show-dots-2'
 
     # TODO maybe test on Baez instead?
     # TODO scroll to ?
@@ -272,7 +272,7 @@ Which ones I haven't seen before?
 ''', length=5)
         wait(5)
 
-        driver.show_visited()
+        helper.mark_visited()
         annotate('''
 Hotkey press...
         ''', length=1.5)
@@ -281,7 +281,10 @@ Hotkey press...
         annotate('''
 Links I've already visited are marked with dots!
         ''', length=8)
-        wait(8)
+        wait(2)
+        driver.save_screenshot(str(demos / 'mark-visited-2.png'))
+
+        wait(6)
 
 
 # TODO perhaps make them independent of network? Although useful for demos
@@ -433,7 +436,7 @@ from end2end_test import get_webdriver
 @browsers(FF, CH)
 def test_demo_highlights(tmp_path, browser):
     assert browser == FF, browser # because of the profile_dir hack
-    path = Path('demos/highlights')
+    path = demos / 'highlights'
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -498,6 +501,8 @@ Highlights are displayed within the original page!
         driver.activate()
         wait(3)
 
+        driver.save_screenshot(str(demos / 'highlights.png'))
+
         annotate('''
 It works with any highlight source, be it Pocket, Hypothes.is or anything else.
         ''', length=5)
@@ -527,7 +532,7 @@ It's not using any annotation service -- it's just an org-mode file!
 @uses_x
 @browsers(FF, CH)
 def test_demo_how_did_i_get_here(tmp_path, browser):
-    path = Path('demos/how_did_i_get_here')
+    path = demos / 'how_did_i_get_here'
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -579,6 +584,8 @@ Let's see...
         helper.move_to(baez)
         wait(4)
 
+        driver.save_screenshot(str(demos / 'search.png'))
+
         # driver.execute_script(f"window.open('{node8}')")
         # TODO encapsulate??
         baez.click()
@@ -601,7 +608,7 @@ Aha! Here's the reference to the book.
 @uses_x
 @browsers(FF, CH)
 def test_demo_watch_later(tmp_path, browser):
-    path = Path('demos/watch_later')
+    path = demos / 'watch_later'
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
@@ -636,6 +643,8 @@ Once I watched it, I want to discuss it with the friend.
         driver.execute_script(CURSOR_SCRIPT)
         loc = driver.find_element_by_class_name('locator')
         helper.move_to(loc)
+
+        driver.save_screenshot(str(demos / 'im.png'))
 
         annotate('''
 Clicking on the "chat with" link will jump straight into that message in Telegram web app.

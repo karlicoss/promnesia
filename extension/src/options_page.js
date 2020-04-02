@@ -155,7 +155,7 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
         },
     }, second).then(res => {
         if (!res.ok) {
-            throw `Backend error: {res.status} {res.statusText}` // TODO
+            throw `Backend error: ${res.status} ${res.statusText}` // TODO
         }
         return res;
     }).then(async res => {
