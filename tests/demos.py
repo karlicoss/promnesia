@@ -95,9 +95,10 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
 .promnesia {{
     --right: 1;
     --size:  {size};
-    background-color: rgba(236, 236, 236, 0.6)
+    background-color: rgba(236, 236, 236, 0.8);
 }}
     '''
+    # TODO hmm. not sure if the whole sidebar should have a background instead??
 
     with _test_helper(tmp_path, indexer(), None, browser=browser) as helper:
         driver = helper.driver
@@ -247,8 +248,7 @@ Which are the ones you haven't seen before?
         # prompt('continue?')
 
         helper.mark_visited()
-
-        wait(1)
+        wait(2)
 
         # TODO somehow mark images with the same annotations??
         helper.screenshot(path.with_suffix('.png'))
@@ -261,9 +261,8 @@ This way you don't have to search your browser history all over for each of them
 
         annotate('''
 You can click right on the ones you haven't seen before and start exploring!
-        ''', length=10)
-
-        wait(10)
+        ''', length=8)
+        wait(8)
 
 
 @uses_x
@@ -350,6 +349,7 @@ It means I have run into this account before!
 Let's see...
         ''', length=2)
         wait(1)
+
         helper.activate()
         wait(2)
 
@@ -358,8 +358,10 @@ Let's see...
         annotate('''
 Right, I've already bookmarked something interesting from that guy before.
 I guess I should follow him!
-        ''', length=8)
-        wait(8)
+        ''', length=7)
+        wait(7)
+
+        # TODO this could also demonstrate jump to the tweet? ( ->->  )
 
 
 
@@ -403,6 +405,7 @@ So I've interacted with the page before!
 Let's see...
         ''', length=2)
         wait(2)
+
         helper.activate()
         wait(2)
 
@@ -529,9 +532,10 @@ Let's try it with Promnesia!
         annotate('''
 Highlights are displayed within the original page!
         ''', length=5)
-        wait(2)
+        wait(5)
+
         helper.activate()
-        wait(3)
+        wait(2)
 
         helper.screenshot(path.with_suffix('.png'))
 
@@ -547,14 +551,16 @@ Let me demonstrate...
 
         driver.get('https://en.wikipedia.org/wiki/Empty_Spaces#Composition')
         wait(3)
+
         helper.activate()
+        wait(2)
 
         # TODO move cursor to the note?
         annotate('''
-This clipping is in my plaintext notes!
-It's not using any annotation service -- it's just an org-mode file!
+This clipping is in my org-mode notes!
+It's not using any annotation service -- it's just a plaintext file!
         ''', length=7)
-        wait(9)
+        wait(7)
 
 
 # TODO https://www.youtube.com/watch?v=YKLpz025vYY
@@ -581,10 +587,10 @@ Hmmm, can't remember, why I added it.
         wait(6)
 
         helper.activate()
-        wait(1)
+        wait(2)
 
         annotate('''
-If you click on a timestamp, you'll jump straight to the visit you your timeline.
+If you click on a timestamp, you'll jump straight to the visit in your timeline.
         ''', length=6)
         wait(2)
 
@@ -632,7 +638,7 @@ Aha! Here's the reference to the book.
             # meh
             SELECT_SCRIPT + "\n" + "selectText(document.getElementsByTagName('dd')[17])"
         )
-        wait(7)
+        wait(5)
     # TODO mention that it's chrome history! so I wouldn't have it in my browser history in firefox
 
 
@@ -641,15 +647,20 @@ Aha! Here's the reference to the book.
 @browsers(FF, CH)
 def test_demo_watch_later(tmp_path, browser):
     path = demos / 'watch_later'
+
+    def before(driver):
+        driver.get('https://www.youtube.com/watch?v=DvT-O_DI4t4')
+
+
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
             path=path,
             subs_position='bottomleft',
+            before=before,
     ) as (helper, annotate):
         driver = helper.driver
-
-        driver.get('https://www.youtube.com/watch?v=DvT-O_DI4t4')
+        wait(2)
 
         annotate('''
 I have this video in my "Watch later" playlist.
@@ -658,7 +669,7 @@ I wonder why?
         wait(4)
 
         helper.activate()
-        wait(1)
+        wait(2)
 
         annotate('''
 Aha, my friend sent it to me on Telegram.
