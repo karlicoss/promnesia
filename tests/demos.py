@@ -10,7 +10,7 @@ from common import uses_x
 from end2end_test import FF, CH, browsers, _test_helper
 from end2end_test import PYTHON_DOC_URL
 from integration_test import index_urls
-from end2end_test import confirm, trigger_command, Command
+from end2end_test import confirm
 from end2end_test import configure, get_window_id
 
 from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
@@ -188,13 +188,16 @@ Six seven eight nine ten?
         wait(5)
 
 
+demos = Path('demos')
+
+
 # TODO need to determine that uses X automatically
 @uses_x
 @browsers(FF, CH)
 def test_demo_show_dots(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
 
-    path = Path('demos/show-dots')
+    path = demos / 'show-dots'
 
     # TODO fast mode??
     url = 'https://slatestarcodex.com/'
@@ -233,8 +236,12 @@ Which are the ones you haven't seen before?
 
         wait(1)
 
+        # TODO move to helper?
+        # TODO make screen after the annotation?
+        driver.save_screenshot(str(demos / 'show_visited.png'))
+
         annotate('''
-The command displays dots next to the links you've already visited.
+The command marks links you've already visited with dots.
 That way you don't have to search browser history all over for each of them!
         ''', length=5)
         wait(5)
@@ -265,7 +272,7 @@ Which ones I haven't seen before?
 ''', length=5)
         wait(5)
 
-        trigger_command(driver, Command.SHOW_DOTS)
+        driver.show_visited()
         annotate('''
 Hotkey press...
         ''', length=1.5)
@@ -323,7 +330,7 @@ It means I have run into this account before!
 Let's see...
         ''', length=2)
         wait(1)
-        trigger_command(driver, Command.ACTIVATE)
+        driver.activate()
         wait(2)
 
         annotate('''
@@ -488,8 +495,7 @@ Let's try it with Promnesia!
 Highlights are displayed within the original page!
         ''', length=5)
         wait(2)
-        # TODO encapsulate in come object instead?..
-        trigger_command(driver, Command.ACTIVATE)
+        driver.activate()
         wait(3)
 
         annotate('''
@@ -504,7 +510,7 @@ Let me demonstrate...
 
         driver.get('https://en.wikipedia.org/wiki/Empty_Spaces#Composition')
         wait(3)
-        trigger_command(driver, Command.ACTIVATE)
+        driver.activate()
 
         # TODO move cursor to the note?
         annotate('''
