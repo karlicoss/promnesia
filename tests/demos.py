@@ -107,17 +107,18 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, subs_position
         W = 2560
         H = 1440
 
-        # TODO it always ends up as 2, 90??
-        margin = 90 # make up space for panel etc... figure that out properly later
+        margin   = 28 # make up space for panel etc... figure that out properly later
+        titlebar = 32
+        # TODO I think firefox counts position as the actual top left corner, but geometry without the title bar???
 
         w = W // 2
-        h = H - margin
+        h = H - margin - titlebar
         def set_geometry(wid: str):
             check_call([
                 'wmctrl',
                 '-i',
                 '-r', wid,
-                '-e', f'0,0,0,{w},{h}',
+                '-e', f'0,0,{margin},{w},{h}',
             ])
         set_geometry(wid=driver_wid)
 

@@ -34,26 +34,35 @@ def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Option
     assert wid is not None
 
 
-    out = check_output(['xdotool', 'getwindowgeometry', wid]).decode('utf8')
-    out = out.replace('\n', ' ')
-    m = re.search(r'Position: (\d+),(\d+).*Geometry: (\d+)x(\d+)', out)
-    assert m is not None, out
-    x, y, w, h = m.groups()
-
     # ugh. no idea wtf is happening here... why is position 2,90??
     # wmctrl -i -r 230686723 -e '0,0,0,400,400'
     # xdotool getwindowgeometry 230686723
     # Window 230686723
     #   Position: 2,90 (screen: 0)
     #   Geometry: 400x400
+    # Position + Geometry don't add up to the screen size. fuck.
+    #
+    # ok, xwininfo seems more reliable
+    #
+    # xwininfo -id $(xdotool getactivewindow)'
+    out = check_output(['xwininfo', '-id', wid]).decode('utf8').replace('\n', ' ')
+    m = re.search(r'geometry (\d+)x(\d+)[+-](\d+)[+-](\d+)', out)
+    assert m is not None, out
+    w, h, x, y = m.groups()
+
+    # fuck.
+    titlebar = 32
+
+    # fuck x 2
+    margin   = 28
 
     cmd: List[Union[Path, str]] = [
         'ffmpeg',
         '-f', 'x11grab',
         '-y',
         '-r', '30',
-        '-s', f'{w}x{h}',
-        '-i', f':0.0+{x},{y}',
+        '-s', f'{w}x{titlebar + int(h)}',
+        '-i', f':0.0+{x},{margin + int(y)}',
         output,
     ]
     # TODO not sure if need converter script
