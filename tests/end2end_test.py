@@ -221,7 +221,10 @@ def get_window_id(driver):
         # ugh nothing in capabilities...
         pid = check_output(['pgrep', '-f', 'chrome.*enable-automation']).decode('utf8').strip()
     # https://askubuntu.com/a/385037/427470
+    return get_wid_by_pid(pid)
 
+
+def get_wid_by_pid(pid: str):
     wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf8').splitlines()
     wids = [w.strip() for w in wids if len(w.strip()) > 0]
 
@@ -282,8 +285,15 @@ class TestHelper(NamedTuple):
     def activate(self):
         self.command(Command.ACTIVATE)
 
-    def show_visited(self):
+    def mark_visited(self):
         self.command(Command.SHOW_DOTS)
+
+    def wid(self) -> str:
+        return get_window_id(self.driver)
+
+    def screenshot(self, path):
+        # ugh, webdriver's save_screenshot doesn't behave well with frames
+        check_call(['import', '-window', self.wid(), path])
 
 
 def confirm(what: str):

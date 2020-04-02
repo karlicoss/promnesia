@@ -1,7 +1,9 @@
 from contextlib import contextmanager
 from pathlib import Path
-from subprocess import Popen
-from typing import Optional
+import re
+from time import sleep
+from subprocess import Popen, check_output
+from typing import Optional, List, Union
 
 # TODO decorator that records a video if a certain env var/flag is set (pass a custom name too)
 
@@ -24,30 +26,59 @@ def hotkeys(geometry: Optional[str]=None):
             p.kill()
 
 
+
 @contextmanager
 def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Optional[str]=None):
     assert output is not None, "TODO use tmp file or current dir??"
+    # TODO to fullscreen if None?
+    assert wid is not None
 
-    # TODO I think recordmydesktop dumps broken file. it's squeezed by ffmpeg somehow
-    # also there is something about broken frames???
 
-    ctx = Popen([
-        'recordmydesktop',
-        *([] if wid     is None else ['--windowid' , wid]),
-        *([] if quality is None else ['--v_quality', quality]),
+    # ugh. no idea wtf is happening here... why is position 2,90??
+    # wmctrl -i -r 230686723 -e '0,0,0,400,400'
+    # xdotool getwindowgeometry 230686723
+    # Window 230686723
+    #   Position: 2,90 (screen: 0)
+    #   Geometry: 400x400
+    # Position + Geometry don't add up to the screen size. fuck.
+    #
+    # ok, xwininfo seems more reliable
+    #
+    # xwininfo -id $(xdotool getactivewindow)'
+    out = check_output(['xwininfo', '-id', wid]).decode('utf8').replace('\n', ' ')
+    m = re.search(r'geometry (\d+)x(\d+)[+-](\d+)[+-](\d+)', out)
+    assert m is not None, out
+    w, h, x, y = m.groups()
 
-        '--no-sound',
-        '--on-the-fly-encoding',
-        '--workdir=/tmp', # TODO not sure..
+    # fuck.
+    titlebar = 32
 
-        '--overwrite', # TODO make optional?
-        '--output', output,
-    ])
-    with ctx as p:
+    # fuck x 2
+    margin   = 28
+
+    cmd: List[Union[Path, str]] = [
+        'ffmpeg',
+        '-f', 'x11grab',
+        '-y',
+        '-r', '30',
+        '-s', f'{w}x{titlebar + int(h)}',
+        '-i', f':0.0+{x},{margin + int(y)}',
+        output,
+    ]
+    # TODO not sure if need converter script
+    # TODO double check there are no ffmpeg processes remaining?
+    # maybe, set timeout?
+
+    with Popen(cmd) as p:
+        # early check
+        sleep(0.5)
+        assert p.poll() is None, f'{cmd} died!'
+
         try:
             yield p
         finally:
-            # TODO check if it terminated gracefully?
+            assert p.poll() is None, f'{cmd} died!'
+
             p.terminate()
             p.wait(timeout=10)
 

@@ -10,8 +10,8 @@ It allows you to answer different questions about the current web page:
 - have I been here before? When? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/child-visits.webm][demo (30 s)]] [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/child-visits-2.webm][demo (40s)]]
 - how did I get on it? Which page has led to it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/how_did_i_get_here.webm][demo (40s)]]
 - why have I bookmarked it? who sent me this link? Can I just jump to the message? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/watch_later.webm][demo (30s)]]
-- which links on this page have I already explored? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/show-dots.webm][demo (30s)]],
-- which posts from this blog page have I already read? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/show-dots-2.webm][demo (20s)]]
+- which links on this page have I already explored? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited.webm][demo (30s)]],
+- which posts from this blog page have I already read? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited-2.webm][demo (20s)]]
 - have I annotated it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/highlights.webm][demo (1m)]]
 
 You can jump straight to the [[#demo][Demo]] and [[#install][Install]] sections if you're already overexcited.

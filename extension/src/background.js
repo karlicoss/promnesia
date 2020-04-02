@@ -377,6 +377,7 @@ async function markVisited(tabId) {
   vertical-align: super;
   font-size: smaller;
 
+  /* prevent selecting along with the text */
   user-select: none;
 
   position:absolute;
