@@ -170,3 +170,11 @@ export function safeSetInnerHTML(element: HTMLElement, html: string) {
         element.appendChild(t);
     }
 }
+
+
+// shit. if I type Json properly, then it requires too much isinstance checks...
+// https://github.com/facebook/flow/issues/4825
+
+export type JsonArray = Array<Json>
+export type JsonObject = $Shape<{ [string]: any }>
+export type Json = JsonArray | JsonObject

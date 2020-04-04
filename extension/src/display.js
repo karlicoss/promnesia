@@ -51,6 +51,17 @@ export class Binder {
         return res;
     }
 
+    error(
+        parent: HTMLElement,
+        message: string,
+    ) {
+        const child = this.makeChild.bind(this);
+        const tchild = this.makeTchild.bind(this); // TODO still necessary??
+
+        const item = child(parent, 'div', ['error']);
+        tchild(item, "ERROR: " + message);
+    }
+
     render(
         parent: HTMLElement,
         dates: string,

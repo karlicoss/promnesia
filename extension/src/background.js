@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Locator, Src, Url, Second} from './common';
+import type {Locator, Src, Url, Second, JsonArray, JsonObject} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
@@ -53,13 +53,6 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
     return res;
 }
 
-
-// shit. if I type Json properly, then it requires too much isinstance checks...
-// https://github.com/facebook/flow/issues/4825
-
-export type JsonArray = Array<Json>
-export type JsonObject = $Shape<{ [string]: any }>
-export type Json = JsonArray | JsonObject
 
 
 function rawToVisits(vis: JsonObject): Visits {
@@ -304,9 +297,13 @@ async function updateState (tab: chrome$Tab) {
         }
     }
 
+    // TODO ok, could bind blacklist here as well.. but later
     // TODO wonder if I can do exhaustive check?
     if (visits instanceof Error) {
-        // TODO bind error to the sidebar??
+        // TODO share code with the Visits branch
+        await chromeTabsExecuteScriptAsync(tabId, {
+            code: `bindError("${visits.message}")`
+        });
     } else if (visits instanceof Visits) {
         // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
         // TODO and show system wide notification instead of tab notification?

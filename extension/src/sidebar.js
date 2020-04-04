@@ -1,6 +1,6 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './common';
-import type {Second} from './common';
+import type {JsonObject, Second} from './common';
 import {get_options_async} from './options';
 import type {Options} from './options';
 import {Binder, _fmt} from './display';
@@ -243,8 +243,22 @@ function tryHighlight(text: string, idx: number) {
     }
 }
 
+// used dynamically
+// eslint-disable-next-line no-unused-vars
+async function bindError(message: string) {
+    const opts = await get_options_async();
+    const sidebar = new Sidebar(opts);
+
+    const cont = await sidebar.getContainer();
+    await sidebar.clear(); // TODO probably, unnecessary?
+
+    const binder = new Binder(doc);
+    binder.error(cont, message);
+}
+
+
 // TODO rename to 'set'?
-async function bindSidebarData(response: Visits) {
+async function bindSidebarData(response: JsonObject) {
     // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
     // TDO perhaps we need something reactive...
     // window.sidebarData = response;
@@ -413,8 +427,10 @@ async function bindSidebarData(response: Visits) {
     }
 }
 
-// TODO why is this necessary?? I guess for the code injected by background page?
+
+// hmm. otherwise it can't be called from executescript??
 window.bindSidebarData = bindSidebarData;
+window.bindError       = bindError;
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 // eslint-disable-next-line no-unused-vars
