@@ -58,6 +58,9 @@ if __name__ == "__main__":
             'reddit': [
                 'pyjq',
             ],
+            'markdown': [
+                'mistletoe',
+            ],
             'org': [
                 'orgparse',
             ],
@@ -70,6 +73,7 @@ if __name__ == "__main__":
                   if for_pypi else # pypi doesn't like git dependencies... will think after that later
                   ['my @ git+https://github.com/karlicoss/my.git'])
             ],
+            # TODO make 'all' group?
         },
         package_data={name: ['py.typed']},
         entry_points={
