@@ -53,9 +53,16 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
     return res;
 }
 
-type Json = any;
 
-function rawToVisits(vis: Json): Visits {
+// shit. if I type Json properly, then it requires too much isinstance checks...
+// https://github.com/facebook/flow/issues/4825
+
+export type JsonArray = Array<Json>
+export type JsonObject = $Shape<{ [string]: any }>
+export type Json = JsonArray | JsonObject
+
+
+function rawToVisits(vis: JsonObject): Visits {
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
         const dts = v['dt'];
@@ -75,10 +82,10 @@ function rawToVisits(vis: Json): Visits {
     );
 }
 
+type Res<T> = T | Error;
 
-// TODO definitely need to use something very lightweight for json requests..
 
-async function queryBackendCommon(params, endp: string) {
+async function queryBackendCommon<R>(params, endp: string): Promise<R> {
     const opts = await get_options_async();
     const endpoint = `${opts.host}/${endp}`;
     // TODO cors mode?
@@ -95,25 +102,23 @@ async function queryBackendCommon(params, endp: string) {
         if (!ok) {
             throw response.statusText; // TODO...
         }
-        return response;
+        return response.json();
     });
-    // TODO it's a promise..
-    // ldebug(`success: ${response}`);
-    return response.json();
+    return response;
 }
 
-async function getBackendVisits(u: Url) {
-    return queryBackendCommon({url: u}, 'visits').then(rawToVisits);
+async function getBackendVisits(u: Url): Promise<Visits> {
+    return queryBackendCommon<JsonObject>({url: u}, 'visits').then(rawToVisits);
 }
 
 
-// TODO include browser too?
+// TODO include browser visits here too?
 export async function searchVisits(u: Url): Promise<Visits> {
-    return queryBackendCommon({url: u}, 'search').then(rawToVisits);
+    return queryBackendCommon<JsonObject>({url: u}, 'search').then(rawToVisits);
 }
 
 export async function searchAround(timestamp: number): Promise<Visits> {
-    return queryBackendCommon({timestamp: timestamp}, 'search_around').then(rawToVisits);
+    return queryBackendCommon<JsonObject>({timestamp: timestamp}, 'search_around').then(rawToVisits);
 }
 
 function getDelayMs(/*url*/) {
@@ -355,7 +360,7 @@ async function markVisited(tabId) {
 
     // TODO check if zero? not sure if necessary...
     // TODO maybe, I need a per-site extension?
-    const resp = await queryBackendCommon({
+    const resp = await queryBackendCommon<JsonArray>({
         urls: res,
     }, 'visited');
 
@@ -593,6 +598,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         // sendResponse(visits);
         // return true; // this is important!! otherwise message will not be sent?
     } else if (method == Methods.SEARCH_VISITS_AROUND) {
+        // TODO reuse handleOpenSearch?
         const timestamp = msg.timestamp; // TODO FIXME epoch?? 
         const params = new URLSearchParams();
         // TODO str??
