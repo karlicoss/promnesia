@@ -328,9 +328,10 @@ def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], 
     for p in previsits:
         if isinstance(p, Exception):
             errors.append(p)
-            parts = ['indexer emitted exception']
-            parts.extend(traceback.format_tb(p.__traceback__))
-            logger.error('\n'.join(parts))
+            parts = ['indexer emitted exception\n']
+            # eh, exception type is ignored by format_exception completely, apparently??
+            parts.extend(traceback.format_exception(Exception, p, p.__traceback__))
+            logger.error(''.join(parts))
             continue
 
         # TODO check whether it's filtered before construction? probably doesn't really impact
