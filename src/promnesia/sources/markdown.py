@@ -37,6 +37,16 @@ Result = Res[Parsed]
 # d.children[0].content
 # Out[13]: 'sub2'
 
+# meh, but for now fine I guess
+HTML_MARKER = '!html '
+
+
+def _ashtml(block) -> str:
+    res = renderer.render(block)
+    if res.startswith('<p>') and res.endswith('</p>'):
+        res = res[3: -4] # meh, but for now fine
+    return res
+
 
 class Parser:
     def __init__(self, path: Path):
@@ -51,7 +61,7 @@ class Parser:
         # TODO fuck. it doesn't preserve line numbers/positions in text???
 
         # ugh. It can't output markdown.. https://github.com/miyuchina/mistletoe/issues/4
-        context = None if last_block is None else renderer.render(last_block)
+        context = None if last_block is None else HTML_MARKER + _ashtml(last_block)
         yield Parsed(url=url, context=context)
 
 

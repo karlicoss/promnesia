@@ -24,6 +24,9 @@ type Params = {
     relative: boolean;
 }
 
+
+const HTML_MARKER = '!html ';
+
 export class Binder {
     doc: Document;
 
@@ -111,10 +114,18 @@ export class Binder {
 
         /* TODO locator could jump into the file? */
         if (context != null) {
-            const ctx_c = child(item, 'div', ['context']);
-            for (const line of context.split('\n')) {
-                tchild(ctx_c, line);
-                child(ctx_c, 'br');
+            const ctx_c = child(item, 'div', ['context'])
+
+            let ctx = context;
+            if (ctx.startsWith(HTML_MARKER)) {
+                ctx = context.substring(HTML_MARKER.length)
+                // TODO right. use innerhtml for now??
+                ctx_c.innerHTML = ctx
+            } else { // plaintext
+                for (const line of ctx.split('\n')) {
+                    tchild(ctx_c, line)
+                    child(ctx_c, 'br')
+                }
             }
         }
 
