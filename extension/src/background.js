@@ -82,8 +82,6 @@ function rawToVisits(vis: JsonObject): Visits {
     );
 }
 
-type Res<T> = T | Error;
-
 
 async function queryBackendCommon<R>(params, endp: string): Promise<R> {
     const opts = await get_options_async();
@@ -162,7 +160,7 @@ async function Blacklist_get(): Promise<Blacklist> {
 }
 
 
-type Result = Visits | Blacklisted;
+type Result = Visits | Blacklisted | Error;
 
 export async function getVisits(url: Url): Promise<Result> {
     const blacklist = await Blacklist_get();
@@ -170,7 +168,15 @@ export async function getVisits(url: Url): Promise<Result> {
     if (bl != null) {
         return new Blacklisted(url, bl);
     }
-    const backendVisits = await getBackendVisits(url);
+    // TODO hmm. maybe have a special 'error' visit so we could just merge visits here?
+    // it's gona be a mess though..
+    const backendRes: Visits | Error = await getBackendVisits(url)
+          .catch((err: Error) => err);
+    if (backendRes instanceof Error) {
+        return backendRes;
+    }
+
+    const backendVisits = backendRes;
     // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
     const chromeVisits = await getChromeVisits(url);
     const allVisits = backendVisits.visits.concat(chromeVisits.visits);
@@ -192,6 +198,10 @@ type IconStyle = {
 function getIconStyle(visits: Result): IconStyle {
     if (visits instanceof Blacklisted) {
         return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${visits.reason}`, text: ''};
+    }
+
+    if (visits instanceof Error) {
+        return {icon: 'images/ic_error.png'         , title: `ERROR: ${visits.message}`, text: ''};
     }
 
     const vcount = visits.visits.length;
@@ -250,6 +260,7 @@ async function updateState (tab: chrome$Tab) {
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
 
+    // TODO move to getIconStyle??
     if (visits instanceof Visits) {
         title = `${title}\nCanonical: ${visits.normalised_url}`;
     }
@@ -293,7 +304,10 @@ async function updateState (tab: chrome$Tab) {
         }
     }
 
-    if (visits instanceof Visits) {
+    // TODO wonder if I can do exhaustive check?
+    if (visits instanceof Error) {
+        // TODO bind error to the sidebar??
+    } else if (visits instanceof Visits) {
         // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
         // TODO and show system wide notification instead of tab notification?
         // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
