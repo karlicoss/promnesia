@@ -440,7 +440,6 @@ function requestVisits() {
             if (response == null) {
                 return;
             }
-            // TODO FIXME here, distinguish them
             bindSidebarData(response);
         });
 }

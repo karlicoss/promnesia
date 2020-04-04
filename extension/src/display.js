@@ -113,11 +113,10 @@ export class Binder {
         tchild(time_c, times);
         dt_c.setAttribute('title', 'search around');
         dt_c.onclick = () => {
-            const ts = timestamp.getTime() / 1000;
+            const utc_ts = timestamp.valueOf();
             chrome.runtime.sendMessage({
-                // TODO hopefully the timestamp is properly captured??
                 method   : Methods.SEARCH_VISITS_AROUND,
-                timestamp: ts,
+                utc_timestamp: utc_ts,
             });
 
             return true;
