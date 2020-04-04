@@ -101,15 +101,17 @@ def fallback(ex):
         except ModuleNotFoundError as me:
             logger = get_logger()
             logger.exception(me)
+            # TODO maybe check first? That way could sync it with the dependencies too
             logger.warning('%s not found, so falling back to plaintext! "pip3 install --user %s" for better support!', me.name, me.name)
             yield me
             yield from _plaintext(path)
     return wrapped
 
+
 @fallback
 def _markdown(path: Path) -> Iterator[Extraction]:
-    # TODO for now handled as plaintext
-    yield from _plaintext(path)
+    from . import markdown
+    yield from markdown.extract_from_file(path)
 
 
 @fallback

@@ -101,12 +101,12 @@ def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
     """
     Note that org-mode doesn't keep timezone, so we don't really have choice but make it tz-agnostic
     """
-    fpath = Path(fname)
-    o = orgparse.loads(fpath.read_text())
+    path = Path(fname)
+    o = orgparse.loads(path.read_text())
     # meh. but maybe ok to start with?
     root = o.root
 
-    fallback_dt = datetime.fromtimestamp(fpath.stat().st_mtime)
+    fallback_dt = datetime.fromtimestamp(path.stat().st_mtime)
 
     ex = RuntimeError(f'while extracting from {fname}')
 
