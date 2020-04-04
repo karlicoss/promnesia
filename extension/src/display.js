@@ -1,6 +1,6 @@
 /* @flow */
 import type {Url, Src, Locator} from './common';
-import {format_dt, Methods, unwrap} from './common';
+import {format_dt, Methods, unwrap, safeSetInnerHTML} from './common';
 
 // TODO need to pass document??
 
@@ -119,8 +119,7 @@ export class Binder {
             let ctx = context;
             if (ctx.startsWith(HTML_MARKER)) {
                 ctx = context.substring(HTML_MARKER.length)
-                // TODO right. use innerhtml for now??
-                ctx_c.innerHTML = ctx
+                safeSetInnerHTML(ctx_c, ctx);
             } else { // plaintext
                 for (const line of ctx.split('\n')) {
                     tchild(ctx_c, line)
