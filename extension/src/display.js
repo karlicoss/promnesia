@@ -1,6 +1,6 @@
 /* @flow */
 import type {Url, Src, Locator} from './common';
-import {format_dt, Methods, unwrap} from './common';
+import {format_dt, Methods, unwrap, safeSetInnerHTML} from './common';
 
 // TODO need to pass document??
 
@@ -24,6 +24,9 @@ type Params = {
     relative: boolean;
 }
 
+
+const HTML_MARKER = '!html ';
+
 export class Binder {
     doc: Document;
 
@@ -46,6 +49,17 @@ export class Binder {
         const res = this.doc.createTextNode(text);
         parent.appendChild(res);
         return res;
+    }
+
+    error(
+        parent: HTMLElement,
+        message: string,
+    ) {
+        const child = this.makeChild.bind(this);
+        const tchild = this.makeTchild.bind(this); // TODO still necessary??
+
+        const item = child(parent, 'div', ['error']);
+        tchild(item, "ERROR: " + message);
     }
 
     render(
@@ -99,11 +113,10 @@ export class Binder {
         tchild(time_c, times);
         dt_c.setAttribute('title', 'search around');
         dt_c.onclick = () => {
-            const ts = timestamp.getTime() / 1000;
+            const utc_ts = timestamp.valueOf();
             chrome.runtime.sendMessage({
-                // TODO hopefully the timestamp is properly captured??
                 method   : Methods.SEARCH_VISITS_AROUND,
-                timestamp: ts,
+                utc_timestamp: utc_ts,
             });
 
             return true;
@@ -111,10 +124,17 @@ export class Binder {
 
         /* TODO locator could jump into the file? */
         if (context != null) {
-            const ctx_c = child(item, 'div', ['context']);
-            for (const line of context.split('\n')) {
-                tchild(ctx_c, line);
-                child(ctx_c, 'br');
+            const ctx_c = child(item, 'div', ['context'])
+
+            let ctx = context;
+            if (ctx.startsWith(HTML_MARKER)) {
+                ctx = context.substring(HTML_MARKER.length)
+                safeSetInnerHTML(ctx_c, ctx);
+            } else { // plaintext
+                for (const line of ctx.split('\n')) {
+                    tchild(ctx_c, line)
+                    child(ctx_c, 'br')
+                }
             }
         }
 

@@ -193,14 +193,18 @@ def search(
 def search_around(
         timestamp: T.number,
 ):
+    utc_timestamp = timestamp # old 'timestamp' name is legacy
+
+    # TODO meh. use count instead?
     delta_back  = timedelta(hours=3).total_seconds()
-    delta_front = timedelta(minutes=5).total_seconds()
+    delta_front = timedelta(minutes=2).total_seconds()
     # TODO not sure about front.. but it also serves as quick hack to accomodate for all the truncations etc
     return search_common(
         url='http://dummy.org', # TODO remove it from search_common
-        # TODO no abs?
         where=lambda table, url: between(
-            func.strftime('%s', func.datetime(table.c.dt)) - literal(timestamp),
+            # %s is a unix timestamp
+            # TODO careful.. not sure how datetime works w.r.t. datetime string without the timezone info..
+            func.strftime('%s', func.datetime(table.c.dt)) - literal(utc_timestamp),
             literal(-delta_back),
             literal(delta_front),
         ),
@@ -284,6 +288,7 @@ def get_system_tz() -> str:
         return 'UTC'
 
 
+# TODO rename to 'backend'?
 def setup_parser(p):
     p.add_argument('--port'    , type=str , default='13131', help='Port for communicating with extension')
     # TODO mm. should add fallback timezone to frontend instead I guess?

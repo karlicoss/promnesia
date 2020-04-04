@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Locator, Src, Url, Second} from './common';
+import type {Locator, Src, Url, Second, JsonArray, JsonObject} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
@@ -53,9 +53,9 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
     return res;
 }
 
-type Json = any;
 
-function rawToVisits(vis: Json): Visits {
+
+function rawToVisits(vis: JsonObject): Visits {
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
         const dts = v['dt'];
@@ -76,9 +76,7 @@ function rawToVisits(vis: Json): Visits {
 }
 
 
-// TODO definitely need to use something very lightweight for json requests..
-
-async function queryBackendCommon(params, endp: string) {
+async function queryBackendCommon<R>(params, endp: string): Promise<R> {
     const opts = await get_options_async();
     const endpoint = `${opts.host}/${endp}`;
     // TODO cors mode?
@@ -95,25 +93,23 @@ async function queryBackendCommon(params, endp: string) {
         if (!ok) {
             throw response.statusText; // TODO...
         }
-        return response;
+        return response.json();
     });
-    // TODO it's a promise..
-    // ldebug(`success: ${response}`);
-    return response.json();
+    return response;
 }
 
-async function getBackendVisits(u: Url) {
-    return queryBackendCommon({url: u}, 'visits').then(rawToVisits);
+async function getBackendVisits(u: Url): Promise<Visits> {
+    return queryBackendCommon<JsonObject>({url: u}, 'visits').then(rawToVisits);
 }
 
 
-// TODO include browser too?
+// TODO include browser visits here too?
 export async function searchVisits(u: Url): Promise<Visits> {
-    return queryBackendCommon({url: u}, 'search').then(rawToVisits);
+    return queryBackendCommon<JsonObject>({url: u}, 'search').then(rawToVisits);
 }
 
 export async function searchAround(timestamp: number): Promise<Visits> {
-    return queryBackendCommon({timestamp: timestamp}, 'search_around').then(rawToVisits);
+    return queryBackendCommon<JsonObject>({timestamp: timestamp}, 'search_around').then(rawToVisits);
 }
 
 function getDelayMs(/*url*/) {
@@ -157,7 +153,7 @@ async function Blacklist_get(): Promise<Blacklist> {
 }
 
 
-type Result = Visits | Blacklisted;
+type Result = Visits | Blacklisted | Error;
 
 export async function getVisits(url: Url): Promise<Result> {
     const blacklist = await Blacklist_get();
@@ -165,7 +161,15 @@ export async function getVisits(url: Url): Promise<Result> {
     if (bl != null) {
         return new Blacklisted(url, bl);
     }
-    const backendVisits = await getBackendVisits(url);
+    // TODO hmm. maybe have a special 'error' visit so we could just merge visits here?
+    // it's gona be a mess though..
+    const backendRes: Visits | Error = await getBackendVisits(url)
+          .catch((err: Error) => err);
+    if (backendRes instanceof Error) {
+        return backendRes;
+    }
+
+    const backendVisits = backendRes;
     // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
     const chromeVisits = await getChromeVisits(url);
     const allVisits = backendVisits.visits.concat(chromeVisits.visits);
@@ -187,6 +191,10 @@ type IconStyle = {
 function getIconStyle(visits: Result): IconStyle {
     if (visits instanceof Blacklisted) {
         return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${visits.reason}`, text: ''};
+    }
+
+    if (visits instanceof Error) {
+        return {icon: 'images/ic_error.png'         , title: `ERROR: ${visits.message}`, text: ''};
     }
 
     const vcount = visits.visits.length;
@@ -245,6 +253,7 @@ async function updateState (tab: chrome$Tab) {
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
 
+    // TODO move to getIconStyle??
     if (visits instanceof Visits) {
         title = `${title}\nCanonical: ${visits.normalised_url}`;
     }
@@ -288,7 +297,14 @@ async function updateState (tab: chrome$Tab) {
         }
     }
 
-    if (visits instanceof Visits) {
+    // TODO ok, could bind blacklist here as well.. but later
+    // TODO wonder if I can do exhaustive check?
+    if (visits instanceof Error) {
+        // TODO share code with the Visits branch
+        await chromeTabsExecuteScriptAsync(tabId, {
+            code: `bindError("${visits.message}")`
+        });
+    } else if (visits instanceof Visits) {
         // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
         // TODO and show system wide notification instead of tab notification?
         // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
@@ -355,7 +371,7 @@ async function markVisited(tabId) {
 
     // TODO check if zero? not sure if necessary...
     // TODO maybe, I need a per-site extension?
-    const resp = await queryBackendCommon({
+    const resp = await queryBackendCommon<JsonArray>({
         urls: res,
     }, 'visited');
 
@@ -593,10 +609,12 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         // sendResponse(visits);
         // return true; // this is important!! otherwise message will not be sent?
     } else if (method == Methods.SEARCH_VISITS_AROUND) {
-        const timestamp = msg.timestamp; // TODO FIXME epoch?? 
+        // TODO reuse handleOpenSearch?
+        // TODO careful about the type?
+        const utc_ts = msg.utc_timestamp;
         const params = new URLSearchParams();
         // TODO str??
-        params.append('timestamp', timestamp.toString());
+        params.append('timestamp', utc_ts);
         const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
         chrome.tabs.create({'url': search_url});
     } else if (method == Methods.MARK_VISITED) {

@@ -54,7 +54,7 @@ def _get_heading(n: OrgNode):
     return '' if n.is_root() else n.get_heading(format='raw') # TODO convert links to html?
 
 
-# TODO FIXME maybe line by line? or restrict length? not sure..
+# TODO maybe line by line? or restrict length? not sure..
 def _get_body(n: OrgNode):
     if n.is_root():
         return '\n'.join(n._lines)

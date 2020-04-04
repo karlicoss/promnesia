@@ -29,6 +29,8 @@ function clearResults() {
     }
 }
 
+
+// TODO reuse it in sidebar??
 function showError(err) {
     clearResults();
     const res = getResultsContainer();

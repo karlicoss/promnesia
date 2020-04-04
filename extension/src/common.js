@@ -159,3 +159,22 @@ export function addStyle(doc: Document, css: string) {
     st.appendChild(doc.createTextNode(css));
     unwrap(doc.head).appendChild(st);
 }
+
+export function safeSetInnerHTML(element: HTMLElement, html: string) {
+    const tags = new DOMParser()
+          .parseFromString(html, 'text/html')
+          .getElementsByTagName('body')[0]
+          .childNodes;
+    // TODO wtf. if I just use for (t of tags), it doesn't iterate over <br>
+    for (const t of Array.from(tags)) {
+        element.appendChild(t);
+    }
+}
+
+
+// shit. if I type Json properly, then it requires too much isinstance checks...
+// https://github.com/facebook/flow/issues/4825
+
+export type JsonArray = Array<Json>
+export type JsonObject = $Shape<{ [string]: any }>
+export type Json = JsonArray | JsonObject
