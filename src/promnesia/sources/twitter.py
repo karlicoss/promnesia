@@ -2,7 +2,7 @@ from typing import Iterator, Optional
 
 from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
 
-import my.twitter as tw
+import my.twitter.all as tw
 
 
 def get(o, k):
@@ -11,22 +11,16 @@ def get(o, k):
     else:
         return getattr(o, k)
 
-def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
-    tw.configure(export_path=export_path)
 
+def index() -> Iterator[Extraction]:
     logger = get_logger()
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0
     for t in tw.tweets():
         processed += 1
         try:
-            ets = t.entities
-            if ets is not None:
-                urls = [get(e, 'expanded_url') for e in get(ets, 'urls')]
-            else:
-                # TODO entities shouldn't really be None.. figure it out in twidump, perhaps None is returned by api?
-                ets = []
-        except Exception as e:
+            urls = t.urls
+        except Exception as e: # just in case..
             yield e
             urls = []
 
@@ -41,7 +35,7 @@ def index(export_path: Optional[PathIsh]=None) -> Iterator[Extraction]:
         for u in urls:
             yield Visit(
                 url=u,
-                dt=t.dt,
+                dt=t.created_at,
                 context=t.text,
                 locator=loc,
             )
