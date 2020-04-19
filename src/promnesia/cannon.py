@@ -11,7 +11,7 @@ Also some experiments to establish 'links' hierarchy.
 """
 import re
 import typing
-from typing import Iterable, NamedTuple, Set, Optional, List
+from typing import Iterable, NamedTuple, Set, Optional, List, Sequence, Union, Tuple, Dict
 
 import urllib.parse
 from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
@@ -243,10 +243,14 @@ def transform_split(split: SplitResult):
 
     fragment = split.fragment
 
-
     ID   = r'(?P<id>[^/]+)'
     REST = r'(?P<rest>.*)'
-    rules = {
+
+    Left = Union[str, Sequence[str]]
+    Right = Tuple[str, str, str]
+    # the idea is that we can unify certain URLs here and map them to the 'canonical' one
+    # this is a dict only for grouping but should be a list really.. todo
+    rules: Dict[Left, Right] = {
         # TODO m. handling might be quite common
         # f'm.youtube.com/{REST}': ('youtube.com', '{rest}'),
         (
@@ -255,6 +259,10 @@ def transform_split(split: SplitResult):
         ) : ('youtube.com', '/watch', 'v={id}'),
         # TODO wonder if there is a better candidate for canonical video link?
         # {DOMAIN} pattern? implicit?
+        (
+            'twitter.com/home',
+            'twitter.com/explore',
+        ) : ('twitter.com', '', ''),
     }
 
     def iter_rules():
@@ -622,6 +630,7 @@ TW_PATTERNS = [
     r'twitter.com/U/lists/L(/.*)?',
     r'twitter.com/i/web/status/S',
     r'twitter.com',
+    r'twitter.com/home',
     r'tweetdeck.twitter.com',
     r'twitter.com/U/(media|photo|followers|following)',
     # r'mobile.twitter.com/.*',
