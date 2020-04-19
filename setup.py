@@ -1,21 +1,32 @@
-import sys
-
-from pkg_resources import require, VersionConflict
-from setuptools import setup
-
-try:
-    require('setuptools>=38.3')
-except VersionConflict:
-    print("Error: version of setuptools is too old (<38.3)!")
-    sys.exit(1)
+# see https://github.com/karlicoss/pymplate for up-to-date reference
 
 
-name = 'promnesia'
+from setuptools import setup, find_packages # type: ignore
 
 
-if __name__ == "__main__":
+def main():
+    # pkgs = find_packages('src')
+    # [pkg] = pkgs
+    pkg = 'promnesia' # eh, find some subpackages too?
     setup(
-        use_pyscaffold=True,
+        name=pkg,
+        use_scm_version={
+            'version_scheme': 'python-simplified-semver',
+            'local_scheme': 'dirty-tag',
+        },
+        setup_requires=['setuptools_scm'],
+
+        zip_safe=False,
+
+        packages=[pkg],
+        package_dir={'': 'src'},
+        package_data={pkg: ['py.typed']},
+
+        url='https://github.com/karlicoss/promnesia',
+        author='Dmitrii Gerasimov',
+        author_email='karlicoss@gmail.com',
+        description='Enhancement of your browsing history',
+
         install_requires=[
             'pytz',
             'urlextract',
@@ -67,8 +78,11 @@ if __name__ == "__main__":
             ],
             # TODO make 'all' group?
         },
-        package_data={name: ['py.typed']},
         entry_points={
             'console_scripts': ['promnesia=promnesia.__main__:main'],
         }
     )
+
+
+if __name__ == "__main__":
+    main()
