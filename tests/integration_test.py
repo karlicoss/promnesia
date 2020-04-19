@@ -110,21 +110,9 @@ def hyp_extractor():
         export_path = '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json'
 
     # TODO good example for documentaion
-    from my.cfg import config
+    from my.cfg import config, set_repo
     config.hypothesis = hypothesis
-
-    from promnesia.kython.kimport import import_from
-    he = import_from('{hypexport_path.parent}', 'hypexport')
-    base = 'my.config.repos'
-    import importlib
-    importlib.import_module(base)  # need to warm up, otherwise later import of 'mycfg.repos.<repo>' fails
-    # TODO could warm up in mypkg as well?
-
-    # ok, config.repos.hypexport = he isn't gonna work because of
-    # TODO think about it and document...
-    # TODO maybe it should use 'hypexport' directly? and just discover paths from my.config.repos too?
-    import sys
-    sys.modules[base + '.hypexport'] = he
+    set_repo('hypexport', '{hypexport_path.parent}')
 
     import promnesia.sources.hypothesis as hypi
     return I(

@@ -1,33 +1,39 @@
+# see https://github.com/karlicoss/pymplate for up-to-date reference
+
 name: CI
 on: [push]
-
-# TODO add pull_request too? not sure if necessary
 
 env:
   # for tests
   # not sure if tests should detect GITHUB_WORKFLOW instead??
   CI: true
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    # TODO matrix??
-      
+     
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
     steps:
+    - run: echo "::add-path::$HOME/.local/bin"
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+   
+    # uncomment for SSH debugging
+    # - uses: mxschmitt/action-tmate@v2
 
-    - run: ci/github-ci-compat
-
-    - run: |
-        python3 -m pip install --user tox
-        sudo apt install python3-dev # TODO ugh, regex (dateparser's dep needs it???)
-        sudo apt install python3-doc
-        python3 -m tox
+    - run: scripts/ci/run
 
   install_and_run_test:
+    # TODO use setup-python thing?
     # TODO run on macos too?
     runs-on: ubuntu-latest
 
@@ -42,7 +48,6 @@ jobs:
         python3 -m pip install .
         export PATH=ci/fake-systemd:$PATH
         tests/install_and_run
-
 
   run_demo:
     strategy:
@@ -76,3 +81,33 @@ jobs:
         pip3 install --user .
         pip3 install --user .[org] # just so it doesn't spam
         scripts/promnesia demo https://github.com/karlicoss/exobrain
+
+  pypi:
+    runs-on: ubuntu-latest
+    needs: [build, install_and_run_test, run_demo]
+
+    steps:
+    - run: echo "::add-path::$HOME/.local/bin"
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: 'release to test pypi'
+      # always deploy merged master to test pypi
+      if: github.event.ref == 'refs/heads/master'
+      env:
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
+      run: pip3 install --user wheel twine && scripts/release --test
+
+    - name: 'release to pypi'
+      # always deploy tags to release pypi
+      # TODO filter release tags only?
+      if: startsWith(github.event.ref, 'refs/tags')
+      env:
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      run: pip3 install --user wheel twine && scripts/release

@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+import os
+import sys
+from pathlib import Path
+from subprocess import check_call
+import shutil
+
+
+def main():
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument('--test', action='store_true', help='use test pypi')
+    args = p.parse_args()
+
+    extra = []
+    if args.test:
+        extra.extend(['--repository-url', 'https://test.pypi.org/legacy/'])
+
+    root = Path(__file__).absolute().parent.parent
+    os.chdir(root) # just in case
+
+    dist = root / 'dist'
+    if dist.exists():
+        shutil.rmtree(dist)
+
+    check_call('python3 setup.py sdist bdist_wheel', shell=True)
+
+    TP = 'TWINE_PASSWORD'
+    password = os.environ.get(TP)
+    if password is None:
+        print(f"WARNING: no {TP} passed", file=sys.stderr)
+        import pip_secrets
+        password = pip_secrets.token_test if args.test else pip_secrets.token # meh
+
+    check_call([
+        'python3', '-m', 'twine',
+        'upload', *dist.iterdir(),
+        *extra,
+    ], env={
+        'TWINE_USERNAME': '__token__',
+        TP: password,
+        **os.environ,
+    })
+
+
+if __name__ == '__main__':
+    main()

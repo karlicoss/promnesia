@@ -1,39 +1,6 @@
 version: 2
 
 jobs:
-  server_build_and_check:
-    docker:
-      - image: circleci/python:latest
-
-    steps:
-      - checkout
-      - run: git submodule update --init # TODO eh, this is only needed for integration tests...
-
-      # - restore_cache:
-      #     keys:
-      #     - v1-dependencies-{{ checksum "promnesia/requirements.txt" }}-{{ checksum "promnesia/requirements-dev.txt" }}
-      #     # fallback to using the latest cache if no exact match is found
-      #     - v1-dependencies-
-
-      - run: python3 -m pip install --user tox
-      # ugh, hug is involved as subprocess and doesn't see virtualenv I gues??
-      - run: sudo apt install python3-dev # TODO ugh, regex (dateparser's dep needs it???)
-      # used as a source of html pages for example test... not sure if a good idea?
-      - run: sudo apt install python3-doc
-
-      - run: python3 -m tox
-
-
-      # - save_cache:
-      #     paths:
-      #       - ./venv
-      #     key: v1-dependencies-{{ checksum "promnesia/requirements.txt" }}-{{ checksum "promnesia/requirements-dev.txt" }}
-        
-
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
-          
   client_build_and_check:
     docker:
       - image: circleci/node:latest
@@ -87,14 +54,6 @@ jobs:
     steps:
       - checkout
 
-      #- run:
-      #    name: 'install python3.6'
-      #    command: |
-      #      sudo add-apt-repository --yes ppa:jonathonf/python-3.6
-      #      sudo apt update
-      #      sudo apt install python3.6
-      #      sudo apt install python3.6-dev python3-pip
-
       - run:
           name: 'setup python'
           command: |
@@ -120,6 +79,5 @@ workflows:
   build_and_test:
     jobs:
       - client_build_and_check
-      - server_build_and_check
       - end2end_tests
       - install_and_run_test
