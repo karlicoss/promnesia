@@ -33,6 +33,10 @@ class Config(NamedTuple):
         assert cd is not None
         return Path(cd)
 
+    @property
+    def output_dir(self) -> Path:
+        return Path(self.OUTPUT_DIR)
+
 
 instance: Optional[Config] = None
 

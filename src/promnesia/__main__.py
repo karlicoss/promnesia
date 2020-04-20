@@ -3,7 +3,7 @@ import os
 import logging
 import inspect
 import sys
-from typing import List, Tuple, Optional, Dict, Sequence
+from typing import List, Tuple, Optional, Dict, Sequence, Iterable
 from pathlib import Path
 from datetime import datetime
 from tempfile import TemporaryDirectory
@@ -17,7 +17,7 @@ from .common import previsits_to_history, Source
 from .dump import dump_histories
 
 
-def _do_index():
+def _do_index() -> Iterable[Exception]:
     cfg = config.get()
 
     logger = get_logger()
@@ -52,16 +52,17 @@ def _do_index():
     # TODO perhaps it's better to open connection and dump as we collect so it consumes less memory?
     dump_histories(all_histories)
 
-    if len(all_errors) > 0:
-        sys.exit(1)
+    return all_errors
 
 
 def do_index(config_file: Path):
+    config.load_from(config_file)
     try:
-        config.load_from(config_file)
-        _do_index()
+        errors = _do_index()
     finally:
         config.reset()
+    if len(list(errors)) > 0:
+        sys.exit(1)
 
 
 def demo_sources():
@@ -88,32 +89,31 @@ def demo_sources():
 
 
 
-def do_demo(index_as: str, params: Sequence[str], port: Optional[str]):
+def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path]):
     logger = get_logger()
     from pprint import pprint
-    # TODO logging?
-    idx = demo_sources()[index_as]()
-
-    idxr = Source(idx, *params)
-    hist, errors = previsits_to_history(idxr, src=idxr.src)
-
-    for e in errors:
-        logger.error(e)
-    logger.info("Finished indexing {} {}, {} total".format(index_as, params, len(hist)))
-    # TODO color?
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
-        cfg = config.Config(
-            OUTPUT_DIR=outdir,
-            SOURCES=[],
-        )
-        config.instance = cfg
-        dump_histories([('demo', hist)])
+
+        if config_file is not None:
+            config.load_from(config_file)
+        else:
+            idx = demo_sources()[index_as]()
+            src = Source(idx, *params)
+            cfg = config.Config(
+                OUTPUT_DIR=outdir,
+                SOURCES=[src],
+            )
+            config.instance = cfg
+
+        errors = _do_index()
+        for e in errors:
+            logger.error(e)
 
         if port is None:
             logger.warning("Port isn't specified, not serving!")
         else:
-            server._run(port=port, db=outdir / 'promnesia.sqlite', timezone=server.get_system_tz(), quiet=False)
+            server._run(port=port, db=config.get().output_dir / 'promnesia.sqlite', timezone=server.get_system_tz(), quiet=False)
 
         if sys.stdin.isatty():
             input("Press any key when ready")
@@ -136,10 +136,10 @@ def main():
     sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F)
     server.setup_parser(sp)
 
-    # TODO not sure what would be a good name? rename to 'demo'?
     ap = subp.add_parser('demo', help='Demo mode: index and serve a directory in single command', formatter_class=F)
     # TODO use docstring or something?
     ap.add_argument('--port', type=str, help='Port to serve. If omitted, will only create the index without serving.', required=False)
+    ap.add_argument('--config', type=Path, required=False, help='Config to run against. If omitted, will use empty config')
     ap.add_argument(
         '--as',
         choices=list(sorted(demo_sources().keys())),
@@ -169,7 +169,7 @@ def main():
         elif args.mode == 'serve':
             server.run(args)
         elif args.mode == 'demo':
-            do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port)
+            do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port, config_file=args.config)
         elif args.mode == 'install-server':
             install_server.install(args)
         else:
