@@ -13,8 +13,8 @@ fi
 
 # TODO think if we really want to guard it by this if..
 if [ -v CI ]; then
-    sudo apt install python3-dev # TODO ugh, regex (dateparser's dep needs it???)
-    # TODO use some docs in /usr/local/share?
+    sudo apt update
+    # TODO use some other docs in /usr/local/share?
     sudo apt install python3-doc
 fi
 

@@ -36,7 +36,6 @@ def main():
 
             # TODO could be optional?
             'python-magic', # for detecting mime types
-            'dateparser', # TODO careful, might need python3-dev due to regex dependency?
         ],
         extras_require={
             # TODO make cachew optional?
