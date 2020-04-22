@@ -1,10 +1,25 @@
 #!/usr/bin/env python3
+'''
+Run [[file:scripts/release][scripts/release]] to deploy Python package onto [[https://pypi.org][PyPi]] and [[https://test.pypi.org][test PyPi]].
+
+The script expects =TWINE_PASSWORD= environment variable to contain the [[https://pypi.org/help/#apitoken][PyPi token]] (not the password!).
+
+The script can be run manually.
+It's also running as =pypi= job in [[file:.github/workflows/main.yml][Github Actions config]]. Packages are deployed on:
+- every master commit, onto test pypi
+- every new tag, onto production pypi
+
+You'll need to set =TWINE_PASSWORD= and =TWINE_PASSWORD_TEST= in [[https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets][secrets]]
+for Github Actions deployment to work.
+'''
+
 import os
 import sys
 from pathlib import Path
 from subprocess import check_call
 import shutil
 
+is_ci = os.environ.get('CI') is not None
 
 def main():
     import argparse
@@ -18,6 +33,10 @@ def main():
 
     root = Path(__file__).absolute().parent.parent
     os.chdir(root) # just in case
+
+    if is_ci:
+        # see https://github.com/actions/checkout/issues/217
+        check_call('git fetch --prune --unshallow'.split())
 
     dist = root / 'dist'
     if dist.exists():
