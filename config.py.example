@@ -15,6 +15,7 @@ List of sources to use
 SOURCES = [
     Source(
         auto.index,
-        '/usr/share/doc/python3/html/faq',
+        # just some arbitrary directory with html files
+        '/usr/share/doc/python3/',
     )
 ]

@@ -3,6 +3,16 @@
 
 from setuptools import setup, find_packages # type: ignore
 
+DEPS_INDEXER = [
+    'urlextract',
+    # TODO could be optional?
+    'python-magic', # for detecting mime types
+]
+
+DEPS_SERVER = [
+    'tzlocal',
+    'hug',
+]
 
 def main():
     # pkgs = find_packages('src')
@@ -28,14 +38,11 @@ def main():
         description='Enhancement of your browsing history',
 
         install_requires=[
+            *DEPS_INDEXER,
+            *DEPS_SERVER,
             'pytz',
-            'urlextract',
             'sqlalchemy', # DB api
             'cachew', # caching with type hints
-            'hug', # server
-
-            # TODO could be optional?
-            'python-magic', # for detecting mime types
         ],
         extras_require={
             # TODO make cachew optional?

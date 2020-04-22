@@ -7,6 +7,8 @@ from common import tdir
 
 import pytest
 
+import platform
+system = platform.system()
 
 # TODO move to common?
 ROOT = Path(__file__).absolute().parent.parent
