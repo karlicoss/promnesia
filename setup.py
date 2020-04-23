@@ -3,9 +3,19 @@
 
 from setuptools import setup, find_packages # type: ignore
 
+DEPS_INDEXER = [
+    'urlextract',
+    # TODO could be optional?
+    'python-magic', # for detecting mime types
+]
+
+DEPS_SERVER = [
+    'tzlocal',
+    'hug',
+]
 
 def main():
-    # pkgs = find_packages('src')
+    pkgs = find_packages('src')
     # [pkg] = pkgs
     pkg = 'promnesia' # eh, find some subpackages too?
     setup(
@@ -18,7 +28,7 @@ def main():
 
         zip_safe=False,
 
-        packages=[pkg],
+        packages=pkgs, # TODO ugh. that's weird. it worked as only ['promnesia'] when installing via PIP ... but not with dev install???
         package_dir={'': 'src'},
         package_data={pkg: ['py.typed']},
 
@@ -28,15 +38,11 @@ def main():
         description='Enhancement of your browsing history',
 
         install_requires=[
+            *DEPS_INDEXER,
+            *DEPS_SERVER,
             'pytz',
-            'urlextract',
             'sqlalchemy', # DB api
             'cachew', # caching with type hints
-            'hug', # server
-
-            # TODO could be optional?
-            'python-magic', # for detecting mime types
-            'dateparser', # TODO careful, might need python3-dev due to regex dependency?
         ],
         extras_require={
             # TODO make cachew optional?

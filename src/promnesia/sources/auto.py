@@ -259,6 +259,7 @@ class Options(NamedTuple):
     replacer: Replacer
 
 
+# TODO eh. might be good to use find or fdfind to speed it up...
 def _index(path: Path, opts: Options) -> Iterator[Extraction]:
     logger = get_logger()
     pp = path # ugh, for historic reasons..

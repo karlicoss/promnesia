@@ -3,10 +3,12 @@ from subprocess import check_call, run
 from typing import Set, Dict, Optional, Union, Sequence, Tuple
 
 from indexer_test import populate_db
-from common import tdir
+from common import tdir, under_ci
 
 import pytest
 
+import platform
+system = platform.system()
 
 # TODO move to common?
 ROOT = Path(__file__).absolute().parent.parent
@@ -21,8 +23,17 @@ def index(cfg: Path):
 
 def test_example_config(tdir):
     example = ROOT / 'config.py.example'
+    ex = example.read_text()
+    if under_ci():
+        # TODO ugh fucking hell I couldn't find a single path that has HTMLs both on macos and ubuntu
+        # and using /usr/share/docs locally might index a bit too much
+        if system == 'Darwin':
+            repl = '/usr/share/doc/cups/'
+        else:
+            repl = '/usr/share/doc/python3/'
+        ex = ex.replace('/usr/share/doc/python3/html/faq', repl)
     cfg = tdir / 'test_config.py'
-    cfg.write_text(example.read_text())
+    cfg.write_text(ex)
     index(cfg)
 
 

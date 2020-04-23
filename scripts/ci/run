@@ -3,19 +3,27 @@
 cd "$(dirname "$0")"
 cd ../..
 
-if ! which sudo;
-then
+if ! command -v sudo; then
     # e.g. CI doesn't have it..
     function sudo {
         "$@"
     }
 fi
 
-# TODO think if we really want to guard it by this if..
-if [ -v CI ]; then
-    sudo apt install python3-dev # TODO ugh, regex (dateparser's dep needs it???)
-    # TODO use some docs in /usr/local/share?
-    sudo apt install python3-doc
+if ! [ -z "$CI" ]; then
+    PYJQ_DEPS=('autoconf' 'automake' 'libtool') # see https://github.com/mwilliamson/jq.py#installation
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # Mac OSX
+        brew install "${PYJQ_DEPS[@]}"
+
+        # TODO hmm. this should be in setup.py?
+        brew install libmagic # for python-magic
+    else
+        sudo apt update
+
+        # TODO also need to warn from readme??
+        sudo apt install "${PYJQ_DEPS[@]}" python3-dev
+    fi
 fi
 
 pip3 install --user tox

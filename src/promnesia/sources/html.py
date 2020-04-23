@@ -17,7 +17,7 @@ def extract_from_file(fname: PathIsh) -> Iterable[Extraction]:
     ts = datetime.fromtimestamp(Path(fname).stat().st_mtime)
     # TODO just allow passing file as timestamp?
 
-    soup = BeautifulSoup(Path(fname).read_text(), 'lxml')
+    soup = BeautifulSoup(Path(fname).read_text(errors='replace'), 'lxml')
     for a in soup.find_all('a'):
         href = a.attrs.get('href')
         if href is None:

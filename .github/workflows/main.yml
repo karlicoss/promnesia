@@ -10,11 +10,12 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-     
     strategy:
       matrix:
+        platform: [ubuntu-latest, macos-latest]
         python-version: [3.6, 3.7, 3.8]
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
     - run: echo "::add-path::$HOME/.local/bin"
@@ -32,9 +33,17 @@ jobs:
 
     - run: scripts/ci/run
 
+    # TODO move to a separate script too?
+    - run: |
+        pip3 install --user .
+        pip3 install --user .[org] # exobrain is mostly org files
+        promnesia demo --port 16789 https://github.com/karlicoss/exobrain & \
+        sleep 10 && curl 'http://localhost:16789/search' --data 'url=github.com'
+
+
   install_and_run_test:
     # TODO use setup-python thing?
-    # TODO run on macos too?
+    # TODO FIXME run on macos too?
     runs-on: ubuntu-latest
 
     steps:
@@ -49,42 +58,9 @@ jobs:
         export PATH=ci/fake-systemd:$PATH
         tests/install_and_run
 
-  run_demo:
-    strategy:
-      matrix:
-        # TODO this should def just run on either platform
-        platform: [macos-latest] # ubuntu-latest,
-    runs-on: ${{ matrix.platform }}
-
-    steps:
-    - uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    # uncomment to debug via SSH
-    # - uses: mxschmitt/action-tmate@v2
-    - run: |
-        pip3 install --user promnesia
-
-        # TODO ugh. that action was meant to set up PATH, but it's still not there :(
-        # /Users/runner/Library/Python/3.7/bin
-
-        # no idea why that's not in PATH either...
-        /Users/runner/.local/bin/promnesia demo --port 16789 https://github.com/karlicoss/exobrain & \
-           sleep 10 && curl 'http://localhost:16789/search' --data 'url=github.com'
-
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-
-    - run: |
-        # just index
-        pip3 install --user .
-        pip3 install --user .[org] # just so it doesn't spam
-        scripts/promnesia demo https://github.com/karlicoss/exobrain
-
   pypi:
     runs-on: ubuntu-latest
-    needs: [build, install_and_run_test, run_demo]
+    needs: [build, install_and_run_test]
 
     steps:
     - run: echo "::add-path::$HOME/.local/bin"
@@ -103,6 +79,7 @@ jobs:
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
       run: pip3 install --user wheel twine && scripts/release --test
+      # TODO run pip install just to test?
 
     - name: 'release to pypi'
       # always deploy tags to release pypi

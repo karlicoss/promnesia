@@ -16,10 +16,6 @@ from .normalise import normalise_url
 from .cannon import CanonifyException
 
 
-# TODO not sure if should keep it? it's throwing some warnings
-import dateparser # type: ignore
-
-
 T = TypeVar('T')
 Res = Union[T, Exception]
 
@@ -27,7 +23,7 @@ PathIsh = Union[str, Path]
 
 Url = str
 SourceName = str
-DatetimeIsh = Union[datetime, date, str]
+DatetimeIsh = Union[datetime, date]
 Context = str
 Second = int
 
@@ -86,9 +82,8 @@ class DbVisit(NamedTuple):
             if isinstance(p.dt, datetime):
                 dt = p.dt
             elif isinstance(p.dt, date):
+                # TODO that won't be with timezone..
                 dt = datetime.combine(p.dt, datetime.min.time()) # meh..
-            elif isinstance(p.dt, str):
-                dt = dateparser.parse(p.dt)
             else:
                 raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
         except Exception as e:
@@ -270,10 +265,9 @@ def extract_urls(s: str) -> List[str]:
     return list(itertools.chain.from_iterable(map(_extract_urls, s.splitlines())))
 
 
+# TODO maybe belongs to HPI?
 def from_epoch(ts: int) -> datetime:
-    res = datetime.utcfromtimestamp(ts)
-    res.replace(tzinfo=pytz.utc)
-    return res
+    return datetime.fromtimestamp(ts, tz=pytz.utc)
 
 
 class PathWithMtime(NamedTuple):
@@ -345,6 +339,7 @@ def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], 
     return h.visits, errors
 
 
+# not sure if necessary anymore?
 # NOTE: used in configs...
 def last(path: PathIsh, *parts: str) -> Path:
     pp = os.path.join(str(path), *parts)

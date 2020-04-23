@@ -1,8 +1,14 @@
-from typing import Iterable, Iterator
+from typing import Iterable
 
-from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
+from ..common import Extraction, Visit, Loc, PathIsh, extract_urls
 
 import my.roamresearch as RR
+
+
+def index() -> Iterable[Extraction]:
+    roam = RR.roam()
+    for node in roam.traverse():
+        yield from _collect(node)
 
 
 def _collect(node: RR.Node) -> Iterable[Extraction]:
@@ -19,23 +25,17 @@ def _collect(node: RR.Node) -> Iterable[Extraction]:
     full = title + '\n' + body
 
     urls = extract_urls(full)
-    if len(urls) != 0:
-        loc = Loc.make(
-            title=node.path,
-            href=node.permalink,
+    if len(urls) == 0:
+        return
+
+    loc = Loc.make(
+        title=node.path,
+        href=node.permalink,
+    )
+    for u in urls:
+        yield Visit(
+            url=u,
+            dt=node.created,
+            context=body,
+            locator=loc,
         )
-        for u in urls:
-            yield Visit(
-                url=u,
-                dt=node.created,
-                context=body,
-                locator=loc,
-            )
-    for c in node.children:
-        yield from _collect(c)
-
-
-def index() -> Iterator[Extraction]:
-    roam = RR.roam()
-    for n in roam.notes:
-        yield from _collect(n)

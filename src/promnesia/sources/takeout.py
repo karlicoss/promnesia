@@ -1,3 +1,4 @@
+# TODO should probably move this whole thing to HPI
 import logging
 
 import pytz
@@ -15,27 +16,13 @@ from pathlib import Path
 import re
 import json
 
-from dateutil import parser
+from my.kython.ktakeout import parse_dt
 
-from ..common import PreVisit, get_logger, PathIsh, Url, Loc
+from ..common import Visit, get_logger, PathIsh, Url, Loc
 from .. import config
 
 from cachew import mtime_hash, cachew
 
-# TODO reuse kython, but really, release takeout html parser separately
-
-# TODO wonder if that old format used to be UTC...
-# Mar 8, 2018, 5:14:40 PM
-_TIME_FORMAT = "%b %d, %Y, %I:%M:%S %p %Z"
-
-# ugh. something is seriously wrong with datetime, it wouldn't parse timezone aware UTC timestamp :(
-def parse_dt(s: str) -> datetime:
-    dt = parser.parse(s)
-    if dt.tzinfo is None:
-        # TODO log?
-        # hopefully it was utc? Legacy, so no that much of an issue anymore..
-        dt = dt.replace(tzinfo=pytz.utc)
-    return dt
 
 class State(Enum):
     OUTSIDE = 0
@@ -47,7 +34,7 @@ class State(Enum):
 class TakeoutHTMLParser(HTMLParser):
     state: State
     current: Dict[str, str]
-    visits: List[PreVisit]
+    visits: List[Visit]
 
     def __init__(self, *, kind: str, fpath: Path) -> None:
         super().__init__()
@@ -108,7 +95,7 @@ class TakeoutHTMLParser(HTMLParser):
                     times = self.current['time']
                     time = parse_dt(times)
                     assert time.tzinfo is not None
-                    visit = PreVisit(
+                    visit = Visit(
                         url=url,
                         dt=time,
                         locator=self.locator,
@@ -164,10 +151,10 @@ def cacheme(ident: str):
             logger.warning('Caching in /tmp')
             cache_dir = Path('/tmp')
         return cache_dir / cname
-    return cachew(db_pathf, cls=PreVisit, logger=logger)
+    return cachew(db_pathf, cls=Visit, logger=logger)
 
 @cacheme('google_activity')
-def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:
+def read_google_activity(takeout: TakeoutSource) -> List[Visit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Chrome", "MyActivity.html")
     if not _exists(takeout, spath):
@@ -177,7 +164,7 @@ def read_google_activity(takeout: TakeoutSource) -> List[PreVisit]:
         return _read_google_activity(fo, kind='Chrome/MyAcvitity.html', fpath=_path(takeout))
 
 @cacheme('search_activity')
-def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
+def read_search_activity(takeout: TakeoutSource) -> List[Visit]:
     logger = get_logger()
     spath = join("Takeout", "My Activity", "Search", "MyActivity.html")
     if not _exists(takeout, spath):
@@ -189,7 +176,7 @@ def read_search_activity(takeout: TakeoutSource) -> List[PreVisit]:
 
 # TODO add this to tests?
 @cacheme('browser_activity')
-def read_browser_history_json(takeout: TakeoutSource) -> Iterable[PreVisit]:
+def read_browser_history_json(takeout: TakeoutSource) -> Iterable[Visit]:
     logger = get_logger()
     spath = join("Takeout", "Chrome", "BrowserHistory.json")
 
@@ -209,7 +196,7 @@ def read_browser_history_json(takeout: TakeoutSource) -> Iterable[PreVisit]:
         url = item['url']
         time = datetime.utcfromtimestamp(item['time_usec'] / 10 ** 6).replace(tzinfo=pytz.utc)
         # TODO any more interesitng info?
-        yield PreVisit(
+        yield Visit(
             url=url,
             dt=time,
             locator=locator,
@@ -242,9 +229,9 @@ def takeout_candidates(takeouts_path: Path) -> Iterable[Path]:
                 yield fp
 
 Key = Tuple[Url, datetime]
-_Map = Dict[Key, PreVisit]
+_Map = Dict[Key, Visit]
 
-def _merge(current: _Map, new: Iterable[PreVisit]):
+def _merge(current: _Map, new: Iterable[Visit]):
     logger = get_logger()
     # TODO would be nice to add specific takeout source??
     logger.debug('before merging %s: %d', 'TODO', len(current))
@@ -261,7 +248,7 @@ def _merge(current: _Map, new: Iterable[PreVisit]):
 
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
-def extract(takeout_path_: PathIsh) -> Iterable[PreVisit]:
+def index(takeout_path_: PathIsh) -> Iterable[Visit]:
     logger = get_logger()
     path = Path(takeout_path_)
 
@@ -292,4 +279,4 @@ def extract(takeout_path_: PathIsh) -> Iterable[PreVisit]:
     return itertools.chain(chrome_myactivity.values(), search_myactivity.values(), browser_history_json.values())
 
 
-index = extract # TODO deprecate 'extract'
+extract = index # TODO deprecate 'extract'
