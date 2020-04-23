@@ -15,7 +15,7 @@ DEPS_SERVER = [
 ]
 
 def main():
-    # pkgs = find_packages('src')
+    pkgs = find_packages('src')
     # [pkg] = pkgs
     pkg = 'promnesia' # eh, find some subpackages too?
     setup(
@@ -28,7 +28,7 @@ def main():
 
         zip_safe=False,
 
-        packages=[pkg],
+        packages=pkgs, # TODO ugh. that's weird. it worked as only ['promnesia'] when installing via PIP ... but not with dev install???
         package_dir={'': 'src'},
         package_data={pkg: ['py.typed']},
 

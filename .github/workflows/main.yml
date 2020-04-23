@@ -34,15 +34,11 @@ jobs:
     - run: scripts/ci/run
 
     # TODO move to a separate script too?
-    - run: pip3 install --user .
-
     - run: |
+        pip3 install --user .
+        pip3 install --user .[org] # exobrain is mostly org files
         promnesia demo --port 16789 https://github.com/karlicoss/exobrain & \
-           sleep 10 && curl 'http://localhost:16789/search' --data 'url=github.com'
-
-    - run: |
-        pip3 install --user .[org] # just so it doesn't spam
-        promnesia demo https://github.com/karlicoss/exobrain
+        sleep 10 && curl 'http://localhost:16789/search' --data 'url=github.com'
 
 
   install_and_run_test:
@@ -83,6 +79,7 @@ jobs:
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
       run: pip3 install --user wheel twine && scripts/release --test
+      # TODO run pip install just to test?
 
     - name: 'release to pypi'
       # always deploy tags to release pypi
