@@ -16,6 +16,6 @@ SOURCES = [
     Source(
         auto.index,
         # just some arbitrary directory with html files
-        '/usr/share/doc/python3/',
+        '/usr/share/doc/python3/html/faq',
     )
 ]
