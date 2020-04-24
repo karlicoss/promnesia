@@ -8,14 +8,14 @@ import promnesia.sources.takeout as takeout # type: ignore
 
 class Sources:
     TAKEOUT = Source(
-        takeout.extract,
+        takeout.index,
         # TODO relative paths are not great..
         'testdata/takeout-20150518T000000Z.zip',
         name='takeout',
     )
 
     PLAIN = Source(
-        shellcmd.extract,
+        shellcmd.index,
         extract_from_path('testdata/custom'),
         name='test',
     )

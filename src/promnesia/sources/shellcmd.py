@@ -8,7 +8,7 @@ import pytz
 
 from ..common import Visit, Loc
 
-def extract(command: str) -> Iterator[Visit]:
+def index(command: str) -> Iterator[Visit]:
     output = check_output(command, shell=True)
     lines = [line.decode('utf-8') for line in output.splitlines()]
     # TODO eh?

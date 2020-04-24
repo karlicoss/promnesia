@@ -85,7 +85,7 @@ def _plaintext(path: Path) -> Iterator[Extraction]:
     from .plaintext import extract_from_path
     logger = get_logger()
     # TODO eh? shellcmd?
-    yield from shellcmd.extract(extract_from_path(path))
+    yield from shellcmd.index(extract_from_path(path))
 
 
 # TODO think about the type
