@@ -7,15 +7,21 @@ import promnesia.sources.takeout as takeout # type: ignore
 
 
 class Sources:
-    TAKEOUT = Source(
-        takeout.extract,
-        # TODO relative paths are not great..
-        'testdata/takeout-20150518T000000Z.zip',
-        name='takeout',
-    )
+    @staticmethod
+    def TAKEOUT():
+        # TODO would be good to share this with readme..
+        from my.cfg import config
+        from types import SimpleNamespace
+        config.google = SimpleNamespace(
+            takeout_path='testdata/takeout-20150518T000000Z.zip',
+        )
+        return Source(
+            takeout.index,
+            name='takeout',
+        )
 
     PLAIN = Source(
-        shellcmd.extract,
+        shellcmd.index,
         extract_from_path('testdata/custom'),
         name='test',
     )

@@ -40,6 +40,7 @@ def main():
         install_requires=[
             *DEPS_INDEXER,
             *DEPS_SERVER,
+            'more_itertools',
             'pytz',
             'sqlalchemy', # DB api
             'cachew', # caching with type hints

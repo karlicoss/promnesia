@@ -87,14 +87,17 @@ def adhoc_config(tmp_path):
         config.reset()
 
 
-def test_takeout(adhoc_config, tmp_path):
-    tdir = Path(tmp_path)
+@pytest.mark.skip(reason='TODO support unpacked directories in HPI')
+def test_takeout_directory(adhoc_config, tmp_path):
+    from my.cfg import config
+    from types import SimpleNamespace
+    config.google = SimpleNamespace(
+        takeout_path='testdata/takeout',
+    )
 
-    test_takeout_path = "testdata/takeout"
     import promnesia.sources.takeout as tex
-    tex._get_cache_dir = lambda: tdir
 
-    visits = history(W(tex.extract, test_takeout_path))
+    visits = history(W(tex.index))
     assert len(visits) > 0 # kinda arbitrary?
 
     assert_got_tzinfo(visits)
@@ -119,9 +122,14 @@ def test_with_error():
 
 
 def test_takeout_new_zip(adhoc_config):
-    test_takeout_path = "testdata/takeout-20150518T000000Z.zip"
+    from my.cfg import config
+    from types import SimpleNamespace
+    config.google = SimpleNamespace(
+        takeout_path='testdata/takeout-20150518T000000Z.zip',
+    )
+
     import promnesia.sources.takeout as tex
-    visits = history(lambda: tex.extract(test_takeout_path))
+    visits = history(tex.index)
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
 
@@ -173,7 +181,7 @@ def test_plaintext_path_extractor():
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = history(W(custom_gen.extract,
+    visits = history(W(custom_gen.index,
         extract_from_path('testdata/custom'),
     ))
     assert {
@@ -191,7 +199,7 @@ def test_normalise():
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = history(W(custom_gen.extract,
+    visits = history(W(custom_gen.index,
         extract_from_path('testdata/normalise'),
     ))
     assert len(visits) == 7
@@ -211,7 +219,7 @@ def test_normalise_weird():
     from promnesia.sources.plaintext import extract_from_path
 
     visits = history(W(
-        custom_gen.extract,
+        custom_gen.index,
         extract_from_path('testdata/weird.txt'),
     ))
     norms = {v.norm_url for v in visits}
@@ -235,7 +243,7 @@ def test_filter():
 def test_custom():
     import promnesia.sources.shellcmd as custom_gen
 
-    hist = history(W(custom_gen.extract,
+    hist = history(W(custom_gen.index,
         """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
     ))
     # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
