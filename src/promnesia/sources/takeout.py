@@ -5,17 +5,14 @@ import pytz
 from collections import OrderedDict
 import itertools
 from datetime import datetime
-from enum import Enum
-from html.parser import HTMLParser
-from os.path import join, lexists, isfile
 import os
 from typing import List, Dict, Any, Optional, Union, Iterable, Tuple
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
-from zipfile import ZipFile
 from pathlib import Path
 import re
 import json
 
+from my.kython.kompress import kexists, kopen
 from my.kython.ktakeout import parse_dt
 
 from ..common import Visit, get_logger, PathIsh, Url, Loc
@@ -24,125 +21,14 @@ from .. import config
 from cachew import mtime_hash, cachew
 
 
-class State(Enum):
-    OUTSIDE = 0
-    INSIDE = 1
-    PARSING_LINK = 2
-    PARSING_DATE = 3
+TakeoutSource = Path
 
-# would be easier to use beautiful soup, but ends up in a big memory footprint..
-class TakeoutHTMLParser(HTMLParser):
-    state: State
-    current: Dict[str, str]
-    visits: List[Visit]
-
-    def __init__(self, *, kind: str, fpath: Path) -> None:
-        super().__init__()
-        self.state = State.OUTSIDE
-        self.visits = []
-        self.current = {}
-        self.kind = kind
-        self.locator = Loc.file(fpath)
-
-    def _reg(self, name, value):
-        assert name not in self.current
-        self.current[name] = value
-
-    def _astate(self, s): assert self.state == s
-
-    def _trans(self, f, t):
-        self._astate(f)
-        self.state = t
-
-    # enter content cell -> scan link -> scan date -> finish till next content cell
-    def handle_starttag(self, tag: str, attrs) -> None:
-        if self.state == State.INSIDE and tag == 'a':
-            self.state = State.PARSING_LINK
-            attrs = OrderedDict(attrs)
-            hr = attrs['href']
-
-            # sometimes it's starts with this prefix, it's apparently clicks from google search? or visits from chrome address line? who knows...
-            # TODO handle http?
-            prefix = r'https://www.google.com/url?q='
-            if hr.startswith(prefix + "http"):
-                hr = hr[len(prefix):]
-                hr = unquote(hr)
-            self._reg('url', hr)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag == 'html':
-            pass # ??
-
-    def handle_data(self, data):
-        if self.state == State.OUTSIDE:
-            if data[:-1].strip() == "Visited":
-                self.state = State.INSIDE
-                return
-
-        if self.state == State.PARSING_LINK:
-            # self._reg(Entry.link, data)
-            self.state = State.PARSING_DATE
-            return
-
-        if self.state == State.PARSING_DATE:
-            # TODO regex?
-            years = [str(i) + "," for i in range(2000, 2030)]
-            for y in years:
-                if y in data:
-                    self._reg('time', data.strip())
-
-                    url = self.current['url']
-                    times = self.current['time']
-                    time = parse_dt(times)
-                    assert time.tzinfo is not None
-                    visit = Visit(
-                        url=url,
-                        dt=time,
-                        locator=self.locator,
-                        debug=self.kind,
-                    )
-                    self.visits.append(visit)
-
-                    self.current = {}
-                    self.state = State.OUTSIDE
-                    return
-
-
-def _read_google_activity(myactivity_html_fo, *, kind: str, fpath: Path):
-    # TODO is it possible to parse iteratively?
-    data: str = myactivity_html_fo.read().decode('utf-8')
-    parser = TakeoutHTMLParser(kind=kind, fpath=fpath)
-    parser.feed(data)
-    # TODO could be yieldy?? and use multiple processes?
-    return parser.visits
-
-
-TakeoutSource = Union[ZipFile, Path]
-
-def _path(thing: TakeoutSource) -> Path:
-    if isinstance(thing, Path):
-        return thing
-    else:
-        return Path(thing.filename) # type: ignore
-
-def _exists(thing: TakeoutSource, path):
-    if isinstance(thing, ZipFile):
-        return path in thing.namelist()
-    else:
-        return thing.joinpath(path).exists()
-
-
-def _open(thing: TakeoutSource, path):
-    if isinstance(thing, ZipFile):
-        return thing.open(path, 'r')
-    else:
-        return thing.joinpath(path).open('rb')
-
+# TODO this should be HPI responsibility?
 def cacheme(ident: str):
     logger = get_logger()
     # doesn't even need a nontrivial hash function, timestsamp is encoded in name
     def db_pathf(takeout: TakeoutSource) -> Path:
-        tpath = _path(takeout)
+        tpath = Path(str(takeout))
         cname = tpath.name + '_' + ident + '.cache'
         if config.has(): # TODO eh?
             cache_dir = Path(config.get().cache_dir)
@@ -153,42 +39,52 @@ def cacheme(ident: str):
         return cache_dir / cname
     return cachew(db_pathf, cls=Visit, logger=logger)
 
-@cacheme('google_activity')
-def read_google_activity(takeout: TakeoutSource) -> List[Visit]:
+
+# TODO Cpath?
+def _read_myactivity(takeout: TakeoutSource, kind: str) -> Iterable[Visit]:
     logger = get_logger()
-    spath = join("Takeout", "My Activity", "Chrome", "MyActivity.html")
-    if not _exists(takeout, spath):
+    # TODO glob
+    # TODO not sure about windows path separators??
+    spath = 'Takeout/My Activity/' + kind
+    if not kexists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
-    with _open(takeout, spath) as fo:
-        return _read_google_activity(fo, kind='Chrome/MyAcvitity.html', fpath=_path(takeout))
+
+    locator = Loc.file(spath)
+    from my.takeout import read_html
+    for dt, url, title in read_html(takeout, spath):
+        yield Visit(
+            url=url,
+            dt=dt,
+            locator=locator,
+            debug=kind,
+        )
+
+
+@cacheme('google_activity')
+def read_google_activity(takeout: TakeoutSource) -> Iterable[Visit]:
+    return _read_myactivity(takeout, 'Chrome/MyActivity.html')
 
 @cacheme('search_activity')
-def read_search_activity(takeout: TakeoutSource) -> List[Visit]:
-    logger = get_logger()
-    spath = join("Takeout", "My Activity", "Search", "MyActivity.html")
-    if not _exists(takeout, spath):
-        logger.warning(f"{spath} is not present in {takeout}... skipping")
-        return []
-    with _open(takeout, spath) as fo:
-        return _read_google_activity(fo, kind='Search/MyActivity.html', fpath=_path(takeout))
+def read_search_activity(takeout: TakeoutSource) -> Iterable[Visit]:
+    return _read_myactivity(takeout, 'Search/MyActivity.html')
 
 
 # TODO add this to tests?
 @cacheme('browser_activity')
 def read_browser_history_json(takeout: TakeoutSource) -> Iterable[Visit]:
     logger = get_logger()
-    spath = join("Takeout", "Chrome", "BrowserHistory.json")
+    spath = 'Takeout/Chrome/BrowserHistory.json'
 
-    if not _exists(takeout, spath):
+    if not kexists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return
 
-    fpath = _path(takeout)
+    fpath = takeout
     locator = Loc.file(fpath)
 
     j = None
-    with _open(takeout, spath) as fo: # TODO iterative parser?
+    with kopen(takeout, spath) as fo: # TODO iterative parser?
         j = json.load(fo)
 
     hist = j['Browser History']
@@ -208,10 +104,12 @@ _TAKEOUT_REGEX = re.compile(r'(\d{8}T\d{6}Z)')
 def is_takeout_archive(fp: Path) -> bool:
     return fp.suffix == '.zip' and _TAKEOUT_REGEX.search(fp.stem) is not None
 
+# TODO move this to hpi?
 def takeout_candidates(takeouts_path: Path) -> Iterable[Path]:
     if not takeouts_path.exists():
         raise RuntimeError(f"{takeouts_path} doesn't exist!")
 
+    # TODO def use my.takeout for it
     if takeouts_path.is_file():
         if is_takeout_archive(takeouts_path):
             yield takeouts_path
@@ -269,7 +167,8 @@ def index(takeout_path_: PathIsh) -> Iterable[Visit]:
     for dts, takeout in sorted(takeouts):
         tr: TakeoutSource
         if not takeout.is_dir(): # must be zip file
-            tr = ZipFile(str(takeout))
+            # TODO Cpath?
+            tr = takeout
         else:
             tr = takeout
         logger.info('handling takeout %s', tr)
