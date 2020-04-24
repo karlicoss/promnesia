@@ -1,12 +1,10 @@
 import logging
 
 import pytz
-import itertools
+from itertools import chain
 from datetime import datetime
-import os
-from typing import List, Dict, Any, Optional, Union, Iterable, Tuple
+from typing import List, Optional, Iterable
 from pathlib import Path
-import re
 import json
 
 from my.kython.kompress import kexists, kopen
@@ -14,6 +12,8 @@ from my.kython.kompress import kexists, kopen
 from ..common import Visit, get_logger, PathIsh, Url, Loc
 from .. import config
 
+
+from more_itertools import unique_everseen
 from cachew import mtime_hash, cachew
 
 
@@ -46,6 +46,7 @@ def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
     if not kexists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return []
+    logger.info('processing %s %s', takeout, kind)
 
     locator = Loc.file(spath)
     from my.google.takeout.html import read_html
@@ -77,9 +78,10 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
     if not kexists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
         return
+    logger.info('processing %s %s', takeout, spath)
 
-    fpath = takeout
-    locator = Loc.file(fpath)
+    # TODO couls also add spath?
+    locator = Loc.file(takeout)
 
     j = None
     with kopen(takeout, spath) as fo: # TODO iterative parser?
@@ -98,44 +100,21 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
         )
 
 
-Key = Tuple[Url, datetime]
-_Map = Dict[Key, Visit]
-
-def _merge(current: _Map, new: Iterable[Visit]):
-    logger = get_logger()
-    # TODO would be nice to add specific takeout source??
-    logger.debug('before merging: %d', len(current))
-    for pv in new:
-        key = (pv.url, pv.dt)
-        if key in current:
-            pass
-        else:
-            current[key] = pv
-    logger.debug('after merging: %d', len(current))
-
-
-
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
 def index() -> Iterable[Visit]:
-    logger = get_logger()
-
     from my.google.takeout.paths import get_takeouts
-    takeouts = get_takeouts()
+    takeouts = list(get_takeouts())
+    # TODO if no takeouts, raise?
+    # although could raise a warning on top level, when source emitted no takeouts
 
-    browser_history_json: _Map = {}
-    chrome_myactivity: _Map = {}
-    search_myactivity: _Map = {}
+    # TODO youtube?
+    google_activities = [read_google_activity(t)      for t in takeouts]
+    search_activities = [read_search_activity(t)      for t in takeouts]
+    browser_histories = [read_browser_history_json(t) for t in takeouts]
 
-    # TODO we need to use CPath here? Also CPath should support kopen, kexists?
-    # TODO anyway, need to support unpacked takeouts..
-    for takeout in takeouts:
-        logger.info('handling takeout %s', takeout)
-        # TODO use more_itertools for merging
-        _merge(chrome_myactivity, read_google_activity(takeout))
-        _merge(search_myactivity, read_search_activity(takeout))
-        _merge(browser_history_json, read_browser_history_json(takeout))
-    return itertools.chain(
-        chrome_myactivity.values(),
-        search_myactivity.values(),
-        browser_history_json.values(),
+    key = lambda v: (v.dt, v.url)
+    return chain(
+        unique_everseen(chain(*google_activities), key=key),
+        unique_everseen(chain(*search_activities), key=key),
+        unique_everseen(chain(*browser_histories), key=key),
     )
