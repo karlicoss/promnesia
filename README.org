@@ -114,11 +114,15 @@ I'm working on improving the documentation on setting the backend up, so please 
 - create your own config
   =cp config.py.example config.py=, edit =config.py=, and configure existing or custom sources
 
+- [optional] test everything
+
+  This is useful to quickly check your config: run =promnesia demo --port 13131 --config /path/to/config.py=.
+
+  This will index the data and launch the backend immediately, so you can check that everything works as expected in your browser.
+
 - run the indexer =promnesia index --config /path/to/config.py=
 
   At the moment, indexing is *periodic, not realtime*. The best is to run it via cron/systemd once or several times a day.
-
-# TODO add a step to test it
 
 - run the server =promnesia serve --db /path/to/database=.
 
