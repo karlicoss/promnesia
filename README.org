@@ -1,5 +1,7 @@
 #+OPTIONS: num:nil
 
+TOC: [[#motivation][Motivation]] | [[#demos][*Demos*]] | [[#install][*Install*]] | [[#try-it-out][Try it out]] | [[#develop][Develop]]
+
 Promnesia is a browser extension ([[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]/Firefox mobile) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
 
 *TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
@@ -14,17 +16,17 @@ It allows you to answer different questions about the current web page:
 - which posts from this blog page have I already read? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited-2.webm][demo (20s)]]
 - have I annotated it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/highlights.webm][demo (1m)]]
 
-You can jump straight to the [[#demo][Demo]] and [[#install][Install]] sections if you're already overexcited.
+You can jump straight to the [[#demos][Demos]] and [[#install][Install]] sections if you're already overexcited.
 
 * Motivation
 
-Has it ever occurred to you that you were reading an old bookmark or some lengthy blog post and suddenly realized you had read it already before? It would be fairly easy to search in chrome history, however, it is only stored locally for three months. 
-
-Or perhaps you even have a habit of annotating and making notes elsewhere? And you wanna know quickly if you have the current page annotated and display the annotations.
-
-Or you have this feeling that someone sent you this link ages ago, but you don't remember who and where.
-
-Or you finally got to watch that thing in your 'Watch later' youtube playlist, that's been there for three years, and now you want to know why did you add it in the first place.
+- Has it ever occurred to you that you were reading an old bookmark or some lengthy blog post and suddenly realized you had read it already before?
+  It would be fairly easy to search in the browser history, however, it is only stored locally for three months.
+  # TODO link?
+- Or perhaps you even have a habit of annotating and making notes elsewhere? And you wanna know quickly if you have the current page annotated and display the annotations.
+  However, most services want you to use their web apps even for viewing highglights. You don't know if you have highlights, unless you waste time checking every page.
+- Or you have this feeling that someone sent you this link ages ago, but you don't remember who and where.
+- Or you finally got to watch that thing in your 'Watch later' youtube playlist, that's been there for three years, and now you want to know why did you add it in the first place.
 
 Then this tool is for you.
 
@@ -39,34 +41,41 @@ The backend regularly processes various *data sources* like:
 - Markdown/org-mode/HTML or any other plaintext on your disk
 - Google Takeout/Activity backups
 - in general, anything that can be parsed, it's easily extensible
-
+  # TODO link to extension guide
+  # TODO link to individual modules?
 # TODO mentioned some motivation for the backend
 
-* Demo 
+#+html: <div id="demo"><div>
+* Demos
   :PROPERTIES:
-  :CUSTOM_ID: demo
+  :CUSTOM_ID: demos
   :END:
-You can find some short screencasts, demonstrating various features [[https://github.com/karlicoss/promnesia-demos][here]]
 
-  
-[[https://user-images.githubusercontent.com/291333/69828210-3755ac80-121b-11ea-9d1e-e5086cc9feda.png]]
+- [[https://user-images.githubusercontent.com/291333/69828210-3755ac80-121b-11ea-9d1e-e5086cc9feda.png]]
 
-- You can see that I sent the link to someone on telegram
-- I've annotated the link on instapaper and highlights (yellow) are shown inline on the page
-- I've also added link to my personal notes at some point, selected text was matched and highlighted as well
+  # TODO might be good to explain what I mean by context and visit..
+  - a green eye means that the link was visited before and has some contexts, associated with it
+    when you click on it, the sidebar opens with more information
+  - You can see that I've sent the link to someone on Telegram (1st sidebar item )
+  - I've annotated the link on instapaper and highlights (2nd and 3rd) are shown inline on the page (yellow)
+  - I've clipped some content to my personal notes at some point (2nd sidebar item), the selected text was matched and highlighted as well
+    If I click the link, it will cause my Emacs to open and jump straight to the clipping within the file.
 
-** Older demo (as of v 0.8)
-[[https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG]]
+- [[https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG]]
 
-Some explanations:
+  - I chatted with some of my friends and sent them the link at some point (2nd sidebar item)
+    Clicking on the link will open Telegram and jump straight to the message where the link was mentioned.
+    So you can reply to it without having to search or scroll over the whole chat history.
+    # Json is clearly not the most convenient way to go through conversations with friends, but that's a matter of representing chats in a plaintext form. The benefit though is that once you have any sort of grepable source it's super easy to feed it into the plugin.
+  - I've tweeted about this link before (4th item)
+    Similarly, clicking would jump straight to my tweet.
+  - I also have this link annotated via [[https://hypothes.is][Hypothesis]] (1st, 3rd and 5th items)
 
-- green eye indicates that the link was visited, so after you click it, you get the sidebar with more information
-- Visits: I have this link added in my Pinboard, and visited it a few times from different computers.
-- Contexts
+- More:
 
-  - I chatted with some of my friends and sent them the link at some point. If I click the context, my Emacs will jump right at the point where the link was in the Telegram backup file. Json is clearly not the most convenient way to go through conversations with friends, but that's a matter of representing chats in a plaintext form. The benefit though is that once you have any sort of grepable source it's super easy to feed it into the plugin.
-  - I had this link stored somewhere in my org mode notes in readlater.org file.
-  - I also have this link annotated via [[https://hypothes.is][Hypothesis]]
+  - You can find more short screencasts, demonstrating various features [[https://github.com/karlicoss/promnesia-demos][here]]
+  - There are more screenshots [[https://github.com/karlicoss/promnesia/issues/5#issuecomment-619365708][here]]
+  # TODO roam?
 
 * Install
   :PROPERTIES:
@@ -79,7 +88,7 @@ Some explanations:
   - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
   - Firefox mobile: not released in the store yet, but you can build it yourself
    
-- backend: =pip3 install --user promnesia=
+- backend: available on [[https://pypi.org/project/promnesia][PyPi]]: =pip3 install --user promnesia=
 
   Alternatively, you can clone this repository and run it as ~scripts/promnesia~
   
@@ -100,17 +109,28 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
   
 * Extended backend setup
 # TODO mention where they get the database  
+I'm working on improving the documentation on setting the backend up, so please feel free to ask if something is unclear!
 
 - create your own config
   =cp config.py.example config.py=, edit =config.py=, and configure existing or custom sources
-  
+
 - run the indexer =promnesia index --config /path/to/config.py=
-  You might want to schedule it on cron to run few times a day to keep the index database up to date
-  
+
+  At the moment, indexing is *periodic, not realtime*. The best is to run it via cron/systemd once or several times a day.
+
+# TODO add a step to test it
+
 - run the server =promnesia serve --db /path/to/database=.
+
+  # TODO db path is in the output_dir??_
 
   You only have to start it once, it will automatically detect index changes.
 - [optional] autostart the server with =promnesia install-server=
+
+  This sets it up to start via Systemd, which should be present in most common Linux distributions.
+
+  I don't have a Mac nearby, so if you can contribute a Launchd script, or an alternative setup guide, I'll be very grateful!
+  I think you can also use cron with =@reboot= attribute, or just create a manual autostart entry.
 
 # TODO Frontend -- mention what settings are possible?
 
@@ -131,12 +151,13 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
 # TODO tabs could be optional in the future?  
 
 * Develop
+I'm in the process of putting up better developer's documentation, but you should be able to figure it out from the CI pipelines:
+[[file:.github/workflows/main.yml][Github Actions]] and [[file:.circleci/config.yml][CircleCI]].
+
 ** Run backend  
    During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
 
-   I'll add more instructions, but check out =.circleci/config.yml= in the meantime.
-   
-   To relase on PIP, use =./release= script.
+   # TODO reuse doc from pymplate?
 
 ** Build extension
    
@@ -159,19 +180,3 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
 
    : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
 
-* TODO todos :noexport:
-** STRT be more informative; show full history or at least last visit and potentially sources (e.g. hypothesis)
-   :LOGBOOK:
-   - State "STRT"       from              [2020-02-18 Tue 22:06]
-   :END:
-   * maybe icons for mobile/desktop?
-** STRT [#C] use some sort of smarter matching, e.g. no difference between http and https; normalize, remove trailing slash, etc, ignore some schemas/urls
-   :LOGBOOK:
-   - State "STRT"       from              [2020-02-18 Tue 22:06]
-   :END:
-   * use some python lib to extract normalized urls? there must be something.. however normalization has to be simple enough, so JS site could use it too.
-** better regex fox url extraction
- eh, urls can have commas...  e.g. http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html
- so, for csv need a separate extractor.
-** TODO [#B] describe why and what for each permission used
-** old temporary name: wereyouhere
