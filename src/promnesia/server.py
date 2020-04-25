@@ -184,7 +184,11 @@ def search(
     # TODO rely on hug logger for query
     return search_common(
         url=url,
-        where=lambda table, url: table.c.norm_url.contains(url, autoescape=True),
+        where=lambda table, url: or_(
+            table.c.norm_url.contains(url, autoescape=True),
+            # TODO hmm. think about it, not sure if I need proper indexer for fuzzy search etc?
+            table.c.context.contains(url, autoescape=True),
+        ),
     )
 
 
