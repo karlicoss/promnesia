@@ -585,7 +585,7 @@ PATTERNS = {
 }
 
 
-def get_patterns():
+def get_patterns():  # pragma: no cover
     def repl(p, dct):
         for k, v in dct.items():
             p = p.replace(k, v)
@@ -608,7 +608,7 @@ def get_patterns():
     return {k: list(handle(v)) for k, v in PATTERNS.items()}
 
 
-def domains(it):
+def domains(it): # pragma: no cover
     from collections import Counter
     c: typing.Counter[str] = Counter()
     for line in it:
@@ -626,7 +626,7 @@ def domains(it):
     pprint(c.most_common(20))
 
 
-def groups(it, args):
+def groups(it, args): # pragma: no cover
     all_pats = get_patterns()
 
     from collections import Counter
@@ -685,7 +685,9 @@ def groups(it, args):
     pprint(uc)
 
 
-def display(it, args): # TODO better name?
+
+def display(it, args): # pragma: no cover
+    # TODO better name?
     import difflib
     # pylint: disable=import-error
     from termcolor import colored as C # type: ignore
@@ -742,7 +744,7 @@ def display(it, args): # TODO better name?
             stdout.write(f'{org_}\n{can_}\n---\n')
 
 
-def main():
+def main(): # pragma: no cover
     import argparse
     p = argparse.ArgumentParser(epilog='''
 - sqlite3 promnesia.sqlite 'select distinct orig_url from visits' | cannon.py --domains
@@ -773,7 +775,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main() # pragma: no cover
 
 # TODO hmm, it's actually sort of fingerprinter... so maybe that's what I should call it
 
