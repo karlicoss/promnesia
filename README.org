@@ -111,30 +111,39 @@ Easiest way to try out Promnesia is a demo mode, it can give you a sense of what
 # TODO mention where they get the database  
 I'm working on improving the documentation on setting the backend up, so please feel free to ask if something is unclear!
 
-- create your own config
-  =cp config.py.example config.py=, edit =config.py=, and configure existing or custom sources
+- create the config
 
-- [optional] test everything
+  You can start from the example config (=cp config.py.example config.py=), and then edit it.
+ 
+  The only required steps are:
+
+    - set =OUTPUT_DIR=
+
+      This is the directory for the indexer's output. You can keep it as =/tmp=, but you might prefer something else.
+
+    - set =SOURCES=
+
+      # TODO put up a list of sources automatically from the code?
+
+- [optional] do a quick test
 
   This is useful to quickly check your config: run =promnesia demo --port 13131 --config /path/to/config.py=.
 
   This will index the data and launch the backend immediately, so you can check that everything works as expected in your browser.
 
-- run the indexer =promnesia index --config /path/to/config.py=
+- run the indexer: =promnesia index --config /path/to/config.py=
 
   At the moment, indexing is *periodic, not realtime*. The best is to run it via cron/systemd once or several times a day.
 
-- run the server =promnesia serve --db /path/to/database=.
-
-  # TODO db path is in the output_dir??_
+- run the server: =promnesia serve --db OUTPUT_DIR/promnesia.sqite=.
 
   You only have to start it once, it will automatically detect index changes.
 - [optional] autostart the server with =promnesia install-server=
 
-  This sets it up to start via Systemd, which should be present in most common Linux distributions.
+  This sets it up to start via Systemd, which should be present in most common *Linux* distributions, so it won't work on Mac/Windows at the moment.
 
-  I don't have a Mac nearby, so if you can contribute a Launchd script, or an alternative setup guide, I'll be very grateful!
-  I think you can also use cron with =@reboot= attribute, or just create a manual autostart entry.
+  I don't have a Mac nearby, so if you can contribute a Launchd script, or point me to a setup guide, I'll be very grateful!
+  I /think/ you can also use cron with =@reboot= attribute, or just create a manual autostart entry.
 
 # TODO Frontend -- mention what settings are possible?
 
@@ -184,3 +193,33 @@ I'm in the process of putting up better developer's documentation, but you shoul
 
    : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
 
+
+
+* WIP on automatic sources summary :noexport:
+#+begin_src python :python "with_my python3" :dir src :results output
+import pkgutil
+import importlib
+import inspect
+
+
+from promnesia.common import Extraction
+from typing import Iterable
+IndexerType = Iterable[Extraction] # TODO move to promnesia? also careful with List etc...
+
+import promnesia.sources as pkg
+for importer, name, ispkg in pkgutil.walk_packages(
+        path=pkg.__path__,
+        prefix=pkg.__name__+'.'
+):
+    # TODO remove
+    if name != 'promnesia.sources.vcs':
+        continue
+    # TODO get by output type??
+    m = importlib.import_module(name)
+    public = [(k, v) for k, v in inspect.getmembers(m) if not k.startswith('_')]
+    indexers = [v for k, v in public if getattr(v, '__annotations__', {}).get('return') == IndexerType]
+    print(indexers)
+#+end_src
+
+#+RESULTS:
+: [<function index at 0x7f4856498598>]
