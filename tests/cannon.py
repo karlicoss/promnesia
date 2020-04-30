@@ -9,25 +9,26 @@ from promnesia.cannon import canonify, CanonifyException
 # https://www.scottaaronson.com/blog/?p=3167 is kind ahierarchy of scottaaronson.com ;
 
 
-# https://youtu.be/iCvmsMzlF7o
+param = pytest.mark.parametrize
 
-@pytest.mark.parametrize('url,expected', [
-    ( "https://www.youtube.com/watch?v=1NHbPN9pNPM&index=63&list=WL&t=491s"
-    , "youtube.com/watch?list=WL&v=1NHbPN9pNPM" # TODO not so sure about &t, it's sort of useful
-    ),
-    ( "youtube.com/watch?v=wHrCkyoe72U&feature=share&time_continue=6"
-    , "youtube.com/watch?v=wHrCkyoe72U"
-    ),
+# TODO assume spaces are not meaninfgul??
+# then could align URLs etc?
 
-    ( "youtube.com/embed/nyc6RJEEe0U?feature=oembed"
-    , "youtube.com/watch?v=nyc6RJEEe0U"
-    ),
-
+@param('url,expected', [(
+    'https://www.youtube.com/watch?v=1NHbPN9pNPM&index=63&list=WL&t=491s',
+    # TODO not so sure about &t, it's sort of useful
+    'youtube.com/watch?list=WL&v=1NHbPN9pNPM'
+), (
+    'youtube.com/watch?v=wHrCkyoe72U&feature=share&time_continue=6',
+    'youtube.com/watch?v=wHrCkyoe72U'
+), (
+    'youtube.com/embed/nyc6RJEEe0U?feature=oembed',
+    'youtube.com/watch?v=nyc6RJEEe0U'
+), (
+    'https://youtu.be/iCvmsMzlF7o?list=WL',
     # TODO hmm. ordering?
-    ( 'https://youtu.be/iCvmsMzlF7o?list=WL'
-    , 'youtube.com/watch?list=WL&v=iCvmsMzlF7o'
-    ),
-
+    'youtube.com/watch?list=WL&v=iCvmsMzlF7o'
+),
     # TODO can even be like that or contain timestamp (&t=)
     # TODO warn if param already present? shouldn't happen..
 
@@ -38,10 +39,10 @@ from promnesia.cannon import canonify, CanonifyException
     # [*, 'youtube', ANY_DOMAIN] / 'embed' -> 'youtube.com/watch'
     # TODO use regex backrefs?
     #
-
-    ( "m.youtube.com/watch?v=Zn6gV2sdl38"
-    , "youtube.com/watch?v=Zn6gV2sdl38"
-    ),
+(
+    'm.youtube.com/watch?v=Zn6gV2sdl38',
+    'youtube.com/watch?v=Zn6gV2sdl38'
+),
 
     # ( "https//youtube.com/playlist?list=PLeOfc0M-50LmJtZwyOfw6aVopmIbU1t7t"
     # , "youtube.com/playlist?list=PLeOfc0M-50LmJtZwyOfw6aVopmIbU1t7t"
@@ -60,7 +61,15 @@ def test_youtube(url, expected):
     assert canonify(url) == expected
 
 
-@pytest.mark.parametrize('url, expected', [
+@param('url,expected', [(
+    'https://web.archive.org/web/20090902224414/http://reason.com/news/show/119237.html',
+    'reason.com/news/show/119237.html',
+)])
+def test_archiveorg(url, expected):
+    assert canonify(url) == expected
+
+
+@param('url, expected', [
     ( 'https://www.reddit.com/r/firefox/comments/bbugc5/firefox_bans_free_speech_commenting_plugin/?ref=readnext'
     , 'reddit.com/r/firefox/comments/bbugc5/firefox_bans_free_speech_commenting_plugin',
     ),

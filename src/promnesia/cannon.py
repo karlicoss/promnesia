@@ -214,6 +214,7 @@ def _quote_path(path: str) -> str:
     return '/'.join(nparts)
 
 
+# TODO wtf is it doing???
 def _prenormalise(url: str) -> str:
     # meh..
     url = re.sub(r'google\..*/amp/s/', '', url)
@@ -287,6 +288,43 @@ def transform_split(split: SplitResult):
     return netloc, path, qparts, fragment
 
 
+
+def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
+    uns = urlunsplit((
+        '', # dummy protocol
+        domain,
+        path,
+        query,
+        fragment,
+    ))
+    uns = try_cutl('//', uns)  # // due to dummy protocol
+    return uns
+
+
+
+#
+# r'web.archive.org/web/\d+/
+# def canonify_simple(url: str) -> Optional[str]:
+#     '''
+#     Experiment with simply using regexes for normalising, as close to regular python as it gets
+#     '''
+#     # - using named groups for comments?
+
+#     # TODO to be fair, archive.org is a 'very' special case..
+#     regexes = [
+#         r'web.archive.org/web/(?<timestamp>\d+)/' # TODO what about 'rest'?
+#     ]
+#     for re in regexes:
+
+def handle_archive_org(url: str) -> Optional[str]:
+    are = r'web.archive.org/web/(?P<timestamp>\d+)/(?P<rest>.*)'
+    m = re.fullmatch(are, url)
+    if m is None:
+        return None
+    else:
+        return m.group('rest')
+
+
 # TODO ok, I suppose even though we can't distinguish + and space, likelihood of them overlapping in normalised url is so low, that it doesn't matter much
 # TODO actually, might be easier for most special charaters
 def canonify(url: str) -> str:
@@ -297,6 +335,8 @@ def canonify(url: str) -> str:
         # TODO didn't really get difference from urlparse
         parts = urlsplit(url)
     except Exception as e:
+        # TODO not sure about the exception...
+        # TODO return it instead of raising
         raise CanonifyException(url) from e
 
     # TODO move to prenormalise?
@@ -307,11 +347,17 @@ def canonify(url: str) -> str:
         except Exception as e:
             raise CanonifyException(url) from e
 
+    # meh. figure out what's up with transform_split
+    no_protocol = parts.netloc + parts.path + parts.query + parts.fragment
+
+    res = handle_archive_org(no_protocol)
+    if res is not None:
+        assert len(res) < len(no_protocol) # just a paranoia to avoid infinite recursion...
+        return canonify(res)
 
     domain, path, qq, _frag = transform_split(parts)
 
     spec = get_spec(domain)
-
 
     # TODO FIXME turn this logic back on?
     # frag = parts.fragment if spec.fkeep else ''
@@ -325,15 +371,7 @@ def canonify(url: str) -> str:
 
     path = _quote_path(path)
 
-    uns = urlunsplit((
-        '',
-        domain,
-        path,
-        query,
-        frag,
-    ))
-
-    uns = try_cutl('//', uns)  # // due to dummy protocol
+    uns = myunsplit(domain, path, query, frag)
     uns = try_cutr('/', uns) # not sure if there is a better way
     return uns
 
@@ -754,3 +792,5 @@ if __name__ == '__main__':
 
 # TODO for debugging, have special mode that only uses query param trimming one by one
 # TODO show percents?
+
+# TODO ugh. need coverage...
