@@ -93,7 +93,7 @@ The backend regularly processes various *data sources* like:
   Alternatively, you can clone this repository and run it as ~scripts/promnesia~
   
 * Try it out
-Easiest way to try out Promnesia is a demo mode, it can give you a sense of what Promnesia is doing with minimal configuration.
+The easies is to try out Promnesia is a demo mode, it can give you a sense of what Promnesia is doing with almost no configuration.
 
 # TODO use smth different
 1. [[#install][Install]] the extension and the backend in case you haven't already
@@ -114,14 +114,22 @@ I'm working on improving the documentation on setting the backend up, so please 
 - create the config
 
   You can start from the example config (=cp config.py.example config.py=), and then edit it.
+  You can also find a more complete configuration example here: [[file:doc/config.py]].
  
-  The only required steps are:
+  The only required settings are:
 
-    - set =OUTPUT_DIR=
+    - =OUTPUT_DIR=
 
-      This is the directory for the indexer's output. You can keep it as =/tmp=, but you might prefer something else.
+      This is the directory for the indexer's output. At the moment it's only the =promnesia.sqlite= file.
+      You can keep it as =/tmp=, but you might prefer something else.
 
-    - set =SOURCES=
+    - =SOURCES=
+
+      These are the data sources, that will be processed and indexed by Promnesia.
+      I'm working on proper documentation for available sources. For now:
+
+      - see the example configuration for now.
+      - you can browse the code [[file:src/promnesia/sources/][here]].
 
       # TODO put up a list of sources automatically from the code?
 
@@ -211,15 +219,18 @@ for importer, name, ispkg in pkgutil.walk_packages(
         path=pkg.__path__,
         prefix=pkg.__name__+'.'
 ):
-    # TODO remove
-    if name != 'promnesia.sources.vcs':
+    if name in {'promnesia.sources.plaintext'}:
         continue
+    # TODO remove
+    # if name not in {'promnesia.sources.vcs', 'promnesia.sources.roamresearch'}:
+    #     continue
     # TODO get by output type??
     m = importlib.import_module(name)
     public = [(k, v) for k, v in inspect.getmembers(m) if not k.startswith('_')]
-    indexers = [v for k, v in public if getattr(v, '__annotations__', {}).get('return') == IndexerType]
-    print(indexers)
+    indexers = [(k, v) for k, v in public if getattr(v, '__annotations__', {}).get('return') == IndexerType]
+    assert len(indexers) > 0, name
+    for k, i in indexers:
+        # print(inspect.signature(i))
+        print(f'{name}.{k}', i.__doc__ or 'NO DOCUMENTATION!!!')
 #+end_src
 
-#+RESULTS:
-: [<function index at 0x7f4856498598>]

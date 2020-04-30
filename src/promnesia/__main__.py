@@ -24,9 +24,10 @@ def _do_index() -> Iterable[Exception]:
 
     indexers = cfg.sources
 
-    output_dir = Path(cfg.OUTPUT_DIR)
+    output_dir = cfg.output_dir
     if not output_dir.exists():
-        raise ValueError(f"Expected OUTPUT_DIR({output_dir}) to exist")
+        logger.warning("OUTPUT_DIR '%s' didn't exist, creating", output_dir)
+        output_dir.mkdir(exist_ok=True)
 
     filters = [make_filter(f) for f in cfg.FILTERS]
     for f in filters:
