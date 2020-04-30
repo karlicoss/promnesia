@@ -59,10 +59,7 @@ def run(tdir: Path):
     ]).decode('utf8'))
 
     print(response)
-    assert response == {
-        'status': 'OK',
-        'db'    : str(tdir / 'promnesia.sqlite'),
-    }
+    assert response['db'] == str(tdir / 'promnesia.sqlite')
 
     time.sleep(1)
     systemctl('is-active', 'promnesia-test.service')

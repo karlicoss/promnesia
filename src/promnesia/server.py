@@ -7,7 +7,7 @@ from datetime import timedelta, datetime
 from pathlib import Path
 import logging
 from functools import lru_cache
-from typing import Collection, List, NamedTuple, Dict
+from typing import Collection, List, NamedTuple, Dict, Optional
 
 
 from cachew import NTBinder
@@ -36,6 +36,11 @@ def get_logger():
     logger = logging.getLogger('promnesia')
     setup_logger(logger, level=logging.DEBUG)
     return logger
+
+
+def get_version() -> str:
+    from pkg_resources import get_distribution
+    return get_distribution('promnesia').version
 
 
 class ServerConfig(NamedTuple):
@@ -152,13 +157,30 @@ def search_common(url: str, where):
 @hug.local()
 @hug.post('/status')
 def status():
-    db_path = get_db_path()
-    # TODO query count of items in db?
+    '''
+    Ideally, status will always respond, regardless the internal state of the backend?
+    '''
+    # TODO hug stats?
+
+    db_path: Optional[str]
+    try:
+        db_path = str(get_db_path())
+        # TODO use 'db_stats' instead? add count or something else
+    except Exception as e:
+        # TODO not sure how to properly communicate the error to frontend?
+        db_path = None
+
+    version: Optional[str]
+    try:
+        version = get_version()
+    except Exception as e:
+        version = None
+
     return {
-        # TODO hug stats?
-        'status': 'OK',
-        'db'    : str(db_path),
+        'db'     : db_path,
+        'version': version,
     }
+# TODO might be good to include the frontend version in the requests?
 
 
 @hug.local()
