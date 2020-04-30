@@ -12,8 +12,7 @@ import traceback
 import pytz
 import warnings
 
-from .normalise import normalise_url
-from .cannon import CanonifyException
+from .cannon import CanonifyException, canonify
 
 
 T = TypeVar('T')
@@ -90,7 +89,7 @@ class DbVisit(NamedTuple):
             return e
 
         try:
-            nurl = normalise_url(p.url)
+            nurl = canonify(p.url)
         except Exception as e:
             return e
 
