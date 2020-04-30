@@ -31,7 +31,9 @@ class Config(NamedTuple):
         cd = self.CACHE_DIR
         # TODO maybe do not use cache if it's none?
         assert cd is not None
-        return Path(cd)
+        res = Path(cd)
+        res.mkdir(exist_ok=True) # TODO not sure about parents=True
+        return res
 
     @property
     def output_dir(self) -> Path:
