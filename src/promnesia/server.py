@@ -23,7 +23,7 @@ from sqlalchemy import Column, Table, func # type: ignore
 
 
 from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh
-from .normalise import normalise_url
+from .cannon import canonify
 
 _ENV_CONFIG = 'PROMNESIA_CONFIG'
 
@@ -122,7 +122,7 @@ def search_common(url: str, where):
 
     logger.info('url: %s', url)
     original_url = url
-    url = normalise_url(url)
+    url = canonify(url)
     logger.info('normalised url: %s', url)
 
     engine, binder, table = get_stuff()
@@ -244,7 +244,7 @@ def visited(
     logger = get_logger()
 
     logger.debug(urls)
-    norms = [(u, normalise_url(u)) for u in urls]
+    norms = [(u, canonify(u)) for u in urls]
     # logger.debug('\n'.join(f'{u} -> {nu}' for u, nu in norms))
 
     nurls = [n[1] for n in norms]
