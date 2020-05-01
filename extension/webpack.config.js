@@ -140,6 +140,11 @@ const buildPath = path.join(__dirname, 'dist', target);
 
 const options = {
   mode: dev ? 'development' : 'production',
+  node: {
+    // no idea what does it mean... https://github.com/webpack/webpack/issues/5627#issuecomment-394290231
+    // but it does get rid of some Function() which webpacka apparently generates
+    global: false,
+  },
   entry: {
     background   : path.join(__dirname, './src/background'),
     options_page : path.join(__dirname, './src/options_page'),
