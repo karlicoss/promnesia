@@ -86,7 +86,7 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
         logger.exception(e)
         yield e
     else:
-        yield from extract_urls(heading)
+        yield from extract_urls(heading, syntax='org')
 
     try:
         content = _get_body(n)
@@ -94,7 +94,7 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
         logger.exception(e)
         yield e
     else:
-        yield from extract_urls(content)
+        yield from extract_urls(content, syntax='org')
 
 
 def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:

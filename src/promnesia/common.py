@@ -221,11 +221,16 @@ def get_tmpdir():
     tdir = tempfile.TemporaryDirectory(suffix="promnesia")
     return tdir
 
-@lru_cache(1)
-def _get_extractor():
+Syntax = str
+
+@lru_cache(None)
+def _get_extractor(syntax: Syntax):
     from urlextract import URLExtract # type: ignore
     u = URLExtract()
     # https://github.com/lipoja/URLExtract/issues/13
+    if syntax == 'org': # TODO remove hardcoding..
+        u._stop_chars_right |= {'[', ']'}
+        u._stop_chars_left  |= {'[', ']'}
     # u._stop_chars_right |= {','}
     # u._stop_chars_left  |= {','}
     return u
@@ -240,9 +245,8 @@ def sanitize(url: str) -> str:
         url = url.strip(')')
     return url
 
-
 # TODO sort just in case? not sure..
-def _extract_urls(s: str) -> List[str]:
+def _extract_line_urls(*, s: str, syntax: Syntax) -> List[str]:
     # TODO unit test for escaped urls.. or should it be in normalise instead?
     if len(s.strip()) == 0:
         return [] # optimize just in case..
@@ -252,7 +256,7 @@ def _extract_urls(s: str) -> List[str]:
     # TODO fuck. doesn't look like it's handling multiple urls in same line well...
     # ("python.org/one.html python.org/two.html",
     # hopefully ok... I guess if there are spaces in url we are fucked anyway..
-    extractor = _get_extractor()
+    extractor = _get_extractor(syntax=syntax)
     urls: List[str] = []
     for x in s.split():
         urls.extend(extractor.find_urls(x))
@@ -260,8 +264,13 @@ def _extract_urls(s: str) -> List[str]:
     return [sanitize(u) for u in urls]
 
 
-def extract_urls(s: str) -> List[str]:
-    return list(itertools.chain.from_iterable(map(_extract_urls, s.splitlines())))
+def _extract_urls(*, s: str, syntax: Syntax) -> Iterable[Url]:
+    for line in s.splitlines():
+        yield from _extract_line_urls(s=line, syntax=syntax)
+
+
+def extract_urls(s: str, syntax: Syntax='') -> List[Url]:
+    return list(_extract_urls(s=s, syntax=syntax))
 
 
 # TODO maybe belongs to HPI?

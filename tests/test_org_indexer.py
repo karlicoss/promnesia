@@ -4,10 +4,13 @@ from common import tdata
 
 def test_org_indexer():
     items = list(extract_from_file(tdata('auto/orgs/file.org')))
-    assert len(items) == 2
+    assert len(items) == 3
 
     cpp = items[1]
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
+
+    cozy = items[2]
+    assert cozy.url == 'https://twitter.com/Mappletons/status/1255221220263563269'
 
 
 def test_org_indexer_2():
