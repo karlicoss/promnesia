@@ -88,6 +88,11 @@ default_qremove = {
     'utf8',
 }
 
+default_qkeep = {
+    # ok, various BBS have it, hackernews has it etc?
+    # hopefully it's a reasonable one to keep..
+    'id',
+}
 
 # TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?
 class Spec(NamedTuple):
@@ -96,29 +101,28 @@ class Spec(NamedTuple):
     fkeep  : bool = False
 
     def keep_query(self, q: str) -> bool:
-        # by default drop all, only do something special in case of specs present
-        # it's better choice for default since if it's too unified user would notice it, but not vice versa
-        if self.qkeep is None and self.qremove is None:
-            return False
-
+        qkeep   = default_qkeep  .union(self.qkeep or {})
         qremove = default_qremove.union(self.qremove or {})
+        # I suppose 'remove' is only useful for logging. we remove by default anyway
 
         keep = False
         remove = False
-        # pylint: disable=unsupported-membership-test
-        if self.qkeep is not None and q in self.qkeep:
+        if qkeep is not None and q in qkeep:
             keep = True
         # pylint: disable=unsupported-membership-test
         if q in qremove:
             remove = True
         if keep and remove:
+            # keep wins?
             return True # TODO need a warning
         if keep:
             return True
         if remove:
             return False
-        return True
-        # TODO basically, at this point only qremove matters
+
+        # by default drop all
+        # it's a better default, since if it's *too* unified, the user would notice it. but not vice versa!
+        return False
 
     @classmethod
     def make(cls, **kwargs):
@@ -171,11 +175,12 @@ specs = {
     ),
     'physicstravelguide.com': S(fkeep=True), # TODO instead, pass fkeep marker object for shorter spec?
     'wikipedia.org': S(fkeep=True),
-    'scottaaronson.com'  : S(qkeep={'p'}, qremove={}, fkeep=True),
-    'urbandictionary.com': S(qkeep={'term'}, qremove={}),
-    'ycombinator.com'    : S(qkeep={'id'}, qremove={}),
-    'play.google.com'    : S(qkeep={'id'}, qremove={}),
-    'answers.yahoo.com'  : S(qkeep={'qid'}, qremove={}),
+    'scottaaronson.com'  : S(qkeep={'p'}, fkeep=True),
+    'urbandictionary.com': S(qkeep={'term'}),
+    'ycombinator.com'    : S(qkeep={'id'}),
+    'play.google.com'    : S(qkeep={'id'}),
+    'answers.yahoo.com'  : S(qkeep={'qid'}),
+    'ubuntuforums.org'   : S(qkeep={'t'}),
 }
 
 _def_spec = S()

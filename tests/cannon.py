@@ -94,6 +94,8 @@ def test_reddit(url, expected):
     assert canonify(url) == expected
 
 @pytest.mark.parametrize("url,expected", [
+    # TODO ?? 'https://groups.google.com/a/list.hypothes.is/forum/#!topic/dev/kcmS7H8ssis',
+    #
     # TODO FIXME fragment handling
     # ( "https://www.scottaaronson.com/blog/?p=3167#comment-1731882"
     # , "scottaaronson.com/blog/?p=3167#comment-1731882"
@@ -170,7 +172,19 @@ def test_reddit(url, expected):
     ),
     ( 'https://www.youtube.com/watch?list=WL&v=hvoQiF0kBI8&index=2'
     , 'youtube.com/watch?list=WL&v=hvoQiF0kBI8',
-    )
+    ),
+
+    # TODO def need to allow the _user_ to define the rules.
+    # no way I can predict everything
+    # basically, allow *interactively* select
+    # also allow introspection, which rule matched?
+    ( 'https://bbs.archlinux.org/viewtopic.php?id=212740'
+    , 'bbs.archlinux.org/viewtopic.php?id=212740',
+    ),
+
+    ( 'https://ubuntuforums.org/showthread.php?t=1403470&s=0dd67bdb12559c22e73a220752db50c7&p=8806195#post8806195'
+    , 'ubuntuforums.org/showthread.php?t=1403470',
+    ),
 
     # ( "gwern.net/DNB+FAQ"
     # , "TODO" # ???
