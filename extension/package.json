@@ -31,6 +31,7 @@
   "homepage": "https://github.com/karlicoss/promnesia#readme",
   "dependencies": {
     "codemirror": "^5.48.2",
+    "linkifyjs": "^2.1.9",
     "webext-options-sync": "^1.0.0"
   },
   "devDependencies": {

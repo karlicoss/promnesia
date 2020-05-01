@@ -2,7 +2,10 @@
 import type {Url, Src, Locator} from './common';
 import {format_dt, Methods, unwrap, safeSetInnerHTML} from './common';
 
-// TODO need to pass document??
+// TODO could do lazier, e.g. on contexts only..
+
+// $FlowFixMe
+import linkifyElement from 'linkifyjs/element';
 
 
 export function _fmt(dt: Date): [string, string] {
@@ -126,6 +129,7 @@ export class Binder {
         if (context != null) {
             const ctx_c = child(item, 'div', ['context'])
 
+            // TODO should use html linkify here?
             let ctx = context;
             if (ctx.startsWith(HTML_MARKER)) {
                 ctx = context.substring(HTML_MARKER.length)
@@ -136,6 +140,7 @@ export class Binder {
                     child(ctx_c, 'br')
                 }
             }
+            linkifyElement(ctx_c, {})
         }
 
         if (locator != null) {
