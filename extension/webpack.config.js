@@ -12,12 +12,14 @@ const T = {
 const env = {
     TARGET : process.env.TARGET,
     RELEASE: process.env.RELEASE,
+    PUBLISH: process.env.PUBLISH,
 };
 
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
 
 const release = env.RELEASE == 'YES' ? true : false;
+const publish = env.PUBLISH == 'YES' ? true : false;
 const dev = !release; // meh. maybe make up my mind?
 const target = env.TARGET; // TODO erm didn't work?? assert(target != null);
 
@@ -128,8 +130,11 @@ if (!isMobile) {
 }
 
 
-if (dev) {
-    // necessary for browser tests; don't remember why
+if (!publish) {
+    /*
+     * When we publish, the id used is AMO/CWS and provided by the build script
+     * Otherwise, use temporary id (or some APIs don't work, at least in firefox..)
+     */
     manifestExtra.browser_specific_settings = {
         'gecko': {'id': 'promnesia@karlicoss.github.com'}
     }

@@ -45,6 +45,7 @@ def main():
     env = {
         'TARGET': target,
         'RELEASE': 'YES' if args.release else 'NO',
+        'PUBLISH': 'YES' if args.publish else 'NO',
         **os.environ,
     }
     check_call([
