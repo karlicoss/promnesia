@@ -104,8 +104,7 @@ def post(*args):
     return json.loads(check_output(cmd).decode('utf8'))
 
 
-def test_query_instapaper(tmp_path):
-    tdir = Path(tmp_path)
+def test_query_instapaper(tdir):
     index_hypothesis(tdir)
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     with wserver(db=tdir / 'promnesia.sqlite') as helper:
@@ -123,8 +122,7 @@ def test_visits(tmp_path):
             assert len(response['visits']) == 1
 
 
-def test_search(tmp_path):
-    tdir = Path(tmp_path)
+def test_search(tdir):
     index_hypothesis(tdir)
     test_url = "http://www.e-flux.com"
     with wserver(db=tdir / 'promnesia.sqlite') as helper:
@@ -167,3 +165,11 @@ def test_visits_hier(tdir):
         response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
         assert {v['context'] for v in response['visits']} == {'parent url', 'Some context'}
 
+
+def test_status(tdir):
+    with wserver(db='/does/not/exist') as helper:
+        response = post(f'http://localhost:{helper.port}/status')
+        assert response['db'] == None # defensive, it doesn't exist
+        version = response['version']
+        assert version is not None
+        assert len(version.split('.')) >= 2 # random check..
