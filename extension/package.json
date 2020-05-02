@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/karlicoss/promnesia#readme",
   "dependencies": {
+    "anchorme": "^2.1.2",
     "basket.js": "^0.5.2",
     "codemirror": "^5.48.2",
     "webext-options-sync": "^1.0.0"
