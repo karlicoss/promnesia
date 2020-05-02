@@ -4,10 +4,6 @@ import {format_dt, Methods, unwrap, safeSetInnerHTML} from './common';
 
 // TODO could do lazier, e.g. on contexts only..
 
-// $FlowFixMe
-import linkifyElement from 'linkifyjs/element';
-
-
 export function _fmt(dt: Date): [string, string] {
     // TODO if it's this year, do not display year?
     const dts = format_dt(dt);
@@ -28,13 +24,18 @@ type Params = {
 }
 
 
+// TODO keep these in sync with the backend...
+// TODO add !orgmode, !markdown etc??
+// then I could cleanup org-mode somehow before linkifying
 const HTML_MARKER = '!html ';
 
 export class Binder {
     doc: Document;
+    linkifyElement: any // meh
 
-    constructor(doc: Document) {
+    constructor(doc: Document, linkifyElement: any) {
         this.doc = doc;
+        this.linkifyElement = linkifyElement
     }
 
     makeChild(parent: HTMLElement, name: string, classes: ?Array<string> = null) {
@@ -140,7 +141,10 @@ export class Binder {
                     child(ctx_c, 'br')
                 }
             }
-            linkifyElement(ctx_c, {})
+            // TODO crap. judging my this: https://github.com/Soapbox/linkifyjs/blob/a565b6fa8ad095f6f3e453abe3fdfa7221040653/src/linkify/core/parser.js#L74
+            // it's going to be incredibly hard to adjust this behaviour with square brackets...
+            // maybe use orgmode: / markdown: markers? then I could cleanup stuff first..
+            this.linkifyElement(ctx_c, {})
         }
 
         if (locator != null) {
@@ -187,3 +191,21 @@ export class Binder {
     }
 }
 
+
+export async function makeBinder(doc: Document): Promise<Binder> {
+    await import(
+        /* webpackChunkName: "linkifyjs-main" */
+        // $FlowFixMe
+        'linkifyjs/dist/linkify.js'
+    )
+    // TODO min?
+    await import(
+        /* webpackChunkName: "linkifyjs-element" */
+        // $FlowFixMe
+       'linkifyjs/dist/linkify-element.js'
+    )
+    // TODO how the fuck does this work????????
+    // apparently await import brings stuff into scope?? or what??
+    // $FlowFixMe
+    return new Binder(doc, linkifyElement) // eslint-disable-line no-undef
+}

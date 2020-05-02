@@ -246,6 +246,14 @@ async function updateState (tab: chrome$Tab) {
 
     const opts = await get_options_async();
     // TODO this should be executed as a single block?
+
+    // TODO what the fuck is this???? for real???
+    // is there no other way of using an async import???
+    await chromeTabsExecuteScriptAsync(tabId, {file: 'vendors~linkifyjs-main.js'})
+    await chromeTabsExecuteScriptAsync(tabId, {file: 'linkifyjs-element.js'})
+    //
+
+
     await chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'});
     await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
     await chromeTabsInsertCSS(tabId, {code: opts.position_css});

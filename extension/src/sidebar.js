@@ -3,7 +3,7 @@ import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './commo
 import type {JsonObject, Second} from './common';
 import {get_options_async} from './options';
 import type {Options} from './options';
-import {Binder, _fmt} from './display';
+import {_fmt, makeBinder} from './display';
 import {defensify} from './notifications';
 import {chromeRuntimeSendMessage} from './async_chrome';
 
@@ -252,7 +252,7 @@ async function bindError(message: string) {
     const cont = await sidebar.getContainer();
     await sidebar.clear(); // TODO probably, unnecessary?
 
-    const binder = new Binder(doc);
+    const binder = await makeBinder(doc);
     binder.error(cont, message);
 }
 
@@ -268,7 +268,7 @@ async function bindSidebarData(response: JsonObject) {
     const cont = await sidebar.getContainer();
     await sidebar.clear(); // TODO probably, unnecessary?
 
-    const binder = new Binder(doc);
+    const binder = await makeBinder(doc);
 
     const all_tags_c = binder.makeChild(cont, 'div', ['src-filter']);
     const items = binder.makeChild(cont, 'ul');

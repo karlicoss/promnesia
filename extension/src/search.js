@@ -4,7 +4,7 @@ import {unwrap, addStyle} from './common';
 import type {Visits, Visit} from './common';
 import {get_options_async} from './options';
 import {searchVisits, searchAround} from './background';
-import {Binder, _fmt} from './display';
+import {makeBinder, _fmt} from './display';
 
 
 const doc = document;
@@ -73,7 +73,7 @@ async function _doSearch(
     const node = doc.createTextNode(`Found ${visits.length} visits`); cc.appendChild(node);
 
 
-    const binder = new Binder(doc);
+    const binder = await makeBinder(doc);
     // TODO use something more generic for that!
     for (const v of visits) {
         const [dates, times] = _fmt(v.time)
