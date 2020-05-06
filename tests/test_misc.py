@@ -15,3 +15,13 @@ def test_extract_2():
    lesswrong.ru и lesswrong.com, книжку Даниэля Канемана "Thinking, fast and slow" и канал Пион https://t.me/ontologics
    '''
    assert set(extract_urls(text)) == {'http://hpmor.ru/', 'lesswrong.ru', 'lesswrong.com', 'https://t.me/ontologics'}
+
+def test_extract_md():
+    lines = '''
+Hey, I recently implemented a new extension for that [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/org-grasp-for-org-capture/), [github](https://github.com/karlicoss/grasp), perhaps it could be useful for you!
+    '''
+    assert set(extract_urls(lines)) == {
+        'addons.mozilla.org',
+        'https://addons.mozilla.org/en-US/firefox/addon/org-grasp-for-org-capture/',
+        'https://github.com/karlicoss/grasp',
+    }
