@@ -221,16 +221,20 @@ def get_tmpdir():
     tdir = tempfile.TemporaryDirectory(suffix="promnesia")
     return tdir
 
+# TODO use mypy literal?
 Syntax = str
+
 
 @lru_cache(None)
 def _get_extractor(syntax: Syntax):
     from urlextract import URLExtract # type: ignore
     u = URLExtract()
     # https://github.com/lipoja/URLExtract/issues/13
-    if syntax == 'org': # TODO remove hardcoding..
+    if syntax in {'org', 'orgmode', 'org-mode'}: # TODO remove hardcoding..
         u._stop_chars_right |= {'[', ']'}
         u._stop_chars_left  |= {'[', ']'}
+    elif syntax in {'md', 'markdown'}:
+        pass
     # u._stop_chars_right |= {','}
     # u._stop_chars_left  |= {','}
     return u

@@ -8,7 +8,7 @@ import my.instapaper as ip
 def index() -> Iterator[Extraction]:
     logger = get_logger()
 
-    for p in ip.get_pages():
+    for p in ip.pages():
         bm = p.bookmark
         hls = p.highlights
 
