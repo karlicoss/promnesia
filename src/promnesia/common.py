@@ -32,7 +32,7 @@ class Loc(NamedTuple):
     href: Optional[str]=None
 
     @classmethod
-    def make(cls, title: str, href: Optional[str]=None):
+    def make(cls, title: str, href: Optional[str]=None) -> 'Loc':
         return cls(title=title, href=href)
 
     @classmethod
@@ -117,7 +117,7 @@ def make_filter(thing) -> Filter:
         return thing
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     return logging.getLogger("promnesia")
 
 # TODO do i really need to inherit this??

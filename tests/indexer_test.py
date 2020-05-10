@@ -90,11 +90,9 @@ def adhoc_config(tmp_path):
 @pytest.mark.skip(reason='TODO support unpacked directories in HPI')
 def test_takeout_directory(adhoc_config, tmp_path):
     from my.cfg import config
-    from types import SimpleNamespace
-    config.google = SimpleNamespace(
-        takeout_path='testdata/takeout',
-    )
-
+    class user_config:
+        takeout_path = 'testdata/takeout'
+    config.google = user_config
     import promnesia.sources.takeout as tex
 
     visits = history(W(tex.index))
@@ -123,10 +121,9 @@ def test_with_error():
 
 def test_takeout_new_zip(adhoc_config):
     from my.cfg import config
-    from types import SimpleNamespace
-    config.google = SimpleNamespace(
-        takeout_path='testdata/takeout-20150518T000000Z.zip',
-    )
+    class user_config:
+        takeout_path = 'testdata/takeout-20150518T000000Z.zip'
+    config.google = user_config
 
     import promnesia.sources.takeout as tex
     visits = history(tex.index)

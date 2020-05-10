@@ -9,12 +9,12 @@ import promnesia.sources.takeout as takeout # type: ignore
 class Sources:
     @staticmethod
     def TAKEOUT():
-        # TODO would be good to share this with readme..
-        from my.cfg import config
-        from types import SimpleNamespace
-        config.google = SimpleNamespace(
-            takeout_path='testdata/takeout-20150518T000000Z.zip',
-        )
+        class user_config:
+            takeout_path = 'testdata/takeout-20150518T000000Z.zip'
+
+        import my.config
+        my.config.google = user_config
+
         return Source(
             takeout.index,
             name='takeout',
