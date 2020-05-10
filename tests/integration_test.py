@@ -117,13 +117,14 @@ OUTPUT_DIR = '{tdir}'
 from promnesia.common import Indexer as I
 
 def hyp_extractor():
+    import my.config
     class hypothesis:
         export_path = '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json'
+    my.config.hypothesis = hypothesis
 
     # TODO good example for documentaion
-    from my.cfg import config, set_repo
-    config.hypothesis = hypothesis
-    set_repo('hypexport', '{hypexport_path.parent}')
+    from my.cfg import set_repo
+    set_repo('hypexport', '{hypexport_path}')
 
     import promnesia.sources.hypothesis as hypi
     return I(
