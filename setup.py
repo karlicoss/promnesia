@@ -81,7 +81,9 @@ def main():
                 'lxml', # bs4 backend
             ],
             'HPI': [
-                'HPI',
+                'HPI', # pypi version
+                # 'HPI @ git+https://github.com/karlicoss/hpi.git', # uncomment to test against github version (useful for one-off CI run)
+                # 'HPI @ git+file://DUMMY/path/to/local/hpi'    , # uncomment to test against version on the disc
             ],
             # TODO make 'all' group?
         },
