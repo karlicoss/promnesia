@@ -26,9 +26,11 @@ def tdir(tmp_path):
     yield Path(tmp_path)
 
 
-def tdata(path: str) -> Path:
-    pp = Path(__file__).parent.parent / 'testdata'
-    assert pp.is_dir()
-    return pp.absolute() / path
+GIT_ROOT = Path(__file__).parent.parent.absolute()
+DATA = GIT_ROOT / 'tests/testdata'
 
 
+# todo deprecate?
+def tdata(path: str) -> str:
+    assert DATA.is_dir(), DATA
+    return str(DATA / path)
