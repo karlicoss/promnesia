@@ -614,7 +614,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         const utc_ts = msg.utc_timestamp;
         const params = new URLSearchParams();
         // TODO str??
-        params.append('timestamp', utc_ts);
+        params.append('utc_timestamp', utc_ts);
         const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
         chrome.tabs.create({'url': search_url});
     } else if (method == Methods.MARK_VISITED) {

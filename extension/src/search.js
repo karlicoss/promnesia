@@ -131,8 +131,10 @@ window.onload = async () => {
         return;
     }
 
-    if (params.has('timestamp')) {
-        const timestamp = parseInt(unwrap(params.get('timestamp')));
+    // todo need to be better tested, with various timezones etc
+    const ts_param = params.has('utc_timestamp');
+    if (ts_param != null) {
+        const timestamp = parseInt(unwrap(ts_param));
         await doSearch(
             searchAround(timestamp),
             {

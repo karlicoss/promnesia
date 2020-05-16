@@ -189,7 +189,9 @@ def configure(
     # if dots.is_selected() != show_dots:
     #     dots.click()
     # assert dots.is_selected() == show_dots
-    set_checkbox('verbose_errors_id', False)
+
+    # TODO not sure, should be False for demos?
+    set_checkbox('verbose_errors_id', True)
 
     if highlights is not None:
         set_checkbox('highlight_id', highlights)
@@ -468,7 +470,7 @@ def test_add_to_blacklist(tmp_path, browser):
             offset = 2 # Inspect, View page source
         else:
             offset = 0
-        pyautogui.typewrite(['up'] + ['up'] * offset + ['enter'], interval=0.5)
+        pyautogui.typewrite(['up'] + ['up'] * offset + ['enter'] + ['enter'], interval=0.5)
 
         confirm('shows prompt with alert to enter pattern to block?')
         driver.switch_to.alert.accept()
@@ -494,7 +496,8 @@ def test_visits(tmp_path, browser):
 def test_around(tmp_path, browser):
     test_url = "about:blank"
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
-        ts = int(datetime.strptime("2017-05-22T10:59:00.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
+        # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??
+        ts = int(datetime.strptime("2017-05-22T10:59:12.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
         h.open_page(f'search.html?timestamp={ts}')
         confirm('you should see search results, "anthrocidal" should be highlighted red')
 
@@ -611,13 +614,14 @@ def test_stress(tmp_path, browser):
 @uses_x
 @browsers(FF, CH)
 def test_fuzz(tmp_path, browser):
+    # TODO ugh. this still results in 'tab permissions' pages, but perhaps because of closed tabs?
+    # dunno if it's worth fixing..
     urls = {
         'https://www.iana.org/domains/reserved': 'IANA',
         'iana.org/domains/reserved': 'IANA2',
     }
     with _test_helper(tmp_path, index_urls(urls), 'https://example.com', browser=browser) as helper:
         driver = helper.driver
-        # import ipdb; ipdb.set_trace()
         tabs = 30
         for _ in range(tabs):
             driver.find_element_by_tag_name('a').send_keys(Keys.CONTROL + Keys.RETURN)
