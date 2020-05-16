@@ -102,6 +102,13 @@ if (!isMobile) {
     manifestExtra.commands = commandsExtra;
 }
 
+/*
+ * TODO ??? from the debugger
+ * Reading manifest: Error processing browser_action.browser_style: Unsupported on Android.
+ * Warning details
+ * Reading manifest: Error processing browser_action.default_icon:
+ */
+
 // TODO shit, how to validate manifest?? didn't find anything...
 if (isMobile) {
     // on mobile firefox page_action makes a bit of sense due to various limitations...

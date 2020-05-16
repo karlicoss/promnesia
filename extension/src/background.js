@@ -289,11 +289,17 @@ async function updateState (tab: chrome$Tab) {
     // TODO ok, only show it if there are visits? and only on android?
     // TODO write that icon can't be changed on android
 
-    if (icon === 'images/ic_visited_48.png') { // ugh. pretty hacky
-        // TODO do I need to hide?
-        if (chrome.pageAction) {
-            // TODO make dependent on options?
+    if (chrome.pageAction) {
+        const interesting = [
+            'images/ic_visited_48.png',
+            'images/ic_relatives_48.png',
+        ].includes(icon); // FIXME meh. hacky
+        // TODO make dependent on options?
+        if (interesting) {
             chrome.pageAction.show(tabId);
+        } else {
+            // not sure if this is really needed, but I feel like it persists otherwise on android
+            chrome.pageAction.hide(tabId);
         }
     }
 
