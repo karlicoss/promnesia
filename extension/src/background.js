@@ -502,6 +502,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
         return;
     }
 
+    // TODO make logging optional? not sure if there are any downsides
     if (ignored(url)) {
         linfo('onUpdated: ignored explicitly %s', url);
         return;
@@ -548,7 +549,10 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 
 
 async function getActiveTab(): Promise<chrome$Tab> {
-    const tabs = await chromeTabsQueryAsync({'active': true});
+    const tabs = await chromeTabsQueryAsync({
+        'currentWindow': true,
+        'active': true,
+    });
     // TODO can it be empty at all??
     if (tabs.length > 1) {
         console.error("Multiple active tabs: %o", tabs); // TODO handle properly?

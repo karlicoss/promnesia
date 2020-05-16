@@ -36,7 +36,7 @@ function defaultOptions(): Options {
         token: '',
 
         verbose_errors_on: false,
-        contexts_popup_on: true,
+        contexts_popup_on: false,
 
         highlight_on: true,
 
@@ -50,18 +50,28 @@ function defaultOptions(): Options {
          * TODO shit, somehow this was breaking on Android... I guess keep it aside
          */
 
+        // TODO tooltip??
+
         // TODO do something defensive if value ended up as invalid?..
         // TODO make it literate from test?
         // TODO hmm. not sure if I can get rid of :root thing without relying on JS?
         // TODO would be nice to use true/false, but that prob. won't work
         // TODO add docs on positioning
+        // TODO eh, would be nice to make it work with --right: true. right now it doesn't
         position_css: `
-.promnesia {
+#promnesia-sidebar {
+    /* you can also use
+       --left/--top/--bottom
+       to change the sidebar position */
     --right: 1;
+
     --size: 30%;
 
-    background-color: rgba(236, 236, 236, 0.4);
+    /* you can also use any other valid CSS
+       easiest is to experiment in devtools first */
+    background-color: rgba(236, 236, 236, 0.8);
 }
+`.trim(),
 
 /* uncomment this to suppress the notification popup
    (will be more tweakable in the future)
@@ -69,22 +79,21 @@ function defaultOptions(): Options {
      display: none !important;
    }
 */
-
-`.trim(),
+        // I guess
         // TODO not sure why that in background was necessary..  none repeat scroll 0% 0%;
-
         // TODO add some docs on configuring it...
         extra_css   : `
 .src {
     font-weight: bold;
 }
+/* you can use devtools to find out which CSS classes you can tweak */
 `.trim(),
     };
 }
 
 
 // TODO mm. don't really like having global object, but seems that it's easiest way to avoid race conditions
-// see https://github.com/fregante/webext-options-sync/issues/38
+// TODO https://github.com/fregante/webext-options-sync/issues/38 -- fixed now
 const _options = new OptionsSync({
     defaults: defaultOptions(),
 });
