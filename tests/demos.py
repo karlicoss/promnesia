@@ -141,7 +141,8 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
             before(driver)
 
         # TODO eh. not sure if this geometry is consistent with ffmpeg...
-        geometry = f'{w}x400+0+{h - 400}'
+        # todo maybe could even do quarter width?
+        geometry = f'{w // 2}x400+{w // 4}+{h - 400}'
         with hotkeys(geometry=geometry):
             # TODO record directly in webm? but need to set quality
             rpath = path.with_suffix('.mp4')
