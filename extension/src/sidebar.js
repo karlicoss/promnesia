@@ -75,6 +75,15 @@ class Sidebar {
             }, 'open_search.onClick'));
             cbody.appendChild(searchb);
         }
+        {
+            // TODO only on mobile?
+            const elem = cdoc.createElement('button');
+            elem.appendChild(cdoc.createTextNode('Close'));
+            elem.addEventListener('click', defensify(async () => {
+                await this.hide();
+            }, 'close_sidebar.onClick'));
+            cbody.appendChild(elem);
+        }
         /*
         {
             const hb = cdoc.createElement('button');
