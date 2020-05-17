@@ -64,8 +64,8 @@ SOURCES = [
 
     ####
     # the following modules are relying on HPI package (https://github.com/karlicoss/HPI#whats-inside) for the data
-    # see setup guide: https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org
-    # and 'Usage examples': https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org#usage-examples
+    # see HPI setup guide: https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org
+    # and HPI usage examples': https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org#usage-examples
     Source(takeout.index),
     Source(instapaper.index),
     Source(pocket.index),

@@ -37,6 +37,7 @@ def main():
         author_email='karlicoss@gmail.com',
         description='Enhancement of your browsing history',
 
+        python_requires='>=3.6',
         install_requires=[
             *DEPS_INDEXER,
             *DEPS_SERVER,

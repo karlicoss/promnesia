@@ -2,7 +2,8 @@
 
 TOC: [[#motivation][Motivation]] | [[#demos][*Demos*]] | [[#install][*Install*]] | [[#try-it-out][Try it out]] | [[#develop][Develop]]
 
-Promnesia is a browser extension ([[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]/Firefox mobile) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
+Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
+(including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
 
 *TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
 This is unlike most modern browsers, where you can only see when you visited the link.
@@ -16,6 +17,7 @@ It allows you to answer different questions about the current web page:
 - which posts from this blog page have I already read? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited-2.webm][demo (20s)]]
 - have I annotated it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/highlights.webm][demo (1m)]]
 - how much time have I spent on it? [[https://user-images.githubusercontent.com/291333/82124084-ba040100-9794-11ea-9af9-ee250ebbb473.png][screenshot]]
+- and it also works on your phone! [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mobile/panel-jbor.png][screenshot]]
 
 You can jump straight to the [[#demos][Demos]] and [[#install][Install]] sections if you're already overexcited.
 
@@ -39,6 +41,9 @@ It consists of two parts:
 The backend regularly processes various *data sources* like:
 
 - data exports from online services: Reddit/Twitter/Hackernews/Telegram/Messenger/Hypothesis/Pocket/Instapaper, etc.
+
+  It heavily benefits from [[https://github.com/karlicoss/HPI][HPI]] package to access the data.
+
 - Markdown/org-mode/HTML or any other plaintext on your disk
 - Google Takeout/Activity backups
 - in general, anything that can be parsed, it's easily extensible
@@ -76,7 +81,10 @@ The backend regularly processes various *data sources* like:
 
   - You can find more short screencasts, demonstrating various features [[https://github.com/karlicoss/promnesia-demos][here]]
   - There are more screenshots [[https://github.com/karlicoss/promnesia/issues/5#issuecomment-619365708][here]]
-  # TODO roam?
+  - This [[https://beepb00p.xyz/myinfra-roam.html#promnesia][post]] features a video demo of using Promnesia with a Roam Research database
+  - Video demos for the mobile extension:
+    - [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mobile/panel-w3c.webm][showing all references to pages on W3C website in my org-mode notes]]
+    - [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mobile/mark-visited-reddit.webm][marking already visited links on the page]], to make easier to process Reddit posts
 
 * Install
   :PROPERTIES:
@@ -115,7 +123,7 @@ I'm working on improving the documentation on setting the backend up, so please 
 - create the config
 
   You can start from the example config (=cp config.py.example config.py=), and then edit it.
-  You can also find a more complete configuration example here: [[file:doc/config.py]].
+  You can also find a more complete and annotated configuration example here: [[file:doc/config.py]].
  
   The only required settings are:
 
