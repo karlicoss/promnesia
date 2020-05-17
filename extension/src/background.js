@@ -246,10 +246,17 @@ async function updateState (tab: chrome$Tab) {
     }
 
     const opts = await get_options_async();
-    // TODO this should be executed as a single block?
-    await chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'});
-    await chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'});
-    await chromeTabsInsertCSS(tabId, {code: opts.position_css});
+    // TODO this should be executed as an atomic block?
+
+    const inject = chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'})
+        .then(chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'}))
+        .then(chromeTabsInsertCSS(tabId, {code: opts.position_css}));
+
+    // NOTE: if the page is unreachable, we can't inject stuf in it
+    // not sure how to detect it? tab doesn't have any interesting attributes
+    // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
+    // TODO in this case, could set browser action to open a new tab (i.e. search) or something?
+    await defensify(inject, 'sidebar injection');
 
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
@@ -319,19 +326,15 @@ async function updateState (tab: chrome$Tab) {
         // TODO and show system wide notification instead of tab notification?
         // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
         // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
-        // a little hacky, but kinda works?
+        // a little hacky, but kinda works? in Firefox too apparently
         const isOk = (await chromeTabsGet(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg';
 
         // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
         const locs = visits.self_contexts().map(l => l == null ? null : l.title);
         if (locs.length !== 0) {
             const msg = `${locs.length} contexts!\n${locs.join('\n')}`;
-            if (isOk) {
-                if (opts.contexts_popup_on) {
-                    await showTabNotification(tabId, msg);
-                }
-            } else {
-                notify(msg);
+            if (opts.contexts_popup_on) {
+                await showTabNotification(tabId, msg);
             }
         }
 
