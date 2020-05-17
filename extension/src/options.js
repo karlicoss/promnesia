@@ -23,7 +23,10 @@ export type Options = {
     blacklist: string;
     src_map: SrcMap;
 
+    /* NOTE: a bit misleading name; it keeps all style settings now */
     position_css: string;
+
+    /* NOTE: deprecated, perhaps should merge together with position_css and migrate propely */
     extra_css: string;
 
 }
@@ -59,6 +62,9 @@ function defaultOptions(): Options {
         // TODO add docs on positioning
         // TODO eh, would be nice to make it work with --right: true. right now it doesn't
         position_css: `
+/* you can use devtools to find other CSS you can tweak */
+
+/* tweak sidebar position/size/style */
 #promnesia-sidebar {
     /* you can also use
        --left/--top/--bottom
@@ -71,6 +77,34 @@ function defaultOptions(): Options {
        easiest is to experiment in devtools first */
     background-color: rgba(236, 236, 236, 0.8);
 }
+
+/* tweak elements within the sidebar */
+#promnesia-sidebar .src {
+    font-weight: bold;
+}
+
+
+/* uncomment to override/tweak 'visited' marks */
+/*
+.promnesia-visited {
+    border: dashed green;
+}
+
+.promnesia-visited:after {
+    content: "" !important;
+}
+*/
+
+/* uncomment to override/tweak highlights */
+/*
+.promnesia-highlight {
+   background-color: green !important;
+}
+
+.promnesia-highlight-reference {
+   color: red !important;
+}
+*/
 `.trim(),
 
 /* uncomment this to suppress the notification popup
@@ -79,15 +113,8 @@ function defaultOptions(): Options {
      display: none !important;
    }
 */
-        // I guess
-        // TODO not sure why that in background was necessary..  none repeat scroll 0% 0%;
-        // TODO add some docs on configuring it...
-        extra_css   : `
-.src {
-    font-weight: bold;
-}
-/* you can use devtools to find out which CSS classes you can tweak */
-`.trim(),
+        // NOTE: deprecated
+        extra_css   : '',
     };
 }
 

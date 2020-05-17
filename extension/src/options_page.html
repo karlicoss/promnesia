@@ -8,6 +8,8 @@
 
 <body>
 
+    <div>Don't foget to save settings (button on the bottom)</div>
+
     <fieldset>
         <legend>Backend</legend>
 
@@ -30,13 +32,12 @@
         <legend>Notifications</legend>
 
         <div>
-            <label for="verbose_errors_id">Verbose errors (may result in spurious notifications)</label>
-            <input type="checkbox" id="verbose_errors_id"/>
-        <div>
-
-        <div>
             <label for="contexts_popup_id">Show 'Has contexts' popup (green)</label>
             <input type="checkbox" id="contexts_popup_id"/>
+        <div>
+        <div>
+            <label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label>
+            <input type="checkbox" id="verbose_errors_id"/>
         <div>
     </fieldset>
 
@@ -69,17 +70,19 @@
     <!-- TODO hmm. iframe css can't be applied from outside; so we have to use two separate CSS settings.. -->
     <!-- could be a bit confusing for user -->
     <fieldset>
-        <legend>Sidebar position (CSS)</legend>
+        <legend>Style settings (CSS)</legend>
         <div id="position_css_id"></div>
     </fieldset>
 
-
     <!-- TODO give some quick help on using CSS, some examples too? -->
     <fieldset>
-        <legend>Sidebar style (CSS)</legend>
+        <legend>Sidebar style</legend>
+        <div>DEPRECATED!</div>
+        <div>If you had any settings here, please move them to the field above</div>
         <div id="extra_css_id"></div>
     </fieldset>
 
+    <!-- TODO enlarge on android? -->
     <div>
     <button id="save_id">Save</button>
     </div>

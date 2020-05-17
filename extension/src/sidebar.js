@@ -49,7 +49,7 @@ class Sidebar {
         link.rel = "stylesheet";
         head.appendChild(link);
 
-        addStyle(cdoc, this.opts.extra_css);
+        addStyle(cdoc, this.opts.position_css);
 
         // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
         const base = cdoc.createElement('base');
@@ -57,6 +57,11 @@ class Sidebar {
         head.appendChild(base);
 
         const cbody = unwrap(cdoc.body);
+        // TODO not sure if it should be same as SIDEBAR_ACTIVE thing?
+        cbody.classList.add('promnesia');
+        // it's a bit hacky.. but stuff inside and outside iframe got different namespace, so ok to reuse id?
+        // makes it much easier for settings
+        cbody.id = SIDEBAR_ID;
         {
             const show_dots = cdoc.createElement('button');
             show_dots.appendChild(cdoc.createTextNode('Mark visited'));
@@ -235,7 +240,7 @@ function _highlight(text: string, idx: number) {
 
         target.classList.add('promnesia-highlight');
         const ref = doc.createElement('span');
-        ref.classList.add('promnesia-highlight-ref');
+        ref.classList.add('promnesia-highlight-reference');
         ref.classList.add('nonselectable');
         ref.appendChild(doc.createTextNode(String(idx)));
         target.insertAdjacentElement('beforeend', ref);

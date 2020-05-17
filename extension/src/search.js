@@ -123,7 +123,7 @@ unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event:
 
 window.onload = async () => {
     const opts = await get_options_async();
-    addStyle(doc, opts.extra_css);
+    addStyle(doc, opts.position_css);
 
     const url = new URL(window.location);
     const params = url.searchParams;
