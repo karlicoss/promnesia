@@ -554,7 +554,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 }, 'onUpdated'));
 
 
-async function getActiveTab(): Promise<chrome$Tab> {
+export async function getActiveTab(): Promise<chrome$Tab> {
     const tabs = await chromeTabsQueryAsync({
         'currentWindow': true,
         'active': true,
@@ -643,27 +643,31 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
    popup is available for pageAction?? can use it for blacklisting/search?
 */
 async function registerActions() {
+    // TODO for android, this only sets it for page action
+    // and for desktop, there is no page action, so it only sets for browser action...
     for (const action of (await actions())) {
         // $FlowFixMe
-        action.onClicked.addListener(defensify(async tab => {
-            const url = unwrap(tab.url);
-            const tid = unwrap(tab.id);
-            if (ignored(url)) {
-                // TODO tab notification?
-                notify(`${url} can't be handled`);
-                return;
-            }
-            const blacklist = await Blacklist_get();
-            const bl = await blacklist.contains(url);
-            if (bl != null) {
-                await showBlackListedNotification(tid, new Blacklisted(url, bl));
-                // TODO show popup; suggest to whitelist?
-            } else {
-                // TODO ugh. messy
-                await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
-                await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
-            }
-        }, 'action.onClicked'));
+        action.onClicked.addListener(defensify(injectSidebar, 'action.onClicked'));
+    }
+}
+
+export async function injectSidebar(tab: chrome$Tab) {
+    const url = unwrap(tab.url);
+    const tid = unwrap(tab.id);
+    if (ignored(url)) {
+        // TODO tab notification?
+        notify(`${url} can't be handled`);
+        return;
+    }
+    const blacklist = await Blacklist_get();
+    const bl = await blacklist.contains(url);
+    if (bl != null) {
+        await showBlackListedNotification(tid, new Blacklisted(url, bl));
+        // TODO show popup; suggest to whitelist?
+    } else {
+        // TODO ugh. messy
+        await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
+        await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
     }
 }
 

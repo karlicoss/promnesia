@@ -71,7 +71,7 @@ const action = {
 
 // NOTE: ok, this is important on Android, this is where click in the menu goes
 if (isMobile) {
-    action["default_popup"] = "search.html";
+    action["default_popup"] = "mobile_sidebar_injector.html";
 }
 
 const permissionsExtra = [];
@@ -156,11 +156,12 @@ const options = {
     global: false,
   },
   entry: {
-    background   : path.join(__dirname, './src/background'),
-    options_page : path.join(__dirname, './src/options_page'),
-    sidebar      : path.join(__dirname, './src/sidebar'),
-    search       : path.join(__dirname, './src/search'),
-    background_injector : path.join(__dirname, './src/background_injector'),
+    background              : path.join(__dirname, './src/background'),
+    options_page            : path.join(__dirname, './src/options_page'),
+    sidebar                 : path.join(__dirname, './src/sidebar'),
+    search                  : path.join(__dirname, './src/search'),
+    background_injector     : path.join(__dirname, './src/background_injector'),
+    mobile_sidebar_injector : path.join(__dirname, './src/mobile_sidebar_injector'),
   },
   output: {
     path: buildPath,
