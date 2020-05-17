@@ -132,7 +132,7 @@ window.onload = async () => {
     }
 
     // todo need to be better tested, with various timezones etc
-    const ts_param = params.has('utc_timestamp');
+    const ts_param = params.get('utc_timestamp');
     if (ts_param != null) {
         const timestamp = parseInt(unwrap(ts_param));
         await doSearch(

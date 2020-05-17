@@ -398,8 +398,8 @@ def set_position(driver, settings: str):
         # ugh... for some reason wouldn't send the keys...
         field.click()
         import pyautogui # type: ignore
-        pyautogui.press(['backspace'] * 100 + ['delete'] * 100)
-        pyautogui.typewrite(settings, interval=0.1)
+        pyautogui.press(['backspace'] * 500 + ['delete'] * 500)
+        pyautogui.typewrite(settings, interval=0.05)
     else:
         area = field.find_element_by_xpath('.//textarea')
         area.send_keys([Keys.DELETE] * 500)
@@ -498,7 +498,7 @@ def test_around(tmp_path, browser):
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
         # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??
         ts = int(datetime.strptime("2017-05-22T10:59:12.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
-        h.open_page(f'search.html?timestamp={ts}')
+        h.open_page(f'search.html?utc_timestamp={ts}')
         confirm('you should see search results, "anthrocidal" should be highlighted red')
 
 
