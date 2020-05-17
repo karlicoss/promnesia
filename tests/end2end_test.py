@@ -493,7 +493,8 @@ def test_visits(tmp_path, browser):
 
 @uses_x
 @browsers(FF, CH)
-def test_around(tmp_path, browser):
+def test_search_around(tmp_path, browser):
+    # TODO it actually lacks a proper end-to-end test withing browser... although I do have something in automatic demos?
     test_url = "about:blank"
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
         # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??

@@ -627,11 +627,9 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         // return true; // this is important!! otherwise message will not be sent?
     } else if (method == Methods.SEARCH_VISITS_AROUND) {
         // TODO reuse handleOpenSearch?
-        // TODO careful about the type?
-        const utc_ts = msg.utc_timestamp;
+        const utc_timestamp_s: number = msg.utc_timestamp_s;
         const params = new URLSearchParams();
-        // TODO str??
-        params.append('utc_timestamp', utc_ts);
+        params.append('utc_timestamp', utc_timestamp_s.toString());
         const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
         chrome.tabs.create({'url': search_url});
     } else if (method == Methods.MARK_VISITED) {

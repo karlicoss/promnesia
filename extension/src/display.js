@@ -113,10 +113,11 @@ export class Binder {
         tchild(time_c, times);
         dt_c.setAttribute('title', 'search around');
         dt_c.onclick = () => {
-            const utc_ts = timestamp.valueOf();
+            // TODO not sure about floor...
+            const utc_timestamp_s = Math.floor(timestamp.getTime() / 1000);
             chrome.runtime.sendMessage({
                 method   : Methods.SEARCH_VISITS_AROUND,
-                utc_timestamp: utc_ts,
+                utc_timestamp_s: utc_timestamp_s,
             });
 
             return true;
