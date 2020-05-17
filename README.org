@@ -15,6 +15,7 @@ It allows you to answer different questions about the current web page:
 - which links on this page have I already explored? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited.webm][demo (30s)]],
 - which posts from this blog page have I already read? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited-2.webm][demo (20s)]]
 - have I annotated it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/highlights.webm][demo (1m)]]
+- how much time have I spent on it? [[https://user-images.githubusercontent.com/291333/82124084-ba040100-9794-11ea-9af9-ee250ebbb473.png][screenshot]]
 
 You can jump straight to the [[#demos][Demos]] and [[#install][Install]] sections if you're already overexcited.
 

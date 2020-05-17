@@ -14,7 +14,7 @@ import pytest # type: ignore
 from pytest import mark # type: ignore
 
 
-from common import skip_if_ci
+from common import skip_if_ci, tdata
 
 from promnesia.common import History, PreVisit
 from promnesia.common import Indexer
@@ -91,7 +91,7 @@ def adhoc_config(tmp_path):
 def test_takeout_directory(adhoc_config, tmp_path):
     from my.cfg import config
     class user_config:
-        takeout_path = 'testdata/takeout'
+        takeout_path = tdata('takeout')
     config.google = user_config
     import promnesia.sources.takeout as tex
 
@@ -122,7 +122,7 @@ def test_with_error():
 def test_takeout_new_zip(adhoc_config):
     from my.cfg import config
     class user_config:
-        takeout_path = 'testdata/takeout-20150518T000000Z.zip'
+        takeout_path = tdata('takeout-20150518T000000Z.zip')
     config.google = user_config
 
     import promnesia.sources.takeout as tex
@@ -179,7 +179,7 @@ def test_plaintext_path_extractor():
     from promnesia.sources.plaintext import extract_from_path
 
     visits = history(W(custom_gen.index,
-        extract_from_path('testdata/custom'),
+        extract_from_path(tdata('custom')),
     ))
     assert {
         v.orig_url for v in visits
@@ -197,7 +197,7 @@ def test_normalise():
     from promnesia.sources.plaintext import extract_from_path
 
     visits = history(W(custom_gen.index,
-        extract_from_path('testdata/normalise'),
+        extract_from_path(tdata('normalise')),
     ))
     assert len(visits) == 7
     assert {
@@ -217,7 +217,7 @@ def test_normalise_weird():
 
     visits = history(W(
         custom_gen.index,
-        extract_from_path('testdata/weird.txt'),
+        extract_from_path(tdata('weird.txt')),
     ))
     norms = {v.norm_url for v in visits}
 
@@ -233,15 +233,16 @@ def test_filter():
 
     History.add_filter(r'some-weird-domain')
     hist = custom_gen.get_custom_history(
-        extract_from_path('testdata/custom'),
+        extract_from_path(tdata('custom')),
     )
     assert len(hist) == 4 # chrome-error got filtered out
 
 def test_custom():
     import promnesia.sources.shellcmd as custom_gen
 
-    hist = history(W(custom_gen.index,
-        """grep -Eo -r --no-filename '(http|https)://\S+' testdata/custom""",
+    hist = history(W(
+        custom_gen.index,
+        """grep -Eo -r --no-filename '(http|https)://\S+' """ + tdata('custom'),
     ))
     # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
     assert len(hist) == 5

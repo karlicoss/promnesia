@@ -10,7 +10,7 @@ class Sources:
     @staticmethod
     def TAKEOUT():
         class user_config:
-            takeout_path = 'testdata/takeout-20150518T000000Z.zip'
+            takeout_path = 'tests/testdata/takeout-20150518T000000Z.zip'
 
         import my.config
         my.config.google = user_config
@@ -22,7 +22,7 @@ class Sources:
 
     PLAIN = Source(
         shellcmd.index,
-        extract_from_path('testdata/custom'),
+        extract_from_path('tests/testdata/custom'),
         name='test',
     )
 

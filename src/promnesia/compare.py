@@ -8,7 +8,6 @@ from typing import Dict, List, Any, NamedTuple, Optional, Iterator, Set, Tuple
 
 
 from .common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
-from .kython import kompress
 
 # TODO include latest too?
 # from cconfig import ignore, filtered

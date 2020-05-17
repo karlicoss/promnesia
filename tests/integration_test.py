@@ -3,17 +3,12 @@ from subprocess import check_call, run
 from typing import Set, Dict, Optional, Union, Sequence, Tuple
 
 from indexer_test import populate_db
-from common import tdir, under_ci
+from common import tdir, under_ci, DATA, GIT_ROOT
 
 import pytest
 
 import platform
 system = platform.system()
-
-# TODO move to common?
-ROOT = Path(__file__).absolute().parent.parent
-
-testdata = ROOT / 'testdata'
 
 
 def index(cfg: Path):
@@ -22,7 +17,7 @@ def index(cfg: Path):
 
 
 def test_example_config(tdir):
-    example = ROOT / 'config.py.example'
+    example = GIT_ROOT / 'config.py.example'
     ex = example.read_text()
     if under_ci():
         # TODO ugh fucking hell I couldn't find a single path that has HTMLs both on macos and ubuntu
@@ -100,6 +95,7 @@ SOURCES = [indexer]
 
 def index_hypothesis(tdir: Path):
     # TODO meh..
+    # TODO use submodule?
     hypexport_path = Path(tdir) / 'hypexport'
     check_call([
         'git',
@@ -114,20 +110,20 @@ def index_hypothesis(tdir: Path):
     cfg.write_text(f"""
 OUTPUT_DIR = '{tdir}'
 
-from promnesia.common import Indexer as I
+from promnesia.common import Source
 
 def hyp_extractor():
     import my.config
-    class hypothesis:
-        export_path = '{testdata}/hypothesis/netrights-dashboards-mockup/data/annotations.json'
-    my.config.hypothesis = hypothesis
+    class user_config:
+        export_path = '{str(DATA)}/hypothesis/netrights-dashboards-mockup/data/*.json'
+    my.config.hypothesis = user_config
 
     # TODO good example for documentaion
     from my.cfg import set_repo
     set_repo('hypexport', '{hypexport_path}')
 
     import promnesia.sources.hypothesis as hypi
-    return I(
+    return Source(
         hypi.index,
         src='hyp',
     )

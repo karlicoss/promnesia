@@ -52,7 +52,7 @@ body.promnesia {
     user-select: none;
 }
 
-.promnesia-highlight-ref {
+.promnesia-highlight-reference {
     color: orange;
     font-weight: bold;
     /* vertical-align: super; */

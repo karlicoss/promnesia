@@ -69,11 +69,9 @@ const action = {
 };
 
 
-// TODO not sure why it is here?
+// NOTE: ok, this is important on Android, this is where click in the menu goes
 if (isMobile) {
-    action["default_popup"] = "popup.html";
-    // TODO ok, need to refine and add things on that page...
-    // TODO maybe show visits as on sidebar?
+    action["default_popup"] = "mobile_sidebar_injector.html";
 }
 
 const permissionsExtra = [];
@@ -101,6 +99,13 @@ if (dev) {
 if (!isMobile) {
     manifestExtra.commands = commandsExtra;
 }
+
+/*
+ * TODO ??? from the debugger
+ * Reading manifest: Error processing browser_action.browser_style: Unsupported on Android.
+ * Warning details
+ * Reading manifest: Error processing browser_action.default_icon:
+ */
 
 // TODO shit, how to validate manifest?? didn't find anything...
 if (isMobile) {
@@ -151,13 +156,12 @@ const options = {
     global: false,
   },
   entry: {
-    background   : path.join(__dirname, './src/background'),
-    options_page : path.join(__dirname, './src/options_page'),
-      // TODO remove popup?
-    popup        : path.join(__dirname, './src/popup'),
-    sidebar      : path.join(__dirname, './src/sidebar'),
-    search       : path.join(__dirname, './src/search'),
-    background_injector : path.join(__dirname, './src/background_injector'),
+    background              : path.join(__dirname, './src/background'),
+    options_page            : path.join(__dirname, './src/options_page'),
+    sidebar                 : path.join(__dirname, './src/sidebar'),
+    search                  : path.join(__dirname, './src/search'),
+    background_injector     : path.join(__dirname, './src/background_injector'),
+    mobile_sidebar_injector : path.join(__dirname, './src/mobile_sidebar_injector'),
   },
   output: {
     path: buildPath,

@@ -12,10 +12,6 @@ in the addon folder
    - State "DONE"       from "TODO"       [2019-08-10 Sat 12:11]
    :END:
 
-* Android:
-** [2019-08-10 Sat 12:12] Installing: web-ext run --target=firefox-android --android-device=XXXXX
-** [2019-08-10 Sat 12:56] remote debugging; use Shift-F8 to open web ide https://developer.mozilla.org/en-US/docs/Tools/Remote_Debugging/Debugging_Firefox_for_Android_with_WebIDE#Enable_remote_debugging_in_Firefox_for_Android
-
 * Testing scenarios
 ** [#A] [2019-04-19 Fri 22:38] open new visited tab via a link (have a html page for that)
 

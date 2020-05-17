@@ -12,7 +12,7 @@ from typing import NamedTuple, ContextManager
 import pytz
 
 from integration_test import index_hypothesis, index_urls
-from common import tdir, under_ci
+from common import tdir, under_ci, tdata
 
 
 class Helper(NamedTuple):
@@ -78,7 +78,7 @@ def _test_helper(tmp_path):
 
     # TODO extract that into index_takeout?
     # TODO ugh. quite hacky...
-    template_config = Path(__file__).parent.parent / 'testdata' / 'test_config.py'
+    template_config = tdata('test_config.py')
     copy(template_config, tdir)
     config = tdir / 'test_config.py'
     with config.open('a') as fo:
