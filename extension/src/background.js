@@ -18,6 +18,7 @@ async function isAndroid() {
     }
 }
 
+const isMobile = isAndroid; // TODO deprecate old name? note sure
 
 // TODO ugh. en-GB etc can't be parsed by Date.parse afterwards...
 
@@ -286,20 +287,23 @@ async function updateState (tab: chrome$Tab) {
         }
     }
 
-    // TODO ok, only show it if there are visits? and only on android?
-    // TODO write that icon can't be changed on android
-
-    if (chrome.pageAction) {
+    /* NOTE: few things here
+     * 1. browser action is only shown in the 'settings on android' (and no icon), so we're using page action
+     * 2. page action icon can't be changed on android, so we're only showing it when there are contexts
+     *    otherwise, we're relying on 'mobile_sidebar_injector' to open the sidebar
+     */
+    if (await isMobile()) {
+        const action = chrome.pageAction;
         const interesting = [
             'images/ic_visited_48.png',
             'images/ic_relatives_48.png',
         ].includes(icon); // FIXME meh. hacky
         // TODO make dependent on options?
         if (interesting) {
-            chrome.pageAction.show(tabId);
+            action.show(tabId);
         } else {
             // not sure if this is really needed, but I feel like it persists otherwise on android
-            chrome.pageAction.hide(tabId);
+            action.hide(tabId);
         }
     }
 
@@ -643,8 +647,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
    popup is available for pageAction?? can use it for blacklisting/search?
 */
 async function registerActions() {
-    // TODO for android, this only sets it for page action
-    // and for desktop, there is no page action, so it only sets for browser action...
+    // NOTE: on mobile, this sets action for both icon (if it's displayed) and in the menu
     for (const action of (await actions())) {
         // $FlowFixMe
         action.onClicked.addListener(defensify(injectSidebar, 'action.onClicked'));

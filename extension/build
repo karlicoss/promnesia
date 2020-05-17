@@ -13,7 +13,12 @@ IDS = {
 }
 
 
-TARGETS = ['chrome', 'firefox', 'firefox-mobile']
+TARGETS = [
+    'chrome',
+    'firefox',
+    # 'firefox-mobile',  # ok, now firefox can handle mobile too
+]
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--release', action='store_true')
@@ -77,7 +82,7 @@ def main():
         # https://github.com/fregante/web-ext-submit#web-ext-submit- hmmm maybe I don't even need sign??
         # Mozilla’s web-ext sign successfully submits an extension for review, but then it throws an error. This wrapper executes the same command, but then it prevents the unrelated "it could not be signed" error.
         assert args.release
-        if target not in ['firefox', 'firefox-mobile']:
+        if 'firefox' not in target:
             raise RuntimeError("{target} is not supported for signing yet".format(target=target))
 
         webext(
@@ -89,7 +94,7 @@ def main():
 
         src_dir = build_dir.resolve() # TODO ugh. webext can't into symlinks???
 
-        if target in ['firefox', 'firefox-mobile']:
+        if 'firefox' in target:
             # TODO --channel listed??
             check_call([
                 'npm', 'run', 'release:amo',
