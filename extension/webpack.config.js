@@ -25,9 +25,9 @@ const target = env.TARGET; // TODO erm didn't work?? assert(target != null);
 
 // see this for up to date info on the differences..
 // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
-const isMobile = target.includes('mobile');
+// const isMobile = target.includes('mobile');
 
-const name = 'Promnesia' + (isMobile ? ' mobile' : '') + (dev ? ' [dev]' : '');
+const name = 'Promnesia' + (dev ? ' [dev]' : '');
 
 // Firefox wouldn't let you rebind its default shortcuts most of which use Shift
 // On the other hand, Chrome wouldn't let you use Alt
@@ -69,19 +69,15 @@ const action = {
 };
 
 
-// NOTE: ok, this is important on Android, this is where click in the menu goes
-if (isMobile) {
-    action["default_popup"] = "mobile_sidebar_injector.html";
-}
-
 const permissionsExtra = [];
 
-if (!isMobile) {
-    permissionsExtra.push(
-        'contextMenus',
-        'history',
-    );
-}
+
+// NOTE: these aren't available on mobile
+permissionsExtra.push(
+    'contextMenus',
+    'history',
+);
+
 
 const manifestExtra = {
     name: name,
@@ -96,9 +92,8 @@ if (dev) {
     manifestExtra.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self'";
 }
 
-if (!isMobile) {
-    manifestExtra.commands = commandsExtra;
-}
+// NOTE: this doesn't have any effect on mobile
+manifestExtra.commands = commandsExtra;
 
 /*
  * TODO ??? from the debugger
@@ -108,8 +103,11 @@ if (!isMobile) {
  */
 
 // TODO shit, how to validate manifest?? didn't find anything...
-if (isMobile) {
-    // on mobile firefox page_action makes a bit of sense due to various limitations...
+
+// NOTE: this is only for mobile Firefox, we dynamically enable it in background.js
+// NOTE: chrome doesn't allow both page_action and browser_action in manifest
+// https://stackoverflow.com/questions/7888915/why-i-cannot-use-two-or-more-browser-action-page-action-or-app-together
+if (target != T.CHROME) {
     manifestExtra.page_action = {
         browser_style: true,
         default_icon: {
@@ -130,9 +128,8 @@ if (target === T.CHROME) {
     throw new Error("unknown target " + target);
 }
 
-if (!isMobile) {
-    manifestExtra.options_ui.open_in_tab = true;
-}
+// on mobile it looks kinda small-ish... but I think can be fixed with responsive CSS, fine.
+manifestExtra.options_ui.open_in_tab = true;
 
 
 if (!publish) {
@@ -161,7 +158,6 @@ const options = {
     sidebar                 : path.join(__dirname, './src/sidebar'),
     search                  : path.join(__dirname, './src/search'),
     background_injector     : path.join(__dirname, './src/background_injector'),
-    mobile_sidebar_injector : path.join(__dirname, './src/mobile_sidebar_injector'),
   },
   output: {
     path: buildPath,
