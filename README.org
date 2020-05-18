@@ -10,14 +10,14 @@ This is unlike most modern browsers, where you can only see when you visited the
 
 It allows you to answer different questions about the current web page:
 
-- have I been here before? When? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/child-visits.webm][demo (30 s)]] [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/child-visits-2.webm][demo (40s)]]
-- how did I get on it? Which page has led to it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/how_did_i_get_here.webm][demo (40s)]]
-- why have I bookmarked it? who sent me this link? Can I just jump to the message? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/watch_later.webm][demo (30s)]]
-- which links on this page have I already explored? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited.webm][demo (30s)]],
-- which posts from this blog page have I already read? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mark-visited-2.webm][demo (20s)]]
-- have I annotated it? [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/highlights.webm][demo (1m)]]
+- have I been here before? When? [[https://karlicoss.github.io/promnesia-demos/child-visits.webm][demo (30 s)]] [[https://karlicoss.github.io/promnesia-demos/child-visits-2.webm][demo (40s)]]
+- how did I get on it? Which page has led to it? [[https://karlicoss.github.io/promnesia-demos/how_did_i_get_here.webm][demo (40s)]]
+- why have I bookmarked it? who sent me this link? Can I just jump to the message? [[https://karlicoss.github.io/promnesia-demos/watch_later.webm][demo (30s)]]
+- which links on this page have I already explored? [[https://karlicoss.github.io/promnesia-demos/mark-visited.webm][demo (30s)]],
+- which posts from this blog page have I already read? [[https://karlicoss.github.io/promnesia-demos/mark-visited-2.webm][demo (20s)]]
+- have I annotated it? [[https://karlicoss.github.io/promnesia-demos/highlights.webm][demo (1m)]]
 - how much time have I spent on it? [[https://user-images.githubusercontent.com/291333/82124084-ba040100-9794-11ea-9af9-ee250ebbb473.png][screenshot]]
-- and it also works on your phone! [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mobile/panel-jbor.png][screenshot]]
+- and it also works on your phone! [[https://karlicoss.github.io/promnesia-demos/mobile/panel-jbor.png][screenshot]]
 
 You can jump straight to the [[#demos][Demos]] and [[#install][Install]] sections if you're already overexcited.
 
@@ -83,8 +83,8 @@ The backend regularly processes various *data sources* like:
   - There are more screenshots [[https://github.com/karlicoss/promnesia/issues/5#issuecomment-619365708][here]]
   - This [[https://beepb00p.xyz/myinfra-roam.html#promnesia][post]] features a video demo of using Promnesia with a Roam Research database
   - Video demos for the mobile extension:
-    - [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mobile/panel-w3c.webm][showing all references to pages on W3C website in my org-mode notes]]
-    - [[https://raw.githubusercontent.com/karlicoss/promnesia-demos/master/mobile/mark-visited-reddit.webm][marking already visited links on the page]], to make easier to process Reddit posts
+    - [[https://karlicoss.github.io/promnesia-demos/mobile/panel-w3c.webm][showing all references to pages on W3C website in my org-mode notes]]
+    - [[https://karlicoss.github.io/promnesia-demos/mobile/mark-visited-reddit.webm][marking already visited links on the page]], to make easier to process Reddit posts
 
 * Install
   :PROPERTIES:
