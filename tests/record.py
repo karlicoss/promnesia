@@ -62,6 +62,7 @@ def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Option
 
     cmd: List[Union[Path, str]] = [
         'ffmpeg',
+        '-hide_banner', '-loglevel', 'panic', # less spam in the terminal
         '-f', 'x11grab',
         '-y',
         '-r', '30',

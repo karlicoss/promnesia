@@ -166,6 +166,7 @@ def configure(
         blacklist=None,
         notification: Optional[bool]=None,
         position: Optional[str]=None,
+        verbose_errors: bool=True,
 ):
     def set_checkbox(cid: str, value: bool):
         cb = driver.find_element_by_id(cid)
@@ -191,7 +192,7 @@ def configure(
     # assert dots.is_selected() == show_dots
 
     # TODO not sure, should be False for demos?
-    set_checkbox('verbose_errors_id', True)
+    set_checkbox('verbose_errors_id', verbose_errors)
 
     if highlights is not None:
         set_checkbox('highlight_id', highlights)
@@ -398,11 +399,12 @@ def set_position(driver, settings: str):
         # ugh... for some reason wouldn't send the keys...
         field.click()
         import pyautogui # type: ignore
+        # it usually ends up in the middle of the area...
         pyautogui.press(['backspace'] * 500 + ['delete'] * 500)
         pyautogui.typewrite(settings, interval=0.05)
     else:
         area = field.find_element_by_xpath('.//textarea')
-        area.send_keys([Keys.DELETE] * 500)
+        area.send_keys([Keys.DELETE] * 1000)
         area.send_keys(settings)
 
 
@@ -688,3 +690,8 @@ def test_duplicate_background_pages(tmp_path, browser):
 #     at notifyError (VM2056 notifications.js:41)
 
 
+
+# TODO FIXME need to test racey conditions _while_ page is loading, results in this 'unexpected error occured'?
+
+
+# TODO shit, sometimes I have 'bindSidebarData is not defined'? with vebose errors on demo_how_did_i_get_here

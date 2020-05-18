@@ -248,15 +248,19 @@ async function updateState (tab: chrome$Tab) {
     const opts = await get_options_async();
     // TODO this should be executed as an atomic block?
 
-    const inject = chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'})
-        .then(chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'}))
-        .then(chromeTabsInsertCSS(tabId, {code: opts.position_css}));
+    const inject = () => chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'})
+    // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
+    // not sure, but using deferred promises just in case
+          .then(() => chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'}))
+          .then(() => chromeTabsInsertCSS(tabId, {code: opts.position_css}));
+
 
     // NOTE: if the page is unreachable, we can't inject stuf in it
     // not sure how to detect it? tab doesn't have any interesting attributes
     // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
     // TODO in this case, could set browser action to open a new tab (i.e. search) or something?
-    await defensify(inject, 'sidebar injection');
+    await defensify(inject, 'sidebar injection')();
+    // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
 
     const visits = await getVisits(url);
     let {icon, title, text} = getIconStyle(visits);
