@@ -92,10 +92,14 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
     }[subs_position]
 
     position = f'''
-.promnesia {{
+#promnesia-sidebar {{
     --right: 1;
     --size:  {size};
     background-color: rgba(236, 236, 236, 0.8);
+}}
+
+#promnesia-sidebar .src {{
+    font-weight: bold;
 }}
     '''
     # TODO hmm. not sure if the whole sidebar should have a background instead??
@@ -132,6 +136,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
             host=None, port=None, # TODO meh
             notification=False,
             position=position,
+            verbose_errors=False,
             **extras,
         )
 
@@ -141,7 +146,8 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
             before(driver)
 
         # TODO eh. not sure if this geometry is consistent with ffmpeg...
-        geometry = f'{w}x400+0+{h - 400}'
+        # todo maybe could even do quarter width?
+        geometry = f'{w // 2}x400+{w // 4}+{h - 400}'
         with hotkeys(geometry=geometry):
             # TODO record directly in webm? but need to set quality
             rpath = path.with_suffix('.mp4')
@@ -571,14 +577,18 @@ It's not using any annotation service -- it's just a plaintext file!
 @browsers(FF, CH)
 def test_demo_how_did_i_get_here(tmp_path, browser):
     path = demos / 'how_did_i_get_here'
+
+    def before(driver):
+        driver.get('https://www.amazon.co.uk/Topoi-Categorial-Analysis-Logic-Mathematics/dp/0486450260')
+
     with demo_helper(
             tmp_path=tmp_path,
             browser=browser,
             path=path,
             subs_position='bottomleft',
+            before=before,
     ) as (helper, annotate):
         driver = helper.driver
-        driver.get('https://www.amazon.co.uk/Topoi-Categorial-Analysis-Logic-Mathematics/dp/0486450260')
 
         annotate('''
 I found this link in my bookmarks.

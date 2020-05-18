@@ -13,10 +13,14 @@ def hotkeys(geometry: Optional[str]=None):
     ctx = Popen([
         'screenkey',
         '--no-detach',
-        '--timeout', '2',
         '--key-mode', 'composed',
+        '--scr', '0',
+        '--timeout', '2',
+        '--bg-color', '#000000',
+        '--font-color', '#ffffff',
         '--font-size', 'large',
-        # TODO font color?
+        '--opacity', '0.6',
+        # TODO hmm. it has --persist arg, but no --no-persist??
         *([] if geometry is None else ['-g', geometry]),
     ])
     with ctx as p:
@@ -58,6 +62,7 @@ def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Option
 
     cmd: List[Union[Path, str]] = [
         'ffmpeg',
+        '-hide_banner', '-loglevel', 'panic', # less spam in the terminal
         '-f', 'x11grab',
         '-y',
         '-r', '30',
