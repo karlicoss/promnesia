@@ -1,16 +1,16 @@
-from typing import Iterator, Optional
+from typing import Iterable
 
-from ..common import Extraction, get_logger, Visit, Loc, PathIsh
+from ..common import Extraction, get_logger, Visit, Loc
 
 import my.instapaper as ip
 
 
-def index() -> Iterator[Extraction]:
+def index() -> Iterable[Extraction]:
     logger = get_logger()
 
     for p in ip.pages():
-        bm = p.bookmark
-        hls = p.highlights
+        bm = p.bookmark # type: ignore[attr-defined]
+        hls = p.highlights # type: ignore[attr-defined]
 
         def visit(**kwargs):
             return Visit(
@@ -25,7 +25,7 @@ def index() -> Iterator[Extraction]:
                 locator=Loc.make(title='instapaper', href=bm.instapaper_link),
             )
         else:
-            for hl in p.highlights:
+            for hl in p.highlights: # type: ignore[attr-defined]
                 cparts = [hl.text]
                 if hl.note is not None:
                     cparts.append('comment: ' + hl.note)
@@ -35,3 +35,5 @@ def index() -> Iterator[Extraction]:
                     locator=Loc.make(title='instapaper', href=hl.instapaper_link),
                 )
 
+
+# TODO mypy: properly clone repos and typecheck on CI, get rid of attr-defined ignores
