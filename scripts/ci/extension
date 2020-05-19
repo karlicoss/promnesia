@@ -1,0 +1,20 @@
+#!/bin/bash -eux
+
+cd "$(dirname "$0")"
+cd ../.. # git root
+
+cd extension
+
+npm install
+
+FAILED=0
+
+npm run flow   || FAILED=1
+npm run eslint || FAILED=1
+npm run test   || FAILED=1
+
+for browser in 'firefox' 'chrome'; do
+    ./build --target "$browser" --release --lint
+done
+
+exit "$FAILED"

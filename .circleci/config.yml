@@ -1,33 +1,6 @@
 version: 2
 
 jobs:
-  client_build_and_check:
-    docker:
-      - image: circleci/node:latest
-    working_directory: ~/project/extension # https://stackoverflow.com/a/50570581/706389
-    steps:
-      - checkout:
-          path: ~/project
-
-      # TODO not sure if should update shallalist?
-      - run: npm install
-      - run:
-          name: build
-          command: ./build --firefox --release --lint
-      - run:
-          name: js flow
-          command: npm run flow # TODO use flow discovery or something??
-          when: always 
-      - run:
-          name: js eslint
-          command: npm run eslint
-          when: always 
-      - run:
-          name: tests
-          command: npm run test
-          when: always
-      # TODO pack?
-
   end2end_tests:
     docker:
       # TODO not sure which is easier to pick...
@@ -78,6 +51,5 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - client_build_and_check
       - end2end_tests
       - install_and_run_test
