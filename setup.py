@@ -1,5 +1,5 @@
 # see https://github.com/karlicoss/pymplate for up-to-date reference
-
+from itertools import chain
 
 from setuptools import setup, find_packages # type: ignore
 
@@ -50,8 +50,8 @@ def main():
                  'pylint',
                  'mypy',
             ],
-            # TODO make 'all' group?
             **{k[0]: v for k, v in DEPS_SOURCES.items()},
+            'all': list(chain.from_iterable(DEPS_SOURCES.values())),
         },
         entry_points={
             'console_scripts': ['promnesia=promnesia.__main__:main'],
