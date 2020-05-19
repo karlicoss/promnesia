@@ -90,3 +90,15 @@ jobs:
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: pip3 install --user wheel twine && scripts/release
+
+  build_extension:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '14'
+    - run: scripts/ci/extension
+    # TODO artifacts?
