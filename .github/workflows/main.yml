@@ -91,6 +91,7 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: pip3 install --user wheel twine && scripts/release
 
+  ###
   build_extension:
     runs-on: ubuntu-latest
     steps:
@@ -101,4 +102,14 @@ jobs:
       with:
         node-version: '14'
     - run: scripts/ci/extension
-    # TODO artifacts?
+
+    # TODO ugh. can't share github actions publicly...
+    - uses: actions/upload-artifact@v2
+      with:
+        name: 'promnesia-chrome-latest.zip'
+        path: 'extension/dist/chrome/web-ext-artifacts/*.zip'
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: 'promnesia-firefox-latest.zip'
+        path: 'extension/dist/firefox/web-ext-artifacts/*.zip'

@@ -43,7 +43,8 @@ def main():
             # TODO use npm run web-ext??
             'npm', 'run', 'web-ext',
             '--',
-            '--source-dir', str(src_dir),
+            '--source-dir'   , src_dir,
+            '--artifacts-dir', src_dir / 'web-ext-artifacts',
             *args,
         ], **kwargs)
 
@@ -62,9 +63,8 @@ def main():
         # TODO warnings as errors??
         webext('lint')
 
-        if target == 'firefox':
-            # TODO move somewhere more appropriate..
-            webext('build')
+        # TODO move somewhere more appropriate..
+        webext('build')
 
 
     if args.release:
