@@ -1,6 +1,4 @@
-from typing import Iterator, Optional
-
-from ..common import Extraction, get_logger, Visit, Loc, PathIsh, extract_urls
+from ..common import get_logger, Results, Visit, Loc, extract_urls
 
 import my.twitter.all as tw
 
@@ -12,7 +10,7 @@ def get(o, k):
         return getattr(o, k)
 
 
-def index() -> Iterator[Extraction]:
+def index() -> Results:
     logger = get_logger()
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0

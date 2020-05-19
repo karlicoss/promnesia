@@ -9,7 +9,7 @@ Tries to index as much as it can:
 import csv
 from datetime import datetime
 import json
-from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Callable, Any, Dict
+from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Iterable, Callable, Any, Dict
 from fnmatch import fnmatch
 from pathlib import Path
 from functools import lru_cache, wraps
@@ -238,7 +238,7 @@ IGNORE = [
 
 Replacer = Optional[Callable[[str], str]]
 
-def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Iterator[Extraction]:
+def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Iterable[Extraction]:
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]

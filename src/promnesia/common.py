@@ -65,6 +65,9 @@ class PreVisit(NamedTuple):
 Visit = PreVisit
 
 Extraction = Union[Visit, Exception]
+Result = Extraction # TODO extraction is a bit too long? deprecate?
+Results = Iterable[Result]
+
 
 class DbVisit(NamedTuple):
     norm_url: Url

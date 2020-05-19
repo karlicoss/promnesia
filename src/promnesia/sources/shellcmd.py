@@ -1,14 +1,14 @@
 from datetime import datetime
 from subprocess import check_call, check_output
-from typing import Iterator, Optional
+from typing import Optional
 from pathlib import Path
 from urllib.parse import unquote
 
 import pytz
 
-from ..common import Visit, Loc
+from ..common import Visit, Loc, Results
 
-def index(command: str) -> Iterator[Visit]:
+def index(command: str) -> Results:
     output = check_output(command, shell=True)
     lines = [line.decode('utf-8') for line in output.splitlines()]
     # TODO eh?

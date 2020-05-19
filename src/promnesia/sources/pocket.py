@@ -1,11 +1,9 @@
-from typing import Iterator, Optional
-
-from ..common import Extraction, get_logger, Visit, Loc
+from ..common import Visit, Loc, Results
 
 from my.pocket import get_articles
 
 
-def index() -> Iterator[Extraction]:
+def index() -> Results:
     # TODO use docstring from my. module? E.g. describing which pocket format is expected
 
     for a in get_articles():
