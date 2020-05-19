@@ -9,7 +9,7 @@ import json
 
 from my.kython.kompress import kexists, kopen
 
-from ..common import Visit, get_logger, PathIsh, Url, Loc
+from ..common import Visit, get_logger, PathIsh, Url, Loc, Results
 from .. import config
 
 
@@ -22,6 +22,7 @@ TakeoutPath = Path
 
 
 # TODO should this be HPI responsibility?
+# TODO FIXME belongs to cachew?
 def cacheme(ident: str):
     logger = get_logger()
     # doesn't even need a nontrivial hash function, timestsamp is encoded in name
@@ -101,7 +102,7 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
 
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
-def index() -> Iterable[Visit]:
+def index() -> Results:
     from my.google.takeout.paths import get_takeouts
     takeouts = list(get_takeouts())
     # TODO if no takeouts, raise?

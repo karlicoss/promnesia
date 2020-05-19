@@ -1,0 +1,31 @@
+I'm in the process of putting up better developer's documentation, but you should be able to figure it out from the CI pipelines:
+
+- [[file:../.github/workflows/main.yml][Github Actions]]
+- [[file:../.circleci/config.yml][CircleCI]].
+
+* Run backend
+   During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
+
+   # TODO reuse doc from pymplate?
+
+* Build extension
+
+   : cd extension
+   : ./build --firefox # you can also use --chrome
+   :         --lint    # [optional], run webext linter
+   :         --release # [optional], build in the release mode (with optimizations)
+   :         --publish # [optional], release to the Chrome Web Store/Mozilla addons
+
+   You'll find the result in =dist/=. After that, you can load it in your browser and develop.
+
+* Run end-to-end tests
+
+   You need:
+
+   - firefox dev edition (standard wouldn't let you install unsigned extensions) and =geckodriver=
+   - TODO chromedriver?
+   - =pip3 install pyautogui= for keyboard automation
+
+   Example of running a test:
+
+   : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'

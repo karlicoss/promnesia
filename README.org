@@ -1,6 +1,6 @@
 #+OPTIONS: num:nil
 
-TOC: [[#motivation][Motivation]] | [[#demos][*Demos*]] | [[#install][*Install*]] | [[#try-it-out][Try it out]] | [[#develop][Develop]]
+TOC: [[#motivation][Motivation]] | [[#demos][*Demos*]] | [[#install][*Install*]] | [[#try-it-out][Try it out]]
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
 (including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
@@ -35,10 +35,10 @@ Then this tool is for you.
 
 It consists of two parts:
 
-- the extension: talks to the backend and neatly displays the history in a sidebar and shows you whether you visited a page
-- the backend. It can run locally as a simple Python program (you don't need to host it, although you can).
+- the extension: talks to the server and neatly displays the history in a sidebar and shows you whether you visited a page
+- the server/backend. It can run locally as a simple Python program (you don't need to host it, although you can).
 
-The backend regularly processes various *data sources* like:
+The server regularly processes various *data sources* like:
 
 - data exports from online services: Reddit/Twitter/Hackernews/Telegram/Messenger/Hypothesis/Pocket/Instapaper, etc.
 
@@ -104,25 +104,26 @@ The backend regularly processes various *data sources* like:
 The easies is to try out Promnesia is a demo mode, it can give you a sense of what Promnesia is doing with almost no configuration.
 
 # TODO use smth different
-1. [[#install][Install]] the extension and the backend in case you haven't already
-2. Run ~promnesia demo --port 16789 https://github.com/karlicoss/exobrain~
+1. [[#install][Install]] the extension and the server in case you haven't already
+2. Run ~promnesia demo --port 13131 https://github.com/karlicoss/exobrain~
 
    This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =16789=
 
    You can also use a path on your local filesystem, or a website URL.
 
-3. In the extension settings, set "Host" to =http://localhost:16789= and save.
+3. After that, visit https://www.gwern.net
 
-4. After that, visit https://www.gwern.net . If you press the extension icon, you will see the pages from my blog where I link to articles on Gwern's site.
+   If you press the extension icon, you will see the pages from my blog where I link to articles on Gwern's site.
   
-* Extended backend setup
-# TODO mention where they get the database  
-I'm working on improving the documentation on setting the backend up, so please feel free to ask if something is unclear!
+* Setup your config
+# TODO mention where they get the database
+To get the most benefit from Promnesia, it's best to properly setup your own config, describing the sources you want it to use.
+I'm working on improving the documentation on setting the server up, so please feel free to ask if something is unclear!
 
-- create the config
+- create =config.py=
 
-  You can start from the example config (=cp config.py.example config.py=), and then edit it.
-  You can also find a more complete and annotated configuration example here: [[file:doc/config.py]].
+  You can start from the minimal example config (=cp config.py.example config.py=), and then edit it.
+  Alternatively, you can borrow bits from a more complete and annotated configuration example here: [[file:doc/config.py]].
  
   The only required settings are:
 
@@ -134,18 +135,19 @@ I'm working on improving the documentation on setting the backend up, so please 
     - =SOURCES=
 
       These are the data sources, that will be processed and indexed by Promnesia.
-      I'm working on proper documentation for available sources. For now:
 
-      - see the example configuration for now.
-      - you can browse the code [[file:src/promnesia/sources/][here]].
+      You can see the list of available sources with more documentation on each of them here: [[file:doc/SOURCES.org][SOURCES]].
 
-      # TODO put up a list of sources automatically from the code?
+      In addition, you can find out more by:
+
+      - reading example config: [[file:doc/config.py]]
+      - browsing the code: [[file:src/promnesia/sources/][promnesia/sources]].
 
 - [optional] do a quick test
 
   This is useful to quickly check your config: run =promnesia demo --port 13131 --config /path/to/config.py=.
 
-  This will index the data and launch the backend immediately, so you can check that everything works as expected in your browser.
+  This will index the data and launch the server immediately, so you can check that everything works as expected in your browser.
 
 - run the indexer: =promnesia index --config /path/to/config.py=
 
@@ -162,83 +164,27 @@ I'm working on improving the documentation on setting the backend up, so please 
   I /think/ you can also use cron with =@reboot= attribute, or just create a manual autostart entry.
 
 # TODO Frontend -- mention what settings are possible?
+# TODO possibly reuse JS config stub?
 
 * Extension permissions
   
 - =file/http/https=: the extension is meant to work on any page, so 
   In the future this might be changed to an optional permission and requested on demand if people feel it's worth it
 - =activeTab=: getting current tab info and adding the sidebar
-- =tabs=: making the extension work without an explicit user action
-  It's meant to be an assistant first of all.
 - =webNavigation=: watching page state changes (to trigger the extension on page load)
 - =storage=: for settings
-- =history=: to use local browsing history
-  Might be optional in future
 - =contextMenus=: Promnesia context menu
 - =notifications=: showing notifications
+- =history=: to use local browsing history
+  Might be optional in future.
+- =tabs=: making the extension work without an explicit user action (hhe extension is meant to be a passive assistant)
+  Might be optional in the future.
 
 # TODO tabs could be optional in the future?  
-
-* Develop
-I'm in the process of putting up better developer's documentation, but you should be able to figure it out from the CI pipelines:
-[[file:.github/workflows/main.yml][Github Actions]] and [[file:.circleci/config.yml][CircleCI]].
-
-** Run backend  
-   During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
-
-   # TODO reuse doc from pymplate?
-
-** Build extension
-   
-   : cd extension
-   : ./build --firefox # you can also use --chrome and --firefox-mobile
-   :         --release # [optional], pass to build in the release mode (with optimizations)
-   :         --publish # [optional], pass to release to the Chrome Web Store/Mozilla addons
-   
-   You'll find the result in =dist/firefox=. After that, you can load it in your browser and develop.
-   
-** Running end-to-end tests
-
-   You need:
-
-   - firefox dev edition (standard wouldn't let you install unsigned extensions) and =geckodriver=
-   - TODO chromedriver?
-   - =pip3 install pyautogui= for keyboard automation
-   
-   Example of running a test:
-
-   : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
+* More links
+- [[file:doc/SOURCES.org][Documentation on specific link sources]]
+- [[file:doc/DEVELOPMENT.org][Developer's guide]]
 
 
-
-* WIP on automatic sources summary :noexport:
-#+begin_src python :python "with_my python3" :dir src :results output
-import pkgutil
-import importlib
-import inspect
-
-
-from promnesia.common import Extraction
-from typing import Iterable
-IndexerType = Iterable[Extraction] # TODO move to promnesia? also careful with List etc...
-
-import promnesia.sources as pkg
-for importer, name, ispkg in pkgutil.walk_packages(
-        path=pkg.__path__,
-        prefix=pkg.__name__+'.'
-):
-    if name in {'promnesia.sources.plaintext'}:
-        continue
-    # TODO remove
-    # if name not in {'promnesia.sources.vcs', 'promnesia.sources.roamresearch'}:
-    #     continue
-    # TODO get by output type??
-    m = importlib.import_module(name)
-    public = [(k, v) for k, v in inspect.getmembers(m) if not k.startswith('_')]
-    indexers = [(k, v) for k, v in public if getattr(v, '__annotations__', {}).get('return') == IndexerType]
-    assert len(indexers) > 0, name
-    for k, i in indexers:
-        # print(inspect.signature(i))
-        print(f'{name}.{k}', i.__doc__ or 'NO DOCUMENTATION!!!')
-#+end_src
-
+# TODO document visits/timestamps/contexts?
+# TODO how does it work?

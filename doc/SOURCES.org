@@ -1,0 +1,64 @@
+Available sources:
+
+#+begin_src python :python "with_my python3" :dir ../src :exports output :results output drawer
+print('\n') # fix github org-mode issue with drawers
+
+from pathlib import Path
+import pkgutil
+import importlib
+import inspect
+
+
+git_root = Path('.').absolute().parent
+
+from promnesia.common import Results
+
+import promnesia.sources as pkg
+for importer, name, ispkg in pkgutil.walk_packages(
+        path=pkg.__path__,
+        prefix=pkg.__name__+'.'
+):
+    if name in {
+            # TODO damn, these modules need depednencies...
+            'promnesia.sources.browser',
+            'promnesia.sources.markdown',
+            'promnesia.sources.org',
+            'promnesia.sources.plaintext',
+    }:
+        continue
+    # TODO remove
+    # if name not in {'promnesia.sources.vcs', 'promnesia.sources.roamresearch'}:
+    #     continue
+    # TODO get by output type??
+    m = importlib.import_module(name)
+    public = [(k, v) for k, v in inspect.getmembers(m) if not k.startswith('_')]
+    indexers = [(k, v) for k, v in public if getattr(v, '__annotations__', {}).get('return') == Results]
+    assert len(indexers) > 0, name
+    for k, i in indexers:
+        # print(inspect.signature(i))
+        link = '../' + str(Path(m.__file__).relative_to(git_root))
+        print(f'- [[file:{link}][{name}]]')
+        # print(f'{name}.{k}', i.__doc__ or 'NO DOCUMENTATION!!!')
+#+end_src
+
+#+RESULTS:
+:results:
+
+
+- [[file:../src/promnesia/sources/auto.py][promnesia.sources.auto]]
+- [[file:../src/promnesia/sources/fbmessenger.py][promnesia.sources.fbmessenger]]
+- [[file:../src/promnesia/sources/guess.py][promnesia.sources.guess]]
+- [[file:../src/promnesia/sources/html.py][promnesia.sources.html]]
+- [[file:../src/promnesia/sources/hypothesis.py][promnesia.sources.hypothesis]]
+- [[file:../src/promnesia/sources/instapaper.py][promnesia.sources.instapaper]]
+- [[file:../src/promnesia/sources/pocket.py][promnesia.sources.pocket]]
+- [[file:../src/promnesia/sources/reddit.py][promnesia.sources.reddit]]
+- [[file:../src/promnesia/sources/roamresearch.py][promnesia.sources.roamresearch]]
+- [[file:../src/promnesia/sources/rss.py][promnesia.sources.rss]]
+- [[file:../src/promnesia/sources/shellcmd.py][promnesia.sources.shellcmd]]
+- [[file:../src/promnesia/sources/takeout.py][promnesia.sources.takeout]]
+- [[file:../src/promnesia/sources/telegram.py][promnesia.sources.telegram]]
+- [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
+- [[file:../src/promnesia/sources/vcs.py][promnesia.sources.vcs]]
+- [[file:../src/promnesia/sources/website.py][promnesia.sources.website]]
+:end:
