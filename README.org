@@ -94,9 +94,8 @@ The backend regularly processes various *data sources* like:
 - extension:
 
   - [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]
-  - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
-  - Firefox mobile: not released in the store yet, but you can build it yourself
-   
+  - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]] (including mobile)
+
 - backend: available on [[https://pypi.org/project/promnesia][PyPi]]: =pip3 install --user promnesia=
 
   Alternatively, you can clone this repository and run it as ~scripts/promnesia~

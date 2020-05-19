@@ -62,14 +62,12 @@ def main():
             ],
             'linting': [
                  'pytest',
+                  # TODO remove pylint?
                  'pylint',
                  'mypy',
             ],
             'telegram': [
                 'dataset',
-            ],
-            'reddit': [
-                'pyjq',
             ],
             'markdown': [
                 'mistletoe',
