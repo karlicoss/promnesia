@@ -1,10 +1,12 @@
 # see https://github.com/karlicoss/pymplate for up-to-date reference
 
 name: CI
-on: [push]
+on:
+  push:
+    branches: '*'
+    tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
 
 env:
-  # for tests
   # not sure if tests should detect GITHUB_WORKFLOW instead??
   CI: true
 
@@ -12,7 +14,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest] # todo windows-latest?
         python-version: [3.6, 3.7, 3.8]
 
     runs-on: ${{ matrix.platform }}
@@ -83,7 +85,7 @@ jobs:
 
     - name: 'release to pypi'
       # always deploy tags to release pypi
-      # TODO filter release tags only?
+      # NOTE: release tags are guarded by on: push: tags on the top
       if: startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
