@@ -1,3 +1,7 @@
+'''
+Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
+'''
+
 from ..common import get_logger, Results, Visit, Loc, extract_urls
 
 import my.twitter.all as tw

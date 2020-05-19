@@ -1,12 +1,12 @@
-# extracts stuff from hypothes.is json backup
-from typing import Iterable
-
-from ..common import Visit, Extraction, get_logger, Loc
+'''
+Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypothesis][hypothesis]] module
+'''
+from ..common import Visit, Results, get_logger, Loc
 
 import my.hypothesis as hyp
 
 
-def index() -> Iterable[Extraction]:
+def index() -> Results:
     logger = get_logger()
 
     for h in hyp.get_highlights():

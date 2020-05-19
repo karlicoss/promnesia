@@ -1,18 +1,19 @@
-from datetime import datetime
-from html.parser import HTMLParser
-from pathlib import Path
-from typing import Iterable, List, Tuple
+'''
+Extracts links from HTML files
+'''
 
-from ..common import PathIsh, Visit, Loc, Extraction
+from datetime import datetime
+from pathlib import Path
+from typing import List, Tuple
+
+from ..common import PathIsh, Visit, Loc, Results
 
 # TODO present error summary in the very end; import errors -- makes sense to show 
-
 # TODO on some exceptions, request a fallback to text?
 
-# TODO not sure if import should be inside extract_from_file or here...
 from bs4 import BeautifulSoup # type: ignore[import]
 
-def extract_from_file(fname: PathIsh) -> Iterable[Extraction]:
+def extract_from_file(fname: PathIsh) -> Results:
 
     ts = datetime.fromtimestamp(Path(fname).stat().st_mtime)
     # TODO just allow passing file as timestamp?
@@ -33,6 +34,7 @@ def extract_from_file(fname: PathIsh) -> Iterable[Extraction]:
         )
 
 
+# from html.parser import HTMLParser
 # eh. it's not really going to work well because of nesting inside <a> tags..
 # class Parser(HTMLParser):
 #     results: List[Tuple[str, str]] = []

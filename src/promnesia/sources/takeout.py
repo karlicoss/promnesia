@@ -1,3 +1,7 @@
+'''
+Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
+'''
+
 import logging
 
 import pytz

@@ -1,17 +1,19 @@
-from typing import Iterable
+'''
+Uses [[https://github.com/karlicoss/HPI][HPI]] for Roam Research data
+'''
 
-from ..common import Extraction, Visit, Loc, PathIsh, extract_urls
+from ..common import Results, Visit, Loc, extract_urls
 
 import my.roamresearch as RR
 
 
-def index() -> Iterable[Extraction]:
+def index() -> Results:
     roam = RR.roam()
     for node in roam.traverse():
         yield from _collect(node)
 
 
-def _collect(node: RR.Node) -> Iterable[Extraction]:
+def _collect(node: RR.Node) -> Results:
     title = node.title
     body  = node.body or ''
     if title is None:

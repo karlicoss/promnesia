@@ -75,10 +75,10 @@ def index_urls(urls: Urls):
         cfg.write_text(f"""
 OUTPUT_DIR = '{tdir}'
 
-from promnesia.common import Source, PreVisit, Loc
+from promnesia.common import Source, Visit, Loc
 from datetime import datetime, timedelta
 indexer = Source(
-    lambda: [PreVisit(
+    lambda: [Visit(
         url=url,
         dt=datetime.min + timedelta(days=5000) + timedelta(hours=i),
         locator=Loc.make('test'),

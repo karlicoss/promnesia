@@ -8,16 +8,17 @@ import pkgutil
 import importlib
 import inspect
 
+indent = lambda s: ''.join('  ' + l for l in s.splitlines(keepends=True))
 
 git_root = Path('.').absolute().parent
 
 from promnesia.common import Results
 
 import promnesia.sources as pkg
-for importer, name, ispkg in pkgutil.walk_packages(
+for importer, name, ispkg in sorted(pkgutil.walk_packages(
         path=pkg.__path__,
         prefix=pkg.__name__+'.'
-):
+), key=lambda x: x[1]):
     if name in {
             # TODO damn, these modules need depednencies...
             'promnesia.sources.browser',
@@ -38,6 +39,10 @@ for importer, name, ispkg in pkgutil.walk_packages(
         # print(inspect.signature(i))
         link = '../' + str(Path(m.__file__).relative_to(git_root))
         print(f'- [[file:{link}][{name}]]')
+        d = m.__doc__
+        if d is not None:
+            # TODO indent?
+            print(indent(d))
         # print(f'{name}.{k}', i.__doc__ or 'NO DOCUMENTATION!!!')
 #+end_src
 
@@ -46,19 +51,59 @@ for importer, name, ispkg in pkgutil.walk_packages(
 
 
 - [[file:../src/promnesia/sources/auto.py][promnesia.sources.auto]]
+
+  - discovers files recursively
+  - guesses the format (orgmode/markdown/json/etc) by the extension/MIME type
+
 - [[file:../src/promnesia/sources/fbmessenger.py][promnesia.sources.fbmessenger]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
+
 - [[file:../src/promnesia/sources/guess.py][promnesia.sources.guess]]
 - [[file:../src/promnesia/sources/html.py][promnesia.sources.html]]
+
+  Extracts links from HTML files
+
 - [[file:../src/promnesia/sources/hypothesis.py][promnesia.sources.hypothesis]]
+
+  Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypothesis][hypothesis]] module
+
 - [[file:../src/promnesia/sources/instapaper.py][promnesia.sources.instapaper]]
+
+  Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myinstapaper][instapaper]] module
+
 - [[file:../src/promnesia/sources/pocket.py][promnesia.sources.pocket]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for Pocket highlights & bookmarks
+
 - [[file:../src/promnesia/sources/reddit.py][promnesia.sources.reddit]]
+
+  Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit][reddit]] module
+
 - [[file:../src/promnesia/sources/roamresearch.py][promnesia.sources.roamresearch]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for Roam Research data
+
 - [[file:../src/promnesia/sources/rss.py][promnesia.sources.rss]]
 - [[file:../src/promnesia/sources/shellcmd.py][promnesia.sources.shellcmd]]
 - [[file:../src/promnesia/sources/takeout.py][promnesia.sources.takeout]]
+
+  Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
+
 - [[file:../src/promnesia/sources/telegram.py][promnesia.sources.telegram]]
+
+  Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
+
 - [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
+
 - [[file:../src/promnesia/sources/vcs.py][promnesia.sources.vcs]]
+
+  Clones & indexes Git repositories (via sources.auto)
+
 - [[file:../src/promnesia/sources/website.py][promnesia.sources.website]]
+
+  Clones a website with wget and indexes via sources.auto
+
 :end:

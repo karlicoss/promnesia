@@ -1,3 +1,8 @@
+'''
+Clones & indexes Git repositories (via sources.auto)
+'''
+# TODO not sure if worth exposing... could be just handled by auto or something?)
+
 from pathlib import Path
 import re
 from subprocess import check_call

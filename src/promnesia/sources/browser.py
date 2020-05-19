@@ -8,10 +8,10 @@ from urllib.parse import unquote
 import pytz
 from sqlalchemy import Column, MetaData, Table, create_engine # type: ignore
 
-from ..common import Loc, PathIsh, PreVisit, get_logger, Second
+from ..common import Loc, PathIsh, Visit, get_logger, Second
 
 
-def browser_extract(histfile: PathIsh, cols, row_handler) -> Iterator[PreVisit]:
+def browser_extract(histfile: PathIsh, cols, row_handler) -> Iterator[Visit]:
     logger = get_logger()
     logger.debug(f'extracing history from {histfile}')
 
@@ -29,13 +29,13 @@ def browser_extract(histfile: PathIsh, cols, row_handler) -> Iterator[PreVisit]:
     logger.debug('done extracing')
 
 
-def _firefox(cols, histfile: PathIsh) -> Iterator[PreVisit]:
+def _firefox(cols, histfile: PathIsh) -> Iterator[Visit]:
     def row_handler(url, ts):
         # ok, looks like it's unix epoch
         # https://stackoverflow.com/a/19430099/706389
         dt = datetime.fromtimestamp(int(ts) / 1_000_000, pytz.utc)
         url = unquote(url) # firefox urls are all quoted
-        return PreVisit(
+        return Visit(
             url=url,
             dt=dt,
             locator=Loc.file(histfile),
@@ -46,10 +46,10 @@ def _firefox(cols, histfile: PathIsh) -> Iterator[PreVisit]:
         row_handler=row_handler,
     )
 
-def firefox_phone(histfile: PathIsh) -> Iterator[PreVisit]:
+def firefox_phone(histfile: PathIsh) -> Iterator[Visit]:
     yield from _firefox(cols=('url', 'date'), histfile=histfile)
 
-def firefox(histfile: PathIsh) -> Iterator[PreVisit]:
+def firefox(histfile: PathIsh) -> Iterator[Visit]:
     yield from _firefox(cols=('url', 'visit_date'), histfile=histfile)
 
 
@@ -61,7 +61,7 @@ def chrome_time_to_utc(chrome_time: int) -> datetime:
 
 
 # TODO could use sqlite3 module I guess... but it's quick enough to extract as it is
-def chrome(histfile: PathIsh) -> Iterator[PreVisit]:
+def chrome(histfile: PathIsh) -> Iterator[Visit]:
     def row_handler(url, ts, durs):
         dt = chrome_time_to_utc(int(ts))
         url = unquote(url) # chrome urls are all quoted # TODO not sure if we want it here?
@@ -71,7 +71,7 @@ def chrome(histfile: PathIsh) -> Iterator[PreVisit]:
             dur = None
         else:
             dur = dd // 1_000_000
-        return PreVisit(
+        return Visit(
             url=url,
             dt=dt,
             locator=Loc.file(histfile),

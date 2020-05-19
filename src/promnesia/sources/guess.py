@@ -1,4 +1,5 @@
 # TODO eh. confusing how guess and auto are different...
+# maybe merge them later?
 from typing import Iterable, Any
 
 from ..common import Extraction, PathIsh

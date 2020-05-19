@@ -1,3 +1,7 @@
+'''
+Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit][reddit]] module
+'''
+
 from itertools import chain
 from typing import Iterable
 

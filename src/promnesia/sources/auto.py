@@ -1,9 +1,6 @@
 """
-Tries to index as much as it can:
-
-- TODO walks up the filesystem hierarchy
-- guesses org/markdown/json/etc by extension or mime type
-
+- discovers files recursively
+- guesses the format (orgmode/markdown/json/etc) by the extension/MIME type
 """
 
 import csv
@@ -16,7 +13,7 @@ from functools import lru_cache, wraps
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results
 
 
 @lru_cache(1)
@@ -80,7 +77,7 @@ def _json(path: Path) -> Urls:
     yield from collect_from(jj)
 
 
-def _plaintext(path: Path) -> Iterator[Extraction]:
+def _plaintext(path: Path) -> Results:
     from . import shellcmd
     from .plaintext import extract_from_path
     logger = get_logger()
@@ -109,19 +106,19 @@ def fallback(ex):
 
 
 @fallback
-def _markdown(path: Path) -> Iterator[Extraction]:
+def _markdown(path: Path) -> Results:
     from . import markdown
     yield from markdown.extract_from_file(path)
 
 
 @fallback
-def _html(path: Path) -> Iterator[Extraction]:
+def _html(path: Path) -> Results:
     from . import html
     yield from html.extract_from_file(path)
 
 
 @fallback
-def _org(path: Path) -> Iterator[Extraction]:
+def _org(path: Path) -> Results:
     from . import org
     return org.extract_from_file(path)
 
@@ -238,7 +235,7 @@ IGNORE = [
 
 Replacer = Optional[Callable[[str], str]]
 
-def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Iterable[Extraction]:
+def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Results:
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
@@ -260,7 +257,7 @@ class Options(NamedTuple):
 
 
 # TODO eh. might be good to use find or fdfind to speed it up...
-def _index(path: Path, opts: Options) -> Iterator[Extraction]:
+def _index(path: Path, opts: Options) -> Results:
     logger = get_logger()
     pp = path # ugh, for historic reasons..
 
@@ -291,7 +288,7 @@ def _index(path: Path, opts: Options) -> Iterator[Extraction]:
         yield e
 
 
-def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
+def _index_file(pp: Path, opts: Options) -> Results:
     logger = get_logger()
     # TODO use kompress?
     # TODO not even sure if it's used...
@@ -325,7 +322,7 @@ def _index_file(pp: Path, opts: Options) -> Iterator[Extraction]:
         logger.debug('file type suppressed: %s', pp)
         return
 
-    indexer: Union[Urls, Iterator[Extraction]] = ip(pp) # type: ignore
+    indexer: Union[Urls, Results] = ip(pp) # type: ignore
     # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 
     fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
