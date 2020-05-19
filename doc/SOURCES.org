@@ -8,7 +8,9 @@ print('\n') # fix github org-mode issue with drawers
 
 import setup
 for (name, description), _ in setup.DEPS_SOURCES.items():
-    print(f"- ~pip3 install --user 'promnesia[{name}]'~")
+    # fuck org-ruby. promnesia[name] should be in quotes, but then it doesn't render as code. ugh.
+    # https://github.com/wallyqs/org-ruby/issues/45
+    print(f"- ~pip3 install --user promnesia[{name}]~")
     print(f'   ')
     print(f'   {description}')
 #+end_src
@@ -17,27 +19,27 @@ for (name, description), _ in setup.DEPS_SOURCES.items():
 :results:
 
 
-- ~pip3 install --user 'promnesia[optional]'~
+- ~pip3 install --user promnesia[optional]~
 
    dependencies that bring some bells & whistles
-- ~pip3 install --user 'promnesia[HPI]'~
+- ~pip3 install --user promnesia[HPI]~
 
    dependencies for [[https://github.com/karlicoss/HPI][HPI]]
-- ~pip3 install --user 'promnesia[html]'~
+- ~pip3 install --user promnesia[html]~
 
    dependencies for sources.html
-- ~pip3 install --user 'promnesia[markdown]'~
+- ~pip3 install --user promnesia[markdown]~
 
    dependencies for sources.markdown
-- ~pip3 install --user 'promnesia[org]'~
+- ~pip3 install --user promnesia[org]~
 
    dependencies for sources.org
-- ~pip3 install --user 'promnesia[telegram]'~
+- ~pip3 install --user promnesia[telegram]~
 
    dependencies for sources.telegram
 :end:
 
-Alternatively, you can just install all of them in bulk: ~pip3 install --user 'promnesia[all]'~.
+Alternatively, you can just install all of them in bulk: ~pip3 install --user promnesia[all]~.
 
 
 * Sources
