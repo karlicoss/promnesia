@@ -1,10 +1,14 @@
+'''
+Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
+'''
+
 from pathlib import Path
-from typing import Optional, Union, Iterable, TypeVar
+from typing import Optional, Union, TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
 import dataset # type: ignore
 
-from ..common import PathIsh, PreVisit, get_logger, Loc, extract_urls, from_epoch, Extraction, echain
+from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, Results, echain
 
 # TODO potentially, belongs to my. package
 
@@ -25,7 +29,7 @@ def dataset_readonly(db: Path):
     return dataset.connect('sqlite:///' , engine_kwargs={'creator': creator})
 
 
-def index(database: PathIsh) -> Iterable[Extraction]:
+def index(database: PathIsh) -> Results:
     logger = get_logger()
 
     path = Path(database)
@@ -77,7 +81,7 @@ ORDER BY time;
                 yield echain(RuntimeError(f'While handling {row}'), ex)
 
 
-def _handle_row(row) -> Iterable[Extraction]:
+def _handle_row(row) -> Results:
     text = row['text']
     if text is None:
         return
@@ -96,7 +100,7 @@ def _handle_row(row) -> Iterable[Extraction]:
     for u in urls:
         # https://www.reddit.com/r/Telegram/comments/6ufwi3/link_to_a_specific_message_in_a_channel_possible/
         # hmm, only seems to work on mobile app, but better than nothing...
-        yield PreVisit(
+        yield Visit(
             url=unquote(u),
             dt=dt,
             context=f"{sender}: {text}",

@@ -1,11 +1,12 @@
-from typing import Iterable
-
-from ..common import Extraction, get_logger, Visit, Loc
+'''
+Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myinstapaper][instapaper]] module
+'''
+from ..common import Results, get_logger, Visit, Loc
 
 import my.instapaper as ip
 
 
-def index() -> Iterable[Extraction]:
+def index() -> Results:
     logger = get_logger()
 
     for p in ip.pages():

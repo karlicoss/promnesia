@@ -1,3 +1,7 @@
+'''
+Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
+'''
+
 from ..common import Results, Visit, Loc, extract_urls
 
 from my.fbmessenger import messages

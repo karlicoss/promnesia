@@ -4,7 +4,7 @@ from typing import Iterable, List, Set, Optional, Iterator, Union, Tuple, NamedT
 from pathlib import Path
 
 
-from ..common import PreVisit, get_logger, Extraction, Url, Loc, from_epoch, echain, extract_urls, PathIsh
+from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, extract_urls, PathIsh
 
 
 import orgparse # type: ignore
@@ -97,7 +97,7 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
         yield from extract_urls(content, syntax='org')
 
 
-def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
+def extract_from_file(fname: PathIsh) -> Results:
     """
     Note that org-mode doesn't keep timezone, so we don't really have choice but make it tz-agnostic
     """
@@ -127,7 +127,7 @@ def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
                 ctx = 'ERROR' # TODO more context?
 
             if isinstance(r, Url):
-                yield PreVisit(
+                yield Visit(
                     url=r,
                     dt=dt,
                     locator=Loc.file(fname), # TODO line number

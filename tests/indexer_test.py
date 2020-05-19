@@ -16,7 +16,7 @@ from pytest import mark # type: ignore
 
 from common import skip_if_ci, tdata
 
-from promnesia.common import History, PreVisit
+from promnesia.common import History, Visit
 from promnesia.common import Indexer
 
 # TODO need to expire dbcache in tests..
@@ -110,7 +110,7 @@ def test_with_error():
             if i == 1:
                 yield ExtractionError()
             else:
-                yield PreVisit(
+                yield Visit(
                     url=f'http://test{i}',
                     dt=datetime.utcfromtimestamp(0),
                     locator=None,

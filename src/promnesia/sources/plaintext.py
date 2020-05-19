@@ -1,3 +1,6 @@
+# TODO FIXME misleading name....
+# just name it 'text'?
+
 from ..common import get_logger, get_tmpdir, PathIsh
 
 from pathlib import Path

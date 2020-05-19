@@ -1,3 +1,7 @@
+'''
+Clones a website with wget and indexes via sources.auto
+'''
+
 from pathlib import Path
 import re
 from subprocess import check_call, run

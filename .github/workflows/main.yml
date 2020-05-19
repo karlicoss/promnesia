@@ -103,11 +103,13 @@ jobs:
         node-version: '14'
     - run: scripts/ci/extension
 
-    # TODO ugh. can't share github actions publicly...
+    # TODO ugh. can't share github actions artifacts publicly...
+    # TODO for fuck's sake... why does it end up named as .zip.zip ????
     - uses: actions/upload-artifact@v2
       with:
         name: 'promnesia-chrome-latest.zip'
         path: 'extension/dist/chrome/web-ext-artifacts/*.zip'
+
 
     - uses: actions/upload-artifact@v2
       with:
