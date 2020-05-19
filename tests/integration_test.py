@@ -116,11 +116,8 @@ def hyp_extractor():
     import my.config
     class user_config:
         export_path = '{str(DATA)}/hypothesis/netrights-dashboards-mockup/data/*.json'
+        hypexport   = '{hypexport_path}'
     my.config.hypothesis = user_config
-
-    # TODO good example for documentaion
-    from my.cfg import set_repo
-    set_repo('hypexport', '{hypexport_path}')
 
     import promnesia.sources.hypothesis as hypi
     return Source(
