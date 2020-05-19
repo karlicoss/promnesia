@@ -3,17 +3,6 @@
 
 from setuptools import setup, find_packages # type: ignore
 
-DEPS_INDEXER = [
-    'urlextract',
-    # TODO could be optional?
-    'python-magic', # for detecting mime types
-]
-
-DEPS_SERVER = [
-    'tzlocal',
-    'hug',
-]
-
 def main():
     pkgs = find_packages('src')
     # [pkg] = pkgs
@@ -47,11 +36,6 @@ def main():
             'cachew', # caching with type hints
         ],
         extras_require={
-            # TODO make cachew optional?
-            # althrough server uses it so not sure...
-            'optional': [
-                'logzero', # pretty colored logging
-            ],
             'testing': [
                  'pytest',
                  'pytest-xdist', # why??
@@ -66,30 +50,50 @@ def main():
                  'pylint',
                  'mypy',
             ],
-            'telegram': [
-                'dataset',
-            ],
-            'markdown': [
-                'mistletoe',
-            ],
-            'org': [
-                'orgparse',
-            ],
-            'html': [
-                'beautifulsoup4', # extracting links from the page
-                'lxml', # bs4 backend
-            ],
-            'HPI': [
-                'HPI', # pypi version
-                # 'HPI @ git+https://github.com/karlicoss/hpi.git', # uncomment to test against github version (useful for one-off CI run)
-                # 'HPI @ git+file://DUMMY/path/to/local/hpi'    , # uncomment to test against version on the disc
-            ],
             # TODO make 'all' group?
+            **{k[0]: v for k, v in DEPS_SOURCES.items()},
         },
         entry_points={
             'console_scripts': ['promnesia=promnesia.__main__:main'],
         }
     )
+
+DEPS_INDEXER = [
+    'urlextract',
+    # TODO could be optional?
+    'python-magic', # for detecting mime types
+]
+
+DEPS_SERVER = [
+    'tzlocal',
+    'hug',
+]
+
+DEPS_SOURCES = {
+    # TODO make cachew optional?
+    # althrough server uses it so not sure...
+    ('optional', 'dependencies that bring some bells & whistles'): [
+        'logzero', # pretty colored logging
+    ],
+    ('HPI'     , 'dependencies for [[https://github.com/karlicoss/HPI][HPI]]'): [
+        'HPI', # pypi version
+        # 'HPI @ git+https://github.com/karlicoss/hpi.git',   # uncomment to test against github version (useful for one-off CI run)
+        # 'HPI @ git+file:///DUMMY/path/to/local/hpi@branch', # uncomment to test against version on the disc
+    ],
+    ('html'    , 'dependencies for sources.html'    ): [
+        'beautifulsoup4', # extracting links from the page
+        'lxml'          , # bs4 backend
+    ],
+    ('markdown', 'dependencies for sources.markdown'): [
+        'mistletoe',
+    ],
+    ('org'     , 'dependencies for sources.org'     ): [
+        'orgparse',
+    ],
+    ('telegram', 'dependencies for sources.telegram'): [
+        'dataset',
+    ],
+}
 
 
 if __name__ == "__main__":
