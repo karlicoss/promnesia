@@ -114,7 +114,7 @@ export async function searchAround(timestamp: number): Promise<Visits> {
 }
 
 function getDelayMs(/*url*/) {
-    return 10 * 60 * 1000; // TODO do something smarter... for some domains we want it to be without delay
+    return 10 * 1000;
 }
 
 const LOCAL_TAG = 'local';

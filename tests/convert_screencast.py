@@ -18,6 +18,9 @@ def convert(path: Path):
 
     # jeez... https://video.stackexchange.com/a/28276/29090
     # otherwise quiality sucks, e.g. letters are grainy
+    #
+    # ok, nice guide.. https://gist.github.com/Vestride/278e13915894821e1d6f#convert-to-webm
+    #
     passfile = path.with_suffix(".pass0")
     for stage in [
             f'-b:v 0  -crf 30  -pass 1 -passlogfile {passfile} -an -f webm /dev/null',
