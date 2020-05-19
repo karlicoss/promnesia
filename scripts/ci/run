@@ -11,6 +11,7 @@ if ! command -v sudo; then
 fi
 
 if ! [ -z "$CI" ]; then
+    # TODO: pyjq is not necessary anymore? will keep CI deps just in case I guess
     PYJQ_DEPS=('autoconf' 'automake' 'libtool') # see https://github.com/mwilliamson/jq.py#installation
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # Mac OSX
