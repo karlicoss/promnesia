@@ -1,4 +1,47 @@
-Available sources:
+This file is an overview of availabe sources along with descriptions and some guidance.
+
+* Dependencies
+Some sources require additional dependencies:
+
+#+begin_src python :dir .. :exports output :results output drawer
+print('\n') # fix github org-mode issue with drawers
+
+import setup
+for (name, description), _ in setup.DEPS_SOURCES.items():
+    print(f"- =pip3 install 'promnesia[{name}]'=")
+    print(f'   ')
+    print(f'   {description}')
+#+end_src
+
+#+RESULTS:
+:results:
+
+
+- =pip3 install 'promnesia[optional]'=
+
+   dependencies that bring some bells & whistles
+- =pip3 install 'promnesia[HPI]'=
+
+   dependencies for [[https://github.com/karlicoss/HPI][HPI]]
+- =pip3 install 'promnesia[html]'=
+
+   dependencies for sources.html
+- =pip3 install 'promnesia[markdown]'=
+
+   dependencies for sources.markdown
+- =pip3 install 'promnesia[org]'=
+
+   dependencies for sources.org
+- =pip3 install 'promnesia[telegram]'=
+
+   dependencies for sources.telegram
+:end:
+
+
+
+* Sources
+
+These are included with the current Promnesia distribution:
 
 #+begin_src python :python "with_my python3" :dir ../src :exports output :results output drawer
 print('\n') # fix github org-mode issue with drawers
@@ -27,10 +70,6 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
             'promnesia.sources.plaintext',
     }:
         continue
-    # TODO remove
-    # if name not in {'promnesia.sources.vcs', 'promnesia.sources.roamresearch'}:
-    #     continue
-    # TODO get by output type??
     m = importlib.import_module(name)
     public = [(k, v) for k, v in inspect.getmembers(m) if not k.startswith('_')]
     indexers = [(k, v) for k, v in public if getattr(v, '__annotations__', {}).get('return') == Results]
@@ -41,9 +80,7 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
         print(f'- [[file:{link}][{name}]]')
         d = m.__doc__
         if d is not None:
-            # TODO indent?
             print(indent(d))
-        # print(f'{name}.{k}', i.__doc__ or 'NO DOCUMENTATION!!!')
 #+end_src
 
 #+RESULTS:
@@ -107,3 +144,11 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
   Clones a website with wget and indexes via sources.auto
 
 :end:
+
+
+* Adding custom sources
+It's very easy!
+One day I'll add some proper documentation, but the easiest at the moment is to use existing simple modules as a reference, for example:
+
+- [[https://github.com/karlicoss/promnesia/blob/master/src/promnesia/sources/pocket.py][pocket]], 25 lines of code
+- [[https://github.com/karlicoss/promnesia/blob/master/src/promnesia/sources/fbmessenger.py][fbmessenger]], 30 lines of code
