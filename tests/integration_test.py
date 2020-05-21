@@ -201,14 +201,20 @@ def test_comparison(tdir: Path):
 
 
 def test_index_many(tdir):
-    # NOTE [20200521] takes 9 seconds for 100K wonder if could be faster
+    # NOTE [20200521] experimenting with promnesia.dump._CHUNK_BY
+    # inserting 100K visits
+    # value=1000: 9 seconds
+    # value=10  : 9 seconds
+    # value=1   : 18 seconds
+    # ok, I guess it's acceptable considering the alternative is crashing (too many sql variables on some systems)
+    # kinda makes sense -- I guess most overhead is coming from creating temporary lists etc?
     cfg = tdir / 'test_config.py'
     cfg.write_text(f"""
 from datetime import datetime, timedelta
 from promnesia import Source, Visit, Loc
 # TODO def need to allow taking in index function without having to wrap in source?
 def index():
-    for i in range(10000):
+    for i in range(100000):
         yield Visit(
             url='http://whatever/page' + str(i),
             dt=datetime.min + timedelta(days=5000) + timedelta(hours=i),
@@ -226,4 +232,4 @@ OUTPUT_DIR = '{tdir}'
     with engine.connect() as conn:
         visits = [binder.from_row(row) for row in conn.execute(query)]
 
-    assert len(visits) == 10000
+    assert len(visits) == 100000
