@@ -2,16 +2,25 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 import shutil
 
+from more_itertools import chunked
+
 from sqlalchemy import create_engine, MetaData # type: ignore
 from sqlalchemy import Column, Table # type: ignore
 
-from cachew import NTBinder, ichunks
+from cachew import NTBinder
 
 from .common import get_logger, DbVisit, get_tmpdir
 from . import config
 
 
-def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]):
+# NOTE: I guess the main performance benefit from this is not creating too many tmp lists and avoiding overhead
+# since as far as sql is concerned it should all be in the same transaction. only a guess
+# not sure it's the proper way to handle it
+# see test_index_many
+_CHUNK_BY = 10
+
+
+def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]) -> None:
     logger = get_logger()
     output_dir = Path(config.get().OUTPUT_DIR)
     db_path = output_dir / 'promnesia.sqlite'
@@ -32,7 +41,7 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]):
     meta.create_all()
 
     with engine.begin() as conn:
-        for chunk in ichunks(iter_visits(), n=1000):
+        for chunk in chunked(iter_visits(), n=_CHUNK_BY):
             bound = [binder.to_row(x) for x in chunk]
             # pylint: disable=no-value-for-parameter
             conn.execute(table.insert().values(bound))
