@@ -1,5 +1,5 @@
 from pathlib import Path
-from .common import PathIsh, Visit, Source, last
+from .common import PathIsh, Visit, Source, last, Loc
 
 
 def root() -> Path:

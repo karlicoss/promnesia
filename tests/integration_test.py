@@ -199,3 +199,31 @@ def test_comparison(tdir: Path):
 
     assert len(list(compare_files(db, old_db))) == 1
 
+
+def test_index_many(tdir):
+    # NOTE [20200521] takes 9 seconds for 100K wonder if could be faster
+    cfg = tdir / 'test_config.py'
+    cfg.write_text(f"""
+from datetime import datetime, timedelta
+from promnesia import Source, Visit, Loc
+# TODO def need to allow taking in index function without having to wrap in source?
+def index():
+    for i in range(10000):
+        yield Visit(
+            url='http://whatever/page' + str(i),
+            dt=datetime.min + timedelta(days=5000) + timedelta(hours=i),
+            locator=Loc.make('test'),
+        )
+
+SOURCES = [Source(index)]
+OUTPUT_DIR = '{tdir}'
+    """)
+    index(cfg)
+    #
+    # TODO copy pasting from server; need to unify
+    engine, binder, table = _get_stuff(tdir)
+    query = table.select()
+    with engine.connect() as conn:
+        visits = [binder.from_row(row) for row in conn.execute(query)]
+
+    assert len(visits) == 10000
