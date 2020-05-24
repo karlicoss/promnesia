@@ -37,7 +37,6 @@ def test_empty(tdir):
     cfg = tdir / 'test_config.py'
     cfg.write_text(f"""
 SOURCES = []
-OUTPUT_DIR = '{tdir}'
     """)
     index(cfg)
 

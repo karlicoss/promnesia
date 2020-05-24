@@ -22,7 +22,7 @@ _CHUNK_BY = 10
 
 def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]) -> None:
     logger = get_logger()
-    output_dir = Path(config.get().OUTPUT_DIR)
+    output_dir = Path(config.get().output_dir)
     db_path = output_dir / 'promnesia.sqlite'
 
     def iter_visits():
