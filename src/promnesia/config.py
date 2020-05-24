@@ -23,10 +23,10 @@ class Config(NamedTuple):
 
     @property
     def sources(self):
-        if self.INDEXERS is not None:
+        if len(self.INDEXERS) > 0:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 
-        res = self.SOURCES or self.INDEXERS
+        res = self.SOURCES + self.INDEXERS
         # TODO enable it?
         # assert len(res) > 0, "Expected some sources"
         return res

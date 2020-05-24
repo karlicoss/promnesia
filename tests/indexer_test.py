@@ -78,7 +78,6 @@ def adhoc_config(tmp_path):
 
     try:
         config.instance = config.Config(
-            INDEXERS=[],
             OUTPUT_DIR=tdir,
             CACHE_DIR=cdir,
         )
