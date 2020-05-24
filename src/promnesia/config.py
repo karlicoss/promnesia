@@ -5,23 +5,28 @@ import warnings
 
 import pytz
 
-from .common import PathIsh, get_tmpdir
+from .common import PathIsh, get_tmpdir, appdirs, default_output_dir
 
 
 class Config(NamedTuple):
-    OUTPUT_DIR: PathIsh
     # TODO remove default from sources once migrated
     SOURCES: List = []
-    INDEXERS: List = []
+
+    # if not specified, uses user data dir
+    OUTPUT_DIR: Optional[PathIsh] = None
+
     CACHE_DIR: Optional[PathIsh] = None
     FILTERS: List[str] = []
+    #
+    # NOTE: INDEXERS is deprecated, use SOURCES instead
+    INDEXERS: List = []
 
     @property
     def sources(self):
-        if self.INDEXERS is not None:
+        if len(self.INDEXERS) > 0:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 
-        res = self.SOURCES or self.INDEXERS
+        res = self.SOURCES + self.INDEXERS
         # TODO enable it?
         # assert len(res) > 0, "Expected some sources"
         return res
@@ -39,7 +44,11 @@ class Config(NamedTuple):
     # TODO also tmp dir -- perhaps should be in cache or at least possible to specify in config? not sure if useful
     @property
     def output_dir(self) -> Path:
-        return Path(self.OUTPUT_DIR)
+        odir = self.OUTPUT_DIR
+        if odir is not None:
+            return Path(odir)
+        else:
+            return default_output_dir()
 
 
 instance: Optional[Config] = None

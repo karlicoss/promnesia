@@ -7,7 +7,7 @@ from shutil import copy
 import signal
 from subprocess import check_output, check_call, Popen, PIPE
 import time
-from typing import NamedTuple, ContextManager
+from typing import NamedTuple, ContextManager, Optional
 
 import pytz
 
@@ -52,13 +52,13 @@ def promnesia_bin(*args):
 
 
 @contextmanager
-def wserver(db: Path): # TODO err not sure what type should it be... -> ContextManager[Helper]:
+def wserver(db: Optional[Path]=None): # TODO err not sure what type should it be... -> ContextManager[Helper]:
     port = str(next_port())
     cmd = [
         'serve',
         '--quiet',
         '--port', port,
-        '--db'  , str(db),
+        *([] if db is None else ['--db'  , str(db)]),
     ]
     with tmp_popen(promnesia_bin(*cmd)) as server:
         print("Giving few secs to start server up")
@@ -173,3 +173,15 @@ def test_status(tdir):
         version = response['version']
         assert version is not None
         assert len(version.split('.')) >= 2 # random check..
+
+
+# test default path (user data dir)
+def test_minimal(tmp_path: Path):
+    cfg = tmp_path / 'config.py' # TODO put in user home dir? annoying in test...
+    cfg.write_text('''
+SOURCES = []
+''')
+    check_call(promnesia_bin('index', '--config', cfg))
+    with wserver() as helper:
+        response = post(f'http://localhost:{helper.port}/visits', 'url=whatever')
+        assert response['visits'] == []

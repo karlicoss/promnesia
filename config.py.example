@@ -1,13 +1,5 @@
-'''
-Index (database) will be dumped to OUTPUT_DIR/promnesia.sqlite
-'''
-OUTPUT_DIR = '/tmp'
-
-
-
 from promnesia import Source
 from promnesia.sources import auto
-
 
 '''
 List of sources to use

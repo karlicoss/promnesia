@@ -1,6 +1,6 @@
 from collections.abc import Sized
 from datetime import datetime, date
-import os.path
+import os
 import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar
 from pathlib import Path
@@ -357,6 +357,7 @@ def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], 
 # not sure if necessary anymore?
 # NOTE: used in configs...
 def last(path: PathIsh, *parts: str) -> Path:
+    import os.path
     pp = os.path.join(str(path), *parts)
     return Path(max(glob(pp, recursive=True)))
 
@@ -374,3 +375,15 @@ def slugify(x: str) -> str:
     valid_file_name = re.sub(r'[^\w_.)( -]', '', x)
     return valid_file_name
 
+
+# todo cache?
+def appdirs():
+    under_test = os.environ.get('PYTEST_CURRENT_TEST') is not None
+    # todo actually use test name?
+    name = 'promnesia-test' if under_test else 'promnesia'
+    import appdirs as ad # type: ignore[import]
+    return ad.AppDirs(appname=name)
+
+
+def default_output_dir() -> Path:
+    return Path(appdirs().user_data_dir)

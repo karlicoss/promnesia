@@ -59,7 +59,10 @@ def main():
     )
 
 DEPS_INDEXER = [
+    'appdirs', # for portable user directories detection
+
     'urlextract',
+
     # TODO could be optional?
     'python-magic', # for detecting mime types
 ]

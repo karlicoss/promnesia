@@ -37,7 +37,6 @@ def test_empty(tdir):
     cfg = tdir / 'test_config.py'
     cfg.write_text(f"""
 SOURCES = []
-OUTPUT_DIR = '{tdir}'
     """)
     index(cfg)
 
@@ -48,6 +47,7 @@ from cachew import NTBinder
 from promnesia.common import DbVisit # TODO ugh. figure out pythonpath
 
 
+# todo reuse promnesia.server??
 def _get_stuff(outdir: Path):
     db_path = outdir / 'promnesia.sqlite'
     assert db_path.exists()
