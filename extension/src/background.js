@@ -464,6 +464,7 @@ function ignored(url: string): boolean {
         return true;
     }
 
+    // TODO might be bad url
     if (isSpecialProtocol(url)) {
         return true;
     }
@@ -514,7 +515,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
     ldebug("onUpdated %s %s", tab, info);
 
     const url = tab.url;
-    if (url == null) {
+    if (!url) { /* on Vivaldi I've seen url being "" */
         ldebug('onUpdated: ignoring as URL is not set');
         return;
     }
