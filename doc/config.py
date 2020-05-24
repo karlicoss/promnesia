@@ -2,11 +2,6 @@
 A more sophisticated example of config for Promnesia
 '''
 
-from pathlib import Path
-
-# path where promnesia.sqlite will be stored
-OUTPUT_DIR = Path('/data/promnesia')
-
 from promnesia import Source
 
 
@@ -88,10 +83,18 @@ SOURCES = [
 
 
 
+''''
+Optional setting.
+A directory where promnesia.sqlite will be stored.
+If not specified, user data directory is used, e.g. ~/.local/share/promnesia/
+see https://github.com/ActiveState/appdirs#some-example-output for different OS
+'''
+OUTPUT_DIR = '/data/promnesia'
 
 '''
 Optional setting.
 A directory to keep intemediate caches in order to speed up indexing.
+If not specified, caching isn't used.
 '''
 CACHE_DIR = '/tmp/promnesia_cache/'
 

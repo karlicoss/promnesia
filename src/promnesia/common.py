@@ -381,5 +381,9 @@ def appdirs():
     under_test = os.environ.get('PYTEST_CURRENT_TEST') is not None
     # todo actually use test name?
     name = 'promnesia-test' if under_test else 'promnesia'
-    import appdirs as ad
+    import appdirs as ad # type: ignore[import]
     return ad.AppDirs(appname=name)
+
+
+def default_output_dir() -> Path:
+    return Path(appdirs().user_data_dir)

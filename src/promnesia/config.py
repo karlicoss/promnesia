@@ -5,7 +5,7 @@ import warnings
 
 import pytz
 
-from .common import PathIsh, get_tmpdir, appdirs
+from .common import PathIsh, get_tmpdir, appdirs, default_output_dir
 
 
 class Config(NamedTuple):
@@ -48,8 +48,7 @@ class Config(NamedTuple):
         if odir is not None:
             return Path(odir)
         else:
-            dirs = appdirs()
-            return Path(dirs.user_data_dir)
+            return default_output_dir()
 
 
 instance: Optional[Config] = None

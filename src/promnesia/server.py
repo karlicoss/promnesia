@@ -22,7 +22,7 @@ from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, a
 from sqlalchemy import Column, Table, func # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir
 from .cannon import canonify
 
 _ENV_CONFIG = 'PROMNESIA_CONFIG'
@@ -48,9 +48,15 @@ class ServerConfig(NamedTuple):
     timezone: BaseTzInfo
 
     @classmethod
-    def make(cls, db: PathIsh, timezone: str) -> 'ServerConfig':
+    def make(cls, timezone: str, db: Optional[PathIsh]=None) -> 'ServerConfig':
         tz = pytz.timezone(timezone)
-        return cls(db=Path(db), timezone=tz)
+
+        if db is None:
+            dbp = default_db_path()
+        else:
+            dbp = Path(db)
+
+        return cls(db=dbp, timezone=tz)
 
 
 @lru_cache(1)
@@ -278,12 +284,16 @@ SELECT queried
     return results
 
 
-def _run(*, port: str, db: Path, timezone: str, quiet: bool):
+def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
     logger = get_logger()
     env = {
         **os.environ,
         # not sure if there is a simpler way to communicate with hug..
-        _ENV_CONFIG: json.dumps({'db': str(db), 'timezone': timezone}),
+        # # TODO here
+        _ENV_CONFIG: json.dumps({
+            'timezone': timezone,
+            **({} if db is None else {'db': str(db)})
+        }),
     }
     args = [
         'python3',
@@ -314,11 +324,40 @@ def get_system_tz() -> str:
         return 'UTC'
 
 
+def default_db_path() -> Path:
+    return default_output_dir() / 'promnesia.sqlite'
+
+
 # TODO rename to 'backend'?
 def setup_parser(p):
-    p.add_argument('--port'    , type=str , default='13131', help='Port for communicating with extension')
-    # TODO mm. should add fallback timezone to frontend instead I guess?
-    p.add_argument('--db'      , type=Path, required=True  , help='Path to the link database (required)')
-    p.add_argument('--timezone', type=str , default=get_system_tz(), help='Fallback timezone, defaults to the system timezone if not specified')
-    p.add_argument('--quiet'              , action='store_true', help='Less logging')
+    p.add_argument(
+        '--port',
+        type=str,
+        default='13131',
+        help='Port for communicating with extension',
+    )
 
+    # TODO need to keep consistent with the backend...
+    # TODO use output_dir instead?
+
+    p.add_argument(
+        '--db',
+        type=Path,
+        required=False,
+        default=None,
+        help='Path to the links database (optional, uses user data dir by default)',
+    )
+
+    # TODO mm. should add fallback timezone to frontend instead, perhaps?
+    p.add_argument(
+        '--timezone',
+        type=str,
+        default=get_system_tz(),
+        help='Fallback timezone, defaults to the system timezone if not specified',
+    )
+    
+    p.add_argument(
+        '--quiet',
+        action='store_true',
+        help='Pass to log less',
+    )

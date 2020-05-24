@@ -47,6 +47,7 @@ from cachew import NTBinder
 from promnesia.common import DbVisit # TODO ugh. figure out pythonpath
 
 
+# todo reuse promnesia.server??
 def _get_stuff(outdir: Path):
     db_path = outdir / 'promnesia.sqlite'
     assert db_path.exists()

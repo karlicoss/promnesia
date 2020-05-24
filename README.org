@@ -114,7 +114,7 @@ The easies is to try out Promnesia is a demo mode, it can give you a sense of wh
 1. [[#install][Install]] the extension and the server in case you haven't already
 2. Run ~promnesia demo --port 13131 https://github.com/karlicoss/exobrain~
 
-   This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =16789=
+   This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =13131=
 
    You can also use a path on your local filesystem, or a website URL.
 
@@ -132,23 +132,20 @@ I'm working on improving the documentation on setting the server up, so please f
   You can start from the minimal example config (=cp config.py.example config.py=), and then edit it.
   Alternatively, you can borrow bits from a more complete and annotated configuration example here: [[file:doc/config.py]].
  
-  The only required settings are:
+  The only required setting is:
 
-    - =OUTPUT_DIR=
+  - =SOURCES=
 
-      This is the directory for the indexer's output. At the moment it's only the =promnesia.sqlite= file.
-      You can keep it as =/tmp=, but you might prefer something else.
+    Sources specifies the list of data sources, that will be processed and indexed by Promnesia.
 
-    - =SOURCES=
+    You can find the list of available sources with more documentation on each of them here: [[file:doc/SOURCES.org][SOURCES]].
 
-      These are the data sources, that will be processed and indexed by Promnesia.
+    In addition, you can learn more by:
 
-      You can find the list of available sources with more documentation on each of them here: [[file:doc/SOURCES.org][SOURCES]].
+    - reading example config: [[file:doc/config.py]]
+    - browsing the code: [[file:src/promnesia/sources/][promnesia/sources]].
 
-      In addition, you can learn more by:
-
-      - reading example config: [[file:doc/config.py]]
-      - browsing the code: [[file:src/promnesia/sources/][promnesia/sources]].
+# TODO document other settings..
 
 - [optional] check the config
 
@@ -160,7 +157,7 @@ I'm working on improving the documentation on setting the server up, so please f
 
   [[https://github.com/karlicoss/promnesia/issues/20][At the moment]], indexing is *periodic, not realtime*. The best is to run it via cron/systemd once or several times a day.
 
-- run the server: =promnesia serve --db OUTPUT_DIR/promnesia.sqlite=.
+- run the server: =promnesia serve=.
 
   You only have to start it once, it will automatically detect index changes.
 - [optional] autostart the server with =promnesia install-server=
