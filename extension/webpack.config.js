@@ -132,7 +132,7 @@ if (target === T.CHROME) {
 manifestExtra.options_ui.open_in_tab = true;
 
 
-if (!publish) {
+if (!publish && target === T.FIREFOX) {
     /*
      * When we publish, the id used is AMO/CWS and provided by the build script
      * Otherwise, use temporary id (or some APIs don't work, at least in firefox..)
