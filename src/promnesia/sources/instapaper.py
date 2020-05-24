@@ -3,10 +3,9 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myinstap
 '''
 from ..common import Results, get_logger, Visit, Loc
 
-import my.instapaper as ip
-
 
 def index() -> Results:
+    import my.instapaper as ip
     logger = get_logger()
 
     for p in ip.pages():

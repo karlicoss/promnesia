@@ -2,18 +2,38 @@
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
 '''
 
-import logging
+from ..common import Visit, get_logger, PathIsh, Url, Loc, Results
+
+
+# TODO make an iterator, insert in db as we go? handle errors gracefully?
+def index() -> Results:
+    from my.google.takeout.paths import get_takeouts
+    takeouts = list(get_takeouts())
+    # TODO if no takeouts, raise?
+    # although could raise a warning on top level, when source emitted no takeouts
+
+    # TODO youtube?
+    google_activities = [read_google_activity(t)      for t in takeouts]
+    search_activities = [read_search_activity(t)      for t in takeouts]
+    browser_histories = [read_browser_history_json(t) for t in takeouts]
+
+    key = lambda v: (v.dt, v.url)
+    return chain(
+        unique_everseen(chain(*google_activities), key=key),
+        unique_everseen(chain(*search_activities), key=key),
+        unique_everseen(chain(*browser_histories), key=key),
+    )
+
+
 
 import pytz
 from itertools import chain
 from datetime import datetime
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, TYPE_CHECKING
 from pathlib import Path
 import json
 
-from my.kython.kompress import kexists, kopen
 
-from ..common import Visit, get_logger, PathIsh, Url, Loc, Results
 from .. import config
 
 
@@ -25,9 +45,20 @@ from cachew import mtime_hash, cachew
 TakeoutPath = Path
 
 
+if TYPE_CHECKING:
+    from typing import Callable, TypeVar
+    from typing_extensions import Protocol
+    F = TypeVar('F')
+    class CachemeType(Protocol):
+        def __call__(self, name: str) -> Callable[[F], F]:
+            ...
+    cacheme: CachemeType
+
+
 # TODO should this be HPI responsibility?
 # TODO FIXME belongs to cachew?
-def cacheme(ident: str):
+# pylint: disable=function-redefined
+def cacheme(ident: str): # type: ignore[no-redef]
     logger = get_logger()
     # doesn't even need a nontrivial hash function, timestsamp is encoded in name
     def db_pathf(takeout: TakeoutPath) -> Path:
@@ -44,6 +75,7 @@ def cacheme(ident: str):
 
 
 def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
+    from my.kython.kompress import kexists
     logger = get_logger()
     # TODO glob
     # TODO not sure about windows path separators??
@@ -76,6 +108,7 @@ def read_search_activity(takeout: TakeoutPath) -> Iterable[Visit]:
 # TODO add this to tests?
 @cacheme('browser_activity')
 def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
+    from my.kython.kompress import kexists, kopen
     # not sure if this deserves moving to HPI? it's pretty trivial for now
     logger = get_logger()
     spath = 'Takeout/Chrome/BrowserHistory.json'
@@ -87,6 +120,8 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
 
     # TODO couls also add spath?
     locator = Loc.file(takeout)
+
+    # TODO this should be supported by HPI now?
 
     j = None
     with kopen(takeout, spath) as fo: # TODO iterative parser?
@@ -104,22 +139,3 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
             debug='Chrome/BrowserHistory.json',
         )
 
-
-# TODO make an iterator, insert in db as we go? handle errors gracefully?
-def index() -> Results:
-    from my.google.takeout.paths import get_takeouts
-    takeouts = list(get_takeouts())
-    # TODO if no takeouts, raise?
-    # although could raise a warning on top level, when source emitted no takeouts
-
-    # TODO youtube?
-    google_activities = [read_google_activity(t)      for t in takeouts]
-    search_activities = [read_search_activity(t)      for t in takeouts]
-    browser_histories = [read_browser_history_json(t) for t in takeouts]
-
-    key = lambda v: (v.dt, v.url)
-    return chain(
-        unique_everseen(chain(*google_activities), key=key),
-        unique_everseen(chain(*search_activities), key=key),
-        unique_everseen(chain(*browser_histories), key=key),
-    )

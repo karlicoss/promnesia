@@ -4,16 +4,15 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] for Roam Research data
 
 from ..common import Results, Visit, Loc, extract_urls
 
-import my.roamresearch as RR
-
 
 def index() -> Results:
+    import my.roamresearch as RR
     roam = RR.roam()
     for node in roam.traverse():
         yield from _collect(node)
 
 
-def _collect(node: RR.Node) -> Results:
+def _collect(node: 'RoamNode') -> Results:
     title = node.title
     body  = node.body or ''
     if title is None:
@@ -41,3 +40,9 @@ def _collect(node: RR.Node) -> Results:
             context=body,
             locator=loc,
         )
+
+
+import typing
+if typing.TYPE_CHECKING:
+    import my.roamresearch as RR
+    RoamNode = RR.Node

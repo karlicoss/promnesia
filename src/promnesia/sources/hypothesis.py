@@ -3,10 +3,9 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypoth
 '''
 from ..common import Visit, Results, get_logger, Loc
 
-import my.hypothesis as hyp
-
 
 def index() -> Results:
+    import my.hypothesis as hyp
     logger = get_logger()
 
     for h in hyp.get_highlights():

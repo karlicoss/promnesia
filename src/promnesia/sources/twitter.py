@@ -4,8 +4,6 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
 
 from ..common import get_logger, Results, Visit, Loc, extract_urls
 
-import my.twitter.all as tw
-
 
 def get(o, k):
     if isinstance(o, dict):
@@ -15,6 +13,7 @@ def get(o, k):
 
 
 def index() -> Results:
+    import my.twitter.all as tw
     logger = get_logger()
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0

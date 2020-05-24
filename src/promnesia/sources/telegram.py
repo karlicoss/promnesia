@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import Optional, Union, TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
-import dataset # type: ignore
-
 from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, Results, echain
 
 # TODO potentially, belongs to my. package
@@ -23,6 +21,7 @@ def unwrap(res: Union[T, Exception]) -> T:
 
 # TODO move to common?
 def dataset_readonly(db: Path):
+    import dataset # type: ignore
     # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
     import sqlite3
     creator = lambda: sqlite3.connect(f'file:{db}?mode=ro', uri=True)

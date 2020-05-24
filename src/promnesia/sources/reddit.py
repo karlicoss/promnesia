@@ -3,16 +3,12 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit
 '''
 
 from itertools import chain
-from typing import Iterable
 
-from ..common import Visit, Loc, extract_urls, Extraction, get_logger
-
-
-from my.reddit import Submission, Comment, Save, Upvote
-from my.reddit import submissions, comments, saved, upvoted
+from ..common import Visit, Loc, extract_urls, Results, get_logger
 
 
-def index() -> Iterable[Extraction]:
+def index() -> Results:
+    from my.reddit import submissions, comments, saved, upvoted
     logger = get_logger()
     # TODO should probably use markdown parser here?
 
@@ -45,7 +41,13 @@ def index() -> Iterable[Extraction]:
             yield e
 
 
-def _from_save(i: Save) -> Iterable[Extraction]:
+# support lazy imports..
+import typing
+if typing.TYPE_CHECKING:
+    from my.reddit import Submission, Comment, Save, Upvote
+
+
+def _from_save(i: 'Save') -> Results:
     locator = Loc.make(
         title='Reddit save',
         href=i.url,
@@ -53,7 +55,7 @@ def _from_save(i: Save) -> Iterable[Extraction]:
     yield from _from_common(i, locator=locator)
 
 
-def _from_comment(i: Comment) -> Iterable[Extraction]:
+def _from_comment(i: 'Comment') -> Results:
     locator = Loc.make(
         title='Reddit comment',
         href=i.url,
@@ -61,7 +63,7 @@ def _from_comment(i: Comment) -> Iterable[Extraction]:
     yield from _from_common(i, locator=locator)
 
 
-def _from_submission(i: Submission) -> Iterable[Extraction]:
+def _from_submission(i: 'Submission') -> Results:
     locator = Loc.make(
         title=f'Reddit submission: {i.title}',
         href=i.url,
@@ -69,7 +71,7 @@ def _from_submission(i: Submission) -> Iterable[Extraction]:
     yield from _from_common(i, locator=locator)
 
 
-def _from_upvote(i: Upvote) -> Iterable[Extraction]:
+def _from_upvote(i: 'Upvote') -> Results:
     locator = Loc.make(
         title=f'Reddit upvote',
         href=i.url,
@@ -77,7 +79,7 @@ def _from_upvote(i: Upvote) -> Iterable[Extraction]:
     yield from _from_common(i, locator=locator)
 
 
-def _from_common(i: 'RedditThing', locator: Loc) -> Iterable[Extraction]:
+def _from_common(i: 'RedditThing', locator: Loc) -> Results:
     urls = [i.url]
     # TODO this should belong to HPI.. fix permalink handling I guess
     # ok, it's not present for all of them..
@@ -98,7 +100,6 @@ def _from_common(i: 'RedditThing', locator: Loc) -> Iterable[Extraction]:
 
 
 from datetime import datetime
-import typing
 if typing.TYPE_CHECKING:
     # TODO define in rexport?
     from typing_extensions import Protocol
