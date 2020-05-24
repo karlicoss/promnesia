@@ -35,6 +35,8 @@ class Config(NamedTuple):
         res.mkdir(exist_ok=True) # TODO not sure about parents=True
         return res
 
+    # TODO make this optional, default to .cache or something?
+    # TODO also tmp dir -- perhaps should be in cache or at least possible to specify in config? not sure if useful
     @property
     def output_dir(self) -> Path:
         return Path(self.OUTPUT_DIR)

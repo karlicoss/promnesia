@@ -3,10 +3,9 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] for Pocket highlights & bookmarks
 '''
 from ..common import Visit, Loc, Results
 
-from my.pocket import get_articles
-
 
 def index() -> Results:
+    from my.pocket import get_articles
     # TODO use docstring from my. module? E.g. describing which pocket format is expected
 
     for a in get_articles():

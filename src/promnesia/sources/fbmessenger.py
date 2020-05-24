@@ -4,10 +4,9 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
 
 from ..common import Results, Visit, Loc, extract_urls
 
-from my.fbmessenger import messages
-
 
 def index() -> Results:
+    from my.fbmessenger import messages
     for m in messages():
         text = m.text
         if text is None:

@@ -160,7 +160,7 @@ I'm working on improving the documentation on setting the server up, so please f
 
   [[https://github.com/karlicoss/promnesia/issues/20][At the moment]], indexing is *periodic, not realtime*. The best is to run it via cron/systemd once or several times a day.
 
-- run the server: =promnesia serve --db OUTPUT_DIR/promnesia.sqite=.
+- run the server: =promnesia serve --db OUTPUT_DIR/promnesia.sqlite=.
 
   You only have to start it once, it will automatically detect index changes.
 - [optional] autostart the server with =promnesia install-server=
