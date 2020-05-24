@@ -65,6 +65,7 @@ class Sidebar {
         {
             const show_dots = cdoc.createElement('button');
             show_dots.appendChild(cdoc.createTextNode('Mark visited'));
+            // TODO hmm. not sure if defensify is gonna work from here? no access to notifications api?
             show_dots.addEventListener('click', defensify(async () => {
                 await chromeRuntimeSendMessage({method: Methods.MARK_VISITED});
             }, 'mark_visited.onClick'));
