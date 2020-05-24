@@ -765,20 +765,27 @@ const onMenuClickedCallback = defensify(async (info) => {
   Only relevantinformation I could found about that is https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs , but that didn't really help
   This behaviour is tested by test_duplicate_background_pages to prevent regressions
 */
+
+// TODO maybe this is what needs to be persisted?
 var backgroundInitialised = false; // should be synchronous hopefully?
-async function initBackground() {
-    // TODO make it defensive in case of error tabs? if it fails then can be conservative and ignore menu etc anyway
-    const android = await isAndroid();
+function initBackground() {
+    /* better set early to minimize the potential for races? */
+    backgroundInitialised = true;
 
     // $FlowFixMe
     chrome.runtime.onMessage.addListener(onMessageCallback);
 
-    if (!android) {
-        // $FlowFixMe // err, complains at Promise but nevertheless works
-        chrome.commands.onCommand.addListener(onCommandCallback);
-    }
+    registerActions();
 
-    if (!android) {
+    // TODO make it defensive in case of error tabs? if it fails then can be conservative and ignore menu etc anyway
+    isAndroid().then(android => {
+        if (android) {
+            return;
+        }
+       
+        //  $FlowFixMe // err, complains at Promise but nevertheless works
+        chrome.commands.onCommand.addListener(onCommandCallback);
+
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
         chrome.contextMenus.create({
             'id'       : MENU_BLACKLIST,
@@ -795,15 +802,10 @@ async function initBackground() {
             'contexts' : ['page', 'browser_action'],
             'title'    : "Search in browsing history",
         })
-    }
-
-    if (!android) {
-        // $FlowFixMe // err, complains at Promise but nevertheless works
+       
+        //  $FlowFixMe // err, complains at Promise but nevertheless works
         chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
-    }
-
-    await registerActions();
-    backgroundInitialised = true;
+    })
 }
 
 
@@ -816,16 +818,21 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
         console.debug("ignoring %o %o; %s", info, sender, backgroundInitialised);
         return;
     }
+
     console.log("onmessage %o %o", info, sender);
     const aurl = sender.tab == null ? null : sender.tab.url;
-    if (aurl != null && isSpecialProtocol(aurl)) {
-        lwarn("Suppressing special background page %s", aurl);
-        return;
-    }
+
     console.info("Registering background page callbacks %s", aurl);
     if (backgroundInitialised) {
         console.debug("background already initialised");
         return;
     }
+
+    // TODO elaborate
+    if (aurl && isSpecialProtocol(aurl)) {
+        lwarn("Suppressing special background page %s", aurl);
+        return;
+    }
+    /* TODO not sure if ok or not to await? it shouldn't be blocking right? */
     initBackground();
 });
