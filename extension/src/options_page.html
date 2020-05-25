@@ -8,7 +8,10 @@
 
 <body>
 
-    <div>Don't foget to save settings (button on the bottom)</div>
+    <fieldset>
+        <legend><strong>Don't forget to save settings after changing</strong></legend>
+        <button id="save_id">Save</button>
+    </fieldset>
 
     <fieldset>
         <legend>Backend</legend>
@@ -32,12 +35,12 @@
         <legend>Notifications</legend>
 
         <div>
-            <label for="contexts_popup_id">Show 'Has contexts' popup (green)</label>
             <input type="checkbox" id="contexts_popup_id"/>
+            <label for="contexts_popup_id">Show 'Has contexts' popup (green)</label>
         <div>
         <div>
-            <label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label>
             <input type="checkbox" id="verbose_errors_id"/>
+            <label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label>
         <div>
     </fieldset>
 
@@ -52,12 +55,12 @@
         <!-- </table> -->
 
         <div>
-            <label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label>
             <input type="checkbox" id="highlight_id"/>
+            <label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label>
         <div>
 
         <div>
-            <label for="blacklist_id">Blacklisted domains</label>
+            <label for="blacklist_id">Blacklisted links and domains:</label>
             <div id="blacklist_id"></div>
         </div>
 
@@ -76,16 +79,11 @@
 
     <!-- TODO give some quick help on using CSS, some examples too? -->
     <fieldset>
-        <legend>Sidebar style</legend>
-        <div>DEPRECATED!</div>
+        <legend>Sidebar style (DEPRECATED!)</legend>
         <div>If you had any settings here, please move them to the field above</div>
         <div id="extra_css_id"></div>
     </fieldset>
 
-    <!-- TODO enlarge on android? -->
-    <div>
-    <button id="save_id">Save</button>
-    </div>
     <script src="options_page.js"/></script>
 </body>
 </html>
