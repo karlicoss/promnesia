@@ -176,10 +176,10 @@ def test_status(tdir):
 
 
 # test default path (user data dir)
-def test_minimal(tmp_path: Path):
+def test_basic(tmp_path: Path):
     cfg = tmp_path / 'config.py' # TODO put in user home dir? annoying in test...
     cfg.write_text('''
-SOURCES = []
+SOURCES = ['promnesia.sources.demo']
 ''')
     check_call(promnesia_bin('index', '--config', cfg))
     with wserver() as helper:
