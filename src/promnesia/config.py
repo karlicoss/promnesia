@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Optional, Union, NamedTuple, Iterable
+import importlib
 import importlib.util
 import warnings
 
@@ -43,9 +44,18 @@ class Config(NamedTuple):
                     yield e
                     continue
 
+            if isinstance(r, str):
+                # must be a raw module name?
+                try:
+                    r = importlib.import_module(r)
+                except ModuleNotFoundError as e:
+                    yield e
+                    continue
+
             if isinstance(r, Source):
                 yield r
             else:
+                # kind of last resort measure..
                 yield Source(r)
 
     @property

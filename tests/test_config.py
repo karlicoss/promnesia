@@ -1,4 +1,5 @@
 import pytest # type: ignore
+from more_itertools import ilen
 
 from promnesia import Source
 
@@ -15,7 +16,7 @@ SOURCES = [
     Source(demo.index),
 ]
 ''')
-    assert len(cfg.sources) == 1
+    assert ilen(cfg.sources) == 1
     assert all(isinstance(s, Source) for s in cfg.sources)
     # todo output dirs?
     index(cfg)
@@ -46,7 +47,7 @@ SOURCES = [
     demo,
 
     # I guess this is as simple as it possibly gets...
-    # 'promnesia.sources.demo',
+    'promnesia.sources.demo',
 
     # or, make it lazy
     lambda: Source(demo.index, name='lazy'),
@@ -56,9 +57,37 @@ SOURCES = [
     srcs = cfg.sources
     assert all(isinstance(_, Source) for _ in cfg.sources)
 
-    [s1, s2, s3, s4, s5, s6] = srcs
+    [s1, s2, s3, s4, s5, s6, s7] = srcs
     index(cfg)
     # TODO assert on results count?
+
+
+def test_sources_errors():
+    '''
+    Testing defensiveness of config against various errors
+    '''
+    cfg = make('''
+SOURCES = [
+    'non.existing.module',
+
+    lambda: bad.attribute,
+
+    'promnesia.sources.demo',
+]
+    ''')
+
+    # nothing fails so far! It's defensive!
+    srcs = list(cfg.sources)
+
+    [e1, e2, s1] = srcs
+
+    assert isinstance(e1, Exception)
+    assert isinstance(e2, Exception)
+    assert isinstance(s1, Source)
+
+    errors = index(cfg, check=False)
+    assert len(errors) == 2 # errors simply propagate
+  
 
 
 def test_no_sources():
@@ -66,7 +95,7 @@ def test_no_sources():
 ''')
     # raises because no SOURCES
     with pytest.raises(RuntimeError):
-        cfg.sources
+        list(cfg.sources)
 
 
 def test_empty_sources():
@@ -75,7 +104,7 @@ SOURCES = []
     ''')
     # raises because empty SOURCES
     with pytest.raises(RuntimeError):
-        cfg.sources
+        list(cfg.sources)
 
 
 from pathlib import Path
@@ -92,12 +121,16 @@ def make(body: str) -> Config:
         return import_config(cp)
 
 
-def index(cfg: Config):
+def index(cfg: Config, check=True):
     import promnesia.config as config
     from promnesia.__main__ import _do_index
     config.instance = cfg
     try:
         errors = list(_do_index())
-        assert len(errors) == 0
+        if check:
+            assert len(errors) == 0, errors
+        # visits = cfg.output_dir / 'promnesia.sqlite'
+        # TODO query visit count too
+        return errors
     finally:
         config.reset()
