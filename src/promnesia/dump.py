@@ -49,3 +49,4 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]) -> None:
     shutil.move(str(tpath), str(db_path))
 
     logger.info('saved database to %s', db_path)
+    # TODO log error count

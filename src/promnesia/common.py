@@ -367,7 +367,12 @@ def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], 
 
     h = History(src=src)
     errors = []
-    previsits = list(extr()) # TODO DEFENSIVE HERE!!!
+    try:
+        previsits = list(extr())
+    except Exception as e:
+        logger.exception(e)
+        return [], [e]
+
     for p in previsits:
         if isinstance(p, Exception):
             errors.append(p)
