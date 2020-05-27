@@ -23,12 +23,16 @@ class Config(NamedTuple):
 
     @property
     def sources(self):
+        idx = self.INDEXERS
+
         if len(self.INDEXERS) > 0:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 
         res = self.SOURCES + self.INDEXERS
-        # TODO enable it?
-        # assert len(res) > 0, "Expected some sources"
+
+        if len(res) == 0:
+            raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup-your-config for more information")
+
         return res
 
     @property
