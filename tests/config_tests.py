@@ -44,6 +44,7 @@ SOURCES = [
     Source(demo),
 
     # no need for Source() either!
+    demo.index,
     demo,
 
     # I guess this is as simple as it possibly gets...
@@ -57,13 +58,14 @@ SOURCES = [
     srcs = cfg.sources
     assert all(isinstance(_, Source) for _ in cfg.sources)
 
-    [s1, s2, s3, s4, s5, s6, s7] = srcs
+    [s1, s2, s3, s4, s5, s55, s6, s7] = srcs
 
     assert s1.name == 'explicit name'
     assert s2.name == 'another name'
     assert s3.name == 'demo'
     assert s4.name == 'demo'
     assert s5.name == 'demo'
+    assert s55.name == 'demo'
     assert s6.name == 'demo'
     assert s7.name == 'lazy'
 

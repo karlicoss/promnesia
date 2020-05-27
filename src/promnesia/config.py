@@ -37,7 +37,8 @@ class Config(NamedTuple):
 
 
         for r in raw:
-            if callable(r):
+            # ugh. could also be an ordinary function.. not sure how to deal with it
+            if isalambda(r):
                 try:
                     r = r() # must be lazy...
                 except Exception as e:
@@ -114,3 +115,11 @@ def import_config(config_file: PathIsh) -> Config:
         if hasattr(mod, f):
             d[f] = getattr(mod, f)
     return Config(**d)
+
+
+
+# https://stackoverflow.com/a/3655857/706389
+# ugh. not sure about this..
+def isalambda(v) -> bool:
+    LAMBDA = lambda: 0
+    return isinstance(v, type(LAMBDA)) and v.__name__ == LAMBDA.__name__

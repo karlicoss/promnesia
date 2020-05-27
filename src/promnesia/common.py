@@ -315,7 +315,6 @@ def _guess_name(thing) -> str:
 
 def _get_index_function(thing):
     # see test_config
-    # TODO try to guess name hre too?
     if not callable(thing):
         # maybe it's a module?
         thing = getattr(thing, 'index')
