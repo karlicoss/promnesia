@@ -40,12 +40,17 @@ SOURCES = [
     Source(demo.index),
 
     # rely on default index function
-    # Source(demo),
+    Source(demo),
+
+    # make it lazy
+    # lambda: Source(demo.index, name='lazy'),
 ]
     ''')
 
-    [s1, s2, s3] = cfg.sources
-    # TODO ugh. need to run extractor..
+    srcs = cfg.sources
+    assert all(isinstance(_, Source) for _ in cfg.sources)
+
+    [s1, s2, s3, s4] = srcs
     index(cfg)
 
 

@@ -297,16 +297,29 @@ class PathWithMtime(NamedTuple):
         )
 
 
+def _get_index_function(thing):
+    # see test_config
+    if not callable(thing):
+        # maybe it's a module?
+        thing = getattr(thing, 'index')
+    return thing
+
+
 class Source:
     # TODO make sure it works with empty src?
     # TODO later, make it properly optional?
     def __init__(self, ff, *args, src: SourceName='', name: SourceName='', **kwargs) -> None:
-        self.ff = ff
+        self.ff = _get_index_function(ff)
         self.args = args
         self.kwargs = kwargs
         if src is not None:
             warnings.warn("'src' argument is deprecated, please use 'name' instead", DeprecationWarning)
         self.src = name or src
+
+    @property
+    def name(self) -> str:
+        # todo deprecate src..
+        return self.src
 
 # TODO deprecated
 Indexer = Source
