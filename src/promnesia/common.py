@@ -297,8 +297,25 @@ class PathWithMtime(NamedTuple):
         )
 
 
+# todo not sure about this...
+def _guess_name(thing) -> str:
+    from types import ModuleType
+    guess = ''
+    if isinstance(thing, ModuleType):
+        guess = thing.__name__
+    elif callable(thing):
+        guess = thing.__module__
+
+    dflt = 'promnesia.sources.'
+    if guess.startswith(dflt):
+        # meh
+        guess = guess[len(dflt):]
+    return guess
+
+
 def _get_index_function(thing):
     # see test_config
+    # TODO try to guess name hre too?
     if not callable(thing):
         # maybe it's a module?
         thing = getattr(thing, 'index')
@@ -314,7 +331,12 @@ class Source:
         self.kwargs = kwargs
         if src is not None:
             warnings.warn("'src' argument is deprecated, please use 'name' instead", DeprecationWarning)
-        self.src = name or src
+        try:
+            name_guess = _guess_name(ff)
+        except:
+            # todo warn?
+            name_guess = ''
+        self.src = name or src or name_guess
 
     @property
     def name(self) -> str:

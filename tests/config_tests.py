@@ -58,6 +58,15 @@ SOURCES = [
     assert all(isinstance(_, Source) for _ in cfg.sources)
 
     [s1, s2, s3, s4, s5, s6, s7] = srcs
+
+    assert s1.name == 'explicit name'
+    assert s2.name == 'another name'
+    assert s3.name == 'demo'
+    assert s4.name == 'demo'
+    assert s5.name == 'demo'
+    assert s6.name == 'demo'
+    assert s7.name == 'lazy'
+
     index(cfg)
     # TODO assert on results count?
 
@@ -105,6 +114,23 @@ SOURCES = []
     # raises because empty SOURCES
     with pytest.raises(RuntimeError):
         list(cfg.sources)
+
+
+
+def test_legacy():
+    cfg = make('''
+from promnesia import Source
+from promnesia.sources import demo
+INDEXERS = [
+    Source(demo.index, src='legacy name'),
+]
+    ''')
+
+    [s1] = cfg.sources
+
+    assert s1.name == 'legacy name'
+
+    index(cfg)
 
 
 from pathlib import Path
