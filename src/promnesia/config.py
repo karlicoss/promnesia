@@ -1,11 +1,12 @@
 from pathlib import Path
-from typing import List, Optional, Union, NamedTuple
+from typing import List, Optional, Union, NamedTuple, Iterable
 import importlib.util
 import warnings
 
 import pytz
 
 from .common import PathIsh, get_tmpdir, appdirs, default_output_dir
+from .common import Res, Source
 
 
 class Config(NamedTuple):
@@ -22,18 +23,30 @@ class Config(NamedTuple):
     INDEXERS: List = []
 
     @property
-    def sources(self):
+    def sources(self) -> Iterable[Res[Source]]:
         idx = self.INDEXERS
 
         if len(self.INDEXERS) > 0:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 
-        res = self.SOURCES + self.INDEXERS
+        raw = self.SOURCES + self.INDEXERS
 
-        if len(res) == 0:
+        if len(raw) == 0:
             raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup-your-config for more information")
 
-        return res
+
+        for r in raw:
+            if callable(r):
+                try:
+                    r = r() # must be lazy...
+                except Exception as e:
+                    yield e
+                    continue
+
+            if isinstance(r, Source):
+                yield r
+            else:
+                yield Source(r)
 
     @property
     def cache_dir(self) -> Path:

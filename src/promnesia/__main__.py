@@ -35,25 +35,23 @@ def _do_index() -> Iterable[Exception]:
 
 
     all_histories = []
-    all_errors = []
+    errors = []
 
-    for extractor in indexers:
-        ex = extractor
-        if callable(ex):
-            # lazy indexers
-            ex = ex()
-        assert isinstance(ex, Source)
+    for idx in indexers:
+        if isinstance(idx, Exception):
+            errors.append(idx)
+            continue
+        # TODO more defensive! e.g. might not have __module__
+        einfo = f'{idx.ff.__module__}:{idx.ff.__name__} {idx.args} {idx.kwargs}'
 
-        einfo = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs}'
-
-        hist, errors = previsits_to_history(ex, src=ex.src)
-        all_errors.extend(errors)
+        hist, err = previsits_to_history(idx, src=idx.name)
+        errors.extend(err)
         all_histories.append((einfo, hist))
 
     # TODO perhaps it's better to open connection and dump as we collect so it consumes less memory?
     dump_histories(all_histories)
 
-    return all_errors
+    return errors
 
 
 def do_index(config_file: Path):

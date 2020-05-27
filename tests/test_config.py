@@ -30,28 +30,35 @@ from promnesia import Source
 from promnesia.sources import demo
 
 SOURCES = [
-    # specify custom name for the source
-    Source(demo.index, name='another name'),
-
-    # you can passs arguments to index function too
+    # you can pass arguments to index functions
     Source(demo.index, count=10, name='explicit name'),
 
-    # rely on default name (will be set to 'demo')
+    # or rely on the default argument!
+    Source(demo.index, name='another name'),
+
+    # or rely on default source name name (will be guessed as 'demo')
     Source(demo.index),
 
     # rely on default index function
     Source(demo),
 
-    # make it lazy
-    # lambda: Source(demo.index, name='lazy'),
+    # no need for Source() either!
+    demo,
+
+    # I guess this is as simple as it possibly gets...
+    # 'promnesia.sources.demo',
+
+    # or, make it lazy
+    lambda: Source(demo.index, name='lazy'),
 ]
     ''')
 
     srcs = cfg.sources
     assert all(isinstance(_, Source) for _ in cfg.sources)
 
-    [s1, s2, s3, s4] = srcs
+    [s1, s2, s3, s4, s5, s6] = srcs
     index(cfg)
+    # TODO assert on results count?
 
 
 def test_no_sources():
