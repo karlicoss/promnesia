@@ -13,7 +13,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, History, make_filter, get_logger, get_tmpdir
-from .common import previsits_to_history, Source
+from .common import previsits_to_history, Source, appdirs
 from .dump import dump_histories
 
 
@@ -118,27 +118,39 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
             input("Press any key when ready")
 
 
+def default_config_path() -> Path:
+    cfg = Path('config.py')
+    if cfg.exists():
+        # eh. not sure if it's a good idea, but whatever, it was the old behaviour
+        return cfg.absolute()
+    else:
+        return Path(appdirs().user_config_dir) / 'config.py'
+    # TODO need to test this..
+
+
 def main():
     # TODO longer, literate description?
     from .common import setup_logger
     setup_logger(get_logger(), level=logging.DEBUG)
 
-    F = argparse.ArgumentDefaultsHelpFormatter
-    p = argparse.ArgumentParser(formatter_class=F)
-    # p.add_argument('--hello', required=False, default='YES', help='alala')
+    F = lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=120)
+    p = argparse.ArgumentParser(formatter_class=F) # type: ignore
     subp = p.add_subparsers(dest='mode', )
     ep = subp.add_parser('index', help='Create/update the link database', formatter_class=F)
-    ep.add_argument('--config', type=Path, default=Path('config.py'))
+    ep.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
     # TODO use some way to override or provide config only via cmdline?
-    ep.add_argument('--intermediate', required=False)
+    ep.add_argument('--intermediate', required=False, help="Used for development, you don't need it")
 
-    sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F)
+    sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F) # type: ignore
     server.setup_parser(sp)
 
     ap = subp.add_parser('demo', help='Demo mode: index and serve a directory in single command', formatter_class=F)
     # TODO use docstring or something?
-    ap.add_argument('--port', type=str, help='Port to serve. If omitted, will only create the index without serving.', required=False)
-    ap.add_argument('--config', type=Path, required=False, help='Config to run against. If omitted, will use empty config')
+    #
+
+    ap.add_argument('--port', type=str, default='13131'              , help='Port to serve on')
+    ap.add_argument('--no-serve', action='store_false', dest='server', help='Pass to only index without running server')
+    ap.add_argument('--config', type=Path, required=False            , help='Config to run against. If omitted, will use empty base config')
     ap.add_argument(
         '--as',
         choices=list(sorted(demo_sources().keys())),
@@ -169,7 +181,7 @@ def main():
             server.run(args)
         elif args.mode == 'demo':
             do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port, config_file=args.config)
-        elif args.mode == 'install-server':
+        elif args.mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')

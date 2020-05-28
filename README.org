@@ -112,9 +112,9 @@ The easies is to try out Promnesia is a demo mode, it can give you a sense of wh
 
 # TODO use smth different
 1. [[#install][Install]] the extension and the server in case you haven't already
-2. Run ~promnesia demo --port 13131 https://github.com/karlicoss/exobrain~
+2. Run ~promnesia demo https://github.com/karlicoss/exobrain~
 
-   This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =13131=
+   This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =13131= (default, can be specified via =--port=)
 
    You can also use a path on your local filesystem, or a website URL.
 
@@ -149,13 +149,17 @@ I'm working on improving the documentation on setting the server up, so please f
 
 - [optional] check the config
 
-  This is useful to quickly check your config: run =promnesia demo --port 13131 --config /path/to/config.py=.
+  This is useful to quickly check your config: run =promnesia demo --config /path/to/config.py=.
 
   This will index the data and launch the server immediately, so you can check that everything works as expected in your browser.
 
 - run the indexer: =promnesia index --config /path/to/config.py=
 
   [[https://github.com/karlicoss/promnesia/issues/20][At the moment]], indexing is *periodic, not realtime*. The best is to run it via cron/systemd once or several times a day.
+
+  NOTE: you can put promensia config in your home directory, e.g. =~/.config/promnesia/config.py=. That way in the future, you can simly run =promnesia index=.
+  
+  See [[https://github.com/ActiveState/appdirs/blob/3fe6a83776843a46f20c2e5587afcffe05e03b39/appdirs.py#L187-L190][this]] if you're not sure what's the user config dir on your system.
 
 - run the server: =promnesia serve=.
 
