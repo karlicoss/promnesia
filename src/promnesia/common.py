@@ -50,7 +50,7 @@ class Loc(NamedTuple):
 
 
 # TODO serialize unions? Might be a bit mad...
-class PreVisit(NamedTuple):
+class Visit(NamedTuple):
     url: Url
     # TODO back to DatetimeIsh, but somehow make compatible to dbcache?
     dt: datetime
@@ -61,8 +61,6 @@ class PreVisit(NamedTuple):
     # TODO gonna be hard to fill retroactively.
     # spent: Optional[Second] = None
     debug: Optional[str] = None
-
-Visit = PreVisit
 
 Extraction = Union[Visit, Exception]
 Result = Extraction # TODO extraction is a bit too long? deprecate?
@@ -79,7 +77,7 @@ class DbVisit(NamedTuple):
     duration: Optional[Second] = None
 
     @staticmethod
-    def make(p: PreVisit, src: SourceName) -> Res['DbVisit']:
+    def make(p: Visit, src: SourceName) -> Res['DbVisit']:
         try:
             if isinstance(p.dt, datetime):
                 dt = p.dt
@@ -155,7 +153,7 @@ class History(Sized):
         cls.FILTERS.append(make_filter(filterish))
 
     def __init__(self, *, src: SourceName):
-        self.vmap: Dict[PreVisit, DbVisit] = {}
+        self.vmap: Dict[Visit, DbVisit] = {}
         # TODO err... why does it map from previsit???
         self.logger = get_logger()
         self.src = src
@@ -174,7 +172,7 @@ class History(Sized):
     def visits(self) -> List[DbVisit]:
         return list(self.vmap.values())
 
-    def register(self, v: PreVisit) -> Optional[Exception]:
+    def register(self, v: Visit) -> Optional[Exception]:
         # TODO should we filter before normalising? not sure...
         if History.filtered(v.url):
             return None
@@ -426,3 +424,6 @@ def appdirs():
 
 def default_output_dir() -> Path:
     return Path(appdirs().user_data_dir)
+
+# TODO deprecate..
+PreVisit = Visit
