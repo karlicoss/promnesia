@@ -6,6 +6,7 @@ import sys
 from typing import List, Tuple, Optional, Dict, Sequence, Iterable
 from pathlib import Path
 from datetime import datetime
+from subprocess import check_call
 from tempfile import TemporaryDirectory
 
 
@@ -118,14 +119,79 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
             input("Press any key when ready")
 
 
+def user_config_file() -> Path:
+    return Path(appdirs().user_config_dir) / 'config.py'
+
+
 def default_config_path() -> Path:
     cfg = Path('config.py')
     if cfg.exists():
         # eh. not sure if it's a good idea, but whatever, it was the old behaviour
         return cfg.absolute()
     else:
-        return Path(appdirs().user_config_dir) / 'config.py'
+        return user_config_file()
     # TODO need to test this..
+
+
+def config_create(args):
+    logger = get_logger()
+    cfg = user_config_file()
+    cfgdir = cfg.parent
+    if cfgdir.exists():
+        logger.error('Config directory %s already exists. Aborting', cfgdir)
+        sys.exit(1)
+    else:
+        # TODO ugh. example config might not be in the repository
+        stub = """
+from promnesia import Source
+from promnesia.sources import auto
+
+'''
+List of sources to use
+You can specify your own, add more sources, etc.
+See https://github.com/karlicoss/promnesia#setup-your-config for more information
+'''
+SOURCES = [
+    Source(
+        auto.index,
+        # just some arbitrary directory with html files
+        '/usr/share/doc/python3/html/faq',
+    )
+]
+"""
+        cfgdir.mkdir(parents=True)
+        cfg.write_text(stub)
+        logger.info("Created a stub config in %s. Edit it to tune to your linking.", cfg)
+
+
+def config_check(args):
+    cfg = args.config
+    logger = get_logger()
+
+    logger.info('Checking syntax:')
+    check_call(['python3', '-m', 'compileall', cfg])
+
+    # todo not sure if should be more defensive than check_call here
+    logger.info('Checking type safety:')
+    try:
+        import mypy
+    except ImportError:
+        logger.warning("mypy not found, can't use it to check config!")
+    else:
+        check_call([
+            'python3', '-m', 'mypy',
+            '--namespace-packages',
+            '--color-output', # not sure if works??
+            '--pretty',
+            '--show-error-codes',
+            '--show-error-context',
+            '--check-untyped-defs',
+            cfg,
+        ])
+
+    logger.info('Checking runtime errors:')
+    check_call(['python3', cfg])
+
 
 
 def main():
@@ -162,6 +228,15 @@ def main():
     isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
     install_server.setup_parser(isp)
 
+    cp = subp.add_parser('config', help='Config management')
+    scp = cp.add_subparsers()
+    ccp = scp.add_parser('check', help='Check config')
+    ccp.set_defaults(func=config_check)
+    ccp.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
+
+    icp = scp.add_parser('create', help='Create user config')
+    icp.set_defaults(func=config_create)
+
     args = p.parse_args()
 
     # TODO is there a way to print full help? i.e. for all subparsers
@@ -183,6 +258,8 @@ def main():
             do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port, config_file=args.config)
         elif args.mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
+        elif args.mode == 'config':
+            args.func(args)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
 
