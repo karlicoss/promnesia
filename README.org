@@ -1,6 +1,6 @@
 #+OPTIONS: num:nil
 
-TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out]] | [[#glossary][Glossary]]
+TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]]
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
 (including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
@@ -80,20 +80,22 @@ Promnesia consists of three parts:
 
   However, browser addons can't read access your filesystem, so to load the data we need a helper component:
 
-- server/backend (=promnesia server= command)
+- server/backend: =promnesia server= command
 
   It's called 'server', but really it's just a regular program with the only purpose to serve the data to the browser.
   It runs locally and you don't have to expose it to the outside.
 
-  # One TODO normalises/URL equivalence. TODO link to urls suck
+- indexer: =promensia index= command
 
-- indexer (=promensia index= command)
+  Indexer goes through the sources (specified in the config), processes raw data and extracts URLs along with other useful information.
 
-  Indexer *indexes* data sources, extracting URLs and other useful information
-  # TODO mention contexts here?
+  Another important thing it's doing is *normalising* URLs to establish equivalence and stip off garbage.
+  I write about the motivation for it in [[https://beepb00p.xyz/promnesia.html#urls_broken]["URLs are broken"]].
+
+You might also want to skim through the [[#glossary][glossary]] if you want to understand deeper what information Promnesia is extracting.
 
 ** Data sources
-Promnesia comes with a variaty of builtin source. It supports:
+Promnesia ships with some builtin sources. It supports:
 
 - data exports from online services: Reddit/Twitter/Hackernews/Telegram/Messenger/Hypothesis/Pocket/Instapaper, etc.
 
@@ -197,41 +199,12 @@ I'm working on improving the documentation on setting the server up, so please f
 
 # TODO Frontend -- mention what settings are possible?
 # TODO possibly reuse JS config stub?
-
-* Extension permissions
-- =activeTab=: getting current tab info and adding the sidebar
-- =webNavigation=: watching page state changes (to trigger the extension on page load)
-- =storage=: for settings
-- =contextMenus=: context menu
-- =notifications=: showing notifications
-
-There permissions are required at the moment, but there is an [[https://github.com/karlicoss/promnesia/issues/97][issue]] for work on possibly making them optional.
-  
-- =tabs=: making the extension work without an explicit user action (the extension is meant to be a passive assistant)
-
-  The extension is still useful even with explicit action only, so worth making opt-in.
-- =history=: to use local browsing history
-
-  Local history isn't strictly required, so we could omit this if people prefer.
-- =file/http/https=: the extension is meant to work on any page, hence such a broad scope.
-
-  Migth be optional in the future, and requested on demand if people feel it's worth it
-
-# TODO tabs could be optional in the future?  
-* More links
-- [[file:doc/SOURCES.org][Documentation on the sources]]
-- [[file:doc/DEVELOPMENT.org][Developer's guide]]
-
-
-# TODO document visits/timestamps/contexts?
-# TODO how does it work?
-
 * Glossary
 *Visit* represents an 'occurence' of a link in your digital trace.
-Obviously, visiting pages in your browser results in visits, but in Promnesia it also captures links that you interacted with
+Obviously, visiting pages in your browser results in visits, but in Promnesia this notion also captures links that you interacted with
 in other applications and services.
 
-In [[file:src/promnesia/common.py][code]], visits are reprented as =class Visit= (and =class DbVisit=).
+In code ([[file:src/promnesia/common.py][python]], [[file:extension/src/common.js][JS]]), visits are reprented as =class Visit= (and =class DbVisit=).
 
 Visits have the following fields:
 
@@ -243,7 +216,7 @@ Visits have the following fields:
 
 - *timestamp*: when the page was visited
 
-  Required, but in the future, will be optional (sometimes you don't have a meaningful timestamp).
+  Required, but in the future might be optional (sometimes you don't have a meaningful timestamp).
 
 - *locator*: what's the origin of the visit?
 
@@ -251,35 +224,38 @@ Visits have the following fields:
  
   For example:
 
-  - locators for a link extracted from Reddit point straight into Reddit posts and comments where they occured
-  - locators for a link extracted a local file point straight into text files on your disk (and clicking on it will open your text editor via MIME integration!)
+  - locators for a link extracted from Reddit data point straight into =reddit.com= interface, for the corresponding post or comment
+  - locators for a link extracted a local file point straight into these files on your disk. Clicking on the locator will open your text editor via MIME integration
 
-  Required, but in the future might be optional.
+  Required, but in the future might be optional. (TODO also rename to 'origin'??)
+  # TODO renaming gonna be annoying because of the communication protocol..
 
 - *context*: what was the context, in which the visit occured?
 
   For example:
 
   - context for Telegram visits is the message body along with its sender
-  - context for a link from org-mode file is the whole outline, in which it occured
+  - context for a link from org-mode file is the whole paragraph (outline), in which it occured
 
   I usually call a visit without a context 'boring' -- it doesn't contain much information except for the mere fact of visiting the page before.
-  However they are useful to have as they fill in the gaps and provide means of tracing through your history.
+  However they are still useful to have, since they fill in the gaps and provide means of *tracing* through your history.
 
   Optional.
 
-- *duration*: how long we have spent on the page
+- *duration*: how much we have spent on the page
+
+  Somewhat experimental field, at the moment it's only set for Chrome (and often not very precise).
 
   Optional.
 
-Digression: now that you have an idea what is a Visit, you can understand few more things about Promnesia:
+*Digression*: now that you have an idea what is a Visit, you can understand few more things about Promnesia:
 
 - source (or indexer) is any function that extract visits from raw files and generates a stream of visits (i.e. =Iterable[Visit]=).
 - promnesia indexer goes through the sources, specified in config, collects the visits and puts in the database
 - promnesia server reads visits form the database, and them to the extension
 
 
-Now let's consider some concrete examples of different kinds of Visits:
+Now let's consider some *concrete* examples of different kinds of Visits:
 
 - [[file:src/promnesia/sources/takeout.py][Google Takeout]] indexer
 
@@ -289,23 +265,23 @@ Now let's consider some concrete examples of different kinds of Visits:
   - *timestamp*
   - *locator*
 
-  There isn't any context for visits from takeout, it's just a glorified database export.
+  There isn't any context for visits from takeout, because it's basically a fancy database export.
 
 - [[file:src/promnesia/sources/instapaper.py][Instapaper]] indexer
 
-  Generates a visit for each highlight on a page:
+  Generates a visit for each highlight on the page:
 
   - *url*: original URL of the annotated page
   - *timestamp*: time when you created the highlight
-  - *locator*: permalink to the highlight into Instapaper's web app
+  - *locator*: permalink to the highlight, bringing you into the Instapaper web app
   - *context*: highlight body
 
 - [[file:src/promnesia/sources/markdown.py][Markdown]] indexer
 
-  Extracts any links it fined in Markdown files:
+  Extracts any links it finds in Markdown files:
 
   - *url*: extracted link
-  - *timestamp*: Markdown doesn't have a well defined
+  - *timestamp*: Markdown doesn't have a well defined datetime format, so it's just set to the file modification time.
 
     However, if you do have your own format, it's possible to write your own indexer to properly take them into the account.
 
@@ -313,3 +289,28 @@ Now let's consider some concrete examples of different kinds of Visits:
   - *context*: the markdown paragraph, containing the url
 
 *Note*: this terminology is not set is stone, so if someone feels there are words that describe these concepts better, I'm open to suggestions!
+
+# TODO glossary for canonical??
+
+* More links
+- [[file:doc/SOURCES.org][Documentation on the sources]]
+- [[file:doc/DEVELOPMENT.org][Developer's guide]]
+
+* Extension permissions
+- =activeTab=: getting current tab info and adding the sidebar
+- =webNavigation=: watching page state changes (to trigger the extension on page load)
+- =storage=: for settings
+- =contextMenus=: context menu
+- =notifications=: showing notifications
+
+There permissions are required at the moment, but there is an [[https://github.com/karlicoss/promnesia/issues/97][issue]] for work on possibly making them optional.
+
+- =tabs=: making the extension work without an explicit user action (the extension is meant to be a passive assistant)
+
+  The extension is still useful even with explicit action only, so worth making opt-in.
+- =history=: to use local browsing history
+
+  Local history isn't strictly required, so we could omit this if people prefer.
+- =file/http/https=: the extension is meant to work on any page, hence such a broad scope.
+
+  Migth be optional in the future, and requested on demand if people feel it's worth it
