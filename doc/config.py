@@ -23,7 +23,7 @@ from promnesia.sources import guess
 
 # this is an incomplete list, just the (perhaps) most interesting ones
 from promnesia.sources import telegram
-from promnesia.sources import takeout, instapaper, pocket, fbmessenger, twitter, roamresearch, hypothesis
+from promnesia.sources import takeout, instapaper, pocket, fbmessenger, twitter, roamresearch, hypothesis, rss
 
 
 # now we can specify the sources
@@ -59,10 +59,10 @@ SOURCES = [
 
 
     # Uses the output of telegram_backup tool: https://github.com/fabianonline/telegram_backup#usage
+    # name will be set to 'telegram' by default
     Source(
         telegram.index,
         '/data/telegram/database.sqlite',
-        name='tg',
     ),
 
     # NOTE: to configure the following modules you need to set up HPI package (https://github.com/karlicoss/HPI#whats-inside)
@@ -71,14 +71,21 @@ SOURCES = [
     ####
     Source(hypothesis.index),
     Source(takeout.index),
-    Source(instapaper.index),
-    Source(pocket.index),
-    Source(twitter.index),
-    Source(roamresearch.index),
 
-    # you can also use a lambda
-    # sometimes it's useful for config hacking/avoiding early imports
-    lambda: Source(fbmessenger.index),
+    # you can also be less verbose in config, if you prefer
+    Source(roamresearch),
+    Source(rss, name='custom name'),
+
+    # or:
+    fbmessenger.index,
+
+    # or even just:
+    pocket,
+    instapaper,
+
+
+    # sometimes lambdas are useful for config hacking/avoiding early imports
+    lambda: twitter.index(),
 ]
 
 

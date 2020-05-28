@@ -32,15 +32,6 @@ def test_example_config(tdir):
     index(cfg)
 
 
-# TODO not sure if makes a lot of sense? maybe on no indexers should actually error
-def test_empty(tdir):
-    cfg = tdir / 'test_config.py'
-    cfg.write_text(f"""
-SOURCES = []
-    """)
-    index(cfg)
-
-
 from sqlalchemy import create_engine, MetaData, exists # type: ignore
 from sqlalchemy import Column, Table # type: ignore
 from cachew import NTBinder
@@ -77,6 +68,7 @@ OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Source, Visit, Loc
 from datetime import datetime, timedelta
+# todo reuse demo indexer?
 indexer = Source(
     lambda: [Visit(
         url=url,
@@ -119,14 +111,13 @@ def hyp_extractor():
         hypexport   = '{hypexport_path}'
     my.config.hypothesis = user_config
 
-    import promnesia.sources.hypothesis as hypi
-    return Source(
-        hypi.index,
-        src='hyp',
-    )
+    import promnesia.sources.hypothesis as hypothesis
+    yield from hypothesis.index()
 
 # in addition, test for lazy indexers. useful for importing packages
-SOURCES = [hyp_extractor]
+SOURCES = [
+    Source(hyp_extractor, name='hyp'),
+]
     """)
     index(cfg)
 

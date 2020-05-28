@@ -6,19 +6,19 @@ import promnesia.sources.shellcmd as shellcmd # type: ignore
 import promnesia.sources.takeout as takeout # type: ignore
 
 
+def index_takeout():
+    class user_config:
+        takeout_path = 'tests/testdata/takeout-20150518T000000Z.zip'
+
+    import my.config
+    my.config.google = user_config
+
+    yield from takeout.index()
+
+
 class Sources:
-    @staticmethod
-    def TAKEOUT():
-        class user_config:
-            takeout_path = 'tests/testdata/takeout-20150518T000000Z.zip'
 
-        import my.config
-        my.config.google = user_config
-
-        return Source(
-            takeout.index,
-            name='takeout',
-        )
+    TAKEOUT = Source(index_takeout, name='takeout')
 
     PLAIN = Source(
         shellcmd.index,

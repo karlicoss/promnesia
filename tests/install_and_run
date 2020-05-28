@@ -12,8 +12,9 @@ CONFIG = """
 
 OUTPUT_DIR = {output_dir}
 
-# TODO add some dummy source. maybe python configs?
-SOURCES = []
+SOURCES = [
+    'promnesia.sources.demo',
+]
 
 """
 

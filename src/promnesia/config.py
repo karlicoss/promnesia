@@ -1,11 +1,13 @@
 from pathlib import Path
-from typing import List, Optional, Union, NamedTuple
+from typing import List, Optional, Union, NamedTuple, Iterable
+import importlib
 import importlib.util
 import warnings
 
 import pytz
 
 from .common import PathIsh, get_tmpdir, appdirs, default_output_dir
+from .common import Res, Source
 
 
 class Config(NamedTuple):
@@ -22,14 +24,32 @@ class Config(NamedTuple):
     INDEXERS: List = []
 
     @property
-    def sources(self):
+    def sources(self) -> Iterable[Res[Source]]:
+        idx = self.INDEXERS
+
         if len(self.INDEXERS) > 0:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 
-        res = self.SOURCES + self.INDEXERS
-        # TODO enable it?
-        # assert len(res) > 0, "Expected some sources"
-        return res
+        raw = self.SOURCES + self.INDEXERS
+
+        if len(raw) == 0:
+            raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup-your-config for more information")
+
+
+        for r in raw:
+            if isinstance(r, str):
+                # must be a raw module name?
+                try:
+                    r = importlib.import_module(r)
+                except ModuleNotFoundError as e:
+                    yield e
+                    continue
+
+            if isinstance(r, Source):
+                yield r
+            else:
+                # kind of last resort measure..
+                yield Source(r)
 
     @property
     def cache_dir(self) -> Path:

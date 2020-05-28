@@ -3,6 +3,9 @@ from promnesia.sources import auto
 
 '''
 List of sources to use
+
+You can specify your own, add more sources, etc.
+See https://github.com/karlicoss/promnesia#setup-your-config for more information
 '''
 SOURCES = [
     Source(

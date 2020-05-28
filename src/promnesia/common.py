@@ -297,16 +297,50 @@ class PathWithMtime(NamedTuple):
         )
 
 
+# todo not sure about this...
+def _guess_name(thing) -> str:
+    from types import ModuleType
+    guess = ''
+    if isinstance(thing, ModuleType):
+        guess = thing.__name__
+    elif callable(thing):
+        guess = thing.__module__
+
+    dflt = 'promnesia.sources.'
+    if guess.startswith(dflt):
+        # meh
+        guess = guess[len(dflt):]
+    return guess
+
+
+def _get_index_function(thing):
+    # see config_tests
+    # not sure about this
+    if hasattr(thing, 'index'):
+        thing = getattr(thing, 'index')
+    return thing
+
+
 class Source:
     # TODO make sure it works with empty src?
     # TODO later, make it properly optional?
     def __init__(self, ff, *args, src: SourceName='', name: SourceName='', **kwargs) -> None:
-        self.ff = ff
+        self.ff = _get_index_function(ff)
         self.args = args
         self.kwargs = kwargs
         if src is not None:
             warnings.warn("'src' argument is deprecated, please use 'name' instead", DeprecationWarning)
-        self.src = name or src
+        try:
+            name_guess = _guess_name(ff)
+        except:
+            # todo warn?
+            name_guess = ''
+        self.src = name or src or name_guess
+
+    @property
+    def name(self) -> str:
+        # todo deprecate src..
+        return self.src
 
 # TODO deprecated
 Indexer = Source
@@ -333,7 +367,12 @@ def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], 
 
     h = History(src=src)
     errors = []
-    previsits = list(extr()) # TODO DEFENSIVE HERE!!!
+    try:
+        previsits = list(extr())
+    except Exception as e:
+        logger.exception(e)
+        return [], [e]
+
     for p in previsits:
         if isinstance(p, Exception):
             errors.append(p)

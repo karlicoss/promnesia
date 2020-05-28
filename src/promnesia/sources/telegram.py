@@ -32,10 +32,10 @@ def index(database: PathIsh) -> Results:
     logger = get_logger()
 
     path = Path(database)
-    assert path.is_file()
+    assert path.is_file(), path
 
     # TODO context manager?
-    db = dataset_readonly(path)
+    db = dataset_readonly(path) # TODO could check is_file inside
 
     def make_query(text_query: str):
         return f"""
