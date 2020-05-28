@@ -85,7 +85,7 @@ SOURCES = [
 
 
     # sometimes lambdas are useful for config hacking/avoiding early imports
-    lambda: twitter,
+    lambda: twitter.index(),
 ]
 
 

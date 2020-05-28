@@ -314,9 +314,9 @@ def _guess_name(thing) -> str:
 
 
 def _get_index_function(thing):
-    # see test_config
-    if not callable(thing):
-        # maybe it's a module?
+    # see config_tests
+    # not sure about this
+    if hasattr(thing, 'index'):
         thing = getattr(thing, 'index')
     return thing
 

@@ -111,14 +111,13 @@ def hyp_extractor():
         hypexport   = '{hypexport_path}'
     my.config.hypothesis = user_config
 
-    import promnesia.sources.hypothesis as hypi
-    return Source(
-        hypi.index,
-        src='hyp',
-    )
+    import promnesia.sources.hypothesis as hypothesis
+    yield from hypothesis.index()
 
 # in addition, test for lazy indexers. useful for importing packages
-SOURCES = [hyp_extractor]
+SOURCES = [
+    Source(hyp_extractor, name='hyp'),
+]
     """)
     index(cfg)
 

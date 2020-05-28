@@ -49,16 +49,13 @@ SOURCES = [
 
     # I guess this is as simple as it possibly gets...
     'promnesia.sources.demo',
-
-    # or, make it lazy
-    lambda: Source(demo.index, name='lazy'),
 ]
     ''')
 
     srcs = cfg.sources
     assert all(isinstance(_, Source) for _ in cfg.sources)
 
-    [s1, s2, s3, s4, s5, s55, s6, s7] = srcs
+    [s1, s2, s3, s4, s5, s55, s6] = srcs
 
     assert s1.name == 'explicit name'
     assert s2.name == 'another name'
@@ -67,10 +64,92 @@ SOURCES = [
     assert s5.name == 'demo'
     assert s55.name == 'demo'
     assert s6.name == 'demo'
-    assert s7.name == 'lazy'
 
     index(cfg)
     # TODO assert on results count?
+
+
+# TODO ugh. allow not to have locator
+# ideally you can construct a visit with a link and that's it
+def test_sources_style_more():
+    '''
+    Now, sources are not magic -- they are just functions emitting visits
+    '''
+    cfg = make('''
+from typing import Iterable
+from promnesia import Visit, Source, Loc
+
+def my_indexer() -> Iterable[Visit]:
+    from datetime import datetime
+    for link in ['reddit.com', 'beepb00p.xyz']:
+        yield Visit(
+            url=link,
+            dt=datetime.min,
+            locator=Loc.make('test'),
+        )
+
+SOURCES = [
+    # you can just pass the function name here
+    my_indexer,
+
+    # or give it an explicit name (instead of a guess)
+    Source(my_indexer, name='nice name'),
+]
+
+
+class MyIndexer:
+    def index():
+        from promnesia.sources import demo
+        return list(demo.index())
+
+SOURCES.append(
+    MyIndexer,
+)
+
+''')
+    srcs = cfg.sources
+    [s1, s2, s3] = srcs
+
+    assert s1.name == 'cfg' # TODO would be nice to guess 'my_indexer' instead...
+    assert s2.name == 'nice name'
+    assert s3.name == 'cfg' # TODO fix it, make MyIndexer?
+
+    index(cfg)
+
+
+def test_sources_lazy():
+    '''
+    Demonstration of ways to return 'lazy' and generally more advanced sources
+
+    Lazy sources could be useful to do some conditional magic or make more defensive against imports, excra configuration. You'll know when you need it ;)
+    '''
+
+    cfg = make('''
+from promnesia import Source
+
+def lazy():
+    from promnesia.sources import demo
+    print("Hello, I'm so lazy...")
+    yield from demo.index()
+
+SOURCES = [
+    lazy,
+]
+    ''')
+    srcs = cfg.sources
+    assert all(isinstance(_, Source) for _ in cfg.sources)
+    [s] = srcs
+
+    assert s.name == 'cfg' # TODO this should be fixed... but not a big deal
+
+    index(cfg)
+
+# TODO later
+# or like that:
+# (i for i in lazy()),
+
+# TODO later, support stuff that returns sources lazily? e.g. lambda: Source(...)
+# not sure if it's very useful
 
 
 def test_sources_errors():
@@ -90,11 +169,11 @@ SOURCES = [
     # nothing fails so far! It's defensive!
     srcs = list(cfg.sources)
 
-    [e1, e2, s1] = srcs
+    [e1, s1, s2] = srcs
 
     assert isinstance(e1, Exception)
-    assert isinstance(e2, Exception)
     assert isinstance(s1, Source)
+    assert isinstance(s2, Source)
 
     errors = index(cfg, check=False)
     assert len(errors) == 2 # errors simply propagate
