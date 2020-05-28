@@ -1,6 +1,6 @@
 #+OPTIONS: num:nil
 
-TOC: [[#motivation][Motivation]] | [[#demos][*Demos*]] | [[#install][*Install*]] | [[#try-it-out][Try it out]]
+TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out]]
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
 (including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
@@ -33,22 +33,6 @@ See a [[https://beepb00p.xyz/promnesia.html][writeup]] on history and the proble
 - Or you finally got to watch that thing in your 'Watch later' youtube playlist, that's been there for three years, and now you want to know why did you add it in the first place.
 
 Then this tool is for you.
-
-It consists of two parts:
-
-- the extension: talks to the server and neatly displays the history in a sidebar and shows you whether you visited a page
-- the server/backend. It can run locally as a simple Python program (you don't need to host it, although you can).
-
-The server regularly indexes (i.e. extracts URLs and other useful information) [[file:doc/SOURCES.org][data sources]] like:
-
-- data exports from online services: Reddit/Twitter/Hackernews/Telegram/Messenger/Hypothesis/Pocket/Instapaper, etc.
-
-  It heavily benefits from [[https://github.com/karlicoss/HPI][HPI]] package to access the data.
-
-- Google Takeout/Activity backups
-- Markdown/org-mode/HTML or any other plaintext on your disk
-- in general, anything that can be parsed in some way
-- you can also add [[file:doc/SOURCES.org::#extending][your own custom sources]], Promnesia is extensible
 
 #+html: <div id="demo"><div>
 * Demos
@@ -85,6 +69,41 @@ The server regularly indexes (i.e. extracts URLs and other useful information) [
     - [[https://karlicoss.github.io/promnesia-demos/mobile/panel-w3c.webm][showing all references to pages on W3C website in my org-mode notes]]
     - [[https://karlicoss.github.io/promnesia-demos/mobile/mark-visited-reddit.webm][marking already visited links on the page]], to make easier to process Reddit posts
 
+* How does it work?
+Promnesia consists of three parts:
+
+- browser extension
+
+  - neatly displays the history and other information in a sidebar
+  - handles highlights
+  - provides search interface
+
+  However, browser addons can't read access your filesystem, so to load the data we need a helper component:
+
+- server/backend (=promnesia server= command)
+
+  It's called 'server', but really it's just a regular program with the only purpose to serve the data to the browser.
+  It runs locally and you don't have to expose it to the outside.
+
+- indexer (=promensia index= command)
+
+  Indexer *indexes* data sources, extracting URLs and other useful information
+  # TODO mention contexts here?
+
+** Data sources
+Promnesia comes with a variaty of builtin source. It supports:
+
+- data exports from online services: Reddit/Twitter/Hackernews/Telegram/Messenger/Hypothesis/Pocket/Instapaper, etc.
+
+  It heavily benefits from [[https://github.com/karlicoss/HPI][HPI]] package to access the data.
+
+- Google Takeout/Activity backups
+- Markdown/org-mode/HTML or any other plaintext on your disk
+- in general, anything that can be parsed in some way
+- you can also add [[file:doc/SOURCES.org::#extending][your own custom sources]], Promnesia is extensible
+
+See [[file:doc/SOURCES.org][SOURCES]] for more information.
+
 * Install
   :PROPERTIES:
   :CUSTOM_ID: install
@@ -96,7 +115,7 @@ The server regularly indexes (i.e. extracts URLs and other useful information) [
   - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]] (including mobile)
   - you can also find 'unpacked' versions in [[https://github.com/karlicoss/promnesia/releases][Releases]]
 
-    It can be useful because Chrome Web Store releases might take days to approve, but in general it's better to prefer the store version.
+    It can be useful because Chrome Web Store releases might take days to approve, but in general the store version if preferrable.
 
 - backend
 
@@ -129,7 +148,7 @@ I'm working on improving the documentation on setting the server up, so please f
 
 - create the config: =promnesia config create=
 
-  The command will put stub promensia config in your user config directory, e.g. =~/.config/promnesia/config.py= on Linux. (it's possibly different on OSX and Windows, see [[https://github.com/ActiveState/appdirs/blob/3fe6a83776843a46f20c2e5587afcffe05e03b39/appdirs.py#L187-L190][this]] if you're not sure).
+  The command will put a stub promensia config in your user config directory, e.g. =~/.config/promnesia/config.py= on Linux. (it's possibly different on OSX and Windows, see [[https://github.com/ActiveState/appdirs/blob/3fe6a83776843a46f20c2e5587afcffe05e03b39/appdirs.py#L187-L190][this]] if you're not sure).
 
 - edit the config and add some sources
 
