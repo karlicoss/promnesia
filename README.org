@@ -108,6 +108,44 @@ Promnesia ships with some builtin sources. It supports:
 
 See [[file:doc/SOURCES.org][SOURCES]] for more information.
 
+
+** Data flow
+
+Here's a diagram, which would hopefully help to understand how data flows through Promnesia.
+
+See HPI [[https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org#data-flow][section on data flow]] for more information on HPI modules and data flow.
+
+Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure map]], which is more detailed!
+
+: ┌─────────────────────────────────┐ ┌────────────────────────────┐ ┌─────────────────┐
+: │ 💾       HPI sources            │ │  💾    plaintext files      │ │  other sources  │
+: │ (twitter, reddit, pocket, etc.) │ │ (org-mode, markdown, etc.) │ │ (user-defined)  │
+: └─────────────────────────────────┘ └────────────────────────────┘ └─────────────────┘
+:                                 ⇘⇘              ⇓⇓               ⇙⇙
+:                                  ⇘⇘             ⇓⇓              ⇙⇙
+:                                  ┌──────────────────────────────┐
+:                                  │ 🔄    promnesia indexer      │
+:                                  |        (runs regularly)      │
+:                                  └──────────────────────────────┘
+:                                                 ⇓⇓
+:                                  ┌──────────────────────────────┐
+:                                  │ 💾    visits database        │
+:                                  │       (promnesia.sqlite)     │
+:                                  └──────────────────────────────┘
+:                                                 ⇓⇓
+:                                  ┌──────────────────────────────┐
+:                                  │ 🔗    promnesia server       │
+:                                  |       (always running)       |
+:                                  └──────────────────────────────┘
+:                                                 ⇣⇣
+:                                  ┌──────────────────────────────┐
+:                                  │ 🌐      web browser          │
+:                                  |     (promnesia extension)    |
+:                                  └──────────────────────────────┘
+
+# TODO mention local history?
+# TODO would be really nice to have links here.. but not sure how without svg...
+
 * Install
   :PROPERTIES:
   :CUSTOM_ID: install
