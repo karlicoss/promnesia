@@ -73,7 +73,7 @@ def _detect_mime_handler() -> str:
         warnings.warn('''
         'emacs:' handler is deprecated!
         Please use newer version at https://github.com/karlicoss/open-in-editor
-        And remove the old one (most likely, rm ~/.local/share/applications/mimemacs.desktop).
+        And remove the old one (most likely, rm ~/.local/share/applications/mimemacs.desktop && update-desktop-database ~/.local/share/applications).
 '''.rstrip())
         result = 'emacs:'
 
