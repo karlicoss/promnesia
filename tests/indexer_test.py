@@ -192,7 +192,7 @@ def test_plaintext_path_extractor():
 
     [wa] = [v for v in visits if v.orig_url == 'http://what.about.this.link']
     f2 = Path(tdata('custom')) / 'file2.txt'
-    assert wa.locator.href == f'emacs:{f2}:3' # occurs line 3
+    assert wa.locator.href == f'editor://{f2}:3' # occurs line 3
 
 # TODO perhaps it belongs to canonify?
 def test_normalise():

@@ -246,7 +246,8 @@ def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], 
         replacer=replacer,
     )
     for p in paths:
-        yield from _index(Path(p), opts=opts)
+        # TODO for displaying maybe better not to expand/absolute, but need it for correct mime handling
+        yield from _index(Path(p).expanduser().absolute(), opts=opts)
 
 
 class Options(NamedTuple):
