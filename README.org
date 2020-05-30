@@ -188,6 +188,7 @@ The easies is to try out Promnesia is a demo mode, it can give you a sense of wh
 # TODO mention where they get the database
 To get the most benefit from Promnesia, it's best to properly setup your own config, describing the sources you want it to use.
 If something is unclear, please feel free to open issues or reach me, I'm working on improving the documentation.
+Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
 
 - create the config: =promnesia config create=
 
