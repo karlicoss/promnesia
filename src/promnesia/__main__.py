@@ -168,11 +168,12 @@ def config_check(args):
     cfg = args.config
     logger = get_logger()
 
-    logger.info('Checking syntax:')
+    # TODO add this to HPI
+    logger.info('Checking syntax...')
     check_call(['python3', '-m', 'compileall', cfg])
 
     # todo not sure if should be more defensive than check_call here
-    logger.info('Checking type safety:')
+    logger.info('Checking type safety...')
     try:
         import mypy
     except ImportError:
@@ -189,7 +190,7 @@ def config_check(args):
             cfg,
         ])
 
-    logger.info('Checking runtime errors:')
+    logger.info('Checking runtime errors...')
     check_call(['python3', cfg])
 
 
