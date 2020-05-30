@@ -37,7 +37,7 @@ def run(tdir: Path):
 
     check_call([
         promnesia, 'install-server',
-        '--unit-name', 'promnesia-test.service',
+        '--name' , 'promnesia-test', # should add .serice arg
         '--db', str(tdir / 'promnesia.sqlite'),
         '--timezone', 'Europe/Moscow',
         '--port', '17777', # TODO get free port?
