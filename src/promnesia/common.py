@@ -38,15 +38,60 @@ class Loc(NamedTuple):
     @classmethod
     def file(cls, path: PathIsh, line: Optional[int]=None):
         ll = '' if line is None else f':{line}'
+        # todo loc should be url encoded? dunno.
+        # or use line=? eh. I don't know. Just ask in issues.
         loc = f'{path}{ll}'
+        handler = _detect_mime_handler()
         return cls.make(
             title=loc,
-            href=f'emacs:{loc}'
+            href=f'{handler}{loc}'
         )
 
     # TODO need some uniform way of string conversion
-    # but generally, it would be
+    # but generally, it will be
     # (url|file)(linenumber|json_path|anchor)
+
+@lru_cache(1)
+def _detect_mime_handler() -> str:
+    def exists(what: str) -> bool:
+        from subprocess import run, PIPE
+        try:
+            r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE)
+        except FileNotFoundError:
+            warnings.warn("No xdg-mime on your OS! If you're on OSX, perhaps you can help me! https://github.com/karlicoss/open-in-editor/issues/1")
+            return False
+        if r.returncode > 0:
+            warnings.warn('xdg-mime failed') # hopefully rest is in stderr
+            return False
+        # todo not sure if should check=True or something
+        handler = r.stdout.decode('utf8').strip()
+        return len(handler) > 0
+
+    # 1. detect legacy 'emacs:' handler (so it doesn't break for existing users)
+    result = None
+    if exists('emacs'):
+        warnings.warn('''
+        'emacs:' handler is deprecated!
+        Please use newer version at https://github.com/karlicoss/open-in-editor
+        And remove the old one (most likely, rm ~/.local/share/applications/mimemacs.desktop).
+'''.rstrip())
+        result = 'emacs:'
+
+    # 2. now try to use newer editor:// thing
+
+    # TODO would be nice to collect warnings and display at the end
+    if not exists('editor'):
+        warnings.warn('''
+        You might want to install https://github.com/karlicoss/open-in-editor
+        So you can jump you your text files straight from the browser
+'''.rstrip())
+    else:
+        result = 'editor://'
+
+    if result is None:
+        result = 'editor://'
+
+    return result
 
 
 # TODO serialize unions? Might be a bit mad...

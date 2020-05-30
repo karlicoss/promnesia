@@ -27,7 +27,7 @@ def test_json():
     # TODO not sure if they deserve separate visits..
     [v1, v2] = mm[sa2464]
     assert v1.context == 'list::yyy::given_url'
-    assert v1.locator.href.startswith('emacs:')
+    assert v1.locator.href.startswith('editor://')
     assert v1.locator.href.endswith('pocket.json')
     # TODO line number?
 
