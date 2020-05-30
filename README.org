@@ -230,9 +230,11 @@ I'm working on improving the documentation on setting the server up, so please f
   You only have to start it once, it will automatically detect further index changes.
 - [optional] autostart the server with =promnesia install-server=
 
-  This sets it up to start via Systemd, which should be present in most common *Linux* distributions, so it won't work on Mac/Windows at the moment.
+  This sets it up to autostart and run in the background:
 
-  I don't have a Mac nearby, so if you can contribute a Launchd script, or point me to a setup guide, I'll be very grateful!
+  - via Systemd for Linux
+  - via Launchd for OSX. I don't have a Mac nearby, so if you have any issues with it, please report them!
+
   I /think/ you can also use cron with =@reboot= attribute, or just create a manual autostart entry.
 
 # TODO Frontend -- mention what settings are possible?
