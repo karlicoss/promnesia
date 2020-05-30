@@ -33,7 +33,7 @@ class Config(NamedTuple):
         raw = self.SOURCES + self.INDEXERS
 
         if len(raw) == 0:
-            raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup-your-config for more information")
+            raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup for more information")
 
 
         for r in raw:

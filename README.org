@@ -13,6 +13,7 @@ It allows you to answer different questions about the current web page:
 - have I been here before? When? [[https://karlicoss.github.io/promnesia-demos/child-visits.webm][demo (30 s)]] [[https://karlicoss.github.io/promnesia-demos/child-visits-2.webm][demo (40s)]]
 - how did I get on it? Which page has led to it? [[https://karlicoss.github.io/promnesia-demos/how_did_i_get_here.webm][demo (40s)]]
 - why have I bookmarked it? who sent me this link? Can I just jump to the message? [[https://karlicoss.github.io/promnesia-demos/watch_later.webm][demo (30s)]]
+- or, can I jump straight into the file where the link occured? [[https://karlicoss.github.io/promnesia-demos/jump_to_editor.webm][demo (20s)]]
 - which links on this page have I already explored? [[https://karlicoss.github.io/promnesia-demos/mark-visited.webm][demo (30s)]],
 - which posts from this blog page have I already read? [[https://karlicoss.github.io/promnesia-demos/mark-visited-2.webm][demo (20s)]]
 - have I annotated it? [[https://karlicoss.github.io/promnesia-demos/highlights.webm][demo (1m)]]
@@ -183,10 +184,10 @@ The easies is to try out Promnesia is a demo mode, it can give you a sense of wh
 
    If you press the extension icon, you will see the pages from my blog where I link to articles on Gwern's site.
   
-* Setup your config
+* Setup
 # TODO mention where they get the database
 To get the most benefit from Promnesia, it's best to properly setup your own config, describing the sources you want it to use.
-I'm working on improving the documentation on setting the server up, so please feel free to ask if something is unclear!
+If something is unclear, please feel free to open issues or reach me, I'm working on improving the documentation.
 
 - create the config: =promnesia config create=
 
@@ -211,31 +212,45 @@ I'm working on improving the documentation on setting the server up, so please f
   is, once again, [[file:doc/config.py][example config]].
   # TODO document other settings..
 
-- [optional] check the config
+  - [optional] check the config
 
-  First, you can run =promensia config check=, it can be used to quickly troubleshoot typos and similar errors.
+    First, you can run =promensia config check=, it can be used to quickly troubleshoot typos and similar errors.
 
-  Next, you can use the demo mode: =promnesia demo --config /path/to/config.py=.
+    Next, you can use the demo mode: =promnesia demo --config /path/to/config.py=.
 
-  This will index the data and launch the server immediately, so you can check that everything works as expected in your browser.
+    This will index the data and launch the server immediately, so you can check that everything works as expected in your browser.
 
 - run the indexer: =promnesia index=
 
-  [[https://github.com/karlicoss/promnesia/issues/20][At the moment]], indexing is *periodic, not realtime*. The best is to run it via *cron/systemd* once or several times a day.
+  [[https://github.com/karlicoss/promnesia/issues/20][At the moment]], indexing is *periodic, not realtime*. The best is to run it via *cron/systemd* once or several times a day:
+
+  : # run every hour in cron
+  : 0 * * * *      promnesia index    >/tmp/promnesia-index.log 2>/tmp/promnesisa-index.err
 
   Note: you can also pass =--config /path/to/config.py=  explicitly if you prefer or want to experiment.
 
 - run the server: =promnesia serve=
 
-  You only have to start it once, it will automatically detect further index changes.
-- [optional] autostart the server with =promnesia install-server=
+  You only have to start it once, it will automatically detect further changes done by =promnesia index=.
+ 
+  - [optional] autostart the server with =promnesia install-server=
 
-  This sets it up to autostart and run in the background:
+    This sets it up to autostart and run in the background:
 
-  - via Systemd for Linux
-  - via Launchd for OSX. I don't have a Mac nearby, so if you have any issues with it, please report them!
+    - via Systemd for Linux
+    - via Launchd for OSX. I don't have a Mac nearby, so if you have any issues with it, please report them!
 
-  I /think/ you can also use cron with =@reboot= attribute, or just create a manual autostart entry.
+    I /think/ you can also use cron with =@reboot= attribute:
+
+    : # sleep is just in case cron starts up too early. Prefer systemd script if possible!
+    : @reboot     sleep 60 && promnesia serve   >/tmp/promnesia-serve.log 2>/tmp/promnesia-serve.err
+
+    Alternatively, you can just create a manual autostart entry in your desktop environment.
+
+- [optional] setup MIME handler to jump to files straight from the extension
+
+  See a short [[https://karlicoss.github.io/promnesia-demos/jump_to_editor.webm][20s demo]], and if this is something you'd like,
+  follow the instructions in [[https://github.com/karlicoss/open-in-editor#readme][open-in-editor]].
 
 # TODO Frontend -- mention what settings are possible?
 # TODO possibly reuse JS config stub?
