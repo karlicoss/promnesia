@@ -1,6 +1,6 @@
 #+OPTIONS: num:nil
 
-TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]]
+TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[#faq][FAQ]] | [[#support][Support]]
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
 (including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
@@ -40,26 +40,30 @@ Then this tool is for you.
   :PROPERTIES:
   :CUSTOM_ID: demos
   :END:
+- [[https://karlicoss.github.io/promnesia-demos/screens/promnesia andy Screenshot at 2020-06-05 23-33-07.png]]
 
-- [[https://user-images.githubusercontent.com/291333/69828210-3755ac80-121b-11ea-9d1e-e5086cc9feda.png]]
+  - a green eye means that the link was visited before and has some [[#glossary][contexts]], associated with it. When you click on it, the sidebar opens with more information about the visits.
+  - You can see that I've sent the link to Jane on Telegram (#1)
+  - I've annotated the link on Instapaper and highlights (#3) is marked with yellow right within the page
 
-  # TODO might be good to explain what I mean by context and visit..
-  - a green eye means that the link was visited before and has some contexts, associated with it
-    when you click on it, the sidebar opens with more information
-  - You can see that I've sent the link to someone on Telegram (1st sidebar item )
-  - I've annotated the link on instapaper and highlights (2nd and 3rd) are shown inline on the page (yellow)
-  - I've clipped some content to my personal notes at some point (2nd sidebar item), the selected text was matched and highlighted as well
-    If I click the link, it will cause my Emacs to open and jump straight to the clipping within the file.
+    Normally in order to see see your Instapaper highligths you have to go to the web app first!
+  - I've clipped some content to my personal notes at some point (#8), the selected text was matched and highlighted as well
+   
+    If I click =notes/ip2org.org=, it will cause my Emacs to open and jump to the file, containing this note.
+    # and jump straight to the clipping within the file. -- TODO
+- [[https://karlicoss.github.io/promnesia-demos/screens/promnesia universal love Screenshot at 2020-06-05 23-18-38.png]]
 
-- [[https://user-images.githubusercontent.com/291333/64424146-2bd16a00-d0a0-11e9-80d2-73cf3b2b60df.PNG]]
-
-  - I chatted with some of my friends and sent them the link at some point (2nd sidebar item)
+  - I have a note about the page in my personal notes on my filesystem (#2)
+  - I chatted with a friend and sent them the link at some point (#6)
+   
     Clicking on the link will open Telegram and jump straight to the message where the link was mentioned.
     So you can reply to it without having to search or scroll over the whole chat history.
     # Json is clearly not the most convenient way to go through conversations with friends, but that's a matter of representing chats in a plaintext form. The benefit though is that once you have any sort of grepable source it's super easy to feed it into the plugin.
-  - I've tweeted about this link before (4th item)
+  - I've tweeted about this link before (#11)
+   
     Similarly, clicking would jump straight to my tweet.
-  - I also have this link annotated via [[https://hypothes.is][Hypothesis]] (1st, 3rd and 5th items)
+
+  - I also have this link annotated via [[https://hypothes.is][Hypothesis]] (#4, #12, #13)
 
 - More:
 
@@ -349,6 +353,23 @@ Now let's consider some *concrete* examples of different kinds of Visits:
 *Note*: this terminology is not set is stone, so if someone feels there are words that describe these concepts better, I'm open to suggestions!
 
 # TODO glossary for canonical??
+
+
+* FAQ
+- What does the name mean?
+
+  [[https://en.wiktionary.org/wiki/promnesia][Promnesi]] is coming from Ancient Greek and means "déjà vu".
+  Ironically, promnesia project is doing the opposite -- it replaces a vague feeling of seeing a page before with a reliable digital tool.
+
+* Support
+The best support for me would be if you contribute to this or my other projects. Code, ideas of feedback -- everything is appreciated.
+
+I don't need money, but I understand it's often easier to give away than time, so here are some of projects that I donate to:
+
+- [[https://orgmode.org/worg/donate.html][org-mode]]
+- [[https://archive.org/donate][Internet Archive]]
+- [[https://web.hypothes.is/donate][Hypothes.is]]
+- [[https://github.com/hlissner/doom-emacs#contribute][Doom Emacs]]
 
 * More links
 - [[file:doc/SOURCES.org][Documentation on the sources]]
