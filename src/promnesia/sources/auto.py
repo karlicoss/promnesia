@@ -240,21 +240,26 @@ def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], 
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
     ignored = (ignored,) if isinstance(ignored, str) else ignored
-    opts = Options(
-        ignored=ignored,
-        follow=follow,
-        replacer=replacer,
-    )
     for p in paths:
         # TODO for displaying maybe better not to expand/absolute, but need it for correct mime handling
-        yield from _index(Path(p).expanduser().absolute(), opts=opts)
+        apath = Path(p).expanduser().absolute()
+        root = apath if apath.is_dir() else None
+        opts = Options(
+            ignored=ignored,
+            follow=follow,
+            replacer=replacer,
+            root=root,
+        )
+        yield from _index(apath, opts=opts)
 
 
 class Options(NamedTuple):
     ignored: Sequence[str]
     follow: bool
     # TODO option to add ignores? not sure..
+    # TODO I don't like this replacer thing... think about removing it
     replacer: Replacer
+    root: Optional[Path]=None
 
 
 # TODO eh. might be good to use find or fdfind to speed it up...
@@ -326,8 +331,9 @@ def _index_file(pp: Path, opts: Options) -> Results:
     indexer: Union[Urls, Results] = ip(pp) # type: ignore
     # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 
+    root = opts.root
     fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
-    loc = Loc.file(pp)
+    fallback_loc = Loc.file(pp)
     replacer = opts.replacer
     for r in indexer:
         if isinstance(r, Exception):
@@ -337,11 +343,19 @@ def _index_file(pp: Path, opts: Options) -> Results:
             v = Visit(
                 url=r.url,
                 dt=fallback_dt,
-                locator=loc,
+                locator=fallback_loc,
                 context='::'.join(r.ctx),
             )
         else:
             v = r
+
+        loc = v.locator
+        if loc is not None and root is not None:
+            # meh. but it works
+            # todo potentially, just use dataclasses instead...
+            loc = loc._replace(title=loc.title.replace(str(root) + '/', ''))
+            v = v._replace(locator=loc)
+
         if replacer is not None:
             upd: Dict[str, Any] = {}
             href = v.locator.href
