@@ -36,12 +36,20 @@ class Loc(NamedTuple):
         return cls(title=title, href=href)
 
     @classmethod
-    def file(cls, path: PathIsh, line: Optional[int]=None):
+    def file(cls, path: PathIsh, line: Optional[int]=None, relative_to: Optional[Path]=None):
         ll = '' if line is None else f':{line}'
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
-        loc = f'{path}{ll}'
         handler = _detect_mime_handler()
+
+        rel = Path(path)
+        if relative_to is not None:
+            try:
+                # making it relative is a bit nicer for display
+                rel = rel.relative_to(relative_to)
+            except Exception as e:
+                pass # TODO log?
+        loc = f'{rel}{ll}'
         return cls.make(
             title=loc,
             href=f'{handler}{loc}'

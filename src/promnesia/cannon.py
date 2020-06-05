@@ -372,7 +372,7 @@ def canonify(url: str) -> str:
     qq = list(sorted(qq)) # order matters in theory, but definitely not by default
     # TODO still not sure what we should do..
     # quote_plus replaces %20 with +, not sure if we want it...
-    query = urlencode(qq, quote_via=quote_via)
+    query = urlencode(qq, quote_via=quote_via) # type: ignore[type-var]
 
     path = _quote_path(path)
 
