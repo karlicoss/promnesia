@@ -8,6 +8,13 @@ def test_org_indexer():
 
     cpp = items[1]
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
+    # TODO not sure about filetags?
+    assert cpp.context == '''
+xxx /r/cpp   :cpp:programming:
+ I've enjoyed [Chandler Carruth's _There Are No Zero-cost Abstractions_](
+ https://www.youtube.com/watch?v=rHIkrotSwcc) very much.
+
+'''.lstrip()
 
     cozy = items[2]
     assert cozy.url == 'https://twitter.com/Mappletons/status/1255221220263563269'
