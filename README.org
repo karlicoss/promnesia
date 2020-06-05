@@ -71,6 +71,9 @@ Then this tool is for you.
     - [[https://karlicoss.github.io/promnesia-demos/mobile/mark-visited-reddit.webm][marking already visited links on the page]], to make easier to process Reddit posts
 
 * How does it work?
+:PROPERTIES:
+:CUSTOM_ID: how-does-it-work
+:END:
 Promnesia consists of three parts:
 
 - browser extension
@@ -93,7 +96,7 @@ Promnesia consists of three parts:
   Another important thing it's doing is *normalising* URLs to establish equivalence and stip off garbage.
   I write about the motivation for it in [[https://beepb00p.xyz/promnesia.html#urls_broken]["URLs are broken"]].
 
-You might also want to skim through the [[#glossary][glossary]] if you want to understand deeper what information Promnesia is extracting.
+You might also want to skim through the [[https://github.com/karlicoss/promnesia#glossary][glossary]] if you want to understand deeper what information Promnesia is extracting.
 
 ** Data sources
 Promnesia ships with some builtin sources. It supports:
@@ -105,9 +108,9 @@ Promnesia ships with some builtin sources. It supports:
 - Google Takeout/Activity backups
 - Markdown/org-mode/HTML or any other plaintext on your disk
 - in general, anything that can be parsed in some way
-- you can also add [[file:doc/SOURCES.org::#extending][your own custom sources]], Promnesia is extensible
+- you can also add [[https://github.com/karlicoss/promnesia/blob/master/doc/SOURCES.org#extending][your own custom sources]], Promnesia is extensible
 
-See [[file:doc/SOURCES.org][SOURCES]] for more information.
+See [[https://github.com/karlicoss/promnesia/blob/master/doc/SOURCES.org][SOURCES]] for more information.
 
 
 ** Data flow
@@ -139,12 +142,11 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
 :                                  |       (always running)       |
 :                                  └──────────────────────────────┘
 :                                                 ⇣⇣
-:                                  ┌──────────────────────────────┐
-:                                  │ 🌐      web browser          │
-:                                  |     (promnesia extension)    |
-:                                  └──────────────────────────────┘
+:                                  ┌─────────────────────────────────┐
+:                                  │ 🌐      web browser             ├───────────────────────────┐
+:                                  |     (promnesia extension)       ⇐  💾 local browser history |
+:                                  └─────────────────────────────────┴───────────────────────────┘
 
-# TODO mention local history?
 # TODO would be really nice to have links here.. but not sure how without svg...
 
 * Install

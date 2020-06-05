@@ -11,7 +11,7 @@ most important
 
  Anyway, hope it helps someone.
 
-* TODO [#C] [2019-10-16 Wed 08:28] xxx /r/cpp
+* TODO [#C] [2019-10-16 Wed 08:28] xxx /r/cpp :programming:cpp:
  I've enjoyed [Chandler Carruth's _There Are No Zero-cost Abstractions_](
  https://www.youtube.com/watch?v=rHIkrotSwcc) very much.
 

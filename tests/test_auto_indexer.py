@@ -42,4 +42,5 @@ def test_auto():
 
     [v] = mm[org_link]
     assert v.locator.href.endswith('file.org') # TODO link number or jump to heading?
-    assert "xxx /r/cpp\n I've enjoyed [Chandler Carruth's" in v.context
+    assert "xxx /r/cpp" in v.context
+    assert "I've enjoyed [Chandler Carruth's" in v.context

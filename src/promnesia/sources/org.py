@@ -115,13 +115,19 @@ def extract_from_file(fname: PathIsh) -> Results:
             yield echain(ex, wr)
             continue
 
-        (pn, n) = wr
-        dt = pn.dt
+        (parsed, n) = wr
+        dt = parsed.dt
         assert dt is not None # shouldn't be because of fallback
         for r in iter_urls(n):
             try:
                 # TODO get body recursively? not sure
-                ctx = pn.heading + '\n' + _get_body(n)
+                tags = n.tags
+                if len(tags) == 0:
+                    tagss = ''
+                else:
+                    # TODO not sure... perhaps keep the whole heading intact?
+                    tagss = f'   :{":".join(sorted(tags))}:'
+                ctx = parsed.heading + tagss + '\n' + _get_body(n)
             except Exception as e:
                 yield echain(ex, e)
                 ctx = 'ERROR' # TODO more context?
