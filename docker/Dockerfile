@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir more_itertools pytz sqlalchemy cachew \
 
 ENV PPATH=/usr/src/promnesia:${PPATH}
 VOLUME /data
-EXPOSE 13313
-CMD ["python", "-m", "promnesia", "serve", "--db", "/data/promnesia.sqlite", "--port", "13313"]
+EXPOSE 13131
+CMD ["python", "-m", "promnesia", "serve", "--db", "/data/promnesia.sqlite", "--port", "13131"]
