@@ -2,22 +2,24 @@ version: '3.3'
 
 services:
   server:
+    image: promnesia
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     # Uncomment to enable persisent volumes
-    #volumes:
-    #  - ./data:/data
+    volumes:
+      - ./data:/data
     ports:
       - "13131:13131"
     restart: always
   indexer:
-    container_name: indexer
+    image: promnesia-indexer
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile-indexer
     # Uncomment to enable persisent volumes
     # create config.py inside ./data
     #volumes:
     #  - ./data:/data
-    command: ["python", "-m", "promnesia", "index", "--config", "/data/config.py"]
+    environment:
+      CRONTAB: "* * * * * cd /usr/src/promnesia && python -m promnesia index --config /data/config.py"
