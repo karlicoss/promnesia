@@ -7,8 +7,8 @@ services:
       context: ./
       dockerfile: docker/Dockerfile
     # Uncomment to enable persisent volumes
-    volumes:
-      - ./data:/data
+    #volumes:
+    #  - ./data:/data
     ports:
       - "13131:13131"
     restart: always
