@@ -10,6 +10,7 @@ from typing import List
 
 SYSTEM = platform.system()
 UNSUPPORTED_SYSTEM = RuntimeError(f'Platform {SYSTEM} is not supported yet!')
+NO_SYSTEMD = RuntimeError('systemd not detected, find your own way to start promnesia automatically')
 
 from .. import root
 from .. import server
@@ -95,6 +96,10 @@ def install_launchd(name: str, out: Path, launcher: str, largs: List[str]) -> No
 def install(args) -> None:
     name = args.name
     if SYSTEM == 'Linux':
+        # Check for existence of systemd
+        # https://www.freedesktop.org/software/systemd/man/sd_booted.html
+        if not Path('/run/systemd/system/').exists():
+            raise NO_SYSTEMD
         suf = '.service'
         if Path(name).suffix != suf:
             name = name + suf
