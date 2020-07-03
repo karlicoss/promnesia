@@ -161,7 +161,7 @@ SOURCES = [
 """
         cfgdir.mkdir(parents=True)
         cfg.write_text(stub)
-        logger.info("Created a stub config in %s. Edit it to tune to your linking.", cfg)
+        logger.info("Created a stub config in %s. Edit it to tune to your liking.", cfg)
 
 
 def config_check(args):

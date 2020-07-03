@@ -91,7 +91,7 @@ def _detect_mime_handler() -> str:
     if not exists('editor'):
         warnings.warn('''
         You might want to install https://github.com/karlicoss/open-in-editor
-        So you can jump you your text files straight from the browser
+        So you can jump to your text files straight from the browser
 '''.rstrip())
     else:
         result = 'editor://'

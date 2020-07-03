@@ -221,7 +221,7 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
 
   - [optional] check the config
 
-    First, you can run =promensia config check=, it can be used to quickly troubleshoot typos and similar errors.
+    First, you can run =promnesia config check=, it can be used to quickly troubleshoot typos and similar errors. Note that you may need to install [mypy](https://github.com/python/mypy) for some config checks.
 
     Next, you can use the demo mode: =promnesia demo --config /path/to/config.py=.
 
