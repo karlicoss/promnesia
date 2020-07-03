@@ -19,11 +19,11 @@ from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_u
 @lru_cache(1)
 def _magic():
     import magic # type: ignore
-    return magic.Magic(mime=True)
+    return magic.Magic(flags=magic.MAGIC_MIME_TYPE)
 
 
 def mime(path: PathIsh) -> str:
-    return _magic().from_file(str(path))
+    return _magic().id_filename(str(path))
 
 Ctx = Sequence[str]
 
