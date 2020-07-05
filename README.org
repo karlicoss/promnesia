@@ -361,6 +361,12 @@ Now let's consider some *concrete* examples of different kinds of Visits:
   [[https://en.wiktionary.org/wiki/promnesia][Promnesi]] is coming from Ancient Greek and means "déjà vu".
   Ironically, promnesia project is doing the opposite -- it replaces a vague feeling of seeing a page before with a reliable digital tool.
 
+- Which hotkeys/shortcuts does Promnesia register in my browser?
+
+  Promnesia registers two shortcuts for: activating the extension and marking the already visited links on the current page.
+
+  You can view the shortkey key combinations to press at [chrome://extensions/shortcuts](chrome://extensions/shortcuts) in Chrome and [see here](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) for instructions for Firefox.
+
 * Support
 The best support for me would be if you contribute to this or my other projects. Code, ideas of feedback -- everything is appreciated.
 
