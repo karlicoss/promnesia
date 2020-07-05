@@ -95,6 +95,7 @@ def install_launchd(name: str, out: Path, launcher: str, largs: List[str]) -> No
 
 def install(args) -> None:
     name = args.name
+    # todo use appdirs for config dir detection
     if SYSTEM == 'Linux':
         # Check for existence of systemd
         # https://www.freedesktop.org/software/systemd/man/sd_booted.html
@@ -120,7 +121,13 @@ def install(args) -> None:
         exe = distutils.spawn.find_executable('promnesia'); assert exe is not None
         launcher = exe # older systemd wants absolute paths..
 
-    largs = ['serve', '--db', args.db, '--timezone', args.timezone, '--port', args.port]
+    db = args.db
+    largs = [
+        'serve',
+        *([] if db is None else ['--db', str(db)]),
+        '--timezone', args.timezone,
+        '--port', args.port,
+    ]
 
     out.parent.mkdir(parents=True, exist_ok=True) # sometimes systemd dir doesn't exist
     if SYSTEM == 'Linux':
