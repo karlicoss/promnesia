@@ -3,7 +3,7 @@
 TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[#faq][FAQ]] | [[#support][Support]]
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
-(including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
+(not including mobile in iOS) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
 
 *TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
 This is unlike most modern browsers, where you can only see when you visited the link.
