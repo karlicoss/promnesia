@@ -3,7 +3,7 @@
 TOC: [[#motivation][Motivation]] |  [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[#faq][FAQ]] | [[#support][Support]]
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
-(including mobile!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
+(including Firefox for Android!) which serves as a web surfing copilot, enhancing your browsing history and web exploration experience.
 
 *TLDR*: it lets you explore your browsing history *in context*: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.
 This is unlike most modern browsers, where you can only see when you visited the link.
@@ -160,8 +160,8 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
   
 - extension:
 
-  - [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]
-  - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]] (including mobile)
+  - [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]: desktop version. Unfortunately mobile Chrome doesn't support web extensions.
+  - [[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]: desktop and Android. Unfortunatly, iOS Firefox [[https://developer.mozilla.org/en-US/docs/Mozilla/Firefox_for_iOS#Addons][doesn't support web extensions]].
   - you can also find 'unpacked' versions in [[https://github.com/karlicoss/promnesia/releases][Releases]]
 
     It can be useful because Chrome Web Store releases might take days to approve, but in general the store version if preferrable.
@@ -174,7 +174,16 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
     This is mainly useful for tinkering with the code and writing new modules.
 
   You might also need some extra dependencies. See [[file:doc/SOURCES.org::#extra-dependencies]["Extra dependencies"]] for more info.
-  
+
+  As for supported operating systems:
+
+  - Linux: everything is expected to work as it's what I'm using!
+  - OSX: expected to work, but there might be issues at times (I don't have any macs so working blind here). Appreciate help!
+
+    You might want to run =brew install libmagic= for proper MIME type detection.
+  - Windows: at the moment doesn't work straightaway (I don't have any Windows to test against), there is an [[https://github.com/karlicoss/promnesia/issues/91][open issue]] describing some workarounds.
+  - Android: [[https://github.com/karlicoss/promnesia/issues/114#issuecomment-642757602][allegedly]], possible to run with Termux! But I haven't got to try personally.
+
 * Try it out
 The easies is to try out Promnesia is a demo mode, it can give you a sense of what Promnesia is doing with almost no configuration.
 
