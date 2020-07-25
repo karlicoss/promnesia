@@ -59,6 +59,7 @@ def import_file(p: Union[str, Path], name=None):
 # TODO eh. need to separate stuff for history backups out...
 backup_db = import_file('scripts/browser_history.py')
 populate_db = import_file('scripts/populate-browser-history.py')
+# todo need to migrate test
 
 def assert_got_tzinfo(visits):
     for v in visits:
