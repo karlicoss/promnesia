@@ -20,8 +20,14 @@ def index(p: PathIsh) -> Results:
     dbs = list(sorted(pp.rglob('*.sqlite')))
     # here, we're assuming that inputs are immutable -- hence it's pointless to take the timestamp into the account?
     global _DBS
-    _DBS = dbs[:10] # TODO FIXME
+    _DBS = dbs[:1000] # TODO FIXME
     yield from _index_dbs(_DBS)
+
+# 8.65s user
+# 3.83s user
+
+
+# todo perhaps I need some profiling?
 
 
 def _index_dbs(dbs: List[Path]):
@@ -44,16 +50,17 @@ from cachew import cachew
 
 # right, so it throws 'database is locked' immediately...
 
-CACHED = 5
+_CACHED = 10
 
 
 # todo cachew this?
+# todo not sure if it should cache results or raw browser data instead?
 def some_cached_visits() -> Results:
     # from . import demo
     # yield from demo.index(100)
     emitted: Set = set()
-    for db in _DBS[:CACHED]:
-        yield from _index_db(db, emitted)
+    for db in _DBS[:_CACHED]:
+        yield from _index_db(db, emitted, marker='C')
 
 
 from typing import Optional
@@ -67,23 +74,28 @@ def _index_dbs_2(dbs: List[Path], emitted: Set) -> Results:
     x  = dbs[-1:]
     print(len(xs), len(x))
     #### this will be hidden from us! we won't know which alternative is true
-    if len(xs) == CACHED:
+    if len(xs) == _CACHED:
         xs_iter = some_cached_visits()
     else:
         xs_iter = _index_dbs_2(xs, emitted=emitted)
     ####
+    was_cached = False
     for r in xs_iter:
         # if at this point emitted is empty, we'd have to populate it
-        yield r # todo not sure about exceptions?
         # todo this is extra work, can be determined by the first emission??
-        key = (r.url, r.dt) # todo orig??
-        if key in emitted:
-            continue
-        emitted.add(key)
-    # TODO FIXME keys are inconsistent..
+        if len(emitted) == 0:
+            # if it wasn't cached, emitted would be populated
+            was_cached = True
+        if was_cached:
+            # need to
+            key = (r.url, r.dt) # todo orig??
+            if key in emitted:
+                # hmm, this shouldn't be the case?
+                # alternatively, could abuse it to avoid messing with 'emitted' in _index_db?
+                continue
+            emitted.add(key)
+        yield r # todo not sure about exceptions?
 
-    # yield from _index_dbs_2(xs, emitted=emitted)
-    # todo if emitted is None, means all of them were cached?
     # then, populate it? But need to keep all emitted in memory? ugh.
     # TODO might take too much stack??
     for db in x:
@@ -94,7 +106,7 @@ def _index_dbs_2(dbs: List[Path], emitted: Set) -> Results:
 # although it's still annoying
 # nah, gonna be ridiculous duplication
 
-def _index_db(db: Path, emitted: Set):
+def _index_db(db: Path, emitted: Set, marker='xx'):
     # TODO shit, it takes up quite a lot of memory, like 7 gigs for phone merging
     # for kammerer, also a lot of time to reindex from scratch. it's also not CPU bound? odd.
     logger.info('processing %s', db)
@@ -107,10 +119,10 @@ def _index_db(db: Path, emitted: Set):
     # db = dbs[1] # 656, 697
     total = 0
     new   = 0
+    loc = Loc.file(db) # ??
     with sqlite3.connect(db) as c: # TODO iterate over all of them..
         c.row_factory = sqlite3.Row
         for r in c.execute(f'select {proj} {query}'):
-            # print(r['url'], r['visit_date'])
     # TODO column names should probably be mapped straightaway...
     # although it's tricky, need to handle timestamps etc properly?
     # alternatively, could convert datetimes as sqlite functions?
@@ -122,21 +134,39 @@ def _index_db(db: Path, emitted: Set):
             total += 1
             # yeah, _way_ better this way. seems it would be essential
             # there is also vid/hid/urlid etc, but not sure if we care about them?..
-            key = (url, ts)
-            if key in emitted:
-                continue
-            emitted.add(key)
-            new += 1
+            # TODO compare performance? not sure if it would matter much with caching
+            # i.e. without caching it's shit either way
+            # key = (url, ts)
+            # if key in emitted:
+            #     continue
+            # emitted.add(key)
+            # new += 1
 
             # ok, looks like it's unix epoch
             # https://stackoverflow.com/a/19430099/706389
             dt = datetime.fromtimestamp(int(ts) / 1_000_000, pytz.utc)
             url = unquote(url) # firefox urls are all quoted
-            yield Visit(
+
+            # eh, ok, almost 2x faster if I don't construct Visit first
+            # maybe it's Loc.file that's too slow?
+            # yeah, seems like it, 4.1 s after computing it only once
+            key = (url, dt)
+            if key in emitted:
+                continue
+
+            v = Visit(
                 url=url,
                 dt=dt,
-                locator=Loc.file(db), # fixme
+                locator=loc,
             )
+            yield v
+            # logger.info(marker) # todo get rid of it
+            emitted.add(key)
+            new += 1
+
+            # ok, this is def better
+            # todo how to keep keys compatible?
+
     logger.info('%s: %d/%d new visits', db, new, total)
 
     # todo just yield visits directly? and cache them/make unique
