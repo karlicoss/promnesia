@@ -8,47 +8,49 @@ import pytz
 
 from ..common import PathIsh, Results, Visit, Loc, get_logger, Second
 
+# todo mcachew?
+from cachew import cachew
+from cachew.experimental import enable_exceptions
+enable_exceptions()
 
 logger = get_logger()
 
 
 def index(p: PathIsh, glob='*.sqlite') -> Results:
     pp = Path(p)
+    assert pp.exists() # just in case of broken symlinks
+    #
     # TODO how to properly discover the databases? mime type maybe?
     # TODO ugh, dunno, maybe this really belongs to hpi?? need get_files etc...
-    assert pp.exists() # just in case of broken symlinks
     dbs = list(sorted(pp.rglob(glob)))
     assert len(dbs) > 0, pp
-    yield from _index_dbs(dbs)
+    cname = str('_'.join(pp.parts[1:])) # meh
+    yield from _index_dbs(dbs, cachew_name=cname)
 
 
-def _index_dbs(dbs: List[Path]):
+
+def _index_dbs(dbs: List[Path], cachew_name: str):
     # TODO right... not ideal, need to think how to handle it properly...
     import sys
     sys.setrecursionlimit(2000)
 
+    cpath = Path('/tmp/cachew') / cachew_name # todo mm, not sure
     emitted: Set = set()
-    # for db in dbs:
-    yield from _index_dbs_aux(dbs, emitted=emitted)
-
-
-# todo mcachew?
-from cachew import cachew
-from cachew.experimental import enable_exceptions
-enable_exceptions()
+    # TODO(cachew) hmm, this results in an error? yield from index_cached(cpath, dbs, emitted=emitted)
+    yield from _index_dbs_aux(cpath, dbs, emitted)
 
 
 # todo wow, stack traces are ridiculous here...
-# todo filename  should probably include the source names or something?
-@cachew(hashf=lambda dbs, emitted: dbs)
-def _index_dbs_aux(dbs: List[Path], emitted: Set) -> Results:
+# todo hmm, feels like it should be a class or something?
+@cachew(lambda cp, d, e: cp, hashf=lambda cp, dbs, e: dbs) # , logger=logger)
+def _index_dbs_aux(cache_path: Path, dbs: List[Path], emitted: Set) -> Results:
     if len(dbs) == 0:
         return
 
     xs = dbs[:-1]
     x  = dbs[-1:]
 
-    xs_res = _index_dbs_aux(xs, emitted=emitted)
+    xs_res = _index_dbs_aux(cache_path, xs, emitted)
     xs_was_cached = False
     for r in xs_res:
         # if it was cached, emitted would be empty
