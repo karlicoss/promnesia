@@ -15,15 +15,25 @@ enable_exceptions()
 
 logger = get_logger()
 
+# pip3 install python-magic
+import magic # type: ignore
+mime = magic.Magic(mime=True)
 
-def index(p: PathIsh, glob='*.sqlite') -> Results:
+
+def index(p: PathIsh) -> Results:
     pp = Path(p)
     assert pp.exists() # just in case of broken symlinks
-    #
-    # TODO how to properly discover the databases? mime type maybe?
-    # TODO ugh, dunno, maybe this really belongs to hpi?? need get_files etc...
-    dbs = list(sorted(pp.rglob(glob)))
+
+    # is_file check because it also returns dirs
+    is_db = lambda x: x.is_file() and mime.from_file(str(x)) in ['application/x-sqlite3']
+
+    # todo warn if filtered out too many?
+    # todo wonder how quickly mimes can be computed?
+    # todo ugh, dunno, maybe this really belongs to hpi?? need get_files etc...
+    dbs = [p for p in sorted(pp.rglob('*')) if is_db(p)]
+
     assert len(dbs) > 0, pp
+    logger.info('processing %d databases', len(dbs))
     cname = str('_'.join(pp.parts[1:])) # meh
     yield from _index_dbs(dbs, cachew_name=cname)
 
