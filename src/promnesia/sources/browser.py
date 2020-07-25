@@ -7,6 +7,7 @@ from typing import List, Set
 import pytz
 
 from ..common import PathIsh, Results, Visit, Loc, get_logger, Second
+from .. import config
 
 # todo mcachew?
 from cachew import cachew
@@ -42,9 +43,10 @@ def index(p: PathIsh) -> Results:
 def _index_dbs(dbs: List[Path], cachew_name: str):
     # TODO right... not ideal, need to think how to handle it properly...
     import sys
-    sys.setrecursionlimit(2000)
+    sys.setrecursionlimit(5000)
 
-    cpath = Path('/tmp/cachew') / cachew_name # todo mm, not sure
+    cache_dir = Path(config.get().cache_dir)
+    cpath = cache_dir / cachew_name
     emitted: Set = set()
     # TODO(cachew) hmm, this results in an error? yield from index_cached(cpath, dbs, emitted=emitted)
     yield from _index_dbs_aux(cpath, dbs, emitted)
@@ -86,7 +88,7 @@ def _index_db(db: Path, emitted: Set):
     total = 0
     new   = 0
     loc = Loc.file(db) # todo possibly needs to be optimized -- moving from within the loop considerably speeds everything up
-    with sqlite3.connect(db) as c: # TODO iterate over all of them..
+    with sqlite3.connect(f'file:{db}?immutable=1', uri=True) as c:
         browser = None
         for b in [Chrome, Firefox, FirefoxPhone]:
             try:
@@ -103,15 +105,9 @@ def _index_db(db: Path, emitted: Set):
 
         c.row_factory = sqlite3.Row
         for r in c.execute(f'select {proj} {query}'):
-            # TODO column names should probably be mapped straightaway...
-            # although it's tricky, need to handle timestamps etc properly?
-            # alternatively, could convert datetimes as sqlite functions?
-            # eh. not worth it. e.g. quoting etc
-
             v = browser.row2visit(r, loc)
             total += 1
 
-            # TODO hmm, bring this optimization back.. 37 secs?
             key = (v.url, v.dt)
             # todo how to keep keys compatible?
             if key in emitted:
@@ -190,7 +186,7 @@ class Chrome(Extr):
         durs = row['visit_duration']
 
         dt = chrome_time_to_utc(int(ts))
-        url = unquote(url) # chrome urls are all quoted # TODO not sure if we want it here?
+        url = unquote(url) # chrome urls are all quoted
         dd = int(durs)
         dur: Optional[Second] = None if dd == 0 else dd // 1_000_000
         return Visit(
