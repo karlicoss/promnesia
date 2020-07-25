@@ -30,7 +30,7 @@ def entries(db: Path) -> Optional[int]:
     return int(sqlite(db, 'SELECT COUNT(*) FROM visits', method=check_output).decode('utf8'))
 
 
-Col = Union[str, Tuple[str, Optional[str]]] # tuple is renaming
+Col = str
 ColType = str
 
 
@@ -39,7 +39,7 @@ class Schema(NamedTuple):
     key: Sequence[str]
 
 
-SchemaCheck = Tuple[str, str]
+SchemaCheck = Tuple[str, Union[str, Sequence[str]]] # todo Union: meh
 
 def create(db: Path, table: str, schema: Schema):
     things = []
