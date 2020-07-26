@@ -58,7 +58,6 @@ def import_file(p: Union[str, Path], name=None):
 
 # TODO eh. need to separate stuff for history backups out...
 backup_db = import_file('scripts/browser_history.py')
-populate_db = import_file('scripts/populate-browser-history.py')
 
 def assert_got_tzinfo(visits):
     for v in visits:
@@ -143,24 +142,8 @@ def test_takeout_new_zip(adhoc_config):
     assert_got_tzinfo(visits)
 
 
-# TODO run condition?? and flag to force all
 @skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
-def test_chrome(tmp_path):
-    from promnesia.sources.browser import chrome
-    tdir = Path(tmp_path)
-
-    path = tdir / 'history'
-    populate_db.merge_from('chrome', from_=None, to=path)
-    # TODO hmm, it actually should be from merged db....
-
-    hist = history(W(chrome, path))
-    assert len(hist) > 10 # kinda random sanity check
-
-    assert_got_tzinfo(hist)
-
-
-@skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
-def test_firefox(tmp_path):
+def test_backup_firefox(tmp_path):
     tdir = Path(tmp_path)
     path = backup_db.backup_history('firefox', to=tdir, profile='*release*')
     # shouldn't fail at least

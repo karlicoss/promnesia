@@ -2,7 +2,6 @@ from pathlib import Path
 from subprocess import check_call, run
 from typing import Set, Dict, Optional, Union, Sequence, Tuple
 
-from indexer_test import populate_db
 from common import tdir, under_ci, DATA, GIT_ROOT
 
 import pytest
@@ -135,6 +134,7 @@ def index_local_chrome(tdir: Path):
 OUTPUT_DIR = '{tdir}'
 
 from promnesia.common import Indexer as I
+# TODO FIXME -- fix back
 from promnesia.sources.browser import chrome
 
 chrome_extractor = I(chrome, '{merged}', src='chrome')
