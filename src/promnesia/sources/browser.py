@@ -218,7 +218,7 @@ def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
     )
 
 
-# https://www.forensicswiki.org/wiki/Mozilla_Firefox_3_History_File_Format#moz_historyvisits
+# https://web.archive.org/web/20190730231715/https://www.forensicswiki.org/wiki/Mozilla_Firefox_3_History_File_Format#moz_historyvisits
 class Firefox(Extr):
     detector='moz_meta'
     schema_check=('moz_historyvisits', "id, from_visit, place_id, visit_date, visit_type, session")
