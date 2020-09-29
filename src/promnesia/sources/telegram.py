@@ -24,7 +24,7 @@ def dataset_readonly(db: Path):
     import dataset # type: ignore
     # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
     import sqlite3
-    creator = lambda: sqlite3.connect(f'file:{db}?mode=ro', uri=True)
+    creator = lambda: sqlite3.connect(f'file:{db}?immutable=1', uri=True)
     return dataset.connect('sqlite:///' , engine_kwargs={'creator': creator})
 
 
