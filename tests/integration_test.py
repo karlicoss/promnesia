@@ -21,6 +21,7 @@ def test_example_config(tdir):
     if under_ci():
         # TODO ugh fucking hell I couldn't find a single path that has HTMLs both on macos and ubuntu
         # and using /usr/share/docs locally might index a bit too much
+        # TODO: this should be fixed under windows
         if system == 'Darwin':
             repl = '/usr/share/doc/cups/'
         else:

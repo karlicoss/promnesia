@@ -17,7 +17,8 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
     # TODO this looks pretty horrible as a context name
     # perhaps pass context here since we know it should be github repo?
     tp = Path(get_tmpdir().name) / slugify(repo)
-    check_call(['git', 'clone', repo, tp])
+    # note: https://bugs.python.org/issue33617 , it doesn't like Path here on Windows
+    check_call(['git', 'clone', repo, str(tp)])
 
     def replacer(p: PathIsh, prefix=str(tp), repo=repo) -> str:
         ps = str(p)

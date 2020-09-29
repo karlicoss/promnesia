@@ -144,7 +144,8 @@ def setup_parser(p: argparse.ArgumentParser) -> None:
     elif SYSTEM == 'Darwin':
         dflt = 'com.github.karlicoss.promnesia'
     else:
-        raise UNSUPPORTED_SYSTEM
+        # defensive here because setup_parser is called regardless whether the functionality is used
+        dflt = NotImplemented
 
     p.add_argument('--name', type=str, default=dflt, help='Systemd/launchd service name')
     p.add_argument('--unit-name', type=str, dest='name', help='DEPRECATED, same as --name')
