@@ -33,14 +33,8 @@ jobs:
     # uncomment for SSH debugging
     # - uses: mxschmitt/action-tmate@v2
 
-    - run: scripts/ci/run
-
-    # TODO move to a separate script too?
-    - run: |
-        pip3 install --user .
-        pip3 install --user .[org] # exobrain is mostly org files
-        promnesia demo --port 16789 https://github.com/karlicoss/exobrain & \
-        sleep 10 && curl 'http://localhost:16789/search' --data 'url=github.com'
+    # need bash, otherwise isn't running under Windows? seems to be a powershell thing?
+    - run: bash scripts/ci/run
 
 
   install_and_run_test:
