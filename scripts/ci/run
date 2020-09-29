@@ -27,5 +27,10 @@ if ! [ -z "$CI" ]; then
     fi
 fi
 
-pip3 install --user tox
-tox
+PY_BIN="python3"
+if ! command -v python3 &> /dev/null; then
+    PY_BIN="python"
+fi
+
+"$PY_BIN" -m pip install --user tox
+"$PY_BIN" -m tox
