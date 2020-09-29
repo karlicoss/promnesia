@@ -53,3 +53,18 @@ workflows:
     jobs:
       - end2end_tests
       - install_and_run_test
+
+# version: 2.1 # Use version 2.1 to enable Orb usage.
+
+# orbs:
+#   win: circleci/windows@2.4.0 # The Windows orb give you everything you need to start using the Windows executor.
+
+# jobs:
+#   build: # name of your job
+#     executor: win/default # executor type
+
+#     steps:
+#       # Commands are run in a Windows virtual machine environment
+#       - checkout
+#       - run: Write-Host 'Hello, Windows'
+#       - run: bash scripts/ci/run
