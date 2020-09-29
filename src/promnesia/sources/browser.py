@@ -6,7 +6,7 @@ from typing import List, Set
 
 import pytz
 
-from ..common import PathIsh, Results, Visit, Loc, get_logger, Second
+from ..common import PathIsh, Results, Visit, Loc, get_logger, Second, _magic
 from .. import config
 
 # todo mcachew?
@@ -16,12 +16,9 @@ enable_exceptions()
 
 logger = get_logger()
 
-# pip3 install python-magic
-import magic # type: ignore
-mime = magic.Magic(mime=True)
-
 
 def index(p: PathIsh) -> Results:
+    mime = _magic()
     pp = Path(p)
     assert pp.exists() # just in case of broken symlinks
 
