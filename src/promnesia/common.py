@@ -503,3 +503,11 @@ def python3() -> str:
             # not sure if should throw?
             warnings.warn("Haven't detected 'python3', and 'python -V' results in '{vstr}'. This likely isn't going to work.")
             return py3
+
+
+# make it lazy, otherwise it might crash on module import (e.g. on Windows)
+# ideally would be nice to fix it properly https://github.com/ahupp/python-magic#windows
+@lru_cache(1)
+def _magic():
+    import magic # type: ignore
+    return magic.Magic(mime=True)

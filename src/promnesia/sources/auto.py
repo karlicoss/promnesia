@@ -13,13 +13,7 @@ from functools import lru_cache, wraps
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results
-
-
-@lru_cache(1)
-def _magic():
-    import magic # type: ignore
-    return magic.Magic(mime=True)
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, _magic
 
 
 def mime(path: PathIsh) -> str:
