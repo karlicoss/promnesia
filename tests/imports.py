@@ -4,6 +4,7 @@ import promnesia.sources as pkg
 import importlib
 
 
+# todo: circleci Windows got stuck with no response on these tests... not sure why, debug print didn't help
 def test_imports():
     '''
     Check that we at least have all necessary dependencies. Although it doesn't "really" guarantee anything?

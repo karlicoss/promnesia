@@ -14,7 +14,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, History, make_filter, get_logger, get_tmpdir
-from .common import previsits_to_history, Source, appdirs
+from .common import previsits_to_history, Source, appdirs, python3
 from .dump import dump_histories
 
 
@@ -28,7 +28,7 @@ def _do_index() -> Iterable[Exception]:
     output_dir = cfg.output_dir
     if not output_dir.exists():
         logger.warning("OUTPUT_DIR '%s' didn't exist, creating", output_dir)
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(exist_ok=True, parents=True)
 
     filters = [make_filter(f) for f in cfg.FILTERS]
     for f in filters:
@@ -170,7 +170,7 @@ def config_check(args):
 
     # TODO add this to HPI
     logger.info('Checking syntax...')
-    check_call(['python3', '-m', 'compileall', cfg])
+    check_call([python3(), '-m', 'compileall', cfg])
 
     # todo not sure if should be more defensive than check_call here
     logger.info('Checking type safety...')
@@ -180,7 +180,7 @@ def config_check(args):
         logger.warning("mypy not found, can't use it to check config!")
     else:
         check_call([
-            'python3', '-m', 'mypy',
+            python3(), '-m', 'mypy',
             '--namespace-packages',
             '--color-output', # not sure if works??
             '--pretty',
@@ -191,7 +191,7 @@ def config_check(args):
         ])
 
     logger.info('Checking runtime errors...')
-    check_call(['python3', cfg])
+    check_call([python3(), cfg])
 
 
 

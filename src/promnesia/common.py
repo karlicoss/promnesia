@@ -476,7 +476,30 @@ def appdirs():
 
 
 def default_output_dir() -> Path:
+    # TODO: on Windows, there are two extra subdirectories (<AppAuthor>\<AppName>)
+    # perhaps makes sense to create it here with parents to avoid issues downstream?
     return Path(appdirs().user_data_dir)
 
 # TODO deprecate..
 PreVisit = Visit
+
+
+@lru_cache()
+def python3() -> str:
+    '''
+    Name of the python3 binary
+    '''
+    py3 = 'python3'
+    py  = 'python'
+    import shutil
+    import subprocess
+    if shutil.which(py3):
+        return py3
+    else:
+        vstr = subprocess.check_output([py, '-V']).decode('utf8')
+        if 'Python 3.' in vstr:
+            return py
+        else:
+            # not sure if should throw?
+            warnings.warn("Haven't detected 'python3', and 'python -V' results in '{vstr}'. This likely isn't going to work.")
+            return py3

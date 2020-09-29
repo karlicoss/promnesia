@@ -22,7 +22,7 @@ from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, a
 from sqlalchemy import Column, Table, func # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3
 from .cannon import canonify
 
 _ENV_CONFIG = 'PROMNESIA_CONFIG'
@@ -296,14 +296,14 @@ def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
         }),
     }
     args = [
-        'python3',
+        python3(),
         '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess..
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,
     ]
     logger.info('Running server: %s', args)
-    os.execvpe('python3', args, env)
+    os.execvpe(python3(), args, env)
 
 
 def run(args):

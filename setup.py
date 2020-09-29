@@ -13,6 +13,8 @@ def main():
             'version_scheme': 'python-simplified-semver',
             'local_scheme': 'dirty-tag',
         },
+        # NOTE: there is some issue on circleci windows when running pip3 install --user -e . because of setuptools_scm?
+        # some CERTIFICATE_VERIFY_FAILED stuff. comment this temporary if you're debugging
         setup_requires=['setuptools_scm'],
 
         zip_safe=False,
