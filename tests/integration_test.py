@@ -85,16 +85,17 @@ SOURCES = [indexer]
 
 
 def index_hypothesis(tdir: Path):
-    # TODO meh..
-    # TODO use submodule?
+    # TODO meh.. use submodule?
     hypexport_path = Path(tdir) / 'hypexport'
     check_call([
         'git',
         'clone',
-        # TODO do I need --recursive here?? I guess it's only for fetching new data?
+        '--recursive',
         'https://github.com/karlicoss/hypexport',
         str(hypexport_path),
     ])
+
+    # TODO using 'hypexport' is a legacy way.. need to use virtualenv and install or add to pythonpath
 
     cfg = tdir / 'test_config.py'
     # TODO ok, need to simplify this...
