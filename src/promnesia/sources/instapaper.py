@@ -9,10 +9,10 @@ def index() -> Results:
     logger = get_logger()
 
     for p in ip.pages():
-        bm = p.bookmark # type: ignore[attr-defined]
-        hls = p.highlights # type: ignore[attr-defined]
+        bm = p.bookmark
+        hls = p.highlights
 
-        def visit(**kwargs):
+        def visit(**kwargs) -> Visit:
             return Visit(
                 url=bm.url,
                 **kwargs,
@@ -25,7 +25,7 @@ def index() -> Results:
                 locator=Loc.make(title='instapaper', href=bm.instapaper_link),
             )
         else:
-            for hl in p.highlights: # type: ignore[attr-defined]
+            for hl in p.highlights:
                 cparts = [hl.text]
                 if hl.note is not None:
                     cparts.append('comment: ' + hl.note)
@@ -34,6 +34,3 @@ def index() -> Results:
                     context='\n'.join(cparts),
                     locator=Loc.make(title='instapaper', href=hl.instapaper_link),
                 )
-
-
-# TODO mypy: properly clone repos and typecheck on CI, get rid of attr-defined ignores

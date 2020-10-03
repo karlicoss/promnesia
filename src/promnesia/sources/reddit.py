@@ -42,6 +42,7 @@ def index() -> Results:
 
 
 # support lazy imports..
+# todo hmm, could do similar stuff in HPI?
 import typing
 if typing.TYPE_CHECKING:
     from my.reddit import Submission, Comment, Save, Upvote
