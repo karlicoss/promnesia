@@ -47,10 +47,10 @@ def main():
                  'click',    # confirmations for end2end test (might remove dependency)
             ],
             'linting': [
-                 'pytest',
-                  # TODO remove pylint?
-                 'pylint',
-                 'mypy',
+                'pytest',
+
+                'mypy',
+                'lxml', # for reports
             ],
             **{k[0]: v for k, v in DEPS_SOURCES.items()},
             'all': list(chain.from_iterable(DEPS_SOURCES.values())),

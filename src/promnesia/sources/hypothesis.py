@@ -12,7 +12,6 @@ def index() -> Results:
         if isinstance(h, Exception):
             yield h
             continue
-        # TODO FIXME need to make sure it's typechecked on CI... and also do coverage checks
         hl = h.highlight
         ann = h.annotation
         cparts = []
