@@ -35,7 +35,7 @@ def main():
             'more_itertools',
             'pytz',
             'sqlalchemy', # DB api
-            'cachew>=0.7.0', # caching with type hints
+            'cachew>=0.8.0', # caching with type hints
         ],
         extras_require={
             'testing': [

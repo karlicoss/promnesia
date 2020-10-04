@@ -11,8 +11,6 @@ from .. import config
 
 # todo mcachew?
 from cachew import cachew
-from cachew.experimental import enable_exceptions
-enable_exceptions()
 
 logger = get_logger()
 
@@ -45,13 +43,12 @@ def _index_dbs(dbs: List[Path], cachew_name: str):
     cache_dir = Path(config.get().cache_dir)
     cpath = cache_dir / cachew_name
     emitted: Set = set()
-    # TODO(cachew) hmm, this results in an error? yield from index_cached(cpath, dbs, emitted=emitted)
-    yield from _index_dbs_aux(cpath, dbs, emitted)
+    yield from _index_dbs_aux(cpath, dbs, emitted=emitted)
 
 
 # todo wow, stack traces are ridiculous here...
 # todo hmm, feels like it should be a class or something?
-@cachew(lambda cp, d, e: cp, hashf=lambda cp, dbs, e: dbs) # , logger=logger)
+@cachew(lambda cp, dbs, emitted: cp, depends_on=lambda cp, dbs, emitted: dbs) # , logger=logger)
 def _index_dbs_aux(cache_path: Path, dbs: List[Path], emitted: Set) -> Results:
     if len(dbs) == 0:
         return
@@ -118,9 +115,6 @@ def _index_db(db: Path, emitted: Set):
             # yeah, seems like it, 4.1 s after computing it only once
 
     logger.info('%s: %d/%d new visits', db, new, total)
-
-
-# TODO limit cachew version??
 
 
 Col = str
