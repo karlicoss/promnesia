@@ -53,6 +53,7 @@ class Config(NamedTuple):
 
     @property
     def cache_dir(self) -> Path:
+        # TODO make it optional?
         cd = self.CACHE_DIR
         # TODO maybe do not use cache if it's none?
         assert cd is not None

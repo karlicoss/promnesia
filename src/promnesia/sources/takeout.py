@@ -38,40 +38,11 @@ from .. import config
 
 
 from more_itertools import unique_everseen
-from cachew import mtime_hash, cachew
+from cachew import cachew
 
 
 # TODO use CPath? Could encapsulate a path within an archive *or* within a directory
 TakeoutPath = Path
-
-
-if TYPE_CHECKING:
-    from typing import Callable, TypeVar
-    from typing_extensions import Protocol
-    F = TypeVar('F')
-    class CachemeType(Protocol):
-        def __call__(self, name: str) -> Callable[[F], F]:
-            ...
-    cacheme: CachemeType
-
-
-# TODO should this be HPI responsibility?
-# TODO(cachew) belongs to cachew?
-# pylint: disable=function-redefined
-def cacheme(ident: str): # type: ignore[no-redef]
-    logger = get_logger()
-    # doesn't even need a nontrivial hash function, timestsamp is encoded in name
-    def db_pathf(takeout: TakeoutPath) -> Path:
-        tpath = Path(str(takeout))
-        cname = tpath.name + '_' + ident + '.cache'
-        if config.has(): # TODO eh?
-            cache_dir = Path(config.get().cache_dir)
-        else:
-            # TODO hmm. if using relative path, make it relative to /tmp?
-            logger.warning('Caching in /tmp')
-            cache_dir = Path('/tmp')
-        return cache_dir / cname
-    return cachew(db_pathf, cls=Visit, logger=logger)
 
 
 def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
@@ -95,18 +66,26 @@ def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
             debug=kind,
         )
 
+def _cpath(suffix: str):
+    def fun(takeout: TakeoutPath):
+        cache_dir = config.get().cache_dir
+        # doesn't need a nontrivial hash function, timestsamp is encoded in name
+        return cache_dir / (takeout.name + '_' + suffix + '.cache')
+    return fun
 
-@cacheme('google_activity')
+
+# todo caching should this be HPI responsibility?
+# todo set global cachew logging on init?
+@cachew(cache_path=_cpath('google_activity') , logger=get_logger())
 def read_google_activity(takeout: TakeoutPath) -> Iterable[Visit]:
     return _read_myactivity_html(takeout, 'Chrome/MyActivity.html')
 
-@cacheme('search_activity')
+@cachew(cache_path=_cpath('search_activity') , logger=get_logger())
 def read_search_activity(takeout: TakeoutPath) -> Iterable[Visit]:
     return _read_myactivity_html(takeout, 'Search/MyActivity.html')
 
-
 # TODO add this to tests?
-@cacheme('browser_activity')
+@cachew(cache_path=_cpath('browser_activity'), logger=get_logger())
 def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
     from my.kython.kompress import kexists, kopen
     # not sure if this deserves moving to HPI? it's pretty trivial for now
