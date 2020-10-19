@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 """
 Experimental libarary for normalising domain names and urls to achieve 'canonical' urls for content.
 E.g. 

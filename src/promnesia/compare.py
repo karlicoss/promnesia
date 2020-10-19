@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 # TODO perhaps make it external script?
 import argparse
 from pathlib import Path
