@@ -1,4 +1,4 @@
-#!/usr/bin/python3.6
+#!/usr/bin/python3.9
 __package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
 import os
