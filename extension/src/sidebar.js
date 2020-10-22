@@ -63,15 +63,15 @@ class Sidebar {
         // makes it much easier for settings
         cbody.id = SIDEBAR_ID;
         {
-            const show_dots = cdoc.createElement('button');
-            show_dots.appendChild(cdoc.createTextNode('Mark visited'));
+            const show_dots_button = cdoc.createElement('button');
+            show_dots_button.appendChild(cdoc.createTextNode('Mark visited'));
             // TODO hmm. not sure if defensify is gonna work from here? no access to notifications api?
-            show_dots.addEventListener('click', defensify(async () => {
+            show_dots_button.addEventListener('click', defensify(async () => {
                 await chromeRuntimeSendMessage({method: Methods.MARK_VISITED});
             }, 'mark_visited.onClick'));
             // TODO maybe highlight or just use custom class for that?
-            show_dots.title = "Mark visited links on the current page with dots";
-            cbody.appendChild(show_dots);
+            show_dots_button.title = "Mark visited links on the current page with dots";
+            cbody.appendChild(show_dots_button);
         }
         {
             const searchb = cdoc.createElement('button');
@@ -165,7 +165,7 @@ class Sidebar {
         this.setupFrame(sidebar);
 
         // TODO a bit nasty, but at the moment easiest way to solve it
-        // apparetnly iframe is loading about:blank 
+        // apparently iframe is loading about:blank
 
 
         // TODO perhaps better move it to toggle? although maybe not necessary at all
@@ -260,7 +260,8 @@ function tryHighlight(text: string, idx: number) {
 
 // used dynamically
 // eslint-disable-next-line no-unused-vars
-async function bindError(message: string) {
+// idk why, but first defining the function and doing the assignment later leaves my window.bindError undefined // nope, i dont think this is the problem
+window.bindError = async function bindError(message: string) {
     const opts = await get_options_async();
     const sidebar = new Sidebar(opts);
 
@@ -445,7 +446,7 @@ async function bindSidebarData(response: JsonObject) {
 
 // hmm. otherwise it can't be called from executescript??
 window.bindSidebarData = bindSidebarData;
-window.bindError       = bindError;
+
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 // eslint-disable-next-line no-unused-vars

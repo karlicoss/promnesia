@@ -53,7 +53,7 @@ export class Blacklist {
             return list;
         }
 
-        log('loading %s from %s', name, file);
+        //log('loading %s from %s', name, file);
 
         const domains_url = chrome.runtime.getURL(file);
         // TODO do we really need await here??
