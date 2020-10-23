@@ -246,6 +246,8 @@ def main():
         p.print_help(sys.stderr)
         sys.exit(1)
 
+    get_logger().debug(f'config_file={args.config}')
+
     # TODO maybe, it's better for server to compute intermediate represetnation?
     # the only downside is storage. dunno.
     # worst case -- could use database?

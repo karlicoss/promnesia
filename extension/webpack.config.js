@@ -65,7 +65,7 @@ const commandsExtra = {
 // TODO ugh it's getting messy...
 const action = {
     "default_icon": "images/ic_not_visited_48.png",
-    "default_title": "Was not visited",
+    "default_title": "Show promnesia sidebar",
 };
 
 

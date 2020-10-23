@@ -40,6 +40,7 @@ export function alertError(obj: any) {
 
 export function defensify(pf: (...any) => Promise<any>, name: string): (any) => Promise<any> {
     return (...args) => pf(...args).catch((err) => {
+        console.error(err); //no, the stack is gone
         console.error('%s failed: %o', name, err);
         getOptions().then(opts => {
             if (opts.verbose_errors_on) {

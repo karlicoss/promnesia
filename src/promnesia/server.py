@@ -131,6 +131,12 @@ def search_common(url: str, where):
     url = canonify(url)
     logger.info('normalised url: %s', url)
 
+    result = {
+        'orginal_url'   : original_url,
+        'normalised_url': url,
+        'visits': []
+    }
+
     engine, binder, table = get_stuff()
 
     query = table.select().where(where(table=table, url=url))
@@ -138,7 +144,11 @@ def search_common(url: str, where):
     logger.info('query: %s', query)
 
     with engine.connect() as conn:
-        visits = [binder.from_row(row) for row in conn.execute(query)]
+        try:
+            visits = [binder.from_row(row) for row in conn.execute(query)]
+        except sqlalchemy.exc.OperationalError as e:
+            if e.msg == 'no such table: visits':
+                return result
 
     logger.debug('got %d visits from db', len(visits))
 
@@ -153,11 +163,8 @@ def search_common(url: str, where):
 
     logger.debug('responding with %d visits', len(vlist))
     # TODO respond with normalised result, then frontent could choose how to present children/siblings/whatever?
-    return {
-        'orginal_url'   : original_url,
-        'normalised_url': url,
-        'visits': list(map(as_json, vlist)),
-    }
+    result['visits'] = list(map(as_json, vlist))
+    return result
 
 
 @hug.local()
@@ -297,12 +304,13 @@ def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
     }
     args = [
         python3(),
-        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess..
+        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess.. # what do you mean "already installed"?
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,
     ]
     logger.info('Running server: %s', args)
+    logger.info(f'with env {_ENV_CONFIG}={env[_ENV_CONFIG]}')
     os.execvpe(python3(), args, env)
 
 

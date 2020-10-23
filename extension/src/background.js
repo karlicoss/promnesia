@@ -117,7 +117,8 @@ function getDelayMs(/*url*/) {
     return 10 * 1000;
 }
 
-const LOCAL_TAG = 'local';
+//hmm having a space in a tag shouldn't cause an error but it does
+const LOCAL_TAG = 'this_browser_history';
 
 
 async function getChromeVisits(url: Url): Promise<Visits> {
@@ -205,7 +206,7 @@ function getIconStyle(visits: Result): IconStyle {
 
     const vcount = visits.visits.length;
     if (vcount === 0) {
-        return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: ''};
+        return {icon: 'images/ic_not_visited_48.png', title: 'No data', text: ''};
     }
     const cp = [];
 
@@ -234,7 +235,7 @@ function getIconStyle(visits: Result): IconStyle {
     const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
     if (boring) {
         // TODO not sure if really worth distinguishing..
-        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (local only)`, text: ''};
+        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (${LOCAL_TAG} only)`, text: ''};
     } else {
         return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: ''};
     }
@@ -351,8 +352,9 @@ async function updateState (tab: chrome$Tab) {
             // TODO even compiling this takes 50ms if 10K visits??
             // faster means of communication are going to require
             // so perhaps instead, truncate and suggest to use 'search-like' interface
+            const visits_str = JSON.stringify(visits);
             await chromeTabsExecuteScriptAsync(tabId, {
-                code: `bindSidebarData(${JSON.stringify(visits)})`
+                code: `bindSidebarData(${visits_str})`
             });
         } else {
             console.warn("TODO implement binding visits to popup?");
