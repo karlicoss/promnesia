@@ -313,6 +313,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
     # TODO dispatch org mode here?
     # TODO try/catch?
 
+    pm = None
     if suf not in SMAP:
         pm = mime(pp)
         if pm not in SMAP:
