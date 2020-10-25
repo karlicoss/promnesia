@@ -11,7 +11,7 @@ indexer_1  | FileNotFoundError: [Errno 2] No such file or directory: '/data/inde
 in another terminal:
 
 ```
-cp indexer-config.py.example ../data/indexer-config.py
+cp indexer-config.py.example data/indexer-config.py
 cd data/
 echo "i like https://github.com/karlicoss/promnesia" >> my_notes.txt
 git clone https://github.com/karlicoss/exobrain

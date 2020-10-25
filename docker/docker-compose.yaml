@@ -8,7 +8,7 @@ services:
       dockerfile: docker/Dockerfile
     # Uncomment to enable persisent volumes
     volumes:
-      - data:/data
+      - ./data:/data
     ports:
       - "13131:13131"
     restart: always
@@ -20,6 +20,6 @@ services:
     # Uncomment to enable persisent volumes
     # create indexer-config.py inside ./promnesia-data
     volumes:
-      - data:/data
+      - ./data:/data
     environment:
       CRONTAB: "* * * * * cd /usr/src/promnesia &&  /usr/local/bin/python3.9 -m promnesia index  --config /data/indexer-config.py"
