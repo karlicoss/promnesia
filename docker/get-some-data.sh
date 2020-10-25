@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+cd data/
+mkdir source1
+cd source1
+echo "i like https://github.com/karlicoss/promnesia" >> my_notes.txt
+git clone https://github.com/karlicoss/exobrain
