@@ -150,7 +150,10 @@ export class Binder {
                 link.title = 'Jump to the context';
                 // $FlowFixMe
                 link.href = loc.href;
+
+                // this seems to work only for the "editor://" protocol. avoids opening a new tab for the "editor://" link. http links then require a middle-click, which is undesirable..
                 link.target= '_self';
+
                 tchild(link, loc.title);
             }
 
