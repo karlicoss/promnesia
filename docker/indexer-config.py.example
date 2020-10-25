@@ -21,4 +21,6 @@ SOURCES = [
 ]
 
 OUTPUT_DIR = '/data/'
-MIME_HANDLER = ''editor:///home/koom/promnesia/'
+
+import os
+MIME_HANDLER = 'editor://' + os.path.dirname(os.path.realpath(__file__))

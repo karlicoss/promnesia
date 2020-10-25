@@ -112,3 +112,5 @@ tmp/
 extension/dist
 
 geckodriver.log
+
+.idea
