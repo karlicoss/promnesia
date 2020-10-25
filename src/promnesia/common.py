@@ -40,7 +40,14 @@ class Loc(NamedTuple):
         ll = '' if line is None else f':{line}'
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
-        handler = _detect_mime_handler()
+
+        # todo: for docker, handler has to be overridable by config:
+        #if get_config().MIME_HANDLER:
+        #   handler = get_config().MIME_HANDLER
+        if True:
+            handler =  'editor:///home/koom/promnesia/'
+        else:
+            handler = _detect_mime_handler()
 
         rel = Path(path)
         if relative_to is not None:

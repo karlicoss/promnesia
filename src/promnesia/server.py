@@ -91,9 +91,11 @@ def as_json(v: DbVisit) -> Dict:
     }
 
 
+def get_db_path_nothrow() -> Path:
+    return get_config().db
+
 def get_db_path() -> Path:
-    config = get_config()
-    db = config.db
+    db = get_db_path_nothrow()
     assert db.exists(), db
     return db
 
@@ -175,6 +177,8 @@ def status():
     '''
     # TODO hug stats?
 
+    db_status_msg = 'ok'
+
     db_path: Optional[str]
     try:
         db_path = str(get_db_path())
@@ -182,6 +186,7 @@ def status():
     except Exception as e:
         # TODO not sure how to properly communicate the error to frontend?
         db_path = None
+        db_status_msg = f'Database file not found (or unreadable): "{get_db_path_nothrow()}". Run indexer.'
 
     version: Optional[str]
     try:
@@ -192,6 +197,7 @@ def status():
     return {
         'db'     : db_path,
         'version': version,
+        'db_status_msg': db_status_msg,
     }
 # TODO might be good to include the frontend version in the requests?
 

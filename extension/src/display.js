@@ -150,6 +150,7 @@ export class Binder {
                 link.title = 'Jump to the context';
                 // $FlowFixMe
                 link.href = loc.href;
+                link.target= '_self';
                 tchild(link, loc.title);
             }
 

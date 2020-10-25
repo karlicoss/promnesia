@@ -12,6 +12,13 @@ SOURCES = [
         auto.index,
         # just some arbitrary directory with html files
         '/usr/share/doc/python3/html/faq',
+    ),
+    Source(
+        auto.index,
+        # just some arbitrary directory with html files
         '/data/html_files',
     )
 ]
+
+OUTPUT_DIR = '/data/'
+MIME_HANDLER = ''editor:///home/koom/promnesia/'

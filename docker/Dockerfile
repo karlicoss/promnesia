@@ -7,8 +7,7 @@ WORKDIR /usr/src/promnesia
 COPY src/ .
 COPY setup.py /usr/src/
 
-#RUN python3 /usr/src/setup.py
-#LookupError: setuptools-scm was unable to detect version for '/usr/src/promnesia'.
+#RUN python3 /usr/src/setup.py #LookupError: setuptools-scm was unable to detect version for '/usr/src/promnesia'.
 
 RUN pip3.9 install --no-cache-dir more_itertools pytz sqlalchemy cachew \
                 appdirs urlextract python-magic \
