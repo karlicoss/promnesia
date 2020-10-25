@@ -24,4 +24,4 @@ SOURCES = [
 OUTPUT_DIR = '/data/'
 
 import os
-MIME_HANDLER = 'editor://' + os.path.dirname(os.path.realpath(__file__))
+MIME_HANDLER = 'editor://' + os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '../')

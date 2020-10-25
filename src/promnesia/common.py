@@ -45,7 +45,7 @@ class Loc(NamedTuple):
         #if get_config().MIME_HANDLER:
         #   handler = get_config().MIME_HANDLER
         if True:
-            handler =  'editor:///home/koom/promnesia/'
+            handler =  'editor:///home/koom/promnesia/docker/'
         else:
             handler = _detect_mime_handler()
 
