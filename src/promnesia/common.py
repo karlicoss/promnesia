@@ -41,7 +41,7 @@ class Loc(NamedTuple):
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
 
-        # todo: for docker, handler has to be overridable by config:
+        # todo: handler has to be overridable by config. This is needed for docker, but also for a "as a service" install, where the sources would be available on some remote webserver
         #if get_config().MIME_HANDLER:
         #   handler = get_config().MIME_HANDLER
         if True:
