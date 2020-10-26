@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-cd data/
+cd "$(dirname "$0")"
+
+cd user_data/
 mkdir source1
 cd source1
 echo "i like https://github.com/karlicoss/promnesia." >> my_notes.txt
