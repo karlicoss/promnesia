@@ -153,6 +153,10 @@ export class Binder {
 
                 // _self seems to "work" only for the "editor://" protocol. Avoids opening a new tab for "editor://" links. Nttp links then require a middle-click, which is undesirable. With normal click, they would not open at all.
                 // testing on firefox mobile would be useful.
+                // note that on some pages, like https://news.ycombinator.com/, this (clicking on a _self editor:// link) results in: Content Security Policy: The page’s settings blocked the loading of a resource at editor:///home/koom/promnesia/docker//user_data/source1/notes/g1:12 (“frame-src”).
+                // but middle-click still works.
+                // on others (https://www.reddit.com/), it just works.
+                // so, if we should do this at all is a question.
                 if (link.href.startsWith('editor://'))
                     link.target= '_self';
 

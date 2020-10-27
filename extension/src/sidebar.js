@@ -260,7 +260,7 @@ function tryHighlight(text: string, idx: number) {
 
 // used dynamically
 // eslint-disable-next-line no-unused-vars
-bindError = async function bindError(message: string) {
+async function bindError(message: string) {
     const opts = await get_options_async();
     const sidebar = new Sidebar(opts);
 

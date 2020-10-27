@@ -1,4 +1,4 @@
-FROM python
+FROM python:3
 
 RUN mkdir /user_data \
     mkdir /usr/src/promnisia

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 __package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
 import os
@@ -310,7 +310,7 @@ def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
     }
     args = [
         python3(),
-        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess.. 
+        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess..
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,

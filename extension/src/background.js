@@ -247,7 +247,7 @@ async function updateState (tab: chrome$Tab) {
     const tabId = unwrap(tab.id);
 
     if (ignored(url)) {
-        //linfo("ignoring %s", url);
+        linfo("ignoring %s", url);
         return;
     }
 
@@ -352,9 +352,8 @@ async function updateState (tab: chrome$Tab) {
             // TODO even compiling this takes 50ms if 10K visits??
             // faster means of communication are going to require
             // so perhaps instead, truncate and suggest to use 'search-like' interface
-            const visits_str = JSON.stringify(visits);
             await chromeTabsExecuteScriptAsync(tabId, {
-                code: `bindSidebarData(${visits_str})`
+                code: `bindSidebarData(${JSON.stringify(visits)})`
             });
         } else {
             console.warn("TODO implement binding visits to popup?");
@@ -519,7 +518,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
     delete tab.favIconUrl;
     delete info.favIconUrl;
     //
-    //ldebug("onUpdated %s %s", tab, info);
+    ldebug("onUpdated %s %s", tab, info);
 
     const url = tab.url;
     if (!url) { /* on Vivaldi I've seen url being "" */
@@ -529,7 +528,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 
     // TODO make logging optional? not sure if there are any downsides
     if (ignored(url)) {
-        //linfo('onUpdated: ignored explicitly %s', url);
+        linfo('onUpdated: ignored explicitly %s', url);
         return;
     }
     // right, tab updated triggered quite a lot, e.g. when the title is blinking
