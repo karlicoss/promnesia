@@ -150,7 +150,11 @@ def search_common(url: str, where):
             visits = [binder.from_row(row) for row in conn.execute(query)]
         except sqlalchemy.exc.OperationalError as e:
             if e.msg == 'no such table: visits':
-                return result
+                logger.warn('you may have to run indexer first!')
+                #result['visits'] = [{an error with a msg}] # TODO
+                #return result
+            raise
+
 
     logger.debug('got %d visits from db', len(visits))
 
