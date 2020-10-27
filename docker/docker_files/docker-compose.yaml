@@ -4,11 +4,11 @@ services:
   server:
     image: promnesia
     build:
-      context: ../
-      dockerfile: docker/Dockerfile
+      context: ../../
+      dockerfile: docker/docker_files/Dockerfile
     # Uncomment to enable persisent volumes
     volumes:
-      - ./data:/data
+      - ../user_data:/data
     ports:
       - "13131:13131"
     restart: always
@@ -17,12 +17,12 @@ services:
       - server
     image: promnesia-indexer
     build:
-      context: ../
-      dockerfile: docker/Dockerfile-indexer
+      context: ../../
+      dockerfile: docker/docker_files/Dockerfile-indexer
     # Uncomment to enable persisent volumes
     # create indexer-config.py inside ./promnesia-data
     volumes:
-      - ./data:/data
+      - ../user_data:/data
     environment:
       # run once every ten minutes
-      CRONTAB: "0-59/10 * * * * cd /usr/src/promnesia &&  /usr/local/bin/python -m promnesia index  --config /data/indexer-config.py"
+      CRONTAB: "0-59/5 * * * * cd /usr/src/promnesia &&  /usr/local/bin/python -m promnesia index  --config /data/indexer-config.py"

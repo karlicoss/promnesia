@@ -1,1 +1,6 @@
-docker/data
+/docker/user_data
+/.mypy_cache
+/venv
+.git
+.idea
+
