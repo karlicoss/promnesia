@@ -151,7 +151,7 @@ export class Binder {
                 // $FlowFixMe
                 link.href = loc.href;
 
-                // this seems to work only for the "editor://" protocol. avoids opening a new tab for the "editor://" link. http links then require a middle-click, which is undesirable..
+                // _self seems to "work" only for the "editor://" protocol. Avoids opening a new tab for "editor://" links. Nttp links then require a middle-click, which is undesirable. With normal click, they would not open at all.
                 if (link.href.startsWith('editor://'))
                     link.target= '_self';
 
