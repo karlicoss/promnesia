@@ -310,7 +310,7 @@ def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
     }
     args = [
         python3(),
-        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess.. # what do you mean "already installed"?
+        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess.. 
         *(['--silent'] if quiet else []),
         '-p', port,
         '-f', __file__,
