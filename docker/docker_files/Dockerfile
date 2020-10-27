@@ -1,6 +1,6 @@
 FROM python
 
-RUN mkdir /data \
+RUN mkdir /user_data \
     mkdir /usr/src/promnisia
 
 WORKDIR /usr/src/promnesia
@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir more_itertools pytz sqlalchemy cachew \
                 logzero HPI beautifulsoup4 lxml mistletoe orgparse dataset
 
 ENV PPATH=/usr/src/promnesia:${PPATH}
-VOLUME /data
+VOLUME /user_data
 
 EXPOSE 13131
-CMD ["python", "-m", "promnesia", "serve", "--db", "/data/promnesia.sqlite", "--port", "13131"]
+CMD ["python", "-m", "promnesia", "serve", "--db", "/user_data/promnesia.sqlite", "--port", "13131"]

@@ -13,7 +13,7 @@ See https://github.com/karlicoss/promnesia#setup for more information
 SOURCES = [
     Source(
         auto.index,
-        '/data/source1/',
+        '/user_data/source1/',
     ),
 #    Source(
 #        auto.index,
@@ -21,7 +21,7 @@ SOURCES = [
 #    )
 ]
 
-OUTPUT_DIR = '/data/'
+OUTPUT_DIR = '/user_data/'
 
 import os
 MIME_HANDLER = 'editor://' + os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '../')
