@@ -43,13 +43,13 @@ class Loc(NamedTuple):
 
         # todo: handler has to be overridable by config. This is needed for docker, but also for a "as a service" install, where the sources would be available on some remote webserver
         # maybe it should be treated as a format string, so that {line} may be a part of the result or not.
-        # for local usage, editor:///file:line works, but if the txt file is only avaiable through http, the breaks.
+        # for local usage, editor:///file:line works, but if the txt file is only avaiable through http, it breaks.
         #if get_config().MIME_HANDLER:
         #   handler = get_config().MIME_HANDLER
-        if True:
-            handler =  'editor:///home/koom/promnesia/docker/'
-        else:
-            handler = _detect_mime_handler()
+        #if True:
+        #    handler =  'editor:///home/koom/promnesia/docker/'
+        #else:
+        handler = _detect_mime_handler()
 
         rel = Path(path)
         if relative_to is not None:

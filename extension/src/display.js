@@ -157,8 +157,8 @@ export class Binder {
                 // but middle-click still works.
                 // on others (https://www.reddit.com/), it just works.
                 // so, if we should do this at all is a question.
-                if (link.href.startsWith('editor://'))
-                    link.target= '_self';
+                //if (link.href.startsWith('editor://'))
+                //    link.target= '_self';
 
                 tchild(link, loc.title);
             }

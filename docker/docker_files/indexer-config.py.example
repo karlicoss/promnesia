@@ -23,5 +23,6 @@ SOURCES = [
 
 OUTPUT_DIR = '/user_data/'
 
-import os
-MIME_HANDLER = 'editor://' + os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '../')
+# this is not supported yet. also, it should probably be named something else than MIME_HANDLER.
+#import os
+#MIME_HANDLER = 'editor://' + os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '../')
