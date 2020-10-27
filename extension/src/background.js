@@ -329,7 +329,7 @@ async function updateState (tab: chrome$Tab) {
     if (visits instanceof Error) {
         // TODO share code with the Visits branch
         await chromeTabsExecuteScriptAsync(tabId, {
-            code: `window.bindError("${visits.message}")`
+            code: `bindError("${visits.message}")`
         });
     } else if (visits instanceof Visits) {
         // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?

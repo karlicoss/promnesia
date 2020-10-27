@@ -152,6 +152,7 @@ export class Binder {
                 link.href = loc.href;
 
                 // _self seems to "work" only for the "editor://" protocol. Avoids opening a new tab for "editor://" links. Nttp links then require a middle-click, which is undesirable. With normal click, they would not open at all.
+                // testing on firefox mobile would be useful.
                 if (link.href.startsWith('editor://'))
                     link.target= '_self';
 

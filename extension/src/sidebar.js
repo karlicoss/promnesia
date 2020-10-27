@@ -260,8 +260,7 @@ function tryHighlight(text: string, idx: number) {
 
 // used dynamically
 // eslint-disable-next-line no-unused-vars
-// idk why, but first defining the function and doing the assignment later leaves my window.bindError undefined // nope, i dont think this is the problem
-window.bindError = async function bindError(message: string) {
+bindError = async function bindError(message: string) {
     const opts = await get_options_async();
     const sidebar = new Sidebar(opts);
 
@@ -446,6 +445,7 @@ async function bindSidebarData(response: JsonObject) {
 
 // hmm. otherwise it can't be called from executescript??
 window.bindSidebarData = bindSidebarData;
+window.bindError = bindError;
 
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
