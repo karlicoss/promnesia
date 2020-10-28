@@ -7,8 +7,7 @@ from datetime import timedelta, datetime
 from pathlib import Path
 import logging
 from functools import lru_cache
-from typing import Collection, List, NamedTuple, Dict, Optional
-
+from typing import Collection, List, NamedTuple, Dict, Optional, Any
 
 from cachew import NTBinder
 
@@ -18,7 +17,7 @@ from pytz.tzinfo import BaseTzInfo # type: ignore
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_ # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc # type: ignore
 from sqlalchemy import Column, Table, func # type: ignore
 
 
@@ -133,10 +132,12 @@ def search_common(url: str, where):
     url = canonify(url)
     logger.info('normalised url: %s', url)
 
+    visits0: List[Any] = []
+
     result = {
         'orginal_url'   : original_url,
         'normalised_url': url,
-        'visits': []
+        'visits': visits0
     }
 
     engine, binder, table = get_stuff()
@@ -148,17 +149,16 @@ def search_common(url: str, where):
     with engine.connect() as conn:
         try:
             visits = [binder.from_row(row) for row in conn.execute(query)]
-        except sqlalchemy.exc.OperationalError as e:
+        except exc.OperationalError as e:
             if e.msg == 'no such table: visits':
                 logger.warn('you may have to run indexer first!')
                 #result['visits'] = [{an error with a msg}] # TODO
                 #return result
             raise
 
-
     logger.debug('got %d visits from db', len(visits))
 
-    vlist = []
+    vlist: List[DbVisit] = []
     for vis in visits:
         dt = vis.dt
         if dt.tzinfo is None:

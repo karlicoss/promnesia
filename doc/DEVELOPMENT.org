@@ -17,7 +17,7 @@ I'm in the process of putting up better developer's documentation, but you shoul
    :         --publish # [optional], release to the Chrome Web Store/Mozilla addons
 
    You'll find the result in =dist/=. After that, you can load it in your browser and develop.
-   For firefox, note that mozilla intentionally complicates this in several ways. On android, only firefox nightly will let you install arbitrary extensions. On desktop, you have a choice between running nightly, re-installing your unpacked extension after every firefox restart, or setting up signing through web-ext. For a quick start, on desktop, chrome is therefore recommended (and is the author's primary browser, i believe?). On mobile, firefox nightly is your only option (?).
+   For firefox, note that mozilla intentionally complicates this in several ways. On android, only firefox nightly will let you install arbitrary extensions. On desktop, you have a choice between running nightly, re-installing your unpacked extension after every firefox restart, or setting up signing through web-ext. For a quick start into the extension development, on desktop, chrome is therefore recommended (and is the author's primary browser, i believe?). On mobile, firefox nightly is your only option (?).
 
 * Run end-to-end tests
 

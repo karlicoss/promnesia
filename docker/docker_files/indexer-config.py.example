@@ -1,14 +1,7 @@
 from promnesia import Source
 from promnesia.sources import auto
 
-'''
-List of sources to use
-
-You can specify your own, add more sources, etc.
-See https://github.com/karlicoss/promnesia#setup for more information
-'''
-
-# we should probably have separate docker volumes for sources and for config/db
+# todo: we should probably have separate docker volumes for sources and for config/db
 
 SOURCES = [
     Source(

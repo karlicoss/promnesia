@@ -22,7 +22,7 @@ class Config(NamedTuple):
     #
     # NOTE: INDEXERS is deprecated, use SOURCES instead
     INDEXERS: List = []
-    MIME_HANDLER: Optional[str] = None
+    #MIME_HANDLER: Optional[str] = None # TODO
     @property
     def sources(self) -> Iterable[Res[Source]]:
         idx = self.INDEXERS

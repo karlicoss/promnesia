@@ -118,7 +118,8 @@ function getDelayMs(/*url*/) {
 }
 
 //hmm having a space in a tag shouldn't cause an error but it does
-const LOCAL_TAG = 'this_browser_history';
+//
+const LOCAL_TAG = 'local';
 
 
 async function getChromeVisits(url: Url): Promise<Visits> {
@@ -167,8 +168,6 @@ export async function getVisits(url: Url): Promise<Result> {
     // it's gona be a mess though..
     const backendRes: Visits | Error = await getBackendVisits(url)
           .catch((err: Error) => err);
-
-    //console.log('backendRes');
     //console.log(backendRes);
 
     if (backendRes instanceof Error) {
@@ -265,7 +264,7 @@ async function updateState (tab: chrome$Tab) {
     // not sure how to detect it? tab doesn't have any interesting attributes
     // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
     // TODO in this case, could set browser action to open a new tab (i.e. search) or something?
-    await defensify(inject, 'sidebar injection for tabId:' + tabId + ' url: ' + url)();
+    await defensify(inject, 'sidebar injection for tabId: ${tabId} url: ${url}')();
     // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
 
     const visits = await getVisits(url);
