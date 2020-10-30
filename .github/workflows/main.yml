@@ -5,6 +5,8 @@ on:
   push:
     branches: '*'
     tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
+  # TODO not sure if need 'pull_request'??
+  workflow_dispatch: # needed to trigger manually
 
 env:
   # not sure if tests should detect GITHUB_WORKFLOW instead??
