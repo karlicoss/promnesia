@@ -92,7 +92,7 @@ async function queryBackendCommon<R>(params, endp: string): Promise<R> {
         // right, fetch API doesn't reject on HTTP error status...
         const ok = response.ok;
         if (!ok) {
-            throw response.statusText; // TODO...
+            throw Error(response.statusText + ' (' + response.status + ')'); // TODO...
         }
         return response.json();
     });
@@ -117,6 +117,8 @@ function getDelayMs(/*url*/) {
     return 10 * 1000;
 }
 
+//hmm having a space in a tag shouldn't cause an error but it does
+//
 const LOCAL_TAG = 'local';
 
 
@@ -166,7 +168,10 @@ export async function getVisits(url: Url): Promise<Result> {
     // it's gona be a mess though..
     const backendRes: Visits | Error = await getBackendVisits(url)
           .catch((err: Error) => err);
+    //console.log(backendRes);
+
     if (backendRes instanceof Error) {
+        console.log('backend server request error:', backendRes);
         return backendRes;
     }
 
@@ -200,7 +205,7 @@ function getIconStyle(visits: Result): IconStyle {
 
     const vcount = visits.visits.length;
     if (vcount === 0) {
-        return {icon: 'images/ic_not_visited_48.png', title: 'Not visited', text: ''};
+        return {icon: 'images/ic_not_visited_48.png', title: 'No data', text: ''};
     }
     const cp = [];
 
@@ -229,7 +234,7 @@ function getIconStyle(visits: Result): IconStyle {
     const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
     if (boring) {
         // TODO not sure if really worth distinguishing..
-        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (local only)`, text: ''};
+        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (${LOCAL_TAG} only)`, text: ''};
     } else {
         return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: ''};
     }
@@ -255,11 +260,11 @@ async function updateState (tab: chrome$Tab) {
           .then(() => chromeTabsInsertCSS(tabId, {code: opts.position_css}));
 
 
-    // NOTE: if the page is unreachable, we can't inject stuf in it
+    // NOTE: if the page is unreachable, we can't inject stuff in it
     // not sure how to detect it? tab doesn't have any interesting attributes
     // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
     // TODO in this case, could set browser action to open a new tab (i.e. search) or something?
-    await defensify(inject, 'sidebar injection')();
+    await defensify(inject, 'sidebar injection for tabId: ${tabId} url: ${url}')();
     // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
 
     const visits = await getVisits(url);
@@ -458,7 +463,7 @@ function isSpecialProtocol(url: string): boolean {
 
 function ignored(url: string): boolean {
     if ([
-        'https://www.google.com/_/chrome/newtab?ie=UTF-8', // ugh, not sure how to dix that properly
+        'https://www.google.com/_/chrome/newtab?ie=UTF-8', // ugh, not sure how to fix that properly
         'about:blank', // not sure why about:blank is loading like 5 times.. but this seems to fix it
     ].includes(url)) {
         return true;
@@ -665,7 +670,7 @@ export async function injectSidebar(tab: chrome$Tab) {
     const tid = unwrap(tab.id);
     if (ignored(url)) {
         // TODO tab notification?
-        notify(`${url} can't be handled`);
+        notify(`${url} is an ignored URL`);
         return;
     }
     const blacklist = await Blacklist_get();
@@ -693,7 +698,7 @@ const onCommandCallback = defensify(async cmd => {
     } else if (cmd === COMMAND_SEARCH) {
         await handleOpenSearch();
     } else {
-        // TODO throw?
+        // TODO throw? // yea probably
         lerror("unexpected command %s", cmd);
     }
 }, 'onCommand');
@@ -782,7 +787,7 @@ function initBackground() {
         if (android) {
             return;
         }
-       
+
         //  $FlowFixMe // err, complains at Promise but nevertheless works
         chrome.commands.onCommand.addListener(onCommandCallback);
 
@@ -802,7 +807,7 @@ function initBackground() {
             'contexts' : ['page', 'browser_action'],
             'title'    : "Search in browsing history",
         })
-       
+
         //  $FlowFixMe // err, complains at Promise but nevertheless works
         chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
     })
@@ -822,7 +827,6 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
     console.log("onmessage %o %o", info, sender);
     const aurl = sender.tab == null ? null : sender.tab.url;
 
-    console.info("Registering background page callbacks %s", aurl);
     if (backgroundInitialised) {
         console.debug("background already initialised");
         return;
@@ -833,6 +837,9 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
         lwarn("Suppressing special background page %s", aurl);
         return;
     }
+
+    console.info("Registering background page callbacks in tab %s", aurl);
+
     /* TODO not sure if ok or not to await? it shouldn't be blocking right? */
     initBackground();
 });

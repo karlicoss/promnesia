@@ -7,8 +7,7 @@ from datetime import timedelta, datetime
 from pathlib import Path
 import logging
 from functools import lru_cache
-from typing import Collection, List, NamedTuple, Dict, Optional
-
+from typing import Collection, List, NamedTuple, Dict, Optional, Any
 
 from cachew import NTBinder
 
@@ -18,7 +17,7 @@ from pytz.tzinfo import BaseTzInfo # type: ignore
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_ # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc # type: ignore
 from sqlalchemy import Column, Table, func # type: ignore
 
 
@@ -91,9 +90,11 @@ def as_json(v: DbVisit) -> Dict:
     }
 
 
+def get_db_path_nothrow() -> Path:
+    return get_config().db
+
 def get_db_path() -> Path:
-    config = get_config()
-    db = config.db
+    db = get_db_path_nothrow()
     assert db.exists(), db
     return db
 
@@ -131,6 +132,14 @@ def search_common(url: str, where):
     url = canonify(url)
     logger.info('normalised url: %s', url)
 
+    visits0: List[Any] = []
+
+    result = {
+        'orginal_url'   : original_url,
+        'normalised_url': url,
+        'visits': visits0
+    }
+
     engine, binder, table = get_stuff()
 
     query = table.select().where(where(table=table, url=url))
@@ -138,11 +147,18 @@ def search_common(url: str, where):
     logger.info('query: %s', query)
 
     with engine.connect() as conn:
-        visits = [binder.from_row(row) for row in conn.execute(query)]
+        try:
+            visits = [binder.from_row(row) for row in conn.execute(query)]
+        except exc.OperationalError as e:
+            if e.msg == 'no such table: visits':
+                logger.warn('you may have to run indexer first!')
+                #result['visits'] = [{an error with a msg}] # TODO
+                #return result
+            raise
 
     logger.debug('got %d visits from db', len(visits))
 
-    vlist = []
+    vlist: List[DbVisit] = []
     for vis in visits:
         dt = vis.dt
         if dt.tzinfo is None:
@@ -153,11 +169,8 @@ def search_common(url: str, where):
 
     logger.debug('responding with %d visits', len(vlist))
     # TODO respond with normalised result, then frontent could choose how to present children/siblings/whatever?
-    return {
-        'orginal_url'   : original_url,
-        'normalised_url': url,
-        'visits': list(map(as_json, vlist)),
-    }
+    result['visits'] = list(map(as_json, vlist))
+    return result
 
 
 @hug.local()
@@ -168,6 +181,8 @@ def status():
     '''
     # TODO hug stats?
 
+    db_status_msg = 'ok'
+
     db_path: Optional[str]
     try:
         db_path = str(get_db_path())
@@ -175,6 +190,7 @@ def status():
     except Exception as e:
         # TODO not sure how to properly communicate the error to frontend?
         db_path = None
+        db_status_msg = f'Database file not found (or unreadable): "{get_db_path_nothrow()}". Run indexer.'
 
     version: Optional[str]
     try:
@@ -185,6 +201,7 @@ def status():
     return {
         'db'     : db_path,
         'version': version,
+        'db_status_msg': db_status_msg,
     }
 # TODO might be good to include the frontend version in the requests?
 
@@ -303,6 +320,7 @@ def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
         '-f', __file__,
     ]
     logger.info('Running server: %s', args)
+    logger.info(f'with env {_ENV_CONFIG}={env[_ENV_CONFIG]}')
     os.execvpe(python3(), args, env)
 
 

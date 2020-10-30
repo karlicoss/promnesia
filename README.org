@@ -169,6 +169,7 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
 - backend
 
   - simplest: install from [[https://pypi.org/project/promnesia][PyPi]]: =pip3 install --user promnesia=
+    - install optional dependencies with: =pip3 install --user bs4 lxml mistletoe logzero=
   - alternatively: you can clone this repository and run it as ~scripts/promnesia~
 
     This is mainly useful for tinkering with the code and writing new modules.

@@ -212,6 +212,8 @@ SMAP = {
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
 IGNORE = [
+    '.idea',
+    'venv',
     '.git',
     '.mypy_cache',
     '.pytest_cache',
@@ -230,6 +232,7 @@ IGNORE = [
 Replacer = Optional[Callable[[str], str]]
 
 def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Results:
+
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
@@ -259,6 +262,7 @@ class Options(NamedTuple):
 # TODO eh. might be good to use find or fdfind to speed it up...
 def _index(path: Path, opts: Options) -> Results:
     logger = get_logger()
+
     pp = path # ugh, for historic reasons..
 
     if pp.name in IGNORE:
@@ -268,17 +272,19 @@ def _index(path: Path, opts: Options) -> Results:
         logger.debug('ignoring %s: user ignore rules', pp)
         return
 
-    if pp.is_dir():
-        paths = list(pp.glob('*')) # meh
-        for p in paths:
-            yield from _index(p, opts=opts)
-        return
-
     if pp.is_symlink():
         if opts.follow:
             yield from _index(pp.resolve(), opts=opts)
         else:
             logger.debug('ignoring symlink %s', pp)
+        return
+
+    logger.debug('auto._index: %s', pp)
+
+    if pp.is_dir():
+        paths = list(pp.glob('*')) # meh
+        for p in paths:
+            yield from _index(p, opts=opts)
         return
 
     try:
@@ -307,10 +313,11 @@ def _index_file(pp: Path, opts: Options) -> Results:
     # TODO dispatch org mode here?
     # TODO try/catch?
 
+    pm = None
     if suf not in SMAP:
         pm = mime(pp)
         if pm not in SMAP:
-            yield RuntimeError(f"Unexpected file extension: {pp}, {pm}")
+            yield RuntimeError(f"Unexpected file type: {pp}, {pm}")
             return
         else:
             ip = SMAP.get(pm, None)
@@ -318,10 +325,11 @@ def _index_file(pp: Path, opts: Options) -> Results:
     else:
         ip = SMAP.get(suf, None)
     if ip is None:
-        # TODO only log once?
-        logger.debug('file type suppressed: %s', pp)
+        # TODO only log once? # hmm..
+        logger.debug('no extractor available for: "%s", suffix: "%s", pm:"%s"', pp, suf, pm)
         return
 
+    logger.debug('using indexer: %s', ip.__name__)
     indexer: Union[Urls, Results] = ip(pp) # type: ignore
     # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 

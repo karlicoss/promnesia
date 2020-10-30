@@ -1,0 +1,27 @@
+version: '3.3'
+
+services:
+  server:
+    image: promnesia
+    build:
+      context: ../../
+      dockerfile: docker/docker_files/Dockerfile
+    # Uncomment to enable persisent volumes
+    volumes:
+      - ../user_data:/user_data
+    ports:
+      - "13131:13131"
+    restart: always
+  indexer:
+    depends_on:
+      - server
+    image: promnesia-indexer
+    build:
+      context: ../../
+      dockerfile: docker/docker_files/Dockerfile-indexer
+    # Uncomment to enable persisent volumes
+    volumes:
+      - ../user_data:/user_data
+    environment:
+      # run once every ten minutes
+      CRONTAB: "0-59/1 * * * * cd /usr/src/promnesia &&  /usr/local/bin/python -m promnesia index  --config /user_data/indexer-config.py"

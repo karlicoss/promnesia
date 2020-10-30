@@ -1,0 +1,21 @@
+from promnesia import Source
+from promnesia.sources import auto
+
+# todo: we should probably have separate docker volumes for sources and for config/db
+
+SOURCES = [
+    Source(
+        auto.index,
+        '/user_data/source1/',
+    ),
+#    Source(
+#        auto.index,
+#        '/source2/',
+#    )
+]
+
+OUTPUT_DIR = '/user_data/'
+
+# this is not supported yet. also, it should probably be named something else than MIME_HANDLER.
+#import os
+#MIME_HANDLER = 'editor://' + os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '../')

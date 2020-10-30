@@ -40,6 +40,15 @@ class Loc(NamedTuple):
         ll = '' if line is None else f':{line}'
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
+
+        # todo: handler has to be overridable by config. This is needed for docker, but also for a "as a service" install, where the sources would be available on some remote webserver
+        # maybe it should be treated as a format string, so that {line} may be a part of the result or not.
+        # for local usage, editor:///file:line works, but if the txt file is only avaiable through http, it breaks.
+        #if get_config().MIME_HANDLER:
+        #   handler = get_config().MIME_HANDLER
+        #if True:
+        #    handler =  'editor:///home/koom/promnesia/docker/'
+        #else:
         handler = _detect_mime_handler()
 
         rel = Path(path)
