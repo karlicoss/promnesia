@@ -85,6 +85,7 @@ DEPS_SOURCES = {
         'HPI', # pypi version
         # 'HPI @ git+https://github.com/karlicoss/hpi.git',   # uncomment to test against github version (useful for one-off CI run)
         # 'HPI @ git+file:///DUMMY/path/to/local/hpi@branch', # uncomment to test against version on the disc
+        # note: sometimes you need to use file://DUMMY?? wtf?..
     ],
     ('html'    , 'dependencies for sources.html'    ): [
         'beautifulsoup4', # extracting links from the page
@@ -94,7 +95,7 @@ DEPS_SOURCES = {
         'mistletoe',
     ],
     ('org'     , 'dependencies for sources.org'     ): [
-        'orgparse',
+        'orgparse>=0.2.0',
     ],
     ('telegram', 'dependencies for sources.telegram'): [
         'dataset',

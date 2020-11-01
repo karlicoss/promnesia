@@ -41,7 +41,7 @@ def test_auto():
     }.issubset(mm.keys())
 
     [v] = mm[org_link]
-    assert v.locator.title == 'orgs/file.org'
-    assert v.locator.href.endswith('file.org') # TODO link number or jump to heading?
+    assert v.locator.title == 'orgs/file.org:14'
+    assert v.locator.href.endswith('file.org:14')
     assert "xxx /r/cpp" in v.context
     assert "I've enjoyed [Chandler Carruth's" in v.context

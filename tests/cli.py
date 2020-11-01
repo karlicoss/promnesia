@@ -34,6 +34,6 @@ def test_demo() -> None:
         vis = res['visits']
         assert len(vis) > 50, vis
         mds  = [x for x in vis if x['locator']['title'] == 'content/posts/citations-example-toml.md']
-        orgs = [x for x in vis if x['locator']['title'] == 'content-org/single-posts/empty_tag.org' ]
+        orgs = [x for x in vis if x['locator']['title'].startswith('content-org/single-posts/empty_tag.org')]
         assert len(mds ) == 1
         assert len(orgs) == 1
