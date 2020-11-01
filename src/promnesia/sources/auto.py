@@ -83,18 +83,27 @@ def _plaintext(path: Path) -> Results:
 # TODO could pass fallback reason to the results as well?
 def fallback(ex):
     """Falls back to plaintext in case of issues"""
+
+    fallback_active: Dict[Any, bool] = {}
     @wraps(ex)
     def wrapped(path: Path):
-        try:
-            it = ex(path)
-            # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
-            yield from it
-        except ModuleNotFoundError as me:
-            logger = get_logger()
-            logger.exception(me)
-            # TODO maybe check first? That way could sync it with the dependencies too
-            logger.warning('%s not found, so falling back to plaintext! "pip3 install --user %s" for better support!', me.name, me.name)
-            yield me
+        nonlocal fallback_active
+        do_fallback = fallback_active.get(ex, False)
+
+        if not do_fallback:
+            try:
+                it = ex(path)
+                # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
+                yield from it
+            except ModuleNotFoundError as me:
+                logger = get_logger()
+                logger.exception(me)
+                logger.warn('%s not found, falling back to plaintext! "pip3 install --user %s" for better support!', me.name, me.name)
+                yield me
+
+                fallback_active[ex] = True
+                do_fallback = True
+        if do_fallback:
             yield from _plaintext(path)
     return wrapped
 
