@@ -37,7 +37,7 @@ class Loc(NamedTuple):
 
     @classmethod
     def file(cls, path: PathIsh, line: Optional[int]=None, relative_to: Optional[Path]=None):
-        ll = '' if line is None else f':{line}'
+        lstr = '' if line is None else f':{line}'
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
 
@@ -57,11 +57,11 @@ class Loc(NamedTuple):
                 # making it relative is a bit nicer for display
                 rel = rel.relative_to(relative_to)
             except Exception as e:
-                pass # TODO log?
-        loc = f'{rel}{ll}'
+                pass # todo log/warn?
+        loc = f'{rel}{lstr}'
         return cls.make(
             title=loc,
-            href=f'{handler}{loc}'
+            href=f'{handler}{path}{lstr}'
         )
 
     # TODO need some uniform way of string conversion

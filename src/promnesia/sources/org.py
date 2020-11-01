@@ -1,18 +1,18 @@
 from datetime import datetime
 import re
-from typing import Iterable, List, Set, Optional, Iterator, Union, Tuple, NamedTuple
+from typing import Iterable, List, Set, Optional, Iterator, Tuple, NamedTuple, cast
 from pathlib import Path
 
 
-from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, extract_urls, PathIsh
+from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, extract_urls, PathIsh, Res
 
 
-import orgparse # type: ignore
-from orgparse.date import gene_timestamp_regex, OrgDate # type: ignore
-from orgparse.node import OrgNode # type: ignore
+import orgparse
+from orgparse.date import gene_timestamp_regex, OrgDate
+from orgparse.node import OrgNode
 
 
-rgx = re.compile(gene_timestamp_regex(brtype='inactive'), re.VERBOSE)
+CREATED_RGX = re.compile(gene_timestamp_regex(brtype='inactive'), re.VERBOSE)
 
 
 # TODO should be include child note contents??
@@ -27,20 +27,22 @@ class Parsed(NamedTuple):
     dt: Optional[datetime]
     heading: str
 
+
 def _parse_node(n: OrgNode) -> Parsed:
     if n.is_root():
         return Parsed(dt=None, heading='')
 
     heading = n.get_heading('raw')
-    pp = n.properties or {}
-    createds = pp.get('CREATED', None)
+    pp = n.properties
+    createds = cast(Optional[str], pp.get('CREATED', None))
     if createds is None:
         # TODO replace with 'match', but need to strip off priority etc first?
         # see _parse_heading in orgparse
-        m = rgx.search(heading)
+        # todo maybe use n.get_timestamps(inactive=True, point=True)? only concern is that it's searching in the body as well?
+        m = CREATED_RGX.search(heading)
         if m is not None:
             createds = m.group(0) # could be None
-            # TODO a bit hacky..
+            # todo a bit hacky..
             heading = heading.replace(createds + ' ', '')
     if createds is not None:
         [odt] = OrgDate.list_from_str(createds)
@@ -51,18 +53,12 @@ def _parse_node(n: OrgNode) -> Parsed:
 
 
 def _get_heading(n: OrgNode):
-    return '' if n.is_root() else n.get_heading(format='raw') # TODO convert links to html?
+    # todo not sure if it's really that useful to distinguish root and non-root...
+    # maybe have a mode that returns uniform entries, and just relies on the convention
+    return '' if n.is_root() else n.get_heading(format='raw')
 
 
-# TODO maybe line by line? or restrict length? not sure..
-def _get_body(n: OrgNode):
-    if n.is_root():
-        return '\n'.join(n._lines)
-    else:
-        return n.get_body(format='raw')
-
-
-def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Union[Tuple[Parsed, OrgNode], Exception]]:
+def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Res[Tuple[Parsed, OrgNode]]]:
     try:
         parsed = _parse_node(node)
     except Exception as e:
@@ -78,8 +74,9 @@ def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Union[Tuple[Parsed, Or
         yield from walk_node(node=c, dt=dt)
 
 
-def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
+def iter_urls(n: OrgNode) -> Iterator[Res[Url]]:
     logger = get_logger()
+    # todo not sure if it can fail? but for now, paranoid just in case
     try:
         heading = _get_heading(n)
     except Exception as e:
@@ -89,7 +86,7 @@ def iter_urls(n: OrgNode) -> Iterator[Union[Url, Exception]]:
         yield from extract_urls(heading, syntax='org')
 
     try:
-        content = _get_body(n)
+        content = n.get_body(format='raw')
     except Exception as e:
         logger.exception(e)
         yield e
@@ -102,8 +99,7 @@ def extract_from_file(fname: PathIsh) -> Results:
     Note that org-mode doesn't keep timezone, so we don't really have choice but make it tz-agnostic
     """
     path = Path(fname)
-    o = orgparse.loads(path.read_text())
-    # meh. but maybe ok to start with?
+    o = orgparse.load(path)
     root = o.root
 
     fallback_dt = datetime.fromtimestamp(path.stat().st_mtime)
@@ -115,19 +111,16 @@ def extract_from_file(fname: PathIsh) -> Results:
             yield echain(ex, wr)
             continue
 
-        (parsed, n) = wr
+        (parsed, node) = wr
         dt = parsed.dt
         assert dt is not None # shouldn't be because of fallback
-        for r in iter_urls(n):
+        for r in iter_urls(node):
+            # TODO get body recursively? not sure
             try:
-                # TODO get body recursively? not sure
-                tags = n.tags
-                if len(tags) == 0:
-                    tagss = ''
-                else:
-                    # TODO not sure... perhaps keep the whole heading intact?
-                    tagss = f'   :{":".join(sorted(tags))}:'
-                ctx = parsed.heading + tagss + '\n' + _get_body(n)
+                # maybe use a similar technique as in exercise parser? e.g. descent until we mee a candidate that worth a separate context?
+                tagss = '' if len(node.tags) == 0 else f'   :{":".join(sorted(node.tags))}:'
+                # TODO not sure... perhaps keep the whole heading intact? unclear how to handle file tags though
+                ctx = parsed.heading + tagss + '\n' + node.get_body(format='raw')
             except Exception as e:
                 yield echain(ex, e)
                 ctx = 'ERROR' # TODO more context?
@@ -136,7 +129,7 @@ def extract_from_file(fname: PathIsh) -> Results:
                 yield Visit(
                     url=r,
                     dt=dt,
-                    locator=Loc.file(fname), # TODO line number
+                    locator=Loc.file(fname, line=node.linenumber),
                     context=ctx,
                 )
             else: # error
