@@ -6,7 +6,7 @@ on:
     branches: '*'
     tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
   # TODO not sure if need 'pull_request'??
-  workflow_dispatch: # needed to trigger manually
+  workflow_dispatch: # needed to trigger workflows manually
 
 env:
   # not sure if tests should detect GITHUB_WORKFLOW instead??
@@ -22,7 +22,8 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - run: echo "::add-path::$HOME/.local/bin"
+    # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
+    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - uses: actions/setup-python@v1
       with:
@@ -33,10 +34,15 @@ jobs:
         submodules: recursive
    
     # uncomment for SSH debugging
-    # - uses: mxschmitt/action-tmate@v2
+    # - uses: mxschmitt/action-tmate@v3
 
     # need bash, otherwise isn't running under Windows? seems to be a powershell thing?
     - run: bash scripts/ci/run
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: .coverage.mypy_${{ matrix.platform }}_${{ matrix.python-version }}
+        path: .coverage.mypy/
 
 
   install_and_run_test:
@@ -61,7 +67,8 @@ jobs:
     needs: [build, install_and_run_test]
 
     steps:
-    - run: echo "::add-path::$HOME/.local/bin"
+    # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
+    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - uses: actions/setup-python@v1
       with:
@@ -105,7 +112,6 @@ jobs:
       with:
         name: 'promnesia-chrome-latest.zip'
         path: 'extension/dist/chrome/web-ext-artifacts/*.zip'
-
 
     - uses: actions/upload-artifact@v2
       with:
