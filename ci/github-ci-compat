@@ -11,6 +11,7 @@ fi
 
 # ugh. bionic image is on py3.6 by default..
 sudo apt -y install python3.7 python3.7-dev
+sudo python3.7 -m pip install -U setuptools pip # ugh. otherwise find_namespace_packages is missing
 
 # meh
 sudo ln -sfT $(which python3.7) /usr/bin/python3

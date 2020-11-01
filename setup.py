@@ -1,12 +1,11 @@
 # see https://github.com/karlicoss/pymplate for up-to-date reference
 from itertools import chain
 
-from setuptools import setup, find_packages # type: ignore
+from setuptools import setup, find_namespace_packages # type: ignore
 
 def main():
-    pkgs = find_packages('src')
-    # [pkg] = pkgs
-    pkg = 'promnesia' # eh, find some subpackages too?
+    pkgs = find_namespace_packages('src')
+    pkg = min(pkgs)
     setup(
         name=pkg,
         use_scm_version={
@@ -50,7 +49,7 @@ def main():
                 'pytest',
 
                 'mypy',
-                'lxml', # for reports
+                'lxml', # for coverage reports
             ],
             **{k[0]: v for k, v in DEPS_SOURCES.items()},
             'all': list(chain.from_iterable(DEPS_SOURCES.values())),
