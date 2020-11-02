@@ -36,6 +36,7 @@ def setup_logger(logger: logging.Logger, level: Level) -> None:
             datefmt=None, # pass None to prevent logzero from messing with date format
         )
         logzero.setup_logger(logger.name, level=level, formatter=formatter)
+    logger.propagate = False
 
 
 class LazyLogger(logging.Logger):
@@ -66,3 +67,33 @@ def test():
 
 if __name__ == '__main__':
     test()
+
+
+# TODO just copy the whole thing from HPI and keep them both kinda synced
+
+
+# todo also save full log in a file?
+class CollapseDebugHandler(logging.StreamHandler):
+    '''
+    Collapses subsequent debug log lines and redraws on the same line.
+    Hopefully this gives both a sense of progress and doesn't clutter the terminal as much?
+    '''
+    last = False
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            cur = record.levelno == logging.DEBUG and '\n' not in msg
+            if cur:
+                if self.last:
+                    self.stream.write('\033[K' + '\r') # clear line + return carriage
+            else:
+                if self.last:
+                    self.stream.write('\n') # clean up after the last debug line
+            self.last = cur
+            # ugh. the 120 characters thing is meh. dunno I guess ultimately need curses for that
+            # TODO also would be cool to have a terminal post-processor? kinda like tail but aware of logging keyworkds (INFO/DEBUG/etc)
+            self.stream.write(msg + ' ' * max(0, 120 - len(msg)) + ('' if cur else '\n'))
+            self.flush()
+        except:
+            self.handleError(record)

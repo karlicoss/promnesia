@@ -20,6 +20,7 @@ from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_u
 from ..py37 import nullcontext
 
 
+# TODO: ugh. this causes warnings to be repeated multiple times... need to reuse the pool or something..
 def use_cores() -> Optional[int]:
     # somewhat experimental.. later need to think how to use it proprely
     # most likely needs to be some sort of pipeline thing?
