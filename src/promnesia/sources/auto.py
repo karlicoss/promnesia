@@ -4,8 +4,11 @@
 """
 
 import csv
+from concurrent.futures import ProcessPoolExecutor as Pool
 from datetime import datetime
+import itertools
 import json
+import os
 from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Iterable, Callable, Any, Dict
 from fnmatch import fnmatch
 from pathlib import Path
@@ -14,6 +17,19 @@ from functools import lru_cache, wraps
 import pytz
 
 from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, _magic
+from ..py37 import nullcontext
+
+
+def use_cores() -> Optional[int]:
+    # somewhat experimental.. later need to think how to use it proprely
+    # most likely needs to be some sort of pipeline thing?
+    cs = os.environ.get('PROMNESIA_CORES', None)
+    if cs is None:
+        return None
+    try:
+        return int(cs)
+    except ValueError: # any other value means 'use all
+        return 0
 
 
 def mime(path: PathIsh) -> str:
@@ -74,7 +90,6 @@ def _json(path: Path) -> Urls:
 def _plaintext(path: Path) -> Results:
     from . import shellcmd
     from .plaintext import extract_from_path
-    logger = get_logger()
     # TODO eh? shellcmd?
     yield from shellcmd.index(extract_from_path(path))
 
@@ -268,36 +283,50 @@ class Options(NamedTuple):
     root: Optional[Path]=None
 
 
+def _index_aux(path: Path, opts: Options):
+    # just a helper for the concurrent version (the generator isn't picklable)
+    return list(_index(path, opts))
+
+
 # TODO eh. might be good to use find or fdfind to speed it up...
 def _index(path: Path, opts: Options) -> Results:
     logger = get_logger()
 
-    pp = path # ugh, for historic reasons..
-
-    if pp.name in IGNORE:
-        logger.debug('ignoring %s: default ignore rules', pp)
+    if path.name in IGNORE:
+        logger.debug('ignoring %s: default ignore rules', path)
         return
-    if any(fnmatch(str(pp), o) for o in opts.ignored):
-        logger.debug('ignoring %s: user ignore rules', pp)
+    if any(fnmatch(str(path), o) for o in opts.ignored):
+        logger.debug('ignoring %s: user ignore rules', path)
         return
 
-    if pp.is_symlink():
+    if path.is_symlink():
         if opts.follow:
-            yield from _index(pp.resolve(), opts=opts)
+            yield from _index(path.resolve(), opts=opts)
         else:
-            logger.debug('ignoring symlink %s', pp)
+            logger.debug('ignoring symlink %s', path)
         return
 
-    logger.debug('auto._index: %s', pp)
+    logger.debug('auto._index: %s', path)
 
-    if pp.is_dir():
-        paths = list(pp.glob('*')) # meh
-        for p in paths:
-            yield from _index(p, opts=opts)
+    if path.is_dir():
+        paths = path.glob('*') # meh
+        # not the best place to use multiprocessing, but for now OK
+        cores = use_cores()
+        if cores is None: # do not use
+            ctx = nullcontext()
+            mapper = map
+        else:
+            workers = None if cores == 0 else cores
+            ctx = Pool(workers) # type: ignore
+            mapper = ctx.map # type: ignore
+        with ctx:
+            for r in mapper(_index_aux, paths, itertools.repeat(opts)):
+                yield from r
         return
 
+    # otherwise it's a regular file
     try:
-        yield from _index_file(pp, opts=opts)
+        yield from _index_file(path, opts=opts)
     except Exception as e:
         # quite likely due to unavoidable race conditions
         yield e

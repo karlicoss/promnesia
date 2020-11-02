@@ -120,3 +120,9 @@ def fromisoformat(date_string, cls=datetime):
         time_components = [0, 0, 0, 0, None]
 
     return cls(*(date_components + time_components))
+
+
+from contextlib import contextmanager
+@contextmanager
+def nullcontext():
+    yield
