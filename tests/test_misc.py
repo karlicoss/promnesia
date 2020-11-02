@@ -25,3 +25,17 @@ Hey, I recently implemented a new extension for that [addons.mozilla.org](https:
         'https://addons.mozilla.org/en-US/firefox/addon/org-grasp-for-org-capture/',
         'https://github.com/karlicoss/grasp',
     }
+
+
+# just random links to test multiline/whitespace behaviour
+def test_extract_3() -> None:
+    lines = '''
+python.org/one.html ?? https://python.org/two.html some extra text
+
+    whatever.org
+    '''
+    assert set(extract_urls(lines, syntax='org')) == {
+        'python.org/one.html',
+        'https://python.org/two.html',
+        'whatever.org',
+    }
