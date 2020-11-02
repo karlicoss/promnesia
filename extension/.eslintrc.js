@@ -35,7 +35,6 @@ module.exports = {
         "indent": "off",
         "comma-dangle": "off",
         "no-console": "off",
+        "flowtype/space-before-type-colon": "off",
     }
-    // https://github.com/gajus/eslint-plugin-flowtype
-    // TODO use flow?
 };
