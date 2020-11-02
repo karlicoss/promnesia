@@ -32,7 +32,7 @@ _ENV_CONFIG = 'PROMNESIA_CONFIG'
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
 def get_logger():
-    logger = logging.getLogger('promnesia')
+    logger = logging.getLogger('promnesia.server')
     setup_logger(logger, level=logging.DEBUG)
     return logger
 

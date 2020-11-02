@@ -181,7 +181,7 @@ def make_filter(thing) -> Filter:
 
 
 def get_logger() -> logging.Logger:
-    return logging.getLogger("promnesia")
+    return logging.getLogger('promnesia')
 
 
 # TODO need to get rid of this.. just some legacy stuf...
