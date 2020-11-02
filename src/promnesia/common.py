@@ -297,6 +297,7 @@ def _get_extractor(syntax: Syntax):
     u = URLExtract()
     # https://github.com/lipoja/URLExtract/issues/13
     if syntax in {'org', 'orgmode', 'org-mode'}: # TODO remove hardcoding..
+        # handle org-mode links properly..
         u._stop_chars_right |= {'[', ']'}
         u._stop_chars_left  |= {'[', ']'}
     elif syntax in {'md', 'markdown'}:
@@ -306,7 +307,7 @@ def _get_extractor(syntax: Syntax):
     return u
 
 
-def sanitize(url: str) -> str:
+def _sanitize(url: str) -> str:
     # TODO not sure it's a really good idea.. but seems easiest now
     # TODO have whitelisted urls that allow trailing parens??
     url = url.strip(',.…\\')
@@ -315,35 +316,18 @@ def sanitize(url: str) -> str:
         url = url.strip(')')
     return url
 
-# TODO sort just in case? not sure..
-def _extract_line_urls(*, s: str, syntax: Syntax) -> List[str]:
-    # TODO unit test for escaped urls.. or should it be in normalise instead?
-    if len(s.strip()) == 0:
-        return [] # optimize just in case..
 
-    # TODO special handling for org links
-
-    # TODO fuck. doesn't look like it's handling multiple urls in same line well...
-    # ("python.org/one.html python.org/two.html",
-    # hopefully ok... I guess if there are spaces in url we are fucked anyway..
+def iter_urls(s: str, *, syntax: Syntax='') -> Iterable[Url]:
     extractor = _get_extractor(syntax=syntax)
-    urls: List[str] = []
-    for x in s.split():
-        urls.extend(extractor.find_urls(x))
-
-    return [sanitize(u) for u in urls]
+    # note: it also has get_indices, might be usefull
+    for u in extractor.gen_urls(s):
+        yield _sanitize(u)
 
 
-def _extract_urls(*, s: str, syntax: Syntax) -> Iterable[Url]:
-    for line in s.splitlines():
-        yield from _extract_line_urls(s=line, syntax=syntax)
+def extract_urls(s: str, *, syntax: Syntax='') -> List[Url]:
+    return list(iter_urls(s=s, syntax=syntax))
 
 
-def extract_urls(s: str, syntax: Syntax='') -> List[Url]:
-    return list(_extract_urls(s=s, syntax=syntax))
-
-
-# TODO maybe belongs to HPI?
 def from_epoch(ts: int) -> datetime:
     return datetime.fromtimestamp(ts, tz=pytz.utc)
 

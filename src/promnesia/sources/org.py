@@ -4,7 +4,7 @@ from typing import Iterable, List, Set, Optional, Iterator, Tuple, NamedTuple, c
 from pathlib import Path
 
 
-from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, extract_urls, PathIsh, Res
+from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, iter_urls, PathIsh, Res
 
 
 import orgparse
@@ -74,7 +74,7 @@ def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Res[Tuple[Parsed, OrgN
         yield from walk_node(node=c, dt=dt)
 
 
-def iter_urls(n: OrgNode) -> Iterator[Res[Url]]:
+def iter_org_urls(n: OrgNode) -> Iterator[Res[Url]]:
     logger = get_logger()
     # todo not sure if it can fail? but for now, paranoid just in case
     try:
@@ -83,7 +83,7 @@ def iter_urls(n: OrgNode) -> Iterator[Res[Url]]:
         logger.exception(e)
         yield e
     else:
-        yield from extract_urls(heading, syntax='org')
+        yield from iter_urls(heading, syntax='org')
 
     try:
         content = n.get_body(format='raw')
@@ -91,7 +91,7 @@ def iter_urls(n: OrgNode) -> Iterator[Res[Url]]:
         logger.exception(e)
         yield e
     else:
-        yield from extract_urls(content, syntax='org')
+        yield from iter_urls(content, syntax='org')
 
 
 def extract_from_file(fname: PathIsh) -> Results:
@@ -114,7 +114,7 @@ def extract_from_file(fname: PathIsh) -> Results:
         (parsed, node) = wr
         dt = parsed.dt
         assert dt is not None # shouldn't be because of fallback
-        for r in iter_urls(node):
+        for r in iter_org_urls(node):
             # TODO get body recursively? not sure
             try:
                 # maybe use a similar technique as in exercise parser? e.g. descent until we mee a candidate that worth a separate context?
