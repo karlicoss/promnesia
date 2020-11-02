@@ -183,7 +183,8 @@ def make_filter(thing) -> Filter:
 def get_logger() -> logging.Logger:
     return logging.getLogger("promnesia")
 
-# TODO do i really need to inherit this??
+
+# TODO need to get rid of this.. just some legacy stuf...
 class History(Sized):
     # TODO I guess instead filter on DbVisit making site?
     FILTERS: List[Filter] = [
@@ -245,6 +246,7 @@ class History(Sized):
 
         res = DbVisit.make(v, src=self.src)
         if isinstance(res, CanonifyException):
+            # todo need to be a warning, so it's only happening once on a specific url
             self.logger.error('error while canonnifying %s... ignoring', v)
             self.logger.exception(res)
             return None
