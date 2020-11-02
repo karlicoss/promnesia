@@ -192,31 +192,34 @@ async function toggleSidebar() {
 window.toggleSidebar = toggleSidebar;
 
 
+function _sanitize(text: string): string {
+    /* cleanup to make matches more robust */
+    // eslint-disable-next-line no-useless-escape
+    return text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,'')
+               .replace(/\s\s+/g, ' ')
+               .trim();
+}
+
 function findText(elem: Node, text: string): ?Node {
-    let res = null;
-    // TODO need to match or something..
-    // TODO not sure if better to go bottom up?
-    if (elem.textContent.includes(text)) {
-        res = elem;
-    }
-    const children = elem.childNodes;
-    if (children == null) {
-        return res;
-    }
+    // start with the most specific element to highlight
+    const children = elem.childNodes || []
     for (let x of children) {
-        let cr = findText(x, text);
+        let cr = findText(x, text)
         if (cr != null) {
-            return cr;
+            return cr
         }
     }
-    return res;
+    if (_sanitize(elem.textContent).includes(text)) {
+        return elem
+    }
+    return null
 }
 
 // TODO not very effecient; replace with something existing (Hypothesis??)
 function _highlight(text: string, idx: number) {
     for (const line of text.split('\n')) {
         // TODO filter too short strings? or maybe only pick the longest one?
-        const found = findText(unwrap(doc.body), line);
+        const found = findText(unwrap(doc.body), _sanitize(line));
         if (found == null) {
             console.debug('No match found for %s', line);
             continue;
@@ -248,7 +251,7 @@ function _highlight(text: string, idx: number) {
     }
 }
 
-function tryHighlight(text: string, idx: number) {
+async function tryHighlight(text: string, idx: number) {
     // TODO sidebar could also display if highlight matched or if it's "orphaned"
     // TODO use tag color for background?
     try {
@@ -367,6 +370,7 @@ async function bindSidebarData(response: JsonObject) {
         const relative = v.normalised_url != response.normalised_url;
 
         if (!relative && opts.highlight_on) {
+            // TODO ugh. why is it blocking here (judging by the log) even though it's async??
             tryHighlight(ctx, idx1);
         }
 
