@@ -21,23 +21,6 @@ export function unwrap<T>(x: ?T): T {
 }
 
 
-const date_formatter =
-    new Intl.DateTimeFormat(
-        'en-GB', {
-            day   : 'numeric',
-            month : 'short',
-            year  : 'numeric',
-            hour  : 'numeric',
-            minute: 'numeric',
-        });
-
-// manual formatting is like 3x faster... but don't think this is the ultimate bottleneck.
-// UGH there are no decent custom time format functions in JS..
-export function format_dt(dt: Date): string {
-    const dts = date_formatter.format(dt);
-    return dts.replace(',', '');
-}
-
 export function format_duration(seconds: Second): string {
     let s = seconds;
     if (s < 60) {
@@ -79,10 +62,6 @@ export class Visit {
         this.context = context;
         this.locator = locator;
         this.duration = duration;
-    }
-
-    repr(): string {
-        return format_dt(this.time)  + " " + this.tags.toString();
     }
 }
 

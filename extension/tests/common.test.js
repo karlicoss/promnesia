@@ -1,10 +1,16 @@
-import {format_dt, format_duration} from '../src/common.js';
+import {_fmt} from '../src/display.js'
 
-// https://jestjs.io/docs/en/using-matchers
-test('formats date', () => {
-    const dd = new Date(Date.UTC(2018, 11, 1, 10, 15, 0));
-    expect(format_dt(dd)).toMatch(/1 Dec 2018 10:15/);
-});
+test('formats visit date/time', () => {
+    // NOTE: under Node env there might not be necesary locales (e.g. if you're running in Docker)
+    // can check with: Intl.DateTimeFormat('en-GB').resolvedOptions().locale
+    // e.g. it might resolve to incmplete locale like 'en'
+    const dd = new Date('05 Jun 2020 05:58:00') // deliberately no timezone, it's pointless without the backend anyway
+    const [ds, ts] = _fmt(dd)
+    expect(ds).toBe('5 Jun 2020')
+    expect(ts).toBe('05:58')
+})
+
+import {format_duration} from '../src/common.js'
 
 test('formats duration', () => {
     expect(format_duration(40)).toBe('40 seconds');

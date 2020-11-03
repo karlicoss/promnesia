@@ -1,17 +1,26 @@
 /* @flow */
 import type {Url, Src, Locator} from './common';
-import {format_dt, Methods, unwrap, safeSetInnerHTML} from './common';
+import {Methods, unwrap, safeSetInnerHTML} from './common';
 
 // TODO need to pass document??
 
 
 export function _fmt(dt: Date): [string, string] {
-    // TODO if it's this year, do not display year?
-    const dts = format_dt(dt);
-    const parts = dts.split(' ');
-    const datestr = parts.slice(0, 3).join(' ');
-    const timestr = parts.slice(3).join(' ');
-    return [datestr, timestr];
+    // todo if it's this year, do not display year?
+    // meh. it really does seem like the easiest way to enforce a consistent date
+    // Intl is crap and doesn't allow proper strftime-like formatting
+    // maybe it should be a user setting later, dunno
+    const dts = dt.toString()
+    const parts = dts.split(' ')
+    // smth like Tue Nov 03 2020 01:53:46 GMT+0000
+    var [mon, day, year] = parts.slice(1, 4)
+    day = day[0] == '0' ? day[1] : day
+    // eslint-disable-next-line no-unused-vars
+    var [hh , mm , ss] = parts[4].split(':')
+
+    const datestr = `${day} ${mon} ${year}`
+    const timestr = `${hh}:${mm}`
+    return [datestr, timestr]
 }
 
 type Params = {
