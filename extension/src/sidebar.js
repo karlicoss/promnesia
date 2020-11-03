@@ -1,7 +1,7 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './common';
 import type {JsonObject, Second} from './common';
-import {get_options_async} from './options';
+import {get_options_async, USE_ORIGINAL_TZ} from './options';
 import type {Options} from './options';
 import {Binder, _fmt} from './display';
 import {defensify} from './notifications';
@@ -298,7 +298,10 @@ async function bindSidebarData(response: JsonObject) {
         new Visit(
             rvisit.original_url,
             rvisit.normalised_url,
-            new Date(rvisit.time), // TODO careful about utc here?
+            // $FlowFixMe // dine assuming original types are correct
+            new Date(rvisit.time),  
+            // $FlowFixMe // fine assuming original types are correct
+            new Date(rvisit.dt_local),
             rvisit.tags,
             rvisit.context,
             rvisit.locator,
@@ -361,6 +364,7 @@ async function bindSidebarData(response: JsonObject) {
         });
     }
 
+    const visit_date_time = (v: Visit) => _fmt(USE_ORIGINAL_TZ ? v.dt_local : v.time)
 
     for (const [idx0, v] of with_ctx.entries()) {
         const idx1 = idx0 + 1; // eh, I guess that makes more sense for humans
@@ -374,8 +378,7 @@ async function bindSidebarData(response: JsonObject) {
             tryHighlight(ctx, idx1);
         }
 
-
-        const [dates, times] = _fmt(v.time);
+        const [dates, times] = visit_date_time(v)
         binder.render(items, dates, times, v.tags, {
             idx           : idx1,
             timestamp     : v.time,
@@ -414,8 +417,8 @@ async function bindSidebarData(response: JsonObject) {
         const first = group[0];
         const last  = group[group.length - 1];
         // eslint-disable-next-line no-unused-vars
-        const [fdates, ftimes] = _fmt(first.time);
-        const [ldates, ltimes] = _fmt(last.time);
+        const [fdates, ftimes] = visit_date_time(first)
+        const [ldates, ltimes] = visit_date_time(last)
         const dates = ldates;
         const times = ltimes == ftimes ? ltimes : ltimes + "-" + ftimes;
         const tset = new Set();
