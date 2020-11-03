@@ -36,6 +36,15 @@ type Params = {
 
 const HTML_MARKER = '!html ';
 
+// todo use opaque type? makes it annoying to convert literal strings...
+type CssClass = string
+export function asClass(x: string): CssClass {
+    // todo meh. too much trouble to fix properly...
+    const res = x.replace(/[^0-9a-z_-]/, '_')
+    return res.length == 0 ? 'bad_class' : res
+}
+
+
 export class Binder {
     doc: Document;
 
@@ -43,7 +52,7 @@ export class Binder {
         this.doc = doc;
     }
 
-    makeChild(parent: HTMLElement, name: string, classes: ?Array<string> = null) {
+    makeChild(parent: HTMLElement, name: string, classes: ?Array<CssClass> = null) {
         const res = this.doc.createElement(name);
         if (classes != null) {
             for (const cls of classes) {
@@ -86,6 +95,7 @@ export class Binder {
             relative,
         }: Params,
     ) {
+        // todo ugh. looks like Flow can't guess the type of clouser that we get by .bind...
         const child = this.makeChild.bind(this);
         const tchild = this.makeTchild.bind(this); // TODO still necessary??
 
@@ -113,7 +123,7 @@ export class Binder {
             tchild(idx_c, String(idx));
         }
         for (const tag of tags) {
-            const tag_c = child(tags_c, 'span', ['src', tag]);
+            const tag_c = child(tags_c, 'span', ['src', asClass(tag)]);
             tchild(tag_c, tag);
         }
         tchild(date_c, dates);

@@ -26,6 +26,10 @@ from promnesia.sources import telegram
 from promnesia.sources import takeout, instapaper, pocket, fbmessenger, twitter, roamresearch, hypothesis, rss
 
 
+# NOTE: at the moment try to avoid using complex sources names
+# it's best to stick to digits, latin characters, dashes and underscores
+# there might be some UI problems related to that
+
 # now we can specify the sources
 # this is a required setting
 SOURCES = [
