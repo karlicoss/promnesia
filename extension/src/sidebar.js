@@ -1,7 +1,7 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './common';
 import type {JsonObject, Second} from './common';
-import {get_options_async, USE_ORIGINAL_TZ} from './options';
+import {get_options_async, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
 import {Binder, _fmt} from './display';
 import {defensify} from './notifications';
@@ -268,7 +268,7 @@ async function bindError(message: string) {
     const sidebar = new Sidebar(opts);
 
     const cont = await sidebar.getContainer();
-    await sidebar.clear(); // TODO probably, unnecessary?
+    await sidebar.clear(); // todo probably, unnecessary?
 
     const binder = new Binder(doc);
     binder.error(cont, message);
@@ -310,6 +310,7 @@ async function bindSidebarData(response: JsonObject) {
     );
     visits.sort((f, s) => {
         // keep 'relatives' in the bottom
+        // TODO: this might slightly break local visits sorting, becuase they don't necessarily have proper normalisation
         const fr = f.normalised_url === response.normalised_url;
         const sr = s.normalised_url === response.normalised_url;
         if (fr != sr) {
@@ -391,12 +392,13 @@ async function bindSidebarData(response: JsonObject) {
     }
 
 
+    const delta_ms = GROUP_CONSECUTIVE_SECONDS * 1000;
     function* groups() {
         let group = [];
-        const delta = 20 * 60 * 1000;
         for (const v of no_ctx) {
             const last = group.length == 0 ? v : group[group.length - 1];
-            if (last.time - v.time > delta) {
+            const diff = last.time - v.time
+            if (diff > delta_ms) {
                 if (group.length > 0) {
                     yield group;
                 }
