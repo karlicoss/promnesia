@@ -12,11 +12,6 @@ STRIP_RULES = [
     [[R('.*')                     , R('^\\w+://'         )]],
     [[R('.*')                     , R('(www|ww|amp)\\.'  )]],
     [[R('.*')                     , R('[&#].*$'          )]],
-    [
-        // TODO get rid of these...
-        [R('^(youtube|urbandictionary|tesco|scottaaronson|answers.yahoo.com|code.google.com)') , null],
-        [R('.*'), R('[\\?].*$')],
-    ],
     [[R('.*')                     , R('/$'               )]],
 ]
 ; // TODO perhaps that should be semi-configurable
@@ -39,7 +34,6 @@ export function normalise_url(url: string): string {
             const target: RegExp = unwrap(rule[0]);
             const reg: ?RegExp = rule[1];
             if (cur.search(target) >= 0) {
-                console.log("[normalise] %s: matched %s, applying %s", cur, target, reg);
                 if (reg != null) {
                     cur = cur.replace(reg, '');
                 }

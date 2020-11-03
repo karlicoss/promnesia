@@ -5,7 +5,8 @@ import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwar
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
-import {Blacklist} from './blacklist';
+import {Blacklist} from './blacklist'
+import {normalise_url} from './normalise'
 
 async function isAndroid() {
     try {
@@ -107,7 +108,7 @@ function getDelayMs(/*url*/) {
 const LOCAL_TAG = 'local';
 
 
-async function getChromeVisits(url: Url): Promise<Visits> {
+async function getBrowserVisits(url: Url): Promise<Visits> {
     const android = await isAndroid();
     if (android) {
         // ugh. 'history' api is not supported on mobile (TODO mention that in readme)
@@ -129,7 +130,8 @@ async function getChromeVisits(url: Url): Promise<Visits> {
           .filter(dt => now - dt > delay);
     const visits = times.map(t => new Visit(
         url,
-        url,
+        // NOTE: this normalise won't necessarily be the same as backend's... not sure what we can do about it without sending visits?
+        normalise_url(url),
         ((t: any): AwareDate),
         ((t: any): NaiveDate), // there is no TZ info in history anyway, so not much else we can do
         [LOCAL_TAG],
@@ -160,7 +162,6 @@ export async function getVisits(url: Url): Promise<Result> {
     // it's gona be a mess though..
     const backendRes: Visits | Error = await getBackendVisits(url)
           .catch((err: Error) => err);
-    //console.log(backendRes);
 
     if (backendRes instanceof Error) {
         console.log('backend server request error:', backendRes);
@@ -168,9 +169,8 @@ export async function getVisits(url: Url): Promise<Result> {
     }
 
     const backendVisits = backendRes;
-    // NOTE sort of a problem with chrome visits that they don't respect normalisation.. not sure if there is much to do with it
-    const chromeVisits = await getChromeVisits(url);
-    const allVisits = backendVisits.visits.concat(chromeVisits.visits);
+    const browserVisits = await getBrowserVisits(url);
+    const allVisits = backendVisits.visits.concat(browserVisits.visits);
     return new Visits(
         backendVisits.original_url,
         backendVisits.normalised_url,

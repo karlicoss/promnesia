@@ -42,6 +42,8 @@ export type Options = {
  */
 export const USE_ORIGINAL_TZ = true;
 
+export const GROUP_CONSECUTIVE_SECONDS = 20 * 60;
+
 // TODO allow to export settings
 // https://github.com/fregante/webext-options-sync/issues/23
 function defaultOptions(): Options {
