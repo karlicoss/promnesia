@@ -3,7 +3,7 @@ import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './commo
 import type {JsonObject, Second} from './common';
 import {get_options_async, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
-import {Binder, _fmt} from './display';
+import {Binder, _fmt, asClass} from './display';
 import {defensify} from './notifications';
 import {chromeRuntimeSendMessage} from './async_chrome';
 
@@ -353,7 +353,7 @@ async function bindSidebarData(response: JsonObject) {
 
         // TODO show total counts?
         // TODO if too many tags, just overlap on the seconds line
-        const tag_c = binder.makeChild(all_tags_c, 'span', ['src', tag]);
+        const tag_c = binder.makeChild(all_tags_c, 'span', ['src', asClass(tag)])
         binder.makeTchild(tag_c, `${tag} (${count})`);
         // TODO checkbox??
         tag_c.addEventListener('click', () => {

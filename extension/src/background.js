@@ -103,7 +103,6 @@ function getDelayMs(/*url*/) {
     return 10 * 1000;
 }
 
-// TODO: having a space in a tag shouldn't cause an error but it does
 // TODO: make it configurable in options?
 const LOCAL_TAG = 'local';
 
