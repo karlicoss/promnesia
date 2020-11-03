@@ -10,6 +10,9 @@ export type Locator = {
 export type VisitsMap = {[Url]: Visits};
 export type Dt = Date;
 
+export opaque type AwareDate: Date = Date;
+export opaque type NaiveDate: Date = Date;
+
 export function unwrap<T>(x: ?T): T {
     if (x == null) {
         throw "undefined or null!";
@@ -55,17 +58,23 @@ export function format_duration(seconds: Second): string {
 export class Visit {
     original_url: string;
     normalised_url: string;
-    time: Dt;
+    /* NOTE: Date class in JS is always keeping the date in UTC (even though when displayed it's converted to browser's TZ)
+     * so we workaround this by keeping both...
+     */
+    time: AwareDate; // TODO rename to dt_utc?
+    dt_local: NaiveDate;
+
     tags: Array<Src>; // TODO need to rename tags to sources
     context: ?string;
     locator: ?Locator;
     duration: ?Second;
 
 
-    constructor(original_url: string, normalised_url: string, time: Dt, tags: Array<Src>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
+    constructor(original_url: string, normalised_url: string, time: AwareDate, dt_local: NaiveDate, tags: Array<Src>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
         this.original_url   = original_url;
         this.normalised_url = normalised_url;
-        this.time = time;
+        this.time     = time;
+        this.dt_local = dt_local;
         this.tags = tags;
         this.context = context;
         this.locator = locator;

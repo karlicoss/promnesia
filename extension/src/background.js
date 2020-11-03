@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Locator, Src, Url, Second, JsonArray, JsonObject} from './common';
+import type {Locator, Src, Url, Second, JsonArray, JsonObject, AwareDate, NaiveDate} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
 import {get_options_async, setOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
@@ -18,26 +18,7 @@ async function isAndroid() {
     }
 }
 
-const isMobile = isAndroid; // TODO deprecate old name? note sure
-
-// TODO ugh. en-GB etc can't be parsed by Date.parse afterwards...
-
-// TODO allow to configure in options/or even use local tz
-const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-const tz_fmt = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: systemTz,
-    day   : 'numeric',
-    month : 'numeric',
-    year  : 'numeric',
-    hour  : 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-});
-
-function normTz(dt: Date): Date {
-    // TODO ugh, merge for dt_formatter??
-    return new Date(tz_fmt.format(dt));
-}
+const isMobile = isAndroid;
 
 
 async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction>> {
@@ -59,15 +40,19 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
 function rawToVisits(vis: JsonObject): Visits {
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
-        const dts = v['dt'];
-        const dt: Date = normTz(new Date(dts));
-        const vtags: Array<Src> = [v['src']]; // TODO hmm. shouldn't be array?
+        const dts = v['dt']
+        // NOTE: server returns a string with TZ offset
+        // Date class in js always keeps UTC inside
+        // so we just use two separate values and treat them differently
+        const dt_utc   = ((new Date(dts)                           : any): AwareDate)
+        const dt_local = ((new Date(dts.slice(0, -' +0000'.length)): any): NaiveDate)
+        const vtags: Array<Src> = [v['src']]; // todo hmm. shouldn't be array?
         const vourl: string = v['original_url'];
         const vnurl: string = v['normalised_url'];
         const vctx: ?string = v['context'];
         const vloc: ?Locator = v['locator']
         const vdur: ?Second = v['duration'];
-        return new Visit(vourl, vnurl, dt, vtags, vctx, vloc, vdur);
+        return new Visit(vourl, vnurl, dt_utc, dt_local, vtags, vctx, vloc, vdur);
     });
     return new Visits(
         vis['original_url'],
@@ -92,7 +77,7 @@ async function queryBackendCommon<R>(params, endp: string): Promise<R> {
         // right, fetch API doesn't reject on HTTP error status...
         const ok = response.ok;
         if (!ok) {
-            throw Error(response.statusText + ' (' + response.status + ')'); // TODO...
+            throw Error(response.statusText + ' (' + response.status + ')');
         }
         return response.json();
     });
@@ -117,8 +102,8 @@ function getDelayMs(/*url*/) {
     return 10 * 1000;
 }
 
-//hmm having a space in a tag shouldn't cause an error but it does
-//
+// TODO: having a space in a tag shouldn't cause an error but it does
+// TODO: make it configurable in options?
 const LOCAL_TAG = 'local';
 
 
@@ -136,12 +121,19 @@ async function getChromeVisits(url: Url): Promise<Visits> {
     // without delay you will always be seeing website as visited
     // TODO but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
     const delay = getDelayMs();
-    const current = normTz(new Date());
+    const now = new Date();
 
-    // NOTE: visitTime returns UTC epoch
-    const times: Array<Date> = results.map(r => normTz(new Date(r['visitTime']))).filter(dt => current - dt > delay);
-    // TODO not sure if need to normalise..
-    const visits = times.map(t => new Visit(url, url, t, [LOCAL_TAG]));
+    // NOTE: visitTime returns UTC epoch,
+    const times: Array<Date> = results
+          .map(r => new Date(r['visitTime']))
+          .filter(dt => now - dt > delay);
+    const visits = times.map(t => new Visit(
+        url,
+        url,
+        ((t: any): AwareDate),
+        ((t: any): NaiveDate), // there is no TZ info in history anyway, so not much else we can do
+        [LOCAL_TAG],
+    ));
     return new Visits(url, url, visits);
 }
 

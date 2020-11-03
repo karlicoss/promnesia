@@ -31,6 +31,17 @@ export type Options = {
 
 }
 
+/*
+ * If true , keep ghe original timezone (stored in the database)
+ * If false, convert to the browser's timezone
+ *
+ * Example: Imagine you have a database visit made at 2001-02-03 10:00:00 California time, and your browser is in NY time
+ * If true , extension will display the visit at 2001-02-03 10:00:00
+ * If false, extension will display the visit at 2001-02-03 13:00:00
+ * TODO: later add it to the options interface?
+ */
+export const USE_ORIGINAL_TZ = true;
+
 // TODO allow to export settings
 // https://github.com/fregante/webext-options-sync/issues/23
 function defaultOptions(): Options {
