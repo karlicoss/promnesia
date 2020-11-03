@@ -324,7 +324,7 @@ Visits have the following fields:
 
 - source (or indexer) is any function that extract visits from raw files and generates a stream of visits (i.e. =Iterable[Visit]=).
 - promnesia indexer goes through the sources, specified in config, collects the visits and puts in the database
-- promnesia server reads visits form the database, and them to the extension
+- promnesia server reads visits form the database, and sends them to the extension
 
 
 Now let's consider some *concrete* examples of different kinds of Visits:
