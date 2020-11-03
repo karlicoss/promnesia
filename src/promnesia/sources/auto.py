@@ -145,7 +145,8 @@ SMAP = {
     'application/json': _json,
     '.json'           : _json,
 
-    '.csv'        : _csv,
+    '.csv'           : _csv,
+    'application/csv': _csv,
 
     '.org'        : _org,
     '.org_archive': _org,
