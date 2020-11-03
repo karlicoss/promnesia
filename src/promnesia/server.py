@@ -174,6 +174,8 @@ def search_common(url: str, where):
 
 
 @hug.local()
+@hug.get ('/status')
+# NOTE: not sure why I used post in the first place... but it was used in the extension so need to keep
 @hug.post('/status')
 def status():
     '''

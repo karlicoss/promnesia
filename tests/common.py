@@ -34,3 +34,29 @@ DATA = GIT_ROOT / 'tests/testdata'
 def tdata(path: str) -> str:
     assert DATA.is_dir(), DATA
     return str(DATA / path)
+
+
+from contextlib import contextmanager
+@contextmanager
+def tmp_popen(*args, **kwargs):
+    import psutil
+    with psutil.Popen(*args, **kwargs) as p:
+        try:
+            yield p
+        finally:
+            for c in p.children(recursive=True):
+                c.kill()
+            p.kill()
+            p.wait()
+
+# meh
+def promnesia_bin(*args):
+    # not sure it's a good idea to diverge, but not sure if there's a better way either?
+    if under_ci():
+        # should be able to use the installed version
+        return ['promnesia', *args]
+    else:
+        # use version from the repository
+        root = Path(__file__).parent.parent
+        pm = root / 'scripts/promnesia'
+        return [pm, *args]

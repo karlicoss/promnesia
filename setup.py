@@ -41,6 +41,8 @@ def main():
                  'pytest',
                  'pytest-xdist', # why??
 
+                 'psutil',
+
                  'httpie',   # nicer http requests (replace with curl?)
                  'selenium', # browser automations
                  'click',    # confirmations for end2end test (might remove dependency)

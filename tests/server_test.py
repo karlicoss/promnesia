@@ -5,14 +5,16 @@ import os
 from pathlib import Path
 from shutil import copy
 import signal
-from subprocess import check_output, check_call, Popen, PIPE
+import sys
+from subprocess import check_output, check_call, PIPE
 import time
 from typing import NamedTuple, ContextManager, Optional
 
 import pytz
+import requests
 
 from integration_test import index_hypothesis, index_urls
-from common import tdir, under_ci, tdata
+from common import tdir, under_ci, tdata, tmp_popen, promnesia_bin
 
 
 class Helper(NamedTuple):
@@ -30,28 +32,6 @@ def next_port():
 
 
 @contextmanager
-def tmp_popen(*args, **kwargs):
-    with Popen(*args, **kwargs, preexec_fn=os.setsid) as p:
-        try:
-            yield p
-        finally:
-            # ugh. otherwise was getting orphaned children...
-            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-
-# meh
-def promnesia_bin(*args):
-    # not sure it's a good idea to diverge, but not sure if there's a better way either?
-    if under_ci():
-        # should be able to use the installed version
-        return ['promnesia', *args]
-    else:
-        # use version from the repository
-        root = Path(__file__).parent.parent
-        pm = root / 'scripts/promnesia'
-        return [pm, *args]
-
-
-@contextmanager
 def wserver(db: Optional[Path]=None): # TODO err not sure what type should it be... -> ContextManager[Helper]:
     port = str(next_port())
     cmd = [
@@ -61,13 +41,21 @@ def wserver(db: Optional[Path]=None): # TODO err not sure what type should it be
         *([] if db is None else ['--db'  , str(db)]),
     ]
     with tmp_popen(promnesia_bin(*cmd)) as server:
-        print("Giving few secs to start server up")
-        time.sleep(3)
-        print("Started server up, db: {db}".format(db=db))
+        # wait till ready
+        st = f'http://localhost:{port}/status'
+        for a in range(50):
+            try:
+                requests.get(st).json()
+                break
+            except:
+                time.sleep(0.1)
+        else:
+            raise RuntimeError("Cooldn't connect to '{st}' after 50 attempts")
+        print("Started server up, db: {db}".format(db=db), file=sys.stderr)
 
         yield Helper(port=port)
 
-        print("DONE!!!!")
+        print("Done with the server", file=sys.stderr)
 
 
 @contextmanager

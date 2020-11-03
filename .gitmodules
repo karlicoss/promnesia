@@ -1,3 +1,8 @@
+# hypothesis test data
 [submodule "testdata/hypothesis/netrights-dashboards-mockup"]
 	path = tests/testdata/hypothesis/netrights-dashboards-mockup
-	url = git@github.com:taniki/netrights-dashboard-mockup.git
+	url = https://github.com/taniki/netrights-dashboard-mockup.git
+# org-mode test data
+[submodule "tests/testdata/ox-hugo"]
+	path = tests/testdata/ox-hugo
+	url = https://github.com/kaushalmodi/ox-hugo.git
