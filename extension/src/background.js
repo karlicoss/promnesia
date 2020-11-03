@@ -2,7 +2,7 @@
 
 import type {Locator, Src, Url, Second, JsonArray, JsonObject, AwareDate, NaiveDate} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
-import {get_options_async, setOptions, THIS_BROWSER_TAG} from './options';
+import {get_options_async, getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 import {Blacklist} from './blacklist'
@@ -64,7 +64,17 @@ function rawToVisits(vis: JsonObject): Visits {
 
 
 async function queryBackendCommon<R>(params, endp: string): Promise<R> {
-    const opts = await get_options_async();
+    const opts = await getOptions()
+    if (opts.host == '') {
+        // the user only wants to use browser visits?
+        // todo: won't work for all endpoints, but can think how to fix later..
+        if (endp == 'visits') {
+            return (({visits: []} : any): R)
+        } else {
+            throw Error(`'${endp}' isn't implemented without the backend yet. Please set host in the extension settings.`)
+        }
+    }
+
     const endpoint = `${opts.host}/${endp}`;
     // TODO cors mode?
     const response = await fetch(endpoint, {
@@ -91,6 +101,7 @@ async function getBackendVisits(u: Url): Promise<Visits> {
 
 
 // TODO include browser visits here too?
+// see https://github.com/karlicoss/promnesia/issues/120
 export async function searchVisits(u: Url): Promise<Visits> {
     return queryBackendCommon<JsonObject>({url: u}, 'search').then(rawToVisits);
 }

@@ -155,16 +155,15 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
         },
     }, second).then(res => {
         if (!res.ok) {
-            throw `Backend error: ${res.status} ${res.statusText}` // TODO
+            throw `Backend error: ${res.status} ${res.statusText}`
         }
         return res;
     }).then(async res => {
         // TODO ugh. need to reject if ok is false...
         const resj = await res.json()
-        // TODO log debug?
         alert(`Success! ${JSON.stringify(resj)}`)
     }, err => {
-        alertError(err);
+        alertError(`${err}. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`);
     });
 }));
 
