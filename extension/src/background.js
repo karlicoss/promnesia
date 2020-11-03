@@ -2,7 +2,7 @@
 
 import type {Locator, Src, Url, Second, JsonArray, JsonObject, AwareDate, NaiveDate} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
-import {get_options_async, setOptions} from './options';
+import {get_options_async, setOptions, THIS_BROWSER_TAG} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 import {Blacklist} from './blacklist'
@@ -103,9 +103,6 @@ function getDelayMs(/*url*/) {
     return 10 * 1000;
 }
 
-// TODO: make it configurable in options?
-const LOCAL_TAG = 'local';
-
 
 async function getBrowserVisits(url: Url): Promise<Visits> {
     const android = await isAndroid();
@@ -133,7 +130,7 @@ async function getBrowserVisits(url: Url): Promise<Visits> {
         normalise_url(url),
         ((t: any): AwareDate),
         ((t: any): NaiveDate), // there is no TZ info in history anyway, so not much else we can do
-        [LOCAL_TAG],
+        [THIS_BROWSER_TAG],
     ));
     return new Visits(url, url, visits);
 }
@@ -222,10 +219,10 @@ function getIconStyle(visits: Result): IconStyle {
         return {icon: 'images/ic_relatives_48.png'    , title: `${vcount} visits, ${ctext}`, text: btext};
     }
     // TODO a bit ugly, but ok for now.. maybe cut off by time?
-    const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == LOCAL_TAG);
+    const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == THIS_BROWSER_TAG);
     if (boring) {
         // TODO not sure if really worth distinguishing..
-        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (${LOCAL_TAG} only)`, text: ''};
+        return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (${THIS_BROWSER_TAG} only)`, text: ''};
     } else {
         return {icon: "images/ic_blue_48.png"       , title: `${vcount} visits`, text: ''};
     }

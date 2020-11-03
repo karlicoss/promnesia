@@ -1,5 +1,6 @@
 /* @flow */
 import type {Src} from './common';
+import {getBrowser} from './common'
 
 // $FlowFixMe
 import OptionsSync from 'webext-options-sync';
@@ -43,6 +44,9 @@ export type Options = {
 export const USE_ORIGINAL_TZ = true;
 
 export const GROUP_CONSECUTIVE_SECONDS = 20 * 60;
+
+// TODO: make it configurable in options?
+export const THIS_BROWSER_TAG = getBrowser()
 
 // TODO allow to export settings
 // https://github.com/fregante/webext-options-sync/issues/23

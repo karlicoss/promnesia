@@ -166,3 +166,18 @@ export function safeSetInnerHTML(element: HTMLElement, html: string) {
 export type JsonArray = Array<Json>
 export type JsonObject = $Shape<{ [string]: any }>
 export type Json = JsonArray | JsonObject
+
+
+export function getBrowser(): string {
+    // https://stackoverflow.com/questions/12489546/getting-a-browsers-name-client-side
+    const agent = window.navigator.userAgent.toLowerCase()
+    switch (true) {
+        case agent.indexOf("chrome") > -1 && !! window.chrome: return "chrome";
+        case agent.indexOf("firefox") > -1                   : return "firefox";
+        case agent.indexOf("safari") > -1                    : return "safari";
+        case agent.indexOf("edge") > -1                      : return "edge";
+        case agent.indexOf("opr") > -1 && !!window.opr       : return "opera";
+        case agent.indexOf("trident") > -1                   : return "ie";
+        default: return "browser";
+    }
+}
