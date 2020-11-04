@@ -1,25 +1,8 @@
 version: 2
 
 jobs:
-  end2end_tests:
-    docker:
-      # TODO not sure which is easier to pick...
-      - image: circleci/python:latest-browsers
-    steps:
-      - checkout
-      - run: sudo apt install nodejs npm
-      - run:
-          name: 'build extension'
-          command: |
-            cd extension
-            npm install
-            ./build --firefox
-            ./build --chrome
-
-      - run: python3 -m pip install --user tox
-      - run: sudo apt install atool # used to pack the extension
-      - run: python3 -m tox -e end2end
-
+  # TODO need to get rid of it... but not sure how, there is just no way to test systemd anywhere else??
+  # maybe it shouldn't really matter. ugh.
   install_and_run_test:
     # right, docker doesn't seem to be systemd friendly
     machine:
@@ -31,7 +14,7 @@ jobs:
           name: 'setup python'
           command: |
             pyenv global 3.7.0
-            pip3 install --upgrade pip
+            pip3 install --upgrade pip setuptools
 
       # - run: curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3 # right, this container is quite old and doesn't have python3-pip package..
 
@@ -51,7 +34,6 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - end2end_tests
       - install_and_run_test
 
 # version: 2.1 # Use version 2.1 to enable Orb usage.
