@@ -194,34 +194,7 @@ def config_check(args):
     check_call([python3(), cfg])
 
 
-def setup_main_logger() -> None:
-    logger = get_logger()
-
-    import logging
-    level = logging.DEBUG
-    # NOTE: this is a bit experimental and temporary..
-    if os.environ.get('PROMNESIA_COLLAPSE_DEBUG', False): # todo only do this for the main logger?
-        from .kython.klogging2 import CollapseDebugHandler as CDH, _FMT_COLOR
-        logger.setLevel(level)
-        h = CDH()
-        h.setLevel(level)
-        try:
-            # meh
-            import logzero # type: ignore
-            formatter = logzero.LogFormatter(fmt=_FMT_COLOR, datefmt=None)
-            h.setFormatter(formatter)
-        except ModuleNotFoundError as e:
-            logger.exception(e)
-        logger.addHandler(h)
-        logger.propagate = False
-        setattr(logger, 'lazylogger_init_done', True) # hacky..
-    else:
-        from .common import setup_logger
-        setup_logger(logger, level=level)
-
-
-def main():
-    setup_main_logger()
+def main() -> None:
     # TODO longer, literate description?
 
     F = lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=120)
