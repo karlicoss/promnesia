@@ -44,6 +44,15 @@ jobs:
         name: .coverage.mypy_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy/
 
+  end2end_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - run: |
+        docker build -f .ci/end2end_tests.Dockerfile . -t promnesia_end2end_tests
+        docker run -e CI promnesia_end2end_tests
 
   install_and_run_test:
     # TODO use setup-python thing?
@@ -64,7 +73,7 @@ jobs:
 
   pypi:
     runs-on: ubuntu-latest
-    needs: [build, install_and_run_test]
+    needs: [build, end2end_tests, install_and_run_test]
 
     steps:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
@@ -104,7 +113,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '14'
-    - run: scripts/ci/extension
+    - run: scripts/ci/extension --release --lint
 
     # TODO ugh. can't share github actions artifacts publicly...
     # TODO for fuck's sake... why does it end up named as .zip.zip ????
