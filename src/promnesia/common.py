@@ -181,7 +181,8 @@ def make_filter(thing) -> Filter:
 
 
 def get_logger() -> logging.Logger:
-    return logging.getLogger('promnesia')
+    from .logging import LazyLogger
+    return LazyLogger('promnesia', level='DEBUG')
 
 
 # TODO need to get rid of this.. just some legacy stuf...
@@ -463,7 +464,7 @@ def last(path: PathIsh, *parts: str) -> Path:
     return Path(max(glob(pp, recursive=True)))
 
 
-from .kython.klogging2 import setup_logger
+from .logging import setup_logger
 
 def echain(ex: Exception, cause: Exception) -> Exception:
     ex.__cause__ = cause
@@ -490,9 +491,6 @@ def default_output_dir() -> Path:
     # TODO: on Windows, there are two extra subdirectories (<AppAuthor>\<AppName>)
     # perhaps makes sense to create it here with parents to avoid issues downstream?
     return Path(appdirs().user_data_dir)
-
-# TODO deprecate..
-PreVisit = Visit
 
 
 @lru_cache()
