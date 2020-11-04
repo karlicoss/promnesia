@@ -9,7 +9,7 @@ from datetime import datetime
 import itertools
 import json
 import os
-from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Iterable, Callable, Any, Dict
+from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Iterable, Callable, Any, Dict, Set
 from fnmatch import fnmatch
 from pathlib import Path
 from functools import lru_cache, wraps
@@ -257,7 +257,6 @@ IGNORE = [
 Replacer = Optional[Callable[[str], str]]
 
 def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Results:
-
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
@@ -271,6 +270,7 @@ def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], 
             follow=follow,
             replacer=replacer,
             root=root,
+            processed=set(), # meh
         )
         yield from _index(apath, opts=opts)
 
@@ -281,6 +281,8 @@ class Options(NamedTuple):
     # TODO option to add ignores? not sure..
     # TODO I don't like this replacer thing... think about removing it
     replacer: Replacer
+    # TODO meh. it should be a class instead..
+    processed: Set[Path]
     root: Optional[Path]=None
 
 
@@ -292,6 +294,10 @@ def _index_aux(path: Path, opts: Options):
 # TODO eh. might be good to use find or fdfind to speed it up...
 def _index(path: Path, opts: Options) -> Results:
     logger = get_logger()
+
+    if path in opts.processed:
+        return
+    opts.processed.add(path)
 
     if path.name in IGNORE:
         logger.debug('ignoring %s: default ignore rules', path)
