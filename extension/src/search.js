@@ -77,7 +77,7 @@ async function _doSearch(
     // TODO use something more generic for that!
     for (const v of visits) {
         const [dates, times] = _fmt(v.time)
-        const cc = binder.render(res, dates, times, v.tags, {
+        const cc = await binder.render(res, dates, times, v.tags, {
             idx           : null,
             timestamp     : v.time,
             original_url  : v.original_url,
