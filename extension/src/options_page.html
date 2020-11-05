@@ -14,6 +14,16 @@
     </fieldset>
 
     <fieldset>
+        <legend>Troubleshoot</legend>
+        <div>
+            If you messed some settings up, you can check
+            <a href="https://github.com/karlicoss/promnesia/blob/master/extension/src/options.js">src/options.js</a>
+        </div>
+    <!-- TODO give some quick help on using CSS, some examples too? -->
+    </fieldset>
+
+
+    <fieldset>
         <legend>Backend</legend>
 
         <table>
@@ -32,19 +42,6 @@
     </fieldset>
 
     <fieldset>
-        <legend>Notifications</legend>
-
-        <div>
-            <input type="checkbox" id="contexts_popup_id"/>
-            <label for="contexts_popup_id">Show 'Has contexts' popup (green)</label>
-        <div>
-        <div>
-            <input type="checkbox" id="verbose_errors_id"/>
-            <label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label>
-        <div>
-    </fieldset>
-
-    <fieldset>
         <legend>Behaviour</legend>
 
         <!-- <table> -->
@@ -53,19 +50,46 @@
         <!-- <td><label for="dots_id">Show dots</label></td> -->
         <!-- </tr> -->
         <!-- </table> -->
-
+        <div>
+            <input type="checkbox" id="contexts_popup_id"/>
+            <label for="contexts_popup_id">Show 'Has contexts' popup (green)</label>
+        <div>
+        <div>
+            <input type="checkbox" id="verbose_errors_id"/>
+            <label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label>
+        <div>
         <div>
             <input type="checkbox" id="highlight_id"/>
             <label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label>
         <div>
-
+        <hr>
         <div>
             <label for="blacklist_id">Blacklisted links and domains:</label>
+            <!-- TODO copy pasted from blacklist() function -->
+            <div class="description">Supported formats:
+- <code>domain.name</code>, e.g.: <code>web.telegram.org</code>
+  Will exclude whole Telegram website.
+- <code>http://exact/match</code>, e.g.: <code>http://github.com</code>
+  Will only exclude Github main page. Subpages will still work.
+- <code>/regul.r.*expression/</code>, e.g.: <code>/github.*/username/</code>
+  Quick way to exclude your own Github repostitories.</div>
             <div id="blacklist_id"></div>
         </div>
-
+        <hr>
         <div>
-            <label for="source_map_id">Source map</label>
+            <label for="filterlists_id">Filter lists:<label>
+            <div class="description">In addition to specific blacklisting above, you can specify links to filter lists.
+They will be autoupdated every 3 days. Spec format (Json):<pre>[
+    ["name (arbitrary)", "link"],
+    ["name2"           , "link 2", "optional comment"]
+]</pre>
+</div>
+            <div id="filterlists_id"></div>
+        </div>
+        <hr>
+        <div>
+            <label for="source_map_id">Source map (json):</label>
+            <div class="description">Can be used to rename the sources</div>
             <div id="source_map_id"></div>
         </div>
     </fieldset>
@@ -76,8 +100,6 @@
         <legend>Style settings (CSS)</legend>
         <div id="position_css_id"></div>
     </fieldset>
-
-    <!-- TODO give some quick help on using CSS, some examples too? -->
     <fieldset>
         <legend>Sidebar style (DEPRECATED!)</legend>
         <div>If you had any settings here, please move them to the field above</div>

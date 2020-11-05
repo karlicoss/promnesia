@@ -17,3 +17,9 @@ textarea {
 input:invalid {
     background-color: red;
 }
+
+.description {
+    margin-left: 0.5em;
+    color: #777777;
+    white-space: pre-line;
+}

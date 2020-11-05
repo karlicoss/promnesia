@@ -44,7 +44,7 @@ https://vk.com
 /github.com/issues.*/
 `;
 
-    const b = new Blacklist(bl_string);
+    const b = new Blacklist({blacklist: bl_string, filterlists: '[]'})
 
     // TODO eh, doesn't work with links without schema; not sure if it's ok
     expect(b._helper('http://instagram.com/')).toBe(null);

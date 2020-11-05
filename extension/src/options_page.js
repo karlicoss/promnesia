@@ -44,6 +44,10 @@ function getBlackList(): HTMLInputElement {
     return getInputElement('blacklist_id');
 }
 
+function getFilterLists(): HTMLInputElement {
+    return getInputElement('filterlists_id')
+}
+
 function getSrcMap(): HTMLElement {
     return getElement('source_map_id');
 }
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
         // $FlowFixMe
         'codemirror/lib/codemirror.js'
     );
-    const CodeMirror = CM.default; // ???
+    const CodeMirror = CM.default; // todo ugh for some reason const {CodeMirror} didn't work
 
     // TODO just copy css in webpack directly??
     await import(
@@ -109,6 +113,12 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
         lineNumbers: true,
         value      : opts.blacklist,
     });
+
+    CodeMirror(getFilterLists(), {
+        mode       : 'javascript',
+        lineNumbers: true,
+        value      : opts.filterlists,
+    })
 
     // TODO tag map could be json?
     CodeMirror(getSrcMap(), {
@@ -181,7 +191,8 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         highlight_on: getHighlightOn().checked,
 
         dots      : true, // TODO? getDots().checked,
-        blacklist : getEditor(getBlackList()).getValue(),
+        blacklist  : getEditor(getBlackList()  ).getValue(),
+        filterlists: getEditor(getFilterLists()).getValue(),
 
         src_map   : JSON.parse(getEditor(getSrcMap()).getValue()),
         position_css : getEditor(getPositionCss()).getValue(),
