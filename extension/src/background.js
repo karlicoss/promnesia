@@ -152,8 +152,8 @@ async function getBrowserVisits(url: Url): Promise<Visits> {
 
 // TODO ugh. can't keep get_options_async in blacklist.js because jest complains..
 async function Blacklist_get(): Promise<Blacklist> {
-    const opts = await get_options_async();
-    return new Blacklist(opts.blacklist);
+    const opts = await get_options_async()
+    return new Blacklist(opts)
 }
 
 

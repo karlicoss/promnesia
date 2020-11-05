@@ -22,6 +22,8 @@ export type Options = {
     dots: boolean;
     // this is kept as string to preserve formatting and comments
     blacklist: string;
+    // kept as string to preserve formatting
+    filterlists: string;
     src_map: SrcMap;
 
     /* NOTE: a bit misleading name; it keeps all style settings now */
@@ -62,6 +64,13 @@ function defaultOptions(): Options {
 
         dots: true,
         blacklist: '',
+        // todo would be nice to validate on saving...
+        filterlists: `[
+  ["Webmail",
+   "https://raw.githubusercontent.com/cbuijs/shallalist/master/webmail/domains"        ],
+  ["Banking",
+   "https://raw.githubusercontent.com/cbuijs/shallalist/master/finance/banking/domains"]
+]`,
         src_map: {},
 
 

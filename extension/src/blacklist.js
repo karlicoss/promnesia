@@ -1,5 +1,6 @@
 /* @flow */
 import type {Url} from './common';
+import type {Options} from './options'
 import {asList, log} from './common';
 import {normalisedURLHostname} from './normalise';
 
@@ -7,20 +8,22 @@ type Reason = string;
 
 
 export class Blacklist {
-    // TODO use Set?
-    blacklist: Array<string>;
-    lists: Map<string, Set<string>>;
+    blacklist: Array<string>
+    lists: Map<string, Set<string>>
+    filterlists: Array<Array<string>>
 
-    constructor(blacklist_string: string) {
-        this.blacklist = asList(blacklist_string);
-        this.lists = new Map();
+    constructor(opts: Options) {
+        // FIXME: make it defensive?
+        this.blacklist = asList(opts.blacklist)
+        this.filterlists = JSON.parse(opts.filterlists)
+        this.lists = new Map()
     }
 
     _helper(url: Url): ?string {
         // https://github.com/gorhill/uBlock/wiki/How-to-whitelist-a-web-site kind of following this logic and syntax
 
         // TODO need to be careful about normalising domains here; e.g. cutting off amp/www could be bit unexpected...
-        const bl = this.blacklist;
+        const bl = this.blacklist
         if (bl.includes(url)) {
             return "User-defined blacklist (exact page)";
         }
@@ -88,11 +91,9 @@ export class Blacklist {
 
         const hostname = normalisedURLHostname(url);
         // TODO perhaps use binary search?
-        for (let [bname, bfile] of [
-            // TODO use a proper CDN?
-            ['Webmail', 'https://raw.githubusercontent.com/cbuijs/shallalist/master/webmail/domains'        ],
-            ['Banking', 'https://raw.githubusercontent.com/cbuijs/shallalist/master/finance/banking/domains'],
-        ]) {
+        for (let spec of this.filterlists) {
+            let bname = spec[0]
+            let bfile = spec[1]
             const domains = await this._list(bname, bfile);
             if (domains.has(hostname)) {
                 return `'${bname}' blacklist`;
