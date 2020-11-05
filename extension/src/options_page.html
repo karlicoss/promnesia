@@ -16,7 +16,10 @@
     <fieldset>
         <legend>Troubleshoot</legend>
         <div>
-            If you messed some settings up, you can check
+            See <a href="https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org">troubleshooting guide</a>
+        </div>
+        <div>
+            If you messed some extension settings up, you can check
             <a href="https://github.com/karlicoss/promnesia/blob/master/extension/src/options.js">src/options.js</a>
         </div>
     <!-- TODO give some quick help on using CSS, some examples too? -->
@@ -26,18 +29,14 @@
     <fieldset>
         <legend>Backend</legend>
 
-        <table>
-            <tr>
-                <td><label for="host_id">Host (set to empty string if you want to use in-browser visits only)</label> </td>
-                <td><input type="URL" id="host_id">  </td>
-            </tr>
-            <!-- Warn about auth token being plaintext -->
-                <td><label for="token_id">Auth token (if necessary)</label> </td>
-                <td><input type="password" id="token_id"> </td>
-            <tr>
-            </tr>
-        </table>
-
+        <label for="host_id">Host</label>
+        <div class="description"><b>Don't forget to setup & run the <a href="https://github.com/karlicoss/promnesia#try-it-out">backend</a> first.</b>
+You can leave host empty if you want to use in-browser visits only.
+However support for that is still limited (see <a href="https://github.com/karlicoss/promnesia/issues/120">issues/120</a>)
+</div>
+        <input type="URL" id="host_id">
+        <label for="token_id">Auth token (if necessary)</label>
+        <td><input type="password" id="token_id">
         <button id="backend_status_id">Check backend status</button>
     </fieldset>
 
@@ -82,8 +81,7 @@
 They will be autoupdated every 3 days. Spec format (Json):<pre>[
     ["name (arbitrary)", "link"],
     ["name2"           , "link 2", "optional comment"]
-]</pre>
-</div>
+]</pre></div>
             <div id="filterlists_id"></div>
         </div>
         <hr>
