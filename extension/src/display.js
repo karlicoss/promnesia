@@ -2,9 +2,6 @@
 import type {Url, Src, Locator} from './common';
 import {Methods, unwrap, safeSetInnerHTML} from './common';
 
-// TODO need to pass document??
-import anchorme from 'anchorme'
-
 export function _fmt(dt: Date): [string, string] {
     // todo if it's this year, do not display year?
     // meh. it really does seem like the easiest way to enforce a consistent date
@@ -80,7 +77,7 @@ export class Binder {
         tchild(item, "ERROR: " + message);
     }
 
-    render(
+    async render(
         parent: HTMLElement,
         dates: string,
         times: string,
@@ -141,6 +138,13 @@ export class Binder {
 
             return true;
         };
+        const AM = await import(
+            /* webpackChunkName: "anchorme" */
+            // $FlowFixMe
+            'anchorme/dist/browser/anchorme.js' // TODO use min.js? slightly smaller
+        )
+        const anchorme = AM.default // ??? otherwise not working..
+
 
         /* TODO locator could jump into the file? */
         if (context != null) {
@@ -151,7 +155,7 @@ export class Binder {
                 ctx = context.substring(HTML_MARKER.length)
                 safeSetInnerHTML(ctx_c, ctx);
             } else { // plaintext
-                console.log("ANCHOR!!!")
+                // todo make defensive just in case?
                 const res = anchorme(ctx)
                 safeSetInnerHTML(ctx_c, res)
                 // for (const line of ctx.split('\n')) {

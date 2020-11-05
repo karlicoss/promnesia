@@ -380,7 +380,7 @@ async function bindSidebarData(response: JsonObject) {
         }
 
         const [dates, times] = visit_date_time(v)
-        binder.render(items, dates, times, v.tags, {
+        await binder.render(items, dates, times, v.tags, {
             idx           : idx1,
             timestamp     : v.time,
             original_url  : v.original_url,
@@ -439,7 +439,7 @@ async function bindSidebarData(response: JsonObject) {
         }
         const tags = [...tset].sort();
         const ctx = total_dur == null ? null : `Time spent: ${format_duration(total_dur)}`;
-        binder.render(items, dates, times, tags, {
+        await binder.render(items, dates, times, tags, {
             idx: null,
             timestamp: first.time,
             original_url  : null,
