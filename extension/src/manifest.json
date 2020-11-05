@@ -4,8 +4,7 @@
     "description": "Indicates whether and when the page was visited (and more!)",
     "web_accessible_resources": [
         "sidebar.js",
-        "sidebar.css",
-        "shallalist/*"
+        "sidebar.css"
     ],
     "background": {
         "scripts": ["background.js"],

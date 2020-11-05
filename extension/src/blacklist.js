@@ -47,18 +47,27 @@ export class Blacklist {
         return null;
     }
 
-    async _list(name: string, file: string): Promise<Set<string>> {
+    async _list(name: string, url: string): Promise<Set<string>> {
         let list = this.lists.get(name);
         if (list != null) {
             return list;
         }
 
-        log('loading %s from %s', name, file);
+        log('loading %s from %s', name, url)
 
-        const domains_url = chrome.runtime.getURL(file);
-        // TODO do we really need await here??
-        const resp = await fetch(domains_url);
-        list = new Set(asList(await resp.text()));
+        const {basket} = await import(
+            /* webpackChunkName: "basket" */
+            // $FlowFixMe
+             'basket.js/lib/basket.js'
+        )
+        // FIXME defensive??
+
+        const resp = (await basket.require({
+            url    : url,
+            execute: false,
+            expire : 24 * 3, // 3 days
+        }))[0]
+        list = new Set(asList(resp.data))
         this.lists.set(name, list);
         return list;
     }
@@ -73,18 +82,16 @@ export class Blacklist {
 
         // for now assumes it's exact domain match domain level
         const user_blacklisted = this._helper(url);
-        // TODO test shallalist etc as well?
         if (user_blacklisted !== null) {
             return user_blacklisted;
         }
 
         const hostname = normalisedURLHostname(url);
         // TODO perhaps use binary search?
-        // TODO not very efficient... I guess I need to refresh it straight from github now and then?
-        // TODO keep cache in local storage or something?
         for (let [bname, bfile] of [
-            ['Webmail', 'shallalist/webmail/domains'],
-            ['Banking', 'shallalist/finance/banking/domains'],
+            // TODO use a proper CDN?
+            ['Webmail', 'https://raw.githubusercontent.com/cbuijs/shallalist/master/webmail/domains'        ],
+            ['Banking', 'https://raw.githubusercontent.com/cbuijs/shallalist/master/finance/banking/domains'],
         ]) {
             const domains = await this._list(bname, bfile);
             if (domains.has(hostname)) {

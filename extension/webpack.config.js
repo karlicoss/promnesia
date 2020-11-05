@@ -186,9 +186,6 @@ const options = {
    new CleanWebpackPlugin(), // ok, respects symlinks
    new CopyWebpackPlugin([
       { from: 'images/*' },
-       // TODO compress maybe...
-      { from: 'shallalist/finance/banking/domains', to: 'shallalist/finance/banking' },
-      { from: 'shallalist/webmail/domains'        , to: 'shallalist/webmail' },
       { from: 'src/*.html'     , flatten: true},
       { from: 'src/*.css'      , flatten: true},
       { from: 'src/toastify.js', flatten: true}, // TODO my version is tweaked, right?
