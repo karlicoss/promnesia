@@ -35,6 +35,7 @@ module.exports = {
         "indent": "off",
         "comma-dangle": "off",
         "no-console": "off",
+        "no-inner-declarations": "off",
         "flowtype/space-before-type-colon": "off",
     }
 };

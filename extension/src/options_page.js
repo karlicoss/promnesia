@@ -36,6 +36,10 @@ function getContextsPopupOn(): HTMLInputElement {
     return getInputElement('contexts_popup_id');
 }
 
+function getDetectSidebarUrls(): HTMLInputElement {
+    return getInputElement('detect_sidebar_urls_id');
+}
+
 // function getDots(): HTMLInputElement {
 //     return getInputElement('dots_id');
 // }
@@ -76,6 +80,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
 
     getVerboseErrorsOn().checked = opts.verbose_errors_on;
     getContextsPopupOn().checked = opts.contexts_popup_on;
+    getDetectSidebarUrls().checked = opts.detect_sidebar_urls
 
     getHighlightOn().checked = opts.highlight_on;
 
@@ -187,6 +192,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
 
         verbose_errors_on: getVerboseErrorsOn().checked,
         contexts_popup_on: getContextsPopupOn().checked,
+        detect_sidebar_urls: getDetectSidebarUrls().checked,
 
         highlight_on: getHighlightOn().checked,
 

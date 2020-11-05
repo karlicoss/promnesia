@@ -16,6 +16,7 @@ export type Options = {
 
     verbose_errors_on: boolean;
     contexts_popup_on: boolean;
+    detect_sidebar_urls: boolean;
 
     highlight_on: boolean;
 
@@ -59,6 +60,7 @@ function defaultOptions(): Options {
 
         verbose_errors_on: false,
         contexts_popup_on: false,
+        detect_sidebar_urls: true,
 
         highlight_on: true,
 

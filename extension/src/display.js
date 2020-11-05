@@ -1,6 +1,7 @@
 /* @flow */
 import type {Url, Src, Locator} from './common';
 import {Methods, unwrap, safeSetInnerHTML} from './common';
+import type {Options} from './options'
 
 export function _fmt(dt: Date): [string, string] {
     // todo if it's this year, do not display year?
@@ -43,10 +44,12 @@ export function asClass(x: string): CssClass {
 
 
 export class Binder {
-    doc: Document;
+    doc: Document
+    options: Options
 
-    constructor(doc: Document) {
-        this.doc = doc;
+    constructor(doc: Document, options: Options) {
+        this.doc = doc
+        this.options = options
     }
 
     makeChild(parent: HTMLElement, name: string, classes: ?Array<CssClass> = null) {
@@ -155,13 +158,25 @@ export class Binder {
                 ctx = context.substring(HTML_MARKER.length)
                 safeSetInnerHTML(ctx_c, ctx);
             } else { // plaintext
-                // todo make defensive just in case?
-                const res = anchorme(ctx)
-                safeSetInnerHTML(ctx_c, res)
-                // for (const line of ctx.split('\n')) {
-                //     tchild(ctx_c, line)
-                //     child(ctx_c, 'br')
-                // }
+                function do_plain() {
+                    for (const line of ctx.split('\n')) {
+                        tchild(ctx_c, line)
+                        child(ctx_c, 'br')
+                    }
+                }
+
+                if (this.options.detect_sidebar_urls) {
+                    // todo perhaps defensive handling should be for the whole function
+                    try {
+                        const res = anchorme(ctx)
+                        safeSetInnerHTML(ctx_c, res)
+                    } catch {
+                        // todo log
+                        do_plain()
+                    }
+                } else {
+                    do_plain()
+                }
             }
         }
 
