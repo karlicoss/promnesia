@@ -270,7 +270,7 @@ async function bindError(message: string) {
     const cont = await sidebar.getContainer();
     await sidebar.clear(); // todo probably, unnecessary?
 
-    const binder = new Binder(doc);
+    const binder = new Binder(doc, opts)
     binder.error(cont, message);
 }
 
@@ -286,7 +286,7 @@ async function bindSidebarData(response: JsonObject) {
     const cont = await sidebar.getContainer();
     await sidebar.clear(); // TODO probably, unnecessary?
 
-    const binder = new Binder(doc);
+    const binder = new Binder(doc, opts)
 
     const all_tags_c = binder.makeChild(cont, 'div', ['src-filter']);
     const items = binder.makeChild(cont, 'ul');

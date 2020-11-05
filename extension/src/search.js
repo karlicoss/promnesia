@@ -2,7 +2,7 @@
 
 import {unwrap, addStyle} from './common';
 import type {Visits, Visit} from './common';
-import {get_options_async} from './options';
+import {getOptions} from './options'
 import {searchVisits, searchAround} from './background';
 import {Binder, _fmt} from './display';
 
@@ -73,7 +73,8 @@ async function _doSearch(
     const node = doc.createTextNode(`Found ${visits.length} visits`); cc.appendChild(node);
 
 
-    const binder = new Binder(doc);
+    const options = await getOptions()
+    const binder = new Binder(doc, options)
     // TODO use something more generic for that!
     for (const v of visits) {
         const [dates, times] = _fmt(v.time)
@@ -122,7 +123,7 @@ unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event:
 
 
 window.onload = async () => {
-    const opts = await get_options_async();
+    const opts = await getOptions()
     addStyle(doc, opts.position_css);
 
     const url = new URL(window.location);
