@@ -164,7 +164,8 @@ const options = {
     filename: '[name].js',
   },
   module: {
-      rules: [{
+      rules: [
+      {
           test: /\.js$/,
           exclude: /node_modules/,
           use: {
@@ -179,7 +180,24 @@ const options = {
           test: /\.html$/,
           loader: 'html-loader',
           exclude: /node_modules/
-      }
+      },
+      {
+          test: /node_modules\/basket.js\/lib\/basket.js/,
+          use: {
+              loader: path.join(__dirname, 'patcher.js'),
+              options: {
+                  patches: [
+                      /* see
+                       * https://github.com/addyosmani/basket.js/issues/174
+                       * https://github.com/addyosmani/basket.js/issues/173
+                       */
+                      {code: /RSVP.Promise/g, newCode: 'Promise'},
+                      {code: 'RSVP.all', newCode: 'Promise.all'},
+                      {code: 'window.basket =', newCode: 'var basket = window.basket='},
+                  ],
+              }
+          },
+      },
     ]
   },
   plugins: [
