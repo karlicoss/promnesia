@@ -1,4 +1,4 @@
 #!/bin/bash
 set -eu
 cd "$(dirname "$0")"
-npm run-script flow
+exec npm run-script flow "$@"
