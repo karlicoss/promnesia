@@ -45,6 +45,7 @@ jobs:
         path: .coverage.mypy/
 
   end2end_tests:
+    needs: [build] # just so it doesn't uses less resources
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

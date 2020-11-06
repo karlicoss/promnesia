@@ -162,6 +162,7 @@ const options = {
   output: {
     path: buildPath,
     filename: '[name].js',
+    // chunkFilename: '[name].bundle.js',
   },
   optimization: {
     splitChunks: {
@@ -198,7 +199,7 @@ const options = {
                        */
                       {code: /RSVP.Promise/g, newCode: 'Promise'},
                       {code: 'RSVP.all', newCode: 'Promise.all'},
-                      {code: 'window.basket =', newCode: 'var basket = window.basket='},
+                      {code: 'window.basket = {', newCode: 'var basket = window.basket= {'},
                   ],
               }
           },

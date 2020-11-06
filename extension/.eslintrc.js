@@ -1,11 +1,10 @@
 module.exports = {
-    "parser": "babel-eslint",
+    "parser": "@babel/eslint-parser",
     "plugins": [
         'flowtype',
         // 'react',
     ],
     'extends': [
-        // "google",
         'eslint:recommended',
         'plugin:flowtype/recommended',
         // 'plugin:react/recommended',
