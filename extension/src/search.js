@@ -3,8 +3,8 @@
 import {unwrap, addStyle} from './common';
 import type {Visits, Visit} from './common';
 import {getOptions} from './options'
-import {searchVisits, searchAround} from './background';
-import {Binder, _fmt} from './display';
+import {searchVisits, searchAround} from './api'
+import {Binder, _fmt} from './display'
 
 
 const doc = document;
