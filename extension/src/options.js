@@ -162,19 +162,6 @@ export async function getOptions(): Promise<Options> {
     return await optSync().getAll();
 }
 
-// TODO legacy; remove
-export async function get_options_async() {
-    return await getOptions();
-}
-
-/*
-function sleeper(ms) {
-    return function(x) {
-        return new Promise(resolve => setTimeout(() => resolve(x), ms));
-    };
-}
-*/
-
 export async function setOptions(opts: Options) {
     const os = optSync();
     await os.set(opts);

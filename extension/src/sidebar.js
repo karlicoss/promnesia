@@ -1,7 +1,7 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './common';
 import type {JsonObject, Second} from './common';
-import {get_options_async, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
+import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
 import {Binder, _fmt, asClass} from './display';
 import {defensify} from './notifications';
@@ -181,7 +181,7 @@ class Sidebar {
 }
 
 async function sidebar(): Promise<Sidebar> {
-    const opts = await get_options_async();
+    const opts = await getOptions();
     return new Sidebar(opts);
 }
 
@@ -264,7 +264,7 @@ async function tryHighlight(text: string, idx: number) {
 // used dynamically
 // eslint-disable-next-line no-unused-vars
 async function bindError(message: string) {
-    const opts = await get_options_async();
+    const opts = await getOptions();
     const sidebar = new Sidebar(opts);
 
     const cont = await sidebar.getContainer();
@@ -280,7 +280,7 @@ async function bindSidebarData(response: JsonObject) {
     // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
     // TDO perhaps we need something reactive...
     // window.sidebarData = response;
-    const opts = await get_options_async();
+    const opts = await getOptions();
     const sidebar = new Sidebar(opts);
 
     const cont = await sidebar.getContainer();

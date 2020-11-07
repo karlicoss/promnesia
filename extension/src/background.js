@@ -2,7 +2,7 @@
 
 import type {Locator, Src, Url, Second, JsonArray, JsonObject, AwareDate, NaiveDate} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
-import {get_options_async, getOptions, setOptions, THIS_BROWSER_TAG} from './options';
+import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 import {Blacklist} from './blacklist'
@@ -150,9 +150,9 @@ async function getBrowserVisits(url: Url): Promise<Visits> {
 // TODO think about caching blacklist on background page?
 // although need to be careful and invalidate it. ugh.
 
-// TODO ugh. can't keep get_options_async in blacklist.js because jest complains..
+// TODO ugh. can't keep getOptions in blacklist.js because jest complains..
 async function Blacklist_get(): Promise<Blacklist> {
-    const opts = await get_options_async()
+    const opts = await getOptions()
     return new Blacklist(opts)
 }
 
@@ -249,7 +249,7 @@ async function updateState (tab: chrome$Tab) {
         return;
     }
 
-    const opts = await get_options_async();
+    const opts = await getOptions();
     // TODO this should be executed as an atomic block?
 
     const inject = () => chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'})
@@ -590,7 +590,7 @@ async function showActiveTabNotification(text: string, color: string): Promise<v
 
 async function handleMarkVisited() {
     // TODO actually use mark visited setting?
-    // const opts = await get_options_async();
+    // const opts = await getOptions();
     const atab = await getActiveTab();
     const url = unwrap(atab.url);
     const tid = unwrap(atab.id);
@@ -730,7 +730,7 @@ async function blacklist(e): Promise<void> {
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
     console.debug('blacklisting %s', to_blacklist);
 
-    const opts = await get_options_async();
+    const opts = await getOptions();
     opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + to_blacklist;
 
     /*
