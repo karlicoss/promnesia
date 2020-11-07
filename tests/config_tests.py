@@ -1,10 +1,12 @@
-import pytest # type: ignore
+import pytest
 from more_itertools import ilen
 
 from promnesia import Source
 
+from common import throw
 
-def test_minimal():
+
+def test_minimal() -> None:
     '''
     Example of a smallest possible config, using a 'demo' source
     '''
@@ -22,7 +24,7 @@ SOURCES = [
     index(cfg)
 
 
-def test_sources_style():
+def test_sources_style() -> None:
     '''
     Testing 'styles' of specifying sources
     '''
@@ -52,8 +54,7 @@ SOURCES = [
 ]
     ''')
 
-    srcs = cfg.sources
-    assert all(isinstance(_, Source) for _ in cfg.sources)
+    srcs = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
 
     [s1, s2, s3, s4, s5, s55, s6] = srcs
 
@@ -107,8 +108,7 @@ SOURCES.append(
 )
 
 ''')
-    srcs = cfg.sources
-    [s1, s2, s3] = srcs
+    [s1, s2, s3] = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
 
     assert s1.name == 'cfg' # TODO would be nice to guess 'my_indexer' instead...
     assert s2.name == 'nice name'
@@ -136,8 +136,7 @@ SOURCES = [
     lazy,
 ]
     ''')
-    srcs = cfg.sources
-    assert all(isinstance(_, Source) for _ in cfg.sources)
+    srcs = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
     [s] = srcs
 
     assert s.name == 'cfg' # TODO this should be fixed... but not a big deal
@@ -208,6 +207,7 @@ INDEXERS = [
     ''')
 
     [s1] = cfg.sources
+    assert isinstance(s1, Source)
 
     assert s1.name == 'legacy name'
 

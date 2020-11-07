@@ -11,7 +11,7 @@ def index_takeout():
         takeout_path = 'tests/testdata/takeout-20150518T000000Z.zip'
 
     import my.config
-    my.config.google = user_config
+    my.config.google = user_config # type: ignore
 
     yield from takeout.index()
 

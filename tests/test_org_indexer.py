@@ -1,12 +1,12 @@
+from promnesia.common import Visit
 from promnesia.sources.org import extract_from_file
 
-from common import tdata
+from common import tdata, throw
 
-def test_org_indexer():
-    items = list(extract_from_file(tdata('auto/orgs/file.org')))
-    assert len(items) == 3
 
-    cpp = items[1]
+def test_org_indexer() -> None:
+    [_, cpp, cozy] = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file.org'))]
+
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
     # TODO not sure about filetags?
     assert cpp.context == '''
@@ -16,12 +16,11 @@ xxx /r/cpp   :cpp:programming:
 
 '''.lstrip()
 
-    cozy = items[2]
     assert cozy.url == 'https://twitter.com/Mappletons/status/1255221220263563269'
 
 
-def test_org_indexer_2():
-    items = list(extract_from_file(tdata('auto/orgs/file3.org')))
+def test_org_indexer_2() -> None:
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file3.org'))]
 
     assert len(items) == 6
     for i in items:
@@ -33,8 +32,8 @@ def test_org_indexer_2():
     # assert results[-1].url == 'https://en.wikipedia.org/wiki/InterPlanetary_File_System'
 
 
-def test_heading():
-    items = list(extract_from_file(tdata('auto/orgs/file2.org')))
+def test_heading() -> None:
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file2.org'))]
     assert {i.url for i in items} == {
         'https://en.wikipedia.org/wiki/Computational_topology',
         'http://graphics.stanford.edu/courses/cs468-09-fall/',

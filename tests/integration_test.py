@@ -140,7 +140,7 @@ SOURCES = [chrome_extractor]
     index(cfg)
 
 
-def test_hypothesis(tdir):
+def test_hypothesis(tdir) -> None:
     index_hypothesis(tdir)
 
     # TODO copy pasting from server; need to unify
@@ -159,7 +159,7 @@ def test_hypothesis(tdir):
     assert 'misconception about evolution is fueling misconception about AI' in vis.context # contains notes as well
 
 
-def test_comparison(tdir: Path):
+def test_comparison(tdir: Path) -> None:
     from promnesia.compare import compare_files
 
     idx = index_urls({
@@ -171,7 +171,7 @@ def test_comparison(tdir: Path):
     db     = tdir / 'promnesia.sqlite'
     old_db = tdir / 'promnesia-old.sqlite'
     import shutil
-    shutil.move(db, old_db)
+    shutil.move(str(db), str(old_db))
 
     idx2 = index_urls({
         'https://example.com': None,
