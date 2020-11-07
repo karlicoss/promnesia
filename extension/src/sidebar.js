@@ -412,7 +412,9 @@ async function bindSidebarData(response: JsonObject) {
         group.length = 0
     }
 
-    const tag_map = opts.src_map;
+    // todo maybe it should be a generic hook instead?
+    // todo how to make it defensive?..
+    const tag_map = JSON.parse(opts.src_map)
     // TODO group ones with no ctx..
     for (const group of groups()) {
 

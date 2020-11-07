@@ -1,13 +1,9 @@
 /* @flow */
-import type {Src} from './common';
 import {getBrowser} from './common'
 
 // $FlowFixMe
 import OptionsSync from 'webext-options-sync';
 
-type SrcMap = {
-    [Src]: Src
-};
 
 export type Options = {
     host: string;
@@ -25,7 +21,7 @@ export type Options = {
     blacklist: string;
     // kept as string to preserve formatting
     filterlists: string;
-    src_map: SrcMap;
+    src_map    : string;
 
     /* NOTE: a bit misleading name; it keeps all style settings now */
     position_css: string;
@@ -73,7 +69,7 @@ function defaultOptions(): Options {
   ["Banking",
    "https://raw.githubusercontent.com/cbuijs/shallalist/master/finance/banking/domains"]
 ]`,
-        src_map: {},
+        src_map: '{}',
 
 
         /* Change these if you want to reposition the sidebar
@@ -159,7 +155,14 @@ function optSync() {
 }
 
 export async function getOptions(): Promise<Options> {
-    return await optSync().getAll();
+    const r = await optSync().getAll()
+    let smap = r.src_map
+    if (typeof smap !== 'string') {
+        // old format, we used to keep as a map
+        smap = JSON.stringify(smap)
+    }
+    r.src_map = smap
+    return r
 }
 
 export async function setOptions(opts: Options) {
