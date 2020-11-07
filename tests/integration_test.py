@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import check_call, run
-from typing import Set, Dict, Optional, Union, Sequence, Tuple
+from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping
 
 from common import tdir, under_ci, DATA, GIT_ROOT
 
@@ -54,7 +54,7 @@ def _get_stuff(outdir: Path):
 
 # TODO a bit shit... why did I make it dict at first??
 Urls = Union[
-              Dict[str, Optional[str]],
+           Mapping[str, Optional[str]],
     Sequence[Tuple[str, Optional[str]]],
 ]
 
@@ -85,18 +85,9 @@ SOURCES = [indexer]
     return idx
 
 
-def index_hypothesis(tdir: Path):
-    # TODO meh.. use submodule?
-    hypexport_path = Path(tdir) / 'hypexport'
-    check_call([
-        'git',
-        'clone',
-        '--recursive',
-        'https://github.com/karlicoss/hypexport',
-        str(hypexport_path),
-    ])
-
-    # TODO using 'hypexport' is a legacy way.. need to use virtualenv and install or add to pythonpath
+def index_hypothesis(tdir: Path) -> None:
+    hypexport_path  = DATA / 'hypexport'
+    hypothesis_data = hypexport_path / 'testdata'
 
     cfg = tdir / 'test_config.py'
     # TODO ok, need to simplify this...
@@ -108,9 +99,12 @@ from promnesia.common import Source
 def hyp_extractor():
     import my.config
     class user_config:
-        export_path = '{str(DATA)}/hypothesis/netrights-dashboards-mockup/data/*.json'
-        hypexport   = '{hypexport_path}'
+        export_path = '{str(hypothesis_data)}/netrights-dashboard-mockup/data/*.json'
     my.config.hypothesis = user_config
+
+    # todo ideally would use virtualenv?
+    import sys
+    sys.path.insert(0, "{str(hypexport_path / 'src')}")
 
     import promnesia.sources.hypothesis as hypothesis
     yield from hypothesis.index()
