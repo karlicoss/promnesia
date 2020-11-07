@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     CodeMirror(getSrcMap(), {
         mode       : 'javascript',
         lineNumbers: true,
-        value      : JSON.stringify(opts.src_map),
+        value      : opts.src_map,
     });
 
     CodeMirror(getPositionCss(), {
@@ -200,7 +200,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         blacklist  : getEditor(getBlackList()  ).getValue(),
         filterlists: getEditor(getFilterLists()).getValue(),
 
-        src_map   : JSON.parse(getEditor(getSrcMap()).getValue()),
+        src_map   : getEditor(getSrcMap()).getValue(),
         position_css : getEditor(getPositionCss()).getValue(),
         extra_css    : getEditor(getExtraCss()).getValue(),
     };
