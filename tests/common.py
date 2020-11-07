@@ -39,7 +39,7 @@ def tdata(path: str) -> str:
 from contextlib import contextmanager
 @contextmanager
 def tmp_popen(*args, **kwargs):
-    import psutil
+    import psutil # type: ignore
     with psutil.Popen(*args, **kwargs) as p:
         try:
             yield p
@@ -60,3 +60,11 @@ def promnesia_bin(*args):
         root = Path(__file__).parent.parent
         pm = root / 'scripts/promnesia'
         return [pm, *args]
+
+
+from typing import Any, NoReturn
+def throw(x: Any) -> NoReturn:
+    '''
+    like raise, but can be an expression...
+    '''
+    raise RuntimeError(x)

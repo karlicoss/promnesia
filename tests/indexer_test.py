@@ -16,8 +16,7 @@ from pytest import mark # type: ignore
 
 from common import skip_if_ci, tdata
 
-from promnesia.common import History, Visit
-from promnesia.common import Indexer
+from promnesia.common import History, Visit, Indexer, Loc
 
 # TODO need to expire dbcache in tests..
 
@@ -31,7 +30,8 @@ def W(*args, **kwargs):
 
 def history(*args, **kwargs):
     from promnesia.common import previsits_to_history
-    return previsits_to_history(*args, **kwargs, src='whatever')[0] # TODO meh
+    kwargs['src'] = 'whatever'
+    return previsits_to_history(*args, **kwargs)[0] # TODO meh
 
 
 from contextlib import contextmanager
@@ -90,7 +90,7 @@ def test_takeout_directory(adhoc_config, tmp_path):
     from my.cfg import config
     class user_config:
         takeout_path = tdata('takeout')
-    config.google = user_config
+    config.google = user_config # type: ignore
     import promnesia.sources.takeout as tex
 
     visits = history(W(tex.index))
@@ -100,7 +100,7 @@ def test_takeout_directory(adhoc_config, tmp_path):
 
 
 
-def test_with_error():
+def test_with_error() -> None:
     class ExtractionError(Exception):
         pass
     def err_ex():
@@ -111,17 +111,17 @@ def test_with_error():
                 yield Visit(
                     url=f'http://test{i}',
                     dt=datetime.utcfromtimestamp(0),
-                    locator=None,
+                    locator=Loc.make('whatever'),
                 )
     hist = history(lambda: err_ex())
     assert len(hist) == 2
 
 
-def test_takeout_new_zip(adhoc_config):
+def test_takeout_new_zip(adhoc_config) -> None:
     from my.cfg import config
     class user_config:
         takeout_path = tdata('takeout-20150518T000000Z.zip')
-    config.google = user_config
+    config.google = user_config # type: ignore
 
     import promnesia.sources.takeout as tex
     visits = history(tex.index)
@@ -218,7 +218,7 @@ def test_filter():
     from promnesia.sources.plaintext import extract_from_path
 
     History.add_filter(r'some-weird-domain')
-    hist = custom_gen.get_custom_history(
+    hist = custom_gen.get_custom_history( # type: ignore
         extract_from_path(tdata('custom')),
     )
     assert len(hist) == 4 # chrome-error got filtered out
@@ -294,7 +294,7 @@ def _test_merge_all_from(tdir):
     assert not lexists(first)
     assert not lexists(second)
 
-    import promnesia.sources.chrome as chrome_ex
+    import promnesia.sources.chrome as chrome_ex # type: ignore
 
     hist = history(W(chrome_ex.extract, mfile))
     assert len(hist) > 0

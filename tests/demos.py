@@ -17,7 +17,7 @@ from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
 
 
 def real_db():
-    from private import real_db_path, test_filter
+    from private import real_db_path, test_filter # type: ignore
     from tempfile import TemporaryDirectory
     import shutil
     def indexer(tdir: Path):

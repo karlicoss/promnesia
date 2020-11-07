@@ -13,6 +13,8 @@ from typing import NamedTuple, ContextManager, Optional
 import pytz
 import requests
 
+from promnesia.common import PathIsh
+
 from integration_test import index_hypothesis, index_urls
 from common import tdir, under_ci, tdata, tmp_popen, promnesia_bin
 
@@ -32,7 +34,7 @@ def next_port():
 
 
 @contextmanager
-def wserver(db: Optional[Path]=None): # TODO err not sure what type should it be... -> ContextManager[Helper]:
+def wserver(db: Optional[PathIsh]=None): # TODO err not sure what type should it be... -> ContextManager[Helper]:
     port = str(next_port())
     cmd = [
         'serve',
