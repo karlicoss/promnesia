@@ -299,9 +299,9 @@ class TestHelper(NamedTuple):
         check_call(['import', '-window', self.wid(), path])
 
 
-def confirm(what: str):
+def confirm(what: str) -> None:
     import click # type: ignore
-    click.confirm(what, abort=True)
+    click.confirm(click.style(what, blink=True, fg='yellow'), abort=True)
 
 
 @contextmanager
@@ -380,14 +380,8 @@ def test_backend_status(tmp_path, browser):
         alert = driver.switch_to.alert
         assert 'ERROR' in alert.text
 
-        # TODO ugh, not sure why it just stucks on headless...
-        # perhaps use policy instead? https://stackoverflow.com/a/43946973/706389
-        if not browser.headless:
-            driver.switch_to.alert.accept()
-            sleep(0.5)
-            # ugh. extra alert...
-            driver.switch_to.alert.accept()
-
+        sleep(0.5) #  don't remember if needed?
+        driver.switch_to.alert.accept()
         # TODO implement positive check??
 
 def set_position(driver, settings: str):
@@ -534,7 +528,7 @@ def test_show_dots(tmp_path, browser):
 @browsers(FF, CH)
 def test_search(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:
+    with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
         trigger_command(helper.driver, Command.SEARCH)
         # TODO actually search something?
         # TODO use current domain as deafult? or 'parent' url?
