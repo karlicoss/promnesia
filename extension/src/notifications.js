@@ -39,8 +39,9 @@ export function alertError(obj: any) {
 }
 
 export function defensify(pf: (...any) => Promise<any>, name: string): (any) => Promise<any> {
+    const fname = pf.name // hopefully it's always present?
     return (...args) => pf(...args).catch((err) => {
-        console.error('%s failed: %o', name, err);
+        console.error('function "%s" %s failed: %o', fname, name, err);
         getOptions().then(opts => {
             if (opts.verbose_errors_on) {
                 notifyError(err, 'defensify');
@@ -82,11 +83,16 @@ export async function showTabNotification(tabId: number, message: string, ...arg
     try {
         await _showTabNotification(tabId, message, ...args);
     } catch (error) {
-        console.error('showTabNotification: %o', error);
-        // TODO could check for 'Invalid tab ID' here? although
-        // TODO I guess if it's an error notification good to display it? otherwise, can suppress and just rely on propagation?
-        // for now just rely on verbose_error settting to decide if we are up for displaying it
-        throw error;
+        console.error('showTabNotification: %o %s', error, message)
+        if (error.message == 'Missing host permission for the tab') {
+            // ugh. might happen if the page is down..
+            // in that case it doesn't have the context to show a popup.
+            // could make it configurable??
+            // tested by test_unreachable
+            notify(message)
+        } else {
+            throw error
+        }
     }
 }
 
