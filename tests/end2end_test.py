@@ -164,10 +164,10 @@ def configure(
         show_dots: bool=True,
         highlights: Optional[bool]=None,
         blacklist=None,
-        notification: Optional[bool]=None,
+        notify_contexts: Optional[bool]=None,
         position: Optional[str]=None,
         verbose_errors: bool=True,
-):
+) -> None:
     def set_checkbox(cid: str, value: bool):
         cb = driver.find_element_by_id(cid)
         selected = cb.is_selected()
@@ -197,8 +197,8 @@ def configure(
     if highlights is not None:
         set_checkbox('highlight_id', highlights)
 
-    if notification is not None:
-        set_checkbox('contexts_popup_id', notification)
+    if notify_contexts is not None:
+        set_checkbox('contexts_popup_id', notify_contexts)
 
     if position is not None:
         set_position(driver, position)
@@ -305,18 +305,18 @@ def confirm(what: str) -> None:
 
 
 @contextmanager
-def _test_helper(tmp_path, indexer, test_url: Optional[str], show_dots: bool=False, browser: Browser=FFH):
+def _test_helper(tmp_path, indexer, test_url: Optional[str], browser: Browser=FFH, **kwargs):
     tdir = Path(tmp_path)
 
     indexer(tdir)
     with wserver(db=tdir / 'promnesia.sqlite') as srv, get_webdriver(browser=browser) as driver:
         port = srv.port
-        configure_extension(driver, port=port, show_dots=show_dots)
+        configure(driver, port=port, **kwargs)
         sleep(0.5)
 
         if test_url is not None:
             driver.get(test_url)
-            sleep(3)
+            sleep(3) # todo use some condition...
         else:
             driver.get('about:blank')
 
@@ -541,7 +541,10 @@ def test_new_background_tab(tmp_path, browser):
     start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
-    with _test_helper(tmp_path, index_hypothesis, start_url, browser=browser) as helper:
+    with _test_helper(
+            tmp_path, index_hypothesis, start_url, browser=browser,
+            notify_contexts=True,
+    ) as helper:
         confirm('you should see notification about contexts')
         helper.driver.find_element(By.XPATH, '//div[@class="logo"]/a').send_keys(Keys.CONTROL + Keys.ENTER)
         confirm('you should not see any new notifications')
@@ -566,23 +569,29 @@ def test_local_page(tmp_path, browser):
         helper.driver.back()
         # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
         confirm('grey icon, should be no sidebar')
+        # TODO fuck. failing here to load anchorme as well as webext-options-sync? ugh.
         helper.driver.forward()
         confirm('green icon, sidebar visible')
 
 
 @uses_x
 @browsers(FF, CH)
-def test_unreachable(tmp_path, browser):
+def test_unreachable(tmp_path, browser) -> None:
     url = 'https://somenonexist1ngurl.com'
     urls = {
         url: 'some context',
     }
-    with _test_helper(tmp_path, index_urls(urls), 'about:blank', browser=browser) as helper:
+    with _test_helper(
+            tmp_path, index_urls(urls), 'about:blank', browser=browser,
+            notify_contexts=True,
+            verbose_errors=False,
+    ) as helper:
         try:
             helper.driver.get(url)
         except:
             # results in exception because it's unreachable
             pass
+        # TODO maybe in this case it could instead open the sidebar in a separate tab?
         confirm('green icon, no errors, desktop notification with contexts')
 
 

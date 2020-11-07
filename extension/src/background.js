@@ -193,7 +193,7 @@ async function updateState (tab: chrome$Tab) {
     // not sure how to detect it? tab doesn't have any interesting attributes
     // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
     // TODO in this case, could set browser action to open a new tab (i.e. search) or something?
-    await defensify(inject, 'sidebar injection for tabId: ${tabId} url: ${url}')();
+    await defensify(inject, `sidebar injection for tabId: ${tabId} url: ${url}`)();
     // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
 
     const visits = await getVisits(url);
