@@ -21,7 +21,7 @@ input:invalid {
 .description {
     margin-left: 1em;
     color: #777777;
-    white-space: pre-line;
+    white-space: pre;
 }
 
 hr {
