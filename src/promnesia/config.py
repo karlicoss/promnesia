@@ -108,3 +108,20 @@ def import_config(config_file: PathIsh) -> Config:
         if hasattr(mod, f):
             d[f] = getattr(mod, f)
     return Config(**d)
+
+
+# TODO: ugh. this causes warnings to be repeated multiple times... need to reuse the pool or something..
+def use_cores() -> Optional[int]:
+    '''
+    Somewhat experimental.
+    For now only used in sources.auto, perhaps later will be shared among the other indexers.
+    '''
+    # most likely needs to be some sort of pipeline thing?
+    import os
+    cs = os.environ.get('PROMNESIA_CORES', None)
+    if cs is None:
+        return None
+    try:
+        return int(cs)
+    except ValueError: # any other value means 'use all
+        return 0

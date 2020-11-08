@@ -17,25 +17,9 @@ import warnings
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, _magic
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, mime, traverse
+from ..config import use_cores
 from ..py37 import nullcontext
-
-
-# TODO: ugh. this causes warnings to be repeated multiple times... need to reuse the pool or something..
-def use_cores() -> Optional[int]:
-    # somewhat experimental.. later need to think how to use it proprely
-    # most likely needs to be some sort of pipeline thing?
-    cs = os.environ.get('PROMNESIA_CORES', None)
-    if cs is None:
-        return None
-    try:
-        return int(cs)
-    except ValueError: # any other value means 'use all
-        return 0
-
-
-def mime(path: PathIsh) -> str:
-    return _magic().from_file(str(path))
 
 
 from .filetypes import EUrl
@@ -66,8 +50,6 @@ def collect_from(thing) -> List[EUrl]:
     path: List[str] = []
     _collect(thing, path, uuu)
     return uuu
-
-# TODO use magic and mimes maybe?
 
 
 Urls = Iterator[EUrl]
@@ -178,7 +160,20 @@ for t in CODE:
 
 Replacer = Optional[Callable[[str], str]]
 
-def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], str]=(), follow=True, replacer: Replacer=None) -> Results:
+def index(
+        path: Union[List[PathIsh], PathIsh],
+        *,
+        ignored: Union[Sequence[str], str]=(),
+        follow=True,
+        replacer: Replacer=None,
+) -> Results:
+    '''
+    path   : a path or list of paths to recursively index
+    ignored: a glob or list of globs to exclude from indexing
+    follow : whether to follow symlinks or not
+    '''
+    # TODO document replacer?
+
     # TODO *args?
     # TODO meh, unify with glob traversing..
     paths = path if isinstance(path, list) else [path]
@@ -192,73 +187,57 @@ def index(path: Union[List[PathIsh], PathIsh], *, ignored: Union[Sequence[str], 
             follow=follow,
             replacer=replacer,
             root=root,
-            processed=set(), # meh
         )
         yield from _index(apath, opts=opts)
 
-
 class Options(NamedTuple):
     ignored: Sequence[str]
-    follow: bool
+    follow: bool # TODO remove this?
     # TODO option to add ignores? not sure..
     # TODO I don't like this replacer thing... think about removing it
     replacer: Replacer
-    # TODO meh. it should be a class instead..
-    processed: Set[Path]
     root: Optional[Path]=None
 
 
-def _index_aux(path: Path, opts: Options):
+def _index_file_aux(path: Path, opts: Options):
     # just a helper for the concurrent version (the generator isn't picklable)
-    return list(_index(path, opts))
+    try:
+        return list(_index_file(path, opts=opts))
+    except Exception as e:
+        # possible due to unavoidable race conditions
+        return e
 
 
 # TODO eh. might be good to use find or fdfind to speed it up...
 def _index(path: Path, opts: Options) -> Results:
     logger = get_logger()
 
-    if path in opts.processed:
-        return
-    opts.processed.add(path)
+    cores = use_cores()
+    if cores is None: # do not use cores
+        pool = nullcontext()
+        mapper = map # dummy pool
+    else:
+        workers = None if cores == 0 else cores
+        pool = Pool(workers) # type: ignore
+        mapper = pool.map # type: ignore
 
-    if path.name in IGNORE:
-        logger.debug('ignoring %s: default ignore rules', path)
-        return
-    if any(fnmatch(str(path), o) for o in opts.ignored):
-        logger.debug('ignoring %s: user ignore rules', path)
-        return
+    def files_it():
+        for p in traverse(path, follow=opts.follow):
+            if any(fnmatch(str(p), o) for o in opts.ignored):
+                # TODO not sure if should log here... might end up with quite a bit of logs
+                logger.debug('ignoring %s: user ignore rules', p)
+                continue
+            if any(i in p.parts for i in IGNORE): # meh, not very efficient.. pass to traverse??
+                logger.debug('ignoring %s: default ignore rules', p)
+                continue
+            yield p
 
-    if path.is_symlink():
-        if opts.follow and os.path.exists(path): # check if not broken
-            yield from _index(path.resolve(), opts=opts)
-        else:
-            logger.debug('ignoring symlink %s', path)
-        return
-
-    logger.debug('auto._index: %s', path)
-
-    if path.is_dir():
-        paths = path.glob('*') # meh
-        # not the best place to use multiprocessing, but for now OK
-        cores = use_cores()
-        if cores is None: # do not use
-            ctx = nullcontext()
-            mapper = map
-        else:
-            workers = None if cores == 0 else cores
-            ctx = Pool(workers) # type: ignore
-            mapper = ctx.map # type: ignore
-        with ctx:
-            for r in mapper(_index_aux, paths, itertools.repeat(opts)):
+    with pool:
+        for r in mapper(_index_file_aux, files_it(), itertools.repeat(opts)):
+            if isinstance(r, Exception):
+                yield r
+            else:
                 yield from r
-        return
-
-    # otherwise it's a regular file
-    try:
-        yield from _index_file(path, opts=opts)
-    except Exception as e:
-        # quite likely due to unavoidable race conditions
-        yield e
 
 
 import mimetypes
@@ -312,7 +291,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
     # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 
     root = opts.root
-    fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc)
+    fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc) # TODO system tz?
     fallback_loc = Loc.file(pp)
     replacer = opts.replacer
     for r in indexer:

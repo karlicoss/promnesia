@@ -504,3 +504,24 @@ def python3() -> str:
 def _magic():
     import magic # type: ignore
     return magic.Magic(mime=True)
+
+
+def mime(path: PathIsh) -> str:
+    return _magic().from_file(str(path))
+
+
+def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
+    if not root.is_dir():
+        yield root
+        return
+
+    from subprocess import Popen, PIPE
+    mfollow = ['--follow'] if follow else []
+    # TODO split by \0?
+    # FIXME support for find
+    with Popen(['fdfind', *mfollow, '--type', 'f', '.', str(root)], stdout=PIPE) as p:
+        out = p.stdout
+        assert out is not None
+        for line in out:
+            fpath = Path(line.decode('utf8').strip())
+            yield fpath

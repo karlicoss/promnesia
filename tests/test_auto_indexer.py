@@ -2,7 +2,7 @@ from itertools import groupby
 
 from promnesia.sources import auto
 
-from common import tdata
+from common import tdata, throw
 
 sa2464 = 'https://www.scottaaronson.com/blog/?p=2464'
 
@@ -15,13 +15,17 @@ _JSON_URLS = {
 def makemap(visits):
     key = lambda v: v.url
     def it():
-        for k, g in groupby(sorted(visits, key=key), key=key):
+        vit = (throw(v) if isinstance(v, Exception) else v for v in visits)
+        for k, g in groupby(sorted(vit, key=key), key=key):
             yield k, list(sorted(g))
     return dict(it())
 
 
-def test_json():
-    mm = makemap(auto.index(tdata('auto/pocket.json')))
+def test_json() -> None:
+    mm = makemap(auto.index(
+        tdata('auto'),
+        ignored='*/orgs/*',
+    ))
     assert mm.keys() == _JSON_URLS
 
     # TODO not sure if they deserve separate visits..
@@ -32,7 +36,7 @@ def test_json():
     # TODO line number?
 
 
-def test_auto():
+def test_auto() -> None:
     mm = makemap(auto.index(tdata('auto')))
     org_link = 'https://www.youtube.com/watch?v=rHIkrotSwcc'
     assert {

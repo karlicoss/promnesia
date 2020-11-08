@@ -122,7 +122,6 @@ IGNORE = [
     '__pycache__',
     '.tox',
     '.stack-work',
-    # TODO use ripgrep?
 
     # TODO not sure about these:
     '.gitignore',
