@@ -286,7 +286,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
         yield RuntimeError(msg + f', path {pp}')
         return
 
-    logger.debug('using indexer: %s', ip.__name__)
+    logger.debug('indexing via %s: %s', ip.__name__, pp)
     indexer: Union[Urls, Results] = ip(pp) # type: ignore
     # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 
