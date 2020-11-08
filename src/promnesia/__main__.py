@@ -14,7 +14,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, History, make_filter, get_logger, get_tmpdir
-from .common import previsits_to_history, Source, appdirs, python3
+from .common import previsits_to_history, Source, appdirs, python3, get_system_zone
 from .dump import dump_histories
 
 
@@ -113,7 +113,7 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
         if port is None:
             logger.warning("Port isn't specified, not serving!")
         else:
-            server._run(port=port, db=config.get().output_dir / 'promnesia.sqlite', timezone=server.get_system_tz(), quiet=False)
+            server._run(port=port, db=config.get().output_dir / 'promnesia.sqlite', timezone=get_system_zone(), quiet=False)
 
         if sys.stdin.isatty():
             input("Press any key when ready")

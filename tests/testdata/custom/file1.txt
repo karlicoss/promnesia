@@ -6,4 +6,4 @@ something something
 trailing slash maybe? http://google.com/ ?
 
 
-whoops! http://some-weird-domain/whatever
+whoops! http://some-weird-domain.xyz/whatever

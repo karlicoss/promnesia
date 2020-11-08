@@ -181,9 +181,11 @@ def make_filter(thing) -> Filter:
         return thing
 
 
+from .logging import LazyLogger
+logger = LazyLogger('promnesia', level='DEBUG')
+
 def get_logger() -> logging.Logger:
-    from .logging import LazyLogger
-    return LazyLogger('promnesia', level='DEBUG')
+    return logger
 
 
 # TODO need to get rid of this.. just some legacy stuf...
@@ -552,3 +554,23 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
         for line in out:
             fpath = Path(line.decode('utf8').strip())
             yield fpath
+
+
+def get_system_zone() -> str:
+    try:
+        import tzlocal # type: ignore
+        return tzlocal.get_localzone().zone
+    except Exception as e:
+        logger.exception(e)
+        logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
+        return 'UTC'
+
+
+def get_system_tz():
+    zone = get_system_zone()
+    try:
+        return pytz.timezone(zone)
+    except Exception as e:
+        logger.exception(e)
+        logger.error(f"Unknown time zone %s. Falling back to UTC. Please report this as a bug!", zone)
+        return pytz.utc

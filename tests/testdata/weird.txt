@@ -1,2 +1,2 @@
 https://urbandictionary.com/define.php?term=Belgian%20Whistle
-https://en.wikipedia.org/wiki/Dinic%27s_algorithm
+right, so https://en.wikipedia.org/wiki/Dinic%27s_algorithm can be used for max flow

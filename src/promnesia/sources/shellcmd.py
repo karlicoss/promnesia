@@ -4,56 +4,54 @@ from typing import Optional
 from pathlib import Path
 from urllib.parse import unquote
 
-import pytz
+from ..common import Visit, Loc, Results, extract_urls, get_system_tz
 
-from ..common import Visit, Loc, Results
 
 def index(command: str) -> Results:
-    output = check_output(command, shell=True)
-    lines = [line.decode('utf-8') for line in output.splitlines()]
-    # TODO eh?
-    for line in lines:
-        # TODO wtf is that??? use extract_url??
-        protocols = ['file', 'ftp', 'http', 'https']
-        for p in protocols:
-            split_by = ':' + p + '://'
-            if split_by in line:
-                parts = line.split(split_by)
-                break
-        else:
-            parts = [line]
+    tz = get_system_tz()
 
+    def handle_line(line: str) -> Results:
+        #
+        # grep dumps this as
+        # /path/to/file:lineno:rest
         fname: Optional[str]
         lineno: Optional[int]
+        parts = line.split(':', maxsplit=2)
         url: str
-        if len(parts) == 1:
+        if len(parts) == 3:
+            fname   = parts[0]
+            lineno  = int(parts[1])
+            line    = parts[2]
+        else:
             fname = None
             lineno = None
-            url = parts[0]
-        else:
-            [fname, linenos] = parts[0].rsplit(':', maxsplit=1)
-            lineno = int(linenos)
-            url = split_by[1:] + parts[1]
 
-        # TODO is it really necessary with locator?
-        context = f"{fname}:{lineno}" if fname and lineno else None
+        urls = extract_urls(line)
+        if len(urls) == 0:
+            return
 
-        # TODO not sure if even necessary? not that I use canonify
-        url = unquote(url)
+        context = line
 
         ts: datetime
         loc: Loc
         if fname is not None:
-            ts = datetime.fromtimestamp(Path(fname).stat().st_mtime)
+            ts = datetime.fromtimestamp(Path(fname).stat().st_mtime, tz=tz)
             loc = Loc.file(fname, line=lineno)
         else:
-            # TODO fallback tz??
-            ts = datetime.utcnow().replace(tzinfo=pytz.utc)
+            ts = datetime.now(tz=tz)
             loc = Loc.make(command)
-        # TODO !1 extract org notes properly...
-        yield Visit(
-            url=url,
-            dt=ts,
-            locator=loc,
-            context=context,
-        )
+        for url in urls:
+            yield Visit(
+                url=url,
+                dt=ts,
+                locator=loc,
+                context=context,
+            )
+
+    output = check_output(command, shell=True)
+    lines = [line.decode('utf-8') for line in output.splitlines()]
+    for line in lines:
+        try:
+            yield from handle_line(line)
+        except Exception as e:
+            yield e
