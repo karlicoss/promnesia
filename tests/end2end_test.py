@@ -5,7 +5,7 @@ from datetime import datetime
 from tempfile import TemporaryDirectory
 from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Iterator
 
 import pytest # type: ignore
 
@@ -20,10 +20,15 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-from common import under_ci, skip_if_ci, uses_x
+from common import under_ci, skip_if_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from firefox_helper import open_extension_page
+
+from promnesia.logging import LazyLogger
+
+
+logger = LazyLogger('promnesia-tests')
 
 
 class Browser(NamedTuple):
@@ -304,6 +309,28 @@ def confirm(what: str) -> None:
     click.confirm(click.style(what, blink=True, fg='yellow'), abort=True)
 
 
+class Manual:
+    def confirm(self, what: str) -> None:
+        raise NotImplementedError
+
+class Interactive(Manual):
+    def confirm(self, what: str) -> None:
+        confirm(what)
+
+class Headless(Manual):
+    def confirm(self, what: str) -> None:
+        logger.warning('"%s": headless mode, responding "yes"', what)
+
+
+'''
+Helper for tests that are not yet fully automated and require a human to check...
+- if running with the GUI, will be interactive
+- if running in headless mode, will automatically assume 'yes'.
+  of course it's not very robust, but at least we're testing some codepaths then
+'''
+manual = Interactive() if has_x() else Headless()
+
+
 @contextmanager
 def _test_helper(tmp_path, indexer, test_url: Optional[str], browser: Browser=FFH, **kwargs):
     tdir = Path(tmp_path)
@@ -329,11 +356,20 @@ class Command:
 # TODO assert this against manifest?
 
 
-def browsers(*br):
+def browsers(*br: Browser):
+    if len(br) == 0:
+        br = (FF, FFH, CH)
+    if not has_x():
+        br = tuple(b for b in br if b.headless)
+
     from functools import wraps
     def dec(f):
+        if len(br) == 0:
+            dd = pytest.mark.skip('Filtered out all browsers (because of no GUI/non-interactive mode)')
+        else:
+            dd = pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
         @pytest.mark.with_browser
-        @pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
+        @dd
         @wraps(f)
         def ff(*args, **kwargs):
             return f(*args, **kwargs)
@@ -344,19 +380,15 @@ def browsers(*br):
 PYTHON_DOC_URL = 'file:///usr/share/doc/python3/html/index.html'
 
 
-@browsers(FFH, CH)
+@browsers()
 def test_installs(tmp_path, browser):
-    browser.skip_ci_x()
-
     with get_webdriver(browser=browser):
         # just shouldn't crash
         pass
 
 
-@browsers(FFH, CH)
+@browsers()
 def test_settings(tmp_path, browser):
-    browser.skip_ci_x()
-
     # TODO fixture for driver?
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', show_dots=False)
@@ -366,10 +398,8 @@ def test_settings(tmp_path, browser):
         assert hh.get_attribute('value') == 'http://localhost:12345'
 
 
-@browsers(FFH, FF, CH)
+@browsers()
 def test_backend_status(tmp_path, browser):
-    browser.skip_ci_x()
-
     with get_webdriver(browser=browser) as driver:
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
@@ -402,11 +432,9 @@ def set_position(driver, settings: str):
         area.send_keys(settings)
 
 
-
+# TODO ffh?
 @browsers(FF, CH)
 def test_sidebar_bottom(browser):
-    browser.skip_ci_x()
-
     with get_webdriver(browser=browser) as driver:
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
@@ -430,27 +458,23 @@ def test_sidebar_bottom(browser):
         confirm("You should see sidebar below")
 
 
-@uses_x
 @browsers(FF, CH)
-def test_blacklist_custom(tmp_path, browser):
-    # TODO make confirm a fixture? so we can automatically skip them on ci
+def test_blacklist_custom(tmp_path, browser) -> None:
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
         driver.get('http://stackoverflow.com')
         trigger_command(driver, Command.ACTIVATE)
-        confirm('page should be blacklisted (black icon), your should see an error notification')
+        manual.confirm('page should be blacklisted (black icon), your should see an error notification')
 
 
-@uses_x
-@browsers(FF, CH)
+@browsers()
 def test_blacklist_builtin(tmp_path, browser):
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://www.hsbc.co.uk/mortgages/')
-        confirm('page should be blacklisted (black icon)')
+        manual.confirm('page should be blacklisted (black icon)')
 
 
-@uses_x
 @browsers(FF, CH)
 def test_add_to_blacklist(tmp_path, browser):
     with get_webdriver(browser=browser) as driver:
@@ -477,7 +501,6 @@ def test_add_to_blacklist(tmp_path, browser):
         confirm('page should be blacklisted (black icon)')
 
 
-@uses_x
 @browsers(FF, CH)
 def test_visits(tmp_path, browser):
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
@@ -487,7 +510,6 @@ def test_visits(tmp_path, browser):
         confirm('you should see hypothesis contexts')
 
 
-@uses_x
 @browsers(FF, CH)
 def test_search_around(tmp_path, browser):
     # TODO it actually lacks a proper end-to-end test withing browser... although I do have something in automatic demos?
@@ -510,7 +532,6 @@ def test_chrome_visits(tmp_path, browser):
         confirm("You shoud see chrome visits now; with time spent")
 
 
-@uses_x
 @browsers(FF, CH)
 def test_show_dots(tmp_path, browser):
     visited = {
@@ -524,7 +545,6 @@ def test_show_dots(tmp_path, browser):
         confirm("You should see dots near special linear group, Unitary group, Transpose")
 
 
-@uses_x
 @browsers(FF, CH)
 def test_search(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
@@ -535,9 +555,8 @@ def test_search(tmp_path, browser):
         confirm("You shoud see search prompt now, with focus on search field")
 
 
-@uses_x
-@browsers(FF, CH)
-def test_new_background_tab(tmp_path, browser):
+@browsers()
+def test_new_background_tab(tmp_path, browser) -> None:
     start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
@@ -545,17 +564,18 @@ def test_new_background_tab(tmp_path, browser):
             tmp_path, index_hypothesis, start_url, browser=browser,
             notify_contexts=True,
     ) as helper:
-        confirm('you should see notification about contexts')
+        manual.confirm('you should see notification about contexts')
         helper.driver.find_element(By.XPATH, '//div[@class="logo"]/a').send_keys(Keys.CONTROL + Keys.ENTER)
-        confirm('you should not see any new notifications')
+        manual.confirm('you should not see any new notifications')
         # TODO switch to new tab?
         # TODO https://www.e-flux.com/journal/53/
 
 
-@uses_x
 # TODO shit disappears on chrome and present on firefox
 @browsers(FF, CH)
-def test_local_page(tmp_path, browser):
+# FIXME fails on headless firefox because in docker python3-doc isn't installing this file??
+# really weird, mismatches dpkg -L
+def test_local_page(tmp_path, browser) -> None:
     tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
     urls = {
          tutorial                                                : 'TODO read this',
@@ -569,13 +589,12 @@ def test_local_page(tmp_path, browser):
         helper.driver.back()
         # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
         confirm('grey icon, should be no sidebar')
-        # TODO fuck. failing here to load anchorme as well as webext-options-sync? ugh.
+        # fIXME fuck. failing here to load anchorme as well as webext-options-sync? ugh.
         helper.driver.forward()
         confirm('green icon, sidebar visible')
 
 
-@uses_x
-@browsers(FF, CH)
+@browsers()
 def test_unreachable(tmp_path, browser) -> None:
     url = 'https://somenonexist1ngurl.com'
     urls = {
@@ -592,12 +611,11 @@ def test_unreachable(tmp_path, browser) -> None:
             # results in exception because it's unreachable
             pass
         # TODO maybe in this case it could instead open the sidebar in a separate tab?
-        confirm('green icon, no errors, desktop notification with contexts')
+        manual.confirm('green icon, no errors, desktop notification with contexts')
 
 
-@uses_x
-@browsers(FF, CH)
-def test_stress(tmp_path, browser):
+@browsers()
+def test_stress(tmp_path, browser) -> None:
     page = tmp_path / 'dummy.html'
     page.write_text('''
 <html>
@@ -613,11 +631,9 @@ def test_stress(tmp_path, browser):
     with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
         # TODO so, should the response be immediate?
         # TODO shouldn't do any work if we don't open the sidebar
-        confirm('is performance reasonable?')
+        manual.confirm('is performance reasonable?')
 
     
-
-@uses_x
 @browsers(FF, CH)
 def test_fuzz(tmp_path, browser):
     # TODO ugh. this still results in 'tab permissions' pages, but perhaps because of closed tabs?
@@ -643,6 +659,7 @@ def test_fuzz(tmp_path, browser):
                 send_key('Ctrl+Shift+t')
                 sleep(0.1)
         trigger_callback(driver, cb)
+        # FIXME shows quite a bunch of notifications here...
         confirm("shouldn't result in 'unexpected error occured'; show only show single notification per page")
 
 
@@ -653,7 +670,6 @@ def trigger_sidebar_search(driver):
     search_button.click()
 
 
-@uses_x
 @browsers(FF, CH)
 def test_duplicate_background_pages(tmp_path, browser):
     url = PYTHON_DOC_URL

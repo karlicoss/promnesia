@@ -134,7 +134,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
         configure(
             driver,
             host=None, port=None, # TODO meh
-            notification=False,
+            notify_contexts=False,
             position=position,
             verbose_errors=False,
             **extras,
