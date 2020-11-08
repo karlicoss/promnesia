@@ -116,6 +116,7 @@ IGNORE = [
     '.idea',
     'venv',
     '.git',
+    '.eggs',
     '.mypy_cache',
     '.pytest_cache',
     'node_modules',

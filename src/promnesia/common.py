@@ -8,6 +8,7 @@ from glob import glob
 import itertools
 import logging
 from functools import lru_cache
+import shutil
 import traceback
 import pytz
 import warnings
@@ -484,7 +485,6 @@ def python3() -> str:
     '''
     py3 = 'python3'
     py  = 'python'
-    import shutil
     import subprocess
     if shutil.which(py3):
         return py3
@@ -510,16 +510,43 @@ def mime(path: PathIsh) -> str:
     return _magic().from_file(str(path))
 
 
+def find_cmd(root: Path, follow: bool) -> List[str]:
+    return [
+        'find',
+        *(['-L'] if follow else []),
+        str(root),
+        '-type', 'f',
+    ]
+
+
 def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
     if not root.is_dir():
         yield root
         return
 
     from subprocess import Popen, PIPE
-    mfollow = ['--follow'] if follow else []
+
+    # first try to use fd.. it cooperates well with gitignore etc, also faster than find
+    fdfind_bin = None
+    for x in ('fd', 'fd-find', 'fdfind'): # has different names on different dists..
+        if shutil.which(x):
+            fdfind_bin = x
+            break
+
+    if fdfind_bin is None:
+        warnings.warn("'fdfind' is recommended for the best indexing performance. See https://github.com/sharkdp/fd#installation. Falling back to 'find'")
+        cmd = find_cmd(root, follow)
+    else:
+        cmd = [
+            'fdfind',
+            *(['--follow'] if follow else []),
+            '--type', 'f',
+            '.',
+            str(root),
+        ]
+
     # TODO split by \0?
-    # FIXME support for find
-    with Popen(['fdfind', *mfollow, '--type', 'f', '.', str(root)], stdout=PIPE) as p:
+    with Popen(cmd, stdout=PIPE) as p:
         out = p.stdout
         assert out is not None
         for line in out:
