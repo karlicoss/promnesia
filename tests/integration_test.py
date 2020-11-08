@@ -15,18 +15,9 @@ def index(cfg: Path):
     do_index(cfg)
 
 
-def test_example_config(tdir):
-    example = GIT_ROOT / 'config.py.example'
-    ex = example.read_text()
-    if under_ci():
-        # TODO ugh fucking hell I couldn't find a single path that has HTMLs both on macos and ubuntu
-        # and using /usr/share/docs locally might index a bit too much
-        # TODO: this should be fixed under windows
-        if system == 'Darwin':
-            repl = '/usr/share/doc/cups/'
-        else:
-            repl = '/usr/share/doc/python3/'
-        ex = ex.replace('/usr/share/doc/python3/html/faq', repl)
+def test_example_config(tdir) -> None:
+    from promnesia.__main__ import read_example_config
+    ex = read_example_config()
     cfg = tdir / 'test_config.py'
     cfg.write_text(ex)
     index(cfg)
