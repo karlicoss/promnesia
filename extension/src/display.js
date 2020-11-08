@@ -141,6 +141,7 @@ export class Binder {
 
             return true;
         };
+        // FIXME ok, this needs to be lazy and happen only when we actually want to use anchor...
         const AM = await import(
             /* webpackChunkName: "anchorme" */
             // $FlowFixMe
