@@ -49,22 +49,24 @@ However support for that is still limited (see <a href="https://github.com/karli
         <!-- <td><label for="dots_id">Show dots</label></td> -->
         <!-- </tr> -->
         <!-- </table> -->
-        <div>
-            <input type="checkbox" id="contexts_popup_id"/>
-            <label for="contexts_popup_id">Show 'Has contexts' popup (green)</label>
-        <div>
-        <div>
-            <input type="checkbox" id="verbose_errors_id"/>
-            <label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label>
-        <div>
-        <div>
-            <input type="checkbox" id="detect_sidebar_urls_id"/>
-            <label for="detect_sidebar_urls_id">Detect and linkify URLs in the sidebar</label>
-        <div>
-        <div>
-            <input type="checkbox" id="highlight_id"/>
-            <label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label>
-        <div>
+        <table>
+            <tr>
+                <td><input type="checkbox" id="contexts_popup_id"/></td>
+                <td><label for="contexts_popup_id">Show 'Has contexts' popup (green)</label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="verbose_errors_id"/></td>
+                <td><label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="detect_sidebar_urls_id"/></td>
+                <td><label for="detect_sidebar_urls_id">Detect and linkify URLs in the sidebar</label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="highlight_id"/></td>
+                <td><label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label></td>
+            </tr>
+        </table>
         <hr>
         <div>
             <label for="blacklist_id">Blacklisted links and domains:</label>
