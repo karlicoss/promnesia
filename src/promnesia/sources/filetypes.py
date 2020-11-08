@@ -88,7 +88,10 @@ video/
 '''
 
 handle_later = lambda *args, **kwargs: ()
-ignore       = lambda *args, **kwargs: () # TODO log (once?)
+
+def ignore(*args, **kwargs):
+    # TODO log (once?)
+    yield from ()
 
 
 for x in BINARY.splitlines():

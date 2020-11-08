@@ -21,7 +21,7 @@ from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, a
 from sqlalchemy import Column, Table, func # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3, get_system_zone
 from .cannon import canonify
 
 _ENV_CONFIG = 'PROMNESIA_CONFIG'
@@ -333,17 +333,6 @@ def run(args):
 _DEFAULT_CONFIG = Path('config.py')
 
 
-def get_system_tz() -> str:
-    logger = get_logger()
-    try:
-        import tzlocal # type: ignore
-        return tzlocal.get_localzone().zone
-    except Exception as e:
-        logger.exception(e)
-        logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
-        return 'UTC'
-
-
 def default_db_path() -> Path:
     return default_output_dir() / 'promnesia.sqlite'
 
@@ -372,7 +361,7 @@ def setup_parser(p):
     p.add_argument(
         '--timezone',
         type=str,
-        default=get_system_tz(),
+        default=get_system_zone(),
         help='Fallback timezone, defaults to the system timezone if not specified',
     )
     

@@ -168,7 +168,7 @@ def test_plaintext_path_extractor():
     } == {
         'http://google.com',
         'http://google.com/',
-        'http://some-weird-domain/whatever',
+        'http://some-weird-domain.xyz/whatever',
         'https://google.com',
         'http://what.about.this.link',
     }
@@ -197,7 +197,7 @@ def test_normalise():
     }
 
 
-def test_normalise_weird():
+def test_normalise_weird() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
@@ -205,11 +205,14 @@ def test_normalise_weird():
         custom_gen.index,
         extract_from_path(tdata('weird.txt')),
     ))
-    norms = {v.norm_url for v in visits}
+    [v1, v2] = visits
 
     # TODO assert there are no spaces in the database?
-    assert "urbandictionary.com/define.php?term=Belgian%20Whistle" in norms
-    assert "en.wikipedia.org/wiki/Dinic%27s_algorithm" in norms
+    assert "urbandictionary.com/define.php?term=Belgian%20Whistle" == v1.norm_url
+
+    assert "en.wikipedia.org/wiki/Dinic%27s_algorithm"             == v2.norm_url
+    assert v2.locator.title.endswith('weird.txt:2')
+    assert v2.context == 'right, so https://en.wikipedia.org/wiki/Dinic%27s_algorithm can be used for max flow'
 
 
 @skip("use a different way to specify filter other than class variable..")
@@ -223,7 +226,7 @@ def test_filter():
     )
     assert len(hist) == 4 # chrome-error got filtered out
 
-def test_custom():
+def test_custom() -> None:
     import promnesia.sources.shellcmd as custom_gen
 
     hist = history(W(

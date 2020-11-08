@@ -1,11 +1,6 @@
-# TODO FIXME misleading name....
-# just name it 'text'?
-
 from ..common import get_logger, get_tmpdir, PathIsh
 
 from pathlib import Path
-import os.path
-import os
 
 from shlex import quote
 
@@ -14,7 +9,7 @@ _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@
 
 # -n to output line numbers so we could restore context
 # -I to ignore binaries
-_GREP_CMD = r"""grep --color=never -Eo -I {grep_args} --exclude-dir=".git" '{regex}' {path} || true"""
+_GREP_CMD = r"""grep --color=never -E -I {grep_args} --exclude-dir=".git" '{regex}' {path} || true"""
 
 
 def _extract_from_dir(path: str) -> str:
@@ -48,14 +43,16 @@ def extract_from_path(path: PathIsh) -> str:
                 '.zip',
         )):
             logger.info(f"Extracting from compressed file {path}")
-            raise RuntimeError()
+            raise RuntimeError(f"Archives aren't supported yet: {path}")
             import lzma
             from tempfile import NamedTemporaryFile
             # TODO hopefully, no collisions
+            import os.path
             fname = os.path.join(tdir.name, os.path.basename(path))
             with open(fname, 'wb') as fo:
                 with lzma.open(path, 'r') as cf:
                     fo.write(cf.read())
                 return _extract_from_file(fname)
         else:
-            return _extract_from_file(str(pp))
+            r = _extract_from_file(str(pp))
+            return r

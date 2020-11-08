@@ -71,7 +71,6 @@ def _json(path: Path) -> Urls:
 def _plaintext(path: Path) -> Results:
     from . import shellcmd
     from .plaintext import extract_from_path
-    # TODO eh? shellcmd?
     yield from shellcmd.index(extract_from_path(path))
 
 
@@ -127,6 +126,7 @@ from .filetypes import TYPE2IDX, type2idx, IGNORE, CODE
 TYPE2IDX.update({
     'application/json': _json,
     '.json'           : _json,
+    '.ipynb'          : _json,
 
     '.csv'           : _csv,
     'application/csv': _csv,
@@ -230,6 +230,11 @@ def _index(path: Path, opts: Options) -> Results:
             if any(i in p.parts for i in IGNORE): # meh, not very efficient.. pass to traverse??
                 logger.debug('ignoring %s: default ignore rules', p)
                 continue
+
+            if not os.path.exists(p):
+                logger.debug('ignoring %s: broken symlink?', p)
+                continue
+
             yield p
 
     with pool:
@@ -251,7 +256,7 @@ def by_path(pp: Path):
     if s is not None:
         return s, None
     # then try mimetypes, it's only using the filename
-    pm, _ = mimetypes.guess_type(pp)
+    pm, _ = mimetypes.guess_type(str(pp))
     if pm is not None:
         s = type2idx(pm)
         if s is not None:
