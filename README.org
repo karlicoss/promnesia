@@ -212,7 +212,7 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
 
 - edit the config and add some sources
 
-  You can look at an [[file:config.py.example][example config]], or borrow bits from an annotated configuration example here: [[file:doc/config.py]].
+  You can look at an [[file:src/promnesia/misc/config_example.py][example config]], or borrow bits from an annotated configuration example here: [[file:doc/config.py]].
 
   The only required setting is:
 

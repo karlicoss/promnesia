@@ -133,7 +133,13 @@ def default_config_path() -> Path:
     # TODO need to test this..
 
 
-def config_create(args):
+def read_example_config() -> str:
+    import inspect
+    from .misc import config_example
+    return inspect.getsource(config_example)
+
+
+def config_create(args) -> None:
     logger = get_logger()
     cfg = user_config_file()
     cfgdir = cfg.parent
@@ -141,24 +147,7 @@ def config_create(args):
         logger.error('Config directory %s already exists. Aborting', cfgdir)
         sys.exit(1)
     else:
-        # TODO ugh. example config might not be in the repository
-        stub = """
-from promnesia import Source
-from promnesia.sources import auto
-
-'''
-List of sources to use
-You can specify your own, add more sources, etc.
-See https://github.com/karlicoss/promnesia#setup for more information
-'''
-SOURCES = [
-    Source(
-        auto.index,
-        # just some arbitrary directory with html files
-        '/usr/share/doc/python3/html/faq',
-    )
-]
-"""
+        stub = read_example_config()
         cfgdir.mkdir(parents=True)
         cfg.write_text(stub)
         logger.info("Created a stub config in %s. Edit it to tune to your liking.", cfg)
