@@ -140,9 +140,9 @@ def _org(path: Path) -> Results:
     return org.extract_from_file(path)
 
 
-from .filetypes import MAPPING, IGNORE, CODE
+from .filetypes import TYPE2IDX, type2idx, IGNORE, CODE
 
-MAPPING.update({
+TYPE2IDX.update({
     'application/json': _json,
     '.json'           : _json,
 
@@ -168,10 +168,11 @@ MAPPING.update({
 
     '.html'    : _html,
     'text/html': _html,
+    'text/xml' : _plaintext,
 })
 
 for t in CODE:
-    MAPPING[t] = _plaintext
+    TYPE2IDX[t] = _plaintext
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
 
@@ -228,7 +229,7 @@ def _index(path: Path, opts: Options) -> Results:
         return
 
     if path.is_symlink():
-        if opts.follow:
+        if opts.follow and os.path.exists(path): # check if not broken
             yield from _index(path.resolve(), opts=opts)
         else:
             logger.debug('ignoring symlink %s', path)
@@ -267,21 +268,18 @@ mimetypes.init()
 def by_path(pp: Path):
     suf = pp.suffix.lower()
     # firt check suffixes, it's faster
-    s = MAPPING.get(suf, None)
-    if s is not None:
-        return s, None
-    s = MAPPING.get(suf.strip('.'), None)
+    s = type2idx(suf)
     if s is not None:
         return s, None
     # then try mimetypes, it's only using the filename
     pm, _ = mimetypes.guess_type(pp)
     if pm is not None:
-        s = MAPPING.get(pm, None)
+        s = type2idx(pm)
         if s is not None:
             return s, pm
     # lastly, use libmagic, it's the slowest
     pm = mime(pp)
-    return MAPPING.get(pm, None), pm
+    return type2idx(pm), pm
 
 
 def _index_file(pp: Path, opts: Options) -> Results:
