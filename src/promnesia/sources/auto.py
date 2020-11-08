@@ -13,6 +13,7 @@ from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence,
 from fnmatch import fnmatch
 from pathlib import Path
 from functools import lru_cache, wraps
+import warnings
 
 import pytz
 
@@ -36,11 +37,8 @@ def use_cores() -> Optional[int]:
 def mime(path: PathIsh) -> str:
     return _magic().from_file(str(path))
 
-Ctx = Sequence[str]
 
-class EUrl(NamedTuple):
-    url: Url
-    ctx: Ctx # TODO ctx here is more like a Loc
+from .filetypes import EUrl
 
 
 def _collect(thing, path: List[str], result: List[EUrl]):
@@ -142,7 +140,9 @@ def _org(path: Path) -> Results:
     return org.extract_from_file(path)
 
 
-SMAP = {
+from .filetypes import MAPPING, IGNORE, CODE
+
+MAPPING.update({
     'application/json': _json,
     '.json'           : _json,
 
@@ -168,91 +168,11 @@ SMAP = {
 
     '.html'    : _html,
     'text/html': _html,
+})
 
-
-    # TODO not sure about these:
-    'text/xml': None,
-    'text/x-python': None,
-    'text/x-tex': None,
-    'text/x-lisp': None,
-    'text/x-shellscript': None,
-    'text/x-java': None,
-    'text/troff': None,
-    'text/x-c': None,
-    'text/x-c++': None,
-    'text/x-makefile': None,
-    # TODO could reuse magic lib?
-
-    # TODO def could extract from source code...
-    '.tex': None, # TODO not sure..
-    '.css': None,
-    '.sh' : None,
-    '.js' : None,
-    '.hs' : None,
-    '.bat': None,
-    '.pl' : None,
-    '.h'  : None,
-    '.rs' : None,
-
-
-    # TODO possible in theory?
-    '.ppt' : None,
-    '.pptx': None,
-    '.xlsx': None,
-    '.doc' : None,
-    '.docx': None,
-    '.ods' : None,
-    '.odt' : None,
-    '.rtf' : None,
-    '.epub': None,
-    '.pdf' : None,
-    '.vcf' : None,
-    '.djvu': None,
-    '.dvi' : None,
-    'application/msword': None,
-    'application/postscript': None,
-    'message/rfc822': None,
-
-    # TODO compressed?
-    'application/octet-stream': None,
-    'application/zip': None,
-    'application/x-tar': None,
-    'application/gzip': None,
-    'application/x-sqlite3': None,
-    'application/x-archive': None,
-    'application/x-pie-executable': None,
-    '.o'  : None,
-    'image/jpeg': None,
-    '.jpg': None,
-    '.png': None,
-    'image/png': None,
-    '.gif': None,
-    '.svg': None,
-    '.ico': None,
-    'inode/x-empty': None,
-    '.class': None,
-    '.jar': None,
-    '.mp3': None,
-    '.mp4': None,
-}
+for t in CODE:
+    MAPPING[t] = _plaintext
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
-
-IGNORE = [
-    '.idea',
-    'venv',
-    '.git',
-    '.mypy_cache',
-    '.pytest_cache',
-    'node_modules',
-    '__pycache__',
-    '.tox',
-    '.stack-work',
-    # TODO use ripgrep?
-
-    # TODO not sure about these:
-    '.gitignore',
-    '.babelrc',
-]
 
 
 Replacer = Optional[Callable[[str], str]]
@@ -340,6 +260,30 @@ def _index(path: Path, opts: Options) -> Results:
         yield e
 
 
+import mimetypes
+mimetypes.init()
+
+
+def by_path(pp: Path):
+    suf = pp.suffix.lower()
+    # firt check suffixes, it's faster
+    s = MAPPING.get(suf, None)
+    if s is not None:
+        return s, None
+    s = MAPPING.get(suf.strip('.'), None)
+    if s is not None:
+        return s, None
+    # then try mimetypes, it's only using the filename
+    pm, _ = mimetypes.guess_type(pp)
+    if pm is not None:
+        s = MAPPING.get(pm, None)
+        if s is not None:
+            return s, pm
+    # lastly, use libmagic, it's the slowest
+    pm = mime(pp)
+    return MAPPING.get(pm, None), pm
+
+
 def _index_file(pp: Path, opts: Options) -> Results:
     logger = get_logger()
     # TODO use kompress?
@@ -356,23 +300,13 @@ def _index_file(pp: Path, opts: Options) -> Results:
         yield from _index(path=uncomp, opts=opts)
         return
 
-    # TODO dispatch org mode here?
-    # TODO try/catch?
-
-    pm = None
-    if suf not in SMAP:
-        pm = mime(pp)
-        if pm not in SMAP:
-            yield RuntimeError(f"Unexpected file type: {pp}, {pm}")
-            return
-        else:
-            ip = SMAP.get(pm, None)
-        # TODO assume plaintext?
-    else:
-        ip = SMAP.get(suf, None)
+    ip, pm = by_path(pp)
     if ip is None:
+        # TOOD use warning (with mime/ext as key?)
         # TODO only log once? # hmm..
-        logger.debug('no extractor available for: "%s", suffix: "%s", pm:"%s"', pp, suf, pm)
+        msg = f'No extractor for suffix {suf}, mime {pm}'
+        warnings.warn(msg)
+        yield RuntimeError(msg + f', path {pp}')
         return
 
     logger.debug('using indexer: %s', ip.__name__)
