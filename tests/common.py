@@ -5,7 +5,12 @@ from pathlib import Path
 import pytest # type: ignore
 
 
-def under_ci():
+def has_x() -> bool:
+    # meh, not very portable, but good enough for now
+    return 'DISPLAY' in os.environ
+
+
+def under_ci() -> bool:
     return 'CI' in os.environ
 
 
