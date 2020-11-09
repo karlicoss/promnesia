@@ -517,7 +517,6 @@ def find_args(root: Path, follow: bool) -> List[str]:
         *(['-L'] if follow else []),
         str(root),
         '-type', 'f',
-        '-exec', 'readlink', '-f', '{}', ';',
     ]
 
 
@@ -530,8 +529,6 @@ def fdfind_args(root: Path, follow: bool) -> List[str]:
         '--type', 'f',
         '.',
         str(root),
-        # resolve symlinks to avoid duplicate visits
-        '-x', 'readlink', '-f',
     ]
 
 

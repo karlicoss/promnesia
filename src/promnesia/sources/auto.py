@@ -221,11 +221,9 @@ def _index(path: Path, opts: Options) -> Results:
         pool = Pool(workers) # type: ignore
         mapper = pool.map # type: ignore
 
-    def files_it():
+    # iterate over resolved paths, to avoid duplicates
+    def rit() -> Iterable[Path]:
         it = traverse(path, follow=opts.follow)
-        from more_itertools import unique_everseen
-        it = unique_everseen(it)
-
         for p in it:
             if any(fnmatch(str(p), o) for o in opts.ignored):
                 # TODO not sure if should log here... might end up with quite a bit of logs
@@ -235,14 +233,18 @@ def _index(path: Path, opts: Options) -> Results:
                 logger.debug('ignoring %s: default ignore rules', p)
                 continue
 
+            p = p.resolve()
             if not os.path.exists(p):
                 logger.debug('ignoring %s: broken symlink?', p)
                 continue
 
             yield p
 
+    from more_itertools import unique_everseen
+    it = unique_everseen(rit())
+
     with pool:
-        for r in mapper(_index_file_aux, files_it(), itertools.repeat(opts)):
+        for r in mapper(_index_file_aux, it, itertools.repeat(opts)):
             if isinstance(r, Exception):
                 yield r
             else:
