@@ -1,3 +1,5 @@
 And this points at https://google.com . Whoa, so secure!
 
 and http://what.about.this.link? Really, you should add a space before ?, but what if you didnt?
+
+this should be ignored chrome-extension://bfhcmckmbimgclmdomhanencdoefcnio/options_page.html since it's an internal brwoser link

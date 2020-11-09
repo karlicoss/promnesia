@@ -3,7 +3,7 @@ from subprocess import check_call, check_output
 from typing import Optional
 from urllib.parse import unquote
 
-from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz
+from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz
 
 
 def index(command: str) -> Results:
@@ -37,7 +37,7 @@ def index(command: str) -> Results:
             ts = file_mtime(fname)
             loc = Loc.file(fname, line=lineno)
         else:
-            ts = datetime.now(tz=tz)
+            ts = now_tz()
             loc = Loc.make(command)
         for url in urls:
             yield Visit(

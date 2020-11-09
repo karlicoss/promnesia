@@ -91,9 +91,10 @@ def fallback(ex):
                 # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
                 yield from it
             except ModuleNotFoundError as me:
+                # TODO ugh. need to figure out how to attach cause/traceback
                 logger = get_logger()
                 logger.exception(me)
-                logger.warn('%s not found, falling back to plaintext! "pip3 install --user %s" for better support!', me.name, me.name)
+                logger.warn('while indexing "%s": %s not found, falling back to plaintext! "pip3 install --user %s" for better support!', path, me.name, me.name)
                 yield me
 
                 fallback_active[ex] = True

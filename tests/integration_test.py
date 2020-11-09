@@ -178,7 +178,7 @@ def test_comparison(tdir: Path) -> None:
     assert len(list(compare_files(db, old_db))) == 1
 
 
-def test_index_many(tdir):
+def test_index_many(tdir) -> None:
     # NOTE [20200521] experimenting with promnesia.dump._CHUNK_BY
     # inserting 100K visits
     # value=1000: 9 seconds

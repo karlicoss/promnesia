@@ -1,7 +1,6 @@
 from collections.abc import Sized
 from datetime import datetime, date
 import os
-import re
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar
 from pathlib import Path
 from glob import glob
@@ -9,11 +8,10 @@ import itertools
 import logging
 from functools import lru_cache
 import shutil
-import traceback
 import pytz
 import warnings
 
-from .cannon import CanonifyException, canonify
+from .cannon import canonify
 
 
 T = TypeVar('T')
@@ -171,15 +169,6 @@ class DbVisit(NamedTuple):
 
 Filter = Callable[[Url], bool]
 
-def make_filter(thing) -> Filter:
-    if isinstance(thing, str):
-        rc = re.compile(thing)
-        def filter_(u: str) -> bool:
-            return rc.search(u) is not None
-        return filter_
-    else: # must be predicate
-        return thing
-
 
 from .logging import LazyLogger
 logger = LazyLogger('promnesia', level='DEBUG')
@@ -187,100 +176,6 @@ logger = LazyLogger('promnesia', level='DEBUG')
 def get_logger() -> logging.Logger:
     return logger
 
-
-# TODO need to get rid of this.. just some legacy stuf...
-class History(Sized):
-    # TODO I guess instead filter on DbVisit making site?
-    FILTERS: List[Filter] = [
-        make_filter(f) for f in
-        [
-            r'^chrome-devtools://',
-            r'^chrome-extension://',
-            r'^chrome-error://',
-            r'^chrome-native://',
-            r'^chrome-search://',
-
-            r'chrome://newtab',
-            r'chrome://apps',
-            r'chrome://history',
-
-            r'^about:',
-            r'^blob:',
-            r'^view-source:',
-
-            r'^content:',
-
-            # TODO maybe file:// too?
-            # chrome-search:
-        ]
-    ]
-
-    @classmethod
-    def add_filter(cls, filterish):
-        cls.FILTERS.append(make_filter(filterish))
-
-    def __init__(self, *, src: SourceName):
-        self.vmap: Dict[Visit, DbVisit] = {}
-        # TODO err... why does it map from previsit???
-        self.logger = get_logger()
-        self.src = src
-
-    # TODO mm. maybe history should get filters from some global config?
-    # wonder how okay is it to set class attribute..
-
-    @classmethod
-    def filtered(cls, url: Url) -> bool:
-        for f in cls.FILTERS:
-            if f(url):
-                return True
-        return False
-
-    @property
-    def visits(self) -> List[DbVisit]:
-        return list(self.vmap.values())
-
-    def register(self, v: Visit) -> Optional[Exception]:
-        # TODO should we filter before normalising? not sure...
-        if History.filtered(v.url):
-            return None
-
-        # TODO perhaps take normalised into account here??
-        if v in self.vmap:
-            return None
-
-        res = DbVisit.make(v, src=self.src)
-        if isinstance(res, CanonifyException):
-            # todo need to be a warning, so it's only happening once on a specific url
-            self.logger.error('error while canonnifying %s... ignoring', v)
-            self.logger.exception(res)
-            return None
-        elif isinstance(res, Exception):
-            return res
-        else:
-            db_visit = res
-
-        self.vmap[v] = db_visit
-        return None
-        # TODO hmm some filters make sense before stripping off protocol...
-
-    ## only used in tests?..
-    def _nmap(self):
-        from itertools import groupby
-        key = lambda x: x.norm_url
-        return {k: list(g) for k, g in groupby(sorted(self.visits, key=key), key=key)}
-
-    def __len__(self) -> int:
-        return len(self._nmap())
-
-    def __contains__(self, url) -> bool:
-        return url in self._nmap()
-
-    def __getitem__(self, url: Url):
-        return self._nmap()[url]
-    #
-
-    def __repr__(self):
-        return 'History{' + repr(self.visits) + '}'
 
 
 # kinda singleton
@@ -394,53 +289,6 @@ class Source:
 
 # TODO deprecated
 Indexer = Source
-
-
-# TODO do we really need it?
-def previsits_to_history(extractor, *, src: SourceName) -> Tuple[List[DbVisit], List[Exception]]:
-    ex = extractor
-    # TODO isinstance wrapper?
-    # TODO make more defensive?
-    logger = get_logger()
-
-    log_info: str
-    if isinstance(ex, Indexer):
-        log_info = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs} ...'
-        extr = lambda: ex.ff(*ex.args, **ex.kwargs)
-    else:
-        # TODO if it's a lambda?
-        log_info = f'{ex.__module__}:{ex.__name__}'
-        extr = ex
-
-
-    logger.info('extracting via %s ...', log_info)
-
-    h = History(src=src)
-    errors = []
-    try:
-        previsits = list(extr())
-    except Exception as e:
-        logger.exception(e)
-        return [], [e]
-
-    for p in previsits:
-        if isinstance(p, Exception):
-            errors.append(p)
-            parts = ['indexer emitted exception\n']
-            # eh, exception type is ignored by format_exception completely, apparently??
-            parts.extend(traceback.format_exception(Exception, p, p.__traceback__))
-            logger.error(''.join(parts))
-            continue
-
-        # TODO check whether it's filtered before construction? probably doesn't really impact
-        res = h.register(p)
-        if isinstance(res, Exception):
-            logger.exception(res)
-            errors.append(res)
-
-    # TODO should handle filtering properly?
-    logger.info('extracting via %s: got %d visits', log_info, len(h))
-    return h.visits, errors
 
 
 # not sure if necessary anymore?
@@ -582,3 +430,7 @@ def get_system_tz():
 def file_mtime(path: PathIsh) -> datetime:
     tz = get_system_tz()
     return datetime.fromtimestamp(Path(path).stat().st_mtime, tz=tz)
+
+
+def now_tz() -> datetime:
+    return datetime.now(tz=get_system_tz())

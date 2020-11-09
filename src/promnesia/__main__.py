@@ -3,7 +3,7 @@ import os
 import logging
 import inspect
 import sys
-from typing import List, Tuple, Optional, Dict, Sequence, Iterable
+from typing import List, Tuple, Optional, Dict, Sequence, Iterable, Iterator
 from pathlib import Path
 from datetime import datetime
 from subprocess import check_call
@@ -13,9 +13,10 @@ from tempfile import TemporaryDirectory
 from . import config
 from . import server
 from .misc import install_server
-from .common import PathIsh, History, make_filter, get_logger, get_tmpdir
-from .common import previsits_to_history, Source, appdirs, python3, get_system_zone
-from .dump import dump_histories
+from .common import PathIsh, get_logger, get_tmpdir, DbVisit, Res
+from .common import Source, appdirs, python3, get_system_zone
+from .dump import visits_to_sqlite
+from .extract import extract_visits, make_filter
 
 
 def _do_index() -> Iterable[Exception]:
@@ -30,38 +31,35 @@ def _do_index() -> Iterable[Exception]:
         logger.warning("OUTPUT_DIR '%s' didn't exist, creating", output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
 
-    filters = [make_filter(f) for f in cfg.FILTERS]
-    for f in filters:
-        History.add_filter(f) # meh..
+    # also keep & return errors for further display
+    errors: List[Exception] = []
 
+    def iter_all_visits() -> Iterator[Res[DbVisit]]:
+        for idx in indexers:
+            if isinstance(idx, Exception):
+                errors.append(idx)
+                yield idx
+                continue
+            # todo use this context? not sure where to attach...
+            einfo = f'{getattr(idx.ff, "__module__", None)}:{getattr(idx.ff, "__name__", None)} {idx.args} {idx.kwargs}'
+            for v in extract_visits(idx, src=idx.name):
+                if isinstance(v, Exception):
+                    errors.append(v)
+                yield v
 
-    all_histories = []
-    errors = []
-
-    for idx in indexers:
-        if isinstance(idx, Exception):
-            errors.append(idx)
-            continue
-        # TODO more defensive! e.g. might not have __module__
-        einfo = f'{idx.ff.__module__}:{idx.ff.__name__} {idx.args} {idx.kwargs}'
-
-        hist, err = previsits_to_history(idx, src=idx.name)
-        errors.extend(err)
-        all_histories.append((einfo, hist))
-
-    # TODO perhaps it's better to open connection and dump as we collect so it consumes less memory?
-    dump_histories(all_histories)
-
+    visits_to_sqlite(iter_all_visits())
     return errors
 
 
-def do_index(config_file: Path):
-    config.load_from(config_file)
+def do_index(config_file: Path) -> None:
+    logger = get_logger()
+    config.load_from(config_file) # meh.. should be cleaner
     try:
-        errors = _do_index()
+        errors = list(_do_index())
     finally:
         config.reset()
-    if len(list(errors)) > 0:
+    if len(errors) > 0:
+        logger.error('%d errors, exit code 1', len(errors))
         sys.exit(1)
 
 
@@ -106,14 +104,17 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
             )
             config.instance = cfg
 
-        errors = _do_index()
+        errors = list(_do_index())
+        if len(errors) > 0:
+            logger.error('%d errors during indexing (see logs above for backtraces)', len(errors))
         for e in errors:
             logger.error(e)
 
+        dbp = config.get().output_dir / 'promnesia.sqlite'
         if port is None:
-            logger.warning("Port isn't specified, not serving!")
+            logger.warning(f"Port isn't specified, not serving!\nYou can inspect the database in the meantime, e.g. 'sqlitebrowser {dbp}'")
         else:
-            server._run(port=port, db=config.get().output_dir / 'promnesia.sqlite', timezone=get_system_zone(), quiet=False)
+            server._run(port=port, db=dbp, timezone=get_system_zone(), quiet=False)
 
         if sys.stdin.isatty():
             input("Press any key when ready")
@@ -202,7 +203,7 @@ def main() -> None:
     #
 
     ap.add_argument('--port', type=str, default='13131'              , help='Port to serve on')
-    ap.add_argument('--no-serve', action='store_false', dest='server', help='Pass to only index without running server')
+    ap.add_argument('--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server')
     ap.add_argument('--config', type=Path, required=False            , help='Config to run against. If omitted, will use empty base config')
     ap.add_argument(
         '--as',
