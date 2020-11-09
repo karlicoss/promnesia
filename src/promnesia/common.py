@@ -512,12 +512,26 @@ def mime(path: PathIsh) -> str:
     return _magic().from_file(str(path))
 
 
-def find_cmd(root: Path, follow: bool) -> List[str]:
+def find_args(root: Path, follow: bool) -> List[str]:
     return [
-        'find',
         *(['-L'] if follow else []),
         str(root),
         '-type', 'f',
+        '-exec', 'readlink', '-f', '{}', ';',
+    ]
+
+
+def fdfind_args(root: Path, follow: bool) -> List[str]:
+    from .config import extra_fd_args
+    extra = extra_fd_args().split() # eh, hopefully splitting that way is ok...
+    return [
+        *extra,
+        *(['--follow'] if follow else []),
+        '--type', 'f',
+        '.',
+        str(root),
+        # resolve symlinks to avoid duplicate visits
+        '-x', 'readlink', '-f',
     ]
 
 
@@ -528,24 +542,14 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
 
     from subprocess import Popen, PIPE
 
-    # first try to use fd.. it cooperates well with gitignore etc, also faster than find
-    fdfind_bin = None
+    cmd = ['find', *find_args(root, follow=follow)]
+    # try to use fd.. it cooperates well with gitignore etc, also faster than find
     for x in ('fd', 'fd-find', 'fdfind'): # has different names on different dists..
         if shutil.which(x):
-            fdfind_bin = x
+            cmd = [x, *fdfind_args(root, follow=follow)]
             break
-
-    if fdfind_bin is None:
-        warnings.warn("'fdfind' is recommended for the best indexing performance. See https://github.com/sharkdp/fd#installation. Falling back to 'find'")
-        cmd = find_cmd(root, follow)
     else:
-        cmd = [
-            'fdfind',
-            *(['--follow'] if follow else []),
-            '--type', 'f',
-            '.',
-            str(root),
-        ]
+        warnings.warn("'fdfind' is recommended for the best indexing performance. See https://github.com/sharkdp/fd#installation. Falling back to 'find'")
 
     # TODO split by \0?
     with Popen(cmd, stdout=PIPE) as p:
