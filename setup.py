@@ -29,12 +29,15 @@ def main():
 
         python_requires='>=3.6',
         install_requires=[
-            *DEPS_INDEXER,
-            *DEPS_SERVER,
+            'appdirs', # for portable user directories detection
+            'tzlocal',
             'more_itertools',
             'pytz',
             'sqlalchemy', # DB api
             'cachew>=0.8.0', # caching with type hints
+
+            *DEPS_INDEXER,
+            *DEPS_SERVER,
         ],
         extras_require={
             'testing': [
@@ -61,17 +64,12 @@ def main():
         }
     )
 
+# todo might be nice to ensure they are installable in separation?
 DEPS_INDEXER = [
-    'appdirs', # for portable user directories detection
-
     'urlextract',
-
-    # TODO could be optional?
-    'python-magic', # for detecting mime types
 ]
 
 DEPS_SERVER = [
-    'tzlocal',
     'hug',
 ]
 
@@ -80,6 +78,7 @@ DEPS_SOURCES = {
     # althrough server uses it so not sure...
     ('optional', 'dependencies that bring some bells & whistles'): [
         'logzero', # pretty colored logging
+        'python-magic', # better mimetype decetion
     ],
     ('HPI'     , 'dependencies for [[https://github.com/karlicoss/HPI][HPI]]'): [
         'HPI', # pypi version

@@ -6,7 +6,7 @@ from typing import List, Set
 
 import pytz
 
-from ..common import PathIsh, Results, Visit, Loc, get_logger, Second, _magic
+from ..common import PathIsh, Results, Visit, Loc, get_logger, Second, mime
 from .. import config
 
 # todo mcachew?
@@ -16,12 +16,11 @@ logger = get_logger()
 
 
 def index(p: PathIsh) -> Results:
-    mime = _magic()
     pp = Path(p)
     assert pp.exists() # just in case of broken symlinks
 
     # is_file check because it also returns dirs
-    is_db = lambda x: x.is_file() and mime.from_file(str(x)) in ['application/x-sqlite3']
+    is_db = lambda x: x.is_file() and mime(x) in ['application/x-sqlite3']
 
     # todo warn if filtered out too many?
     # todo wonder how quickly mimes can be computed?
