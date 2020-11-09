@@ -352,12 +352,37 @@ def python3() -> str:
 # ideally would be nice to fix it properly https://github.com/ahupp/python-magic#windows
 @lru_cache(1)
 def _magic():
-    import magic # type: ignore
-    return magic.Magic(mime=True)
+    logger = get_logger()
+    try:
+        import magic # type: ignore
+    except ModuleNotFoundError as me:
+        logger.exception(me)
+        msg = "python-magic is not detected. It's recommended for better file type detection (pip3 install --user python-magic). See https://github.com/ahupp/python-magic#installation"
+        logger.warning(msg)
+        warnings.warn(msg)
+        return lambda path: None # stub
+    else:
+        mm = magic.Magic(mime=True)
+        return mm.from_file
 
 
-def mime(path: PathIsh) -> str:
-    return _magic().from_file(str(path))
+@lru_cache(1)
+def _mimetypes():
+    import mimetypes
+    mimetypes.init()
+    return mimetypes
+
+
+def mime(path: PathIsh) -> Optional[str]:
+    ps = str(path)
+    mimetypes = _mimetypes()
+    # first try mimetypes, it's only using the filename without opening the file
+    pm, _ = mimetypes.guess_type(ps)
+    if pm is not None:
+        return pm
+    # next, libmagic, it might access the file, so a bit slower
+    magic = _magic()
+    return magic(ps)
 
 
 def find_args(root: Path, follow: bool) -> List[str]:

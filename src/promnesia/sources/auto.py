@@ -252,25 +252,18 @@ def _index(path: Path, opts: Options) -> Results:
                 yield from r
 
 
-import mimetypes
-mimetypes.init()
-
-
 def by_path(pp: Path):
     suf = pp.suffix.lower()
     # firt check suffixes, it's faster
     s = type2idx(suf)
     if s is not None:
         return s, None
-    # then try mimetypes, it's only using the filename
-    pm, _ = mimetypes.guess_type(str(pp))
-    if pm is not None:
-        s = type2idx(pm)
-        if s is not None:
-            return s, pm
-    # lastly, use libmagic, it's the slowest
+    # then try with mime
     pm = mime(pp)
-    return type2idx(pm), pm
+    if pm is not None:
+        return type2idx(pm), pm
+    else:
+        return None, None
 
 
 def _index_file(pp: Path, opts: Options) -> Results:
