@@ -222,7 +222,11 @@ def _index(path: Path, opts: Options) -> Results:
         mapper = pool.map # type: ignore
 
     def files_it():
-        for p in traverse(path, follow=opts.follow):
+        it = traverse(path, follow=opts.follow)
+        from more_itertools import unique_everseen
+        it = unique_everseen(it)
+
+        for p in it:
             if any(fnmatch(str(p), o) for o in opts.ignored):
                 # TODO not sure if should log here... might end up with quite a bit of logs
                 logger.debug('ignoring %s: user ignore rules', p)

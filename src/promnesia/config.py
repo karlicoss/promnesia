@@ -1,10 +1,9 @@
 from pathlib import Path
+import os
 from typing import List, Optional, Union, NamedTuple, Iterable
 import importlib
 import importlib.util
 import warnings
-
-import pytz
 
 from .common import PathIsh, get_tmpdir, appdirs, default_output_dir
 from .common import Res, Source
@@ -117,7 +116,6 @@ def use_cores() -> Optional[int]:
     For now only used in sources.auto, perhaps later will be shared among the other indexers.
     '''
     # most likely needs to be some sort of pipeline thing?
-    import os
     cs = os.environ.get('PROMNESIA_CORES', None)
     if cs is None:
         return None
@@ -125,3 +123,11 @@ def use_cores() -> Optional[int]:
         return int(cs)
     except ValueError: # any other value means 'use all
         return 0
+
+
+def extra_fd_args() -> str:
+    '''
+    Not sure where it belongs yet... so via env variable for now
+    Can be used to pass --ignore-file parameter
+    '''
+    return os.environ.get('PROMNESIA_FD_EXTRA_ARGS', '')
