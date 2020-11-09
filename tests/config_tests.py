@@ -1,5 +1,6 @@
 import pytest
 from more_itertools import ilen
+from typing import Union
 
 from promnesia import Source
 
@@ -151,7 +152,7 @@ SOURCES = [
 # not sure if it's very useful
 
 
-def test_sources_errors():
+def test_sources_errors() -> None:
     '''
     Testing defensiveness of config against various errors
     '''
@@ -228,16 +229,26 @@ def make(body: str) -> Config:
         return import_config(cp)
 
 
-def index(cfg: Config, check=True):
-    import promnesia.config as config
-    from promnesia.__main__ import _do_index
-    config.instance = cfg
+from contextlib import contextmanager
+@contextmanager
+def with_config(cfg: Union[str, Config]):
+    import promnesia.config as C
+    assert not C.has()
+    cfg2: Config = make(cfg) if isinstance(cfg, str) else cfg
     try:
+        C.instance = cfg2
+        assert C.has()
+        yield
+    finally:
+        C.reset()
+
+
+def index(cfg: Config, check=True):
+    from promnesia.__main__ import _do_index
+    with with_config(cfg):
         errors = list(_do_index())
         if check:
             assert len(errors) == 0, errors
         # visits = cfg.output_dir / 'promnesia.sqlite'
         # TODO query visit count too
         return errors
-    finally:
-        config.reset()

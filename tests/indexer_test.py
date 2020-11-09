@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from contextlib import contextmanager
 from datetime import datetime, date
 from os.path import join, getsize
 from pathlib import Path
@@ -8,15 +9,16 @@ from shutil import copytree
 import os
 from os import mkdir
 from os.path import lexists
-from typing import Union
+from typing import Union, List
 
 import pytest # type: ignore
 from pytest import mark # type: ignore
 
 
 from common import skip_if_ci, tdata
+from config_tests import with_config
 
-from promnesia.common import History, Visit, Indexer, Loc
+from promnesia.common import Visit, Indexer, Loc, Res, DbVisit
 
 # TODO need to expire dbcache in tests..
 
@@ -28,10 +30,20 @@ def W(*args, **kwargs):
         kwargs['src'] = 'whatever'
     return Indexer(*args, **kwargs)
 
-def history(*args, **kwargs):
-    from promnesia.common import previsits_to_history
+
+def as_visits(*args, **kwargs) -> List[Res[DbVisit]]:
+    from promnesia.extract import extract_visits
     kwargs['src'] = 'whatever'
-    return previsits_to_history(*args, **kwargs)[0] # TODO meh
+    return list(extract_visits(*args, **kwargs))
+
+
+def as_ok_visits(*args, **kwargs) -> List[DbVisit]:
+    r: List[DbVisit] = []
+    for v in as_visits(*args, **kwargs):
+        if isinstance(v, Exception):
+            raise v
+        r.append(v)
+    return r
 
 
 from contextlib import contextmanager
@@ -93,7 +105,7 @@ def test_takeout_directory(adhoc_config, tmp_path):
     config.google = user_config # type: ignore
     import promnesia.sources.takeout as tex
 
-    visits = history(W(tex.index))
+    visits = as_visits(W(tex.index))
     assert len(visits) > 0 # kinda arbitrary?
 
     assert_got_tzinfo(visits)
@@ -113,8 +125,10 @@ def test_with_error() -> None:
                     dt=datetime.utcfromtimestamp(0),
                     locator=Loc.make('whatever'),
                 )
-    hist = history(lambda: err_ex())
-    assert len(hist) == 2
+    [v1, e, v2] = as_visits(lambda: err_ex())
+    assert isinstance(v1, DbVisit)
+    assert isinstance(e, Exception)
+    assert isinstance(v2, DbVisit)
 
 
 def test_takeout_new_zip(adhoc_config) -> None:
@@ -124,7 +138,7 @@ def test_takeout_new_zip(adhoc_config) -> None:
     config.google = user_config # type: ignore
 
     import promnesia.sources.takeout as tex
-    visits = history(tex.index)
+    visits = as_ok_visits(tex.index)
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
 
@@ -156,11 +170,11 @@ def test_backup_firefox(tmp_path):
         # assert_got_tzinfo(hist)
 
 
-def test_plaintext_path_extractor():
+def test_plaintext_path_extractor() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = history(W(custom_gen.index,
+    visits = as_ok_visits(W(custom_gen.index,
         extract_from_path(tdata('custom')),
     ))
     assert {
@@ -178,11 +192,11 @@ def test_plaintext_path_extractor():
     assert wa.locator.href == f'editor://{f2}:3' # occurs line 3
 
 # TODO perhaps it belongs to canonify?
-def test_normalise():
+def test_normalise() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = history(W(custom_gen.index,
+    visits = as_ok_visits(W(custom_gen.index,
         extract_from_path(tdata('normalise')),
     ))
     assert len(visits) == 7
@@ -201,7 +215,7 @@ def test_normalise_weird() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = history(W(
+    visits = as_ok_visits(W(
         custom_gen.index,
         extract_from_path(tdata('weird.txt')),
     ))
@@ -215,26 +229,41 @@ def test_normalise_weird() -> None:
     assert v2.context == 'right, so https://en.wikipedia.org/wiki/Dinic%27s_algorithm can be used for max flow'
 
 
-@skip("use a different way to specify filter other than class variable..")
-def test_filter():
+def test_filter() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    History.add_filter(r'some-weird-domain')
-    hist = custom_gen.get_custom_history( # type: ignore
-        extract_from_path(tdata('custom')),
-    )
-    assert len(hist) == 4 # chrome-error got filtered out
+    # ugh... such a mess
+    @contextmanager
+    def reset_filters():
+        try:
+            E.filters.cache_clear()
+            yield
+        finally:
+            E.filters.cache_clear()
+
+    import promnesia.extract as E
+    with reset_filters(), with_config('''
+FILTERS = [
+    "some-weird-domain.xyz"
+]
+'''):
+        visits = as_visits(W(
+            custom_gen.index,
+            extract_from_path(tdata('custom')),
+        ))
+        assert len(visits) == 4
+
 
 def test_custom() -> None:
     import promnesia.sources.shellcmd as custom_gen
 
-    hist = history(W(
+    visits = as_visits(W(
         custom_gen.index,
         """grep -Eo -r --no-filename '(http|https)://\S+' """ + tdata('custom'),
     ))
     # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
-    assert len(hist) == 5
+    assert len(visits) == 5
 
 
 
@@ -299,7 +328,7 @@ def _test_merge_all_from(tdir):
 
     import promnesia.sources.chrome as chrome_ex # type: ignore
 
-    hist = history(W(chrome_ex.extract, mfile))
+    hist = history(W(chrome_ex.extract, mfile)) # type: ignore
     assert len(hist) > 0
 
     older = hist['github.com/orgzly/orgzly-android/issues']

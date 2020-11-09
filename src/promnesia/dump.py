@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import shutil
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Iterable
 
 from more_itertools import chunked
 
@@ -10,7 +10,7 @@ from sqlalchemy import Column, Table # type: ignore
 
 from cachew import NTBinder
 
-from .common import get_logger, DbVisit, get_tmpdir
+from .common import get_logger, DbVisit, get_tmpdir, Res, now_tz, Loc
 from . import config
 
 
@@ -27,18 +27,33 @@ policy_update = INDEX_POLICY == 'update'
 _CHUNK_BY = 10
 
 
-def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]) -> None:
+def visits_to_sqlite(vit: Iterable[Res[DbVisit]]) -> None:
     logger = get_logger()
     output_dir = Path(config.get().output_dir)
     db_path = output_dir / 'promnesia.sqlite'
 
-    def iter_visits():
-        for e, h in all_histories:
-            # TODO sort them somehow for determinism?
-            # TODO what do we do with errors?
-            # TODO maybe conform them to schema and dump too?
-            # TODO or, dump to a separate table?
-            yield from h
+    now = now_tz()
+    ok = 0
+    errors = 0
+    def vit_ok() -> Iterable[DbVisit]:
+        nonlocal errors, ok
+        for v in vit:
+            if isinstance(v, DbVisit):
+                ok += 1
+                yield v
+            else:
+                errors += 1
+                # conform to the schema and dump. can't hurt anyway
+                ev = DbVisit(
+                    norm_url='<error>',
+                    orig_url='<error>',
+                    dt=now,
+                    locator=Loc.make('<errror>'),
+                    src='error',
+                    # todo attach backtrace?
+                    context=repr(v),
+                )
+                yield ev
 
     tpath = Path(get_tmpdir().name) / 'promnesia.tmp.sqlite'
     if not policy_update:
@@ -53,8 +68,8 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]) -> None:
 
     cleared: Set[str] = set()
     with engine.begin() as conn:
-        for chunk in chunked(iter_visits(), n=_CHUNK_BY):
-            srcs = set(v.src for v in chunk)
+        for chunk in chunked(vit_ok(), n=_CHUNK_BY):
+            srcs = set(v.src or '' for v in chunk)
             new = srcs.difference(cleared)
             for src in new:
                 conn.execute(table.delete().where(table.c.src == src))
@@ -67,5 +82,5 @@ def dump_histories(all_histories: List[Tuple[str, List[DbVisit]]]) -> None:
     if not policy_update:
         shutil.move(str(tpath), str(db_path))
 
-    logger.info('saved database to %s', db_path)
-    # TODO log error count
+    errs = '' if errors == 0 else f', {errors} ERRORS'
+    logger.info('saved database to "%s". %d total (%d OK%s)', db_path, ok + errors, ok, errs)
