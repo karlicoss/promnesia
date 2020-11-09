@@ -141,43 +141,52 @@ export class Binder {
 
             return true;
         };
-        // FIXME ok, this needs to be lazy and happen only when we actually want to use anchor...
-        const AM = await import(
-            /* webpackChunkName: "anchorme" */
-            // $FlowFixMe
-            'anchorme/dist/browser/anchorme.js' // TODO use min.js? slightly smaller
-        )
-        const anchorme = AM.default // ??? otherwise not working..
 
 
-        /* TODO locator could jump into the file? */
         if (context != null) {
             const ctx_c = child(item, 'div', ['context'])
+
+            // ugh.. so much code foe something so simple
+            function do_simple(text: string) {
+                for (const line of text.split('\n')) {
+                    tchild(ctx_c, line)
+                    child (ctx_c, 'br')
+                }
+            }
+            let handle_plain = do_simple
+
+            if (this.options.detect_sidebar_urls) {
+                let anchorme = null
+                try {
+                    const {default: anchorme_} = await import(
+                        /* webpackChunkName: "anchorme" */
+                        // $FlowFixMe
+                        'anchorme/dist/browser/anchorme.js' // TODO use min.js? slightly smaller
+                    )
+                    anchorme = anchorme_ // ugh. scope works odd..
+                } catch (err) {
+                    console.error(err)
+                    console.warn("Couldn't import anchorme. Fallback on plaintext")
+                }
+                if (anchorme != null) {
+                    handle_plain = (text: string) => {
+                        try {
+                            const res = unwrap(anchorme)(text)
+                            safeSetInnerHTML(ctx_c, res)
+                        } catch (err) { // just in case..
+                            console.error(err)
+                            do_simple(text)
+                        }
+                    }
+                }
+            }
 
             let ctx = context;
             if (ctx.startsWith(HTML_MARKER)) {
                 ctx = context.substring(HTML_MARKER.length)
                 safeSetInnerHTML(ctx_c, ctx);
             } else { // plaintext
-                function do_plain() {
-                    for (const line of ctx.split('\n')) {
-                        tchild(ctx_c, line)
-                        child(ctx_c, 'br')
-                    }
-                }
-
-                if (this.options.detect_sidebar_urls) {
-                    // todo perhaps defensive handling should be for the whole function
-                    try {
-                        const res = anchorme(ctx)
-                        safeSetInnerHTML(ctx_c, res)
-                    } catch {
-                        // todo log
-                        do_plain()
-                    }
-                } else {
-                    do_plain()
-                }
+                handle_plain(ctx)
             }
         }
 
