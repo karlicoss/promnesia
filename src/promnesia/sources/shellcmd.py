@@ -1,10 +1,9 @@
 from datetime import datetime
 from subprocess import check_call, check_output
 from typing import Optional
-from pathlib import Path
 from urllib.parse import unquote
 
-from ..common import Visit, Loc, Results, extract_urls, get_system_tz
+from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz
 
 
 def index(command: str) -> Results:
@@ -35,7 +34,7 @@ def index(command: str) -> Results:
         ts: datetime
         loc: Loc
         if fname is not None:
-            ts = datetime.fromtimestamp(Path(fname).stat().st_mtime, tz=tz)
+            ts = file_mtime(fname)
             loc = Loc.file(fname, line=lineno)
         else:
             ts = datetime.now(tz=tz)

@@ -2,11 +2,8 @@
 Extracts links from HTML files
 '''
 
-from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple
-
-from ..common import PathIsh, Visit, Loc, Results
+from ..common import PathIsh, Visit, Loc, Results, file_mtime
 
 # TODO present error summary in the very end; import errors -- makes sense to show 
 # TODO on some exceptions, request a fallback to text?
@@ -14,15 +11,13 @@ from ..common import PathIsh, Visit, Loc, Results
 from bs4 import BeautifulSoup # type: ignore[import]
 
 def extract_from_file(fname: PathIsh) -> Results:
-
-    ts = datetime.fromtimestamp(Path(fname).stat().st_mtime)
-    # TODO just allow passing file as timestamp?
+    ts = file_mtime(fname)
 
     soup = BeautifulSoup(Path(fname).read_text(errors='replace'), 'lxml')
     for a in soup.find_all('a'):
         href = a.attrs.get('href')
-        if href is None:
-            # TODO ignore #?
+        if href is None or ('://' not in href):
+            # second condition means relative link
             continue
         text = a.text
 

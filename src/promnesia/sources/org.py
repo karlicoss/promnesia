@@ -4,7 +4,7 @@ from typing import Iterable, List, Set, Optional, Iterator, Tuple, NamedTuple, c
 from pathlib import Path
 
 
-from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, iter_urls, PathIsh, Res
+from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, iter_urls, PathIsh, Res, file_mtime
 
 
 import orgparse
@@ -102,7 +102,7 @@ def extract_from_file(fname: PathIsh) -> Results:
     o = orgparse.load(path)
     root = o.root
 
-    fallback_dt = datetime.fromtimestamp(path.stat().st_mtime)
+    fallback_dt = file_mtime(path)
 
     ex = RuntimeError(f'while extracting from {fname}')
 
