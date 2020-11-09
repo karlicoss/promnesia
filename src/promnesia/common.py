@@ -556,6 +556,7 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
             yield fpath
 
 
+@lru_cache(1)
 def get_system_zone() -> str:
     try:
         import tzlocal # type: ignore
@@ -566,6 +567,7 @@ def get_system_zone() -> str:
         return 'UTC'
 
 
+@lru_cache(1)
 def get_system_tz():
     zone = get_system_zone()
     try:
@@ -574,3 +576,8 @@ def get_system_tz():
         logger.exception(e)
         logger.error(f"Unknown time zone %s. Falling back to UTC. Please report this as a bug!", zone)
         return pytz.utc
+
+
+def file_mtime(path: PathIsh) -> datetime:
+    tz = get_system_tz()
+    return datetime.fromtimestamp(Path(path).stat().st_mtime, tz=tz)

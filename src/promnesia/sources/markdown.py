@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterator, NamedTuple, Optional
 
-from ..common import get_logger, Extraction, Url, PathIsh, Res, Visit, echain, Loc
+from ..common import get_logger, Extraction, Url, PathIsh, Res, Visit, echain, Loc, file_mtime
 
 
 import mistletoe # type: ignore
@@ -86,7 +86,7 @@ class Parser:
 
 def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
     path = Path(fname)
-    fallback_dt = datetime.fromtimestamp(path.stat().st_mtime)
+    fallback_dt = file_mtime(path)
 
     ex = RuntimeError(f'while extracting from {path}')
 

@@ -17,7 +17,7 @@ import warnings
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, mime, traverse
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, mime, traverse, file_mtime
 from ..config import use_cores
 from ..py37 import nullcontext
 
@@ -192,7 +192,7 @@ def index(
 
 class Options(NamedTuple):
     ignored: Sequence[str]
-    follow: bool # TODO remove this?
+    follow: bool
     # TODO option to add ignores? not sure..
     # TODO I don't like this replacer thing... think about removing it
     replacer: Replacer
@@ -296,7 +296,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
     # TODO careful, filter out obviously not plaintext? maybe mime could help here??
 
     root = opts.root
-    fallback_dt = datetime.fromtimestamp(pp.stat().st_mtime, tz=pytz.utc) # TODO system tz?
+    fallback_dt = file_mtime(pp)
     fallback_loc = Loc.file(pp)
     replacer = opts.replacer
     for r in indexer:
