@@ -88,7 +88,7 @@ Promnesia consists of three parts:
 
   However, browser addons can't read access your filesystem, so to load the data we need a helper component:
 
-- server/backend: =promnesia server= command
+- server/backend: =promnesia serve= command
 
   It's called 'server', but really it's just a regular program with the only purpose to serve the data to the browser.
   It runs locally and you don't have to expose it to the outside.

@@ -151,16 +151,36 @@ def config_create(args) -> None:
         stub = read_example_config()
         cfgdir.mkdir(parents=True)
         cfg.write_text(stub)
-        logger.info("Created a stub config in %s. Edit it to tune to your liking.", cfg)
+        logger.info("Created a stub config in '%s'. Edit it to tune to your liking. (see https://github.com/karlicoss/promnesia#setup for more info)", cfg)
 
 
-def config_check(args):
-    cfg = args.config
+def config_check(args) -> None:
     logger = get_logger()
+    cfg = args.config
+    errors = list(_config_check(cfg))
+    if len(errors) == 0:
+        logger.info('OK')
+    else:
+        logger.error('CHECK FAILED')
+        sys.exit(1)
+
+
+def _config_check(cfg: Path) -> Iterable[Exception]:
+    logger = get_logger()
+    from subprocess import run
+
+    logger.info('config: %s', cfg)
+
+    def check(cmd):
+        logger.debug(' '.join(map(str, cmd)))
+        res = run(cmd)
+        if res.returncode > 0:
+            yield Exception()
 
     # TODO add this to HPI
     logger.info('Checking syntax...')
-    check_call([python3(), '-m', 'compileall', cfg])
+    cmd = [python3(), '-m', 'compileall', cfg]
+    yield from check(cmd)
 
     # todo not sure if should be more defensive than check_call here
     logger.info('Checking type safety...')
@@ -169,7 +189,7 @@ def config_check(args):
     except ImportError:
         logger.warning("mypy not found, can't use it to check config!")
     else:
-        check_call([
+        yield from check([
             python3(), '-m', 'mypy',
             '--namespace-packages',
             '--color-output', # not sure if works??
@@ -181,7 +201,7 @@ def config_check(args):
         ])
 
     logger.info('Checking runtime errors...')
-    check_call([python3(), cfg])
+    yield from check([python3(), cfg])
 
 
 def main() -> None:
@@ -217,6 +237,7 @@ def main() -> None:
     install_server.setup_parser(isp)
 
     cp = subp.add_parser('config', help='Config management')
+    cp.set_defaults(func=lambda *args: cp.print_help())
     scp = cp.add_subparsers()
     ccp = scp.add_parser('check', help='Check config')
     ccp.set_defaults(func=config_check)
@@ -232,8 +253,6 @@ def main() -> None:
         print('ERROR: Please specify a mode', file=sys.stderr)
         p.print_help(sys.stderr)
         sys.exit(1)
-
-    get_logger().debug(f'config_file={args.__dict__.get("config")}')
 
     # TODO maybe, it's better for server to compute intermediate represetnation?
     # the only downside is storage. dunno.
