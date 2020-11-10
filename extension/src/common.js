@@ -116,6 +116,7 @@ export class Blacklisted {
 
 export const Methods = {
     GET_SIDEBAR_VISITS  : 'getActiveTabVisitsForSidebar',
+    BIND_SIDEBAR_VISITS : 'bindSidebarVisits',
     SEARCH_VISITS_AROUND: 'searchVisitsAround',
     MARK_VISITED        : 'markVisited',
     OPEN_SEARCH         : 'openSearch',
