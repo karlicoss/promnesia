@@ -510,15 +510,16 @@ def test_visits(tmp_path, browser):
         confirm('you should see hypothesis contexts')
 
 
-@browsers(FF, CH)
-def test_search_around(tmp_path, browser):
+@browsers()
+def test_search_around(tmp_path, browser) -> None:
     # TODO it actually lacks a proper end-to-end test withing browser... although I do have something in automatic demos?
     test_url = "about:blank"
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
         # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??
         ts = int(datetime.strptime("2017-05-22T10:59:12.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
         h.open_page(f'search.html?utc_timestamp={ts}')
-        confirm('you should see search results, "anthrocidal" should be highlighted red')
+        manual.confirm('you should see search results, "anthrocidal" should be highlighted red')
+        # FIXME test clicking search around in actual search page.. it didn't work, seemingly because of initBackground() handling??
 
 
 # TODO skip if not my hostname

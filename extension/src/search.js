@@ -1,6 +1,6 @@
 /* @flow */
 
-import {unwrap, addStyle} from './common';
+import {unwrap, addStyle, chunkBy} from './common';
 import type {Visits, Visit} from './common';
 import {getOptions} from './options'
 import {searchVisits, searchAround} from './api'
@@ -40,7 +40,7 @@ function showError(err) {
 }
 
 
-async function _doSearch(
+async function* _doSearch(
     cb: Promise<Visits>,
     {
         with_ctx_first,
@@ -57,6 +57,7 @@ async function _doSearch(
 
     clearResults();
 
+    // $FlowFixMe // hmm, not sure what it doesn't like here? seems to work fine..
     const visits = (await cb).visits;
     visits.sort((f, s) => (s.time - f.time));
     // TODO ugh, should do it via sort predicate...
@@ -65,7 +66,6 @@ async function _doSearch(
         visits.sort((f, s) => (f.context === null ? 1 : 0) - (s.context === null ? 1 : 0));
     }
 
-    // TODO res is undefined??
     const res = getResultsContainer();
     const cc = doc.createElement('div'); res.appendChild(cc);
     cc.classList.add('summary');
@@ -76,7 +76,11 @@ async function _doSearch(
     const options = await getOptions()
     const binder = new Binder(doc, options)
     // TODO use something more generic for that!
-    for (const v of visits) {
+   
+    const ONE_CHUNK = 250
+    for (const chunk of chunkBy(visits, ONE_CHUNK)) {
+    yield // give way to UI thread
+    for (const v of chunk) {
         const [dates, times] = _fmt(v.time)
         const cc = await binder.render(res, dates, times, v.tags, {
             idx           : null,
@@ -90,12 +94,24 @@ async function _doSearch(
         if (highlight_if(v)) {
             cc.classList.add('highlight');
         }
-        // const el = doc.createElement('div'); res.appendChild(el);
-        // const node = document.createTextNode(JSON.stringify(visit)); el.appendChild(node);
+    }
     }
 }
 
-async function doSearch (...args) {
+async function doSearch(...args) {
+    const dom_updates = _doSearch(...args)
+    async function consume_one() {
+        // consume head
+        const res = await dom_updates.next()
+        if (!res.done) {
+            // schedule tail
+            setTimeout(consume_one)
+        }
+    }
+    await consume_one()
+}
+
+async function doSearchDefensive(...args) {
     try {
         await _doSearch(...args);
     } catch (err) {
@@ -112,7 +128,7 @@ async function doSearch (...args) {
 unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event: Event) => {
     event.preventDefault();
     // TODO make ctx first configurable?
-    await doSearch(
+    await doSearchDefensive(
         searchVisits(getQuery().value),
         {
             with_ctx_first: true,
