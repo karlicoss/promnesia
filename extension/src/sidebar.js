@@ -471,7 +471,7 @@ async function bindSidebarData(response: JsonObject) {
         const res = await dom_updates_gen.next()
         if (!res.done) {
             // schedule tail
-            setTimeout(async () => await consume_one())
+            setTimeout(consume_one)
         }
     }
     await consume_one()
