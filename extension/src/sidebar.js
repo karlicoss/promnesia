@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_duration, Methods, addStyle} from './common';
+import {Visits, Visit, unwrap, format_duration, Methods, addStyle, chunkBy} from './common';
 import type {JsonObject, Second} from './common';
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
@@ -275,8 +275,10 @@ async function bindError(message: string) {
 }
 
 
-// TODO rename to 'set'?
-async function bindSidebarData(response: JsonObject) {
+/**
+ * yields UI updates, so it's possible to schedule them in blocks and avoid blocking
+ */
+async function* _bindSidebarData(response: JsonObject) {
     // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
     // TDO perhaps we need something reactive...
     // window.sidebarData = response;
@@ -366,7 +368,17 @@ async function bindSidebarData(response: JsonObject) {
 
     const visit_date_time = (v: Visit) => _fmt(USE_ORIGINAL_TZ ? v.dt_local : v.time)
 
-    for (const [idx0, v] of with_ctx.entries()) {
+    const entries = with_ctx.entries() // NOTE: it's an iterator
+    /*
+     * ugh. hacky way to defer UI thread updating... otherwise it blocks the interface on too many visits
+     * TBH this is a beat stupid... surely async style execution would be super useful for this, why is it not here by default?
+     */
+
+    const ONE_CHUNK = 300 // kinda arbitrary
+    for (const chunk of chunkBy(entries, ONE_CHUNK)) {
+    yield // give way to UI thread
+
+    for (const [idx0, v] of chunk) {
         const idx1 = idx0 + 1; // eh, I guess that makes more sense for humans
         const ctx = unwrap(v.context);
 
@@ -379,7 +391,7 @@ async function bindSidebarData(response: JsonObject) {
         }
 
         const [dates, times] = visit_date_time(v)
-        await binder.render(items, dates, times, v.tags, {
+        binder.render(items, dates, times, v.tags, {
             idx           : idx1,
             timestamp     : v.time,
             original_url  : v.original_url,
@@ -387,9 +399,9 @@ async function bindSidebarData(response: JsonObject) {
             context       : v.context,
             locator       : v.locator,
             relative      : relative,
-        });
+        })
     }
-
+    }
 
     const delta_ms = GROUP_CONSECUTIVE_SECONDS * 1000;
     function* groups() {
@@ -401,22 +413,21 @@ async function bindSidebarData(response: JsonObject) {
                 if (group.length > 0) {
                     yield group;
                 }
-                group.length = 0
+                group = []
             }
             group.push(v);
         }
         if (group.length > 0) {
             yield group;
         }
-        group.length = 0
     }
 
     // todo maybe it should be a generic hook instead?
     // todo how to make it defensive?..
     const tag_map = JSON.parse(opts.src_map)
-    // TODO group ones with no ctx..
-    for (const group of groups()) {
-
+    for (const chunk of chunkBy(groups(), ONE_CHUNK)) {
+    yield // give way to UI thread
+    for (const group of chunk) {
         const first = group[0];
         const last  = group[group.length - 1];
         // eslint-disable-next-line no-unused-vars
@@ -450,6 +461,20 @@ async function bindSidebarData(response: JsonObject) {
             relative: false,
         });
     }
+    }
+}
+
+async function bindSidebarData(response: JsonObject) {
+    const dom_updates_gen = _bindSidebarData(response)
+    async function consume_one() {
+        // consume head
+        const res = await dom_updates_gen.next()
+        if (!res.done) {
+            // schedule tail
+            setTimeout(async () => await consume_one())
+        }
+    }
+    await consume_one()
 }
 
 
