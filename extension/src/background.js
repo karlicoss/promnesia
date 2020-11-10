@@ -280,9 +280,11 @@ async function updateState (tab: chrome$Tab) {
             // TODO even compiling this takes 50ms if 10K visits??
             // faster means of communication are going to require
             // so perhaps instead, truncate and suggest to use 'search-like' interface
-            await chromeTabsExecuteScriptAsync(tabId, {
-                code: `bindSidebarData(${JSON.stringify(visits)})`
-            });
+            chrome.tabs.sendMessage(tabId, {
+                method: Methods.BIND_SIDEBAR_VISITS,
+                data  : visits
+            })
+            // TODO is it possible to do dom operations in the background??
         } else {
             console.warn("TODO implement binding visits to popup?");
         }

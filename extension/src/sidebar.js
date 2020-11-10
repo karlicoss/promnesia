@@ -292,8 +292,7 @@ async function bindSidebarData(response: JsonObject) {
     const items = binder.makeChild(cont, 'ul');
     items.id = 'visits';
 
-
-    // TODO why has this ended up serialised??
+    // ugh. this ends up as json because we're passing them from the background page... annoying
     const visits = response.visits.map(rvisit =>
         new Visit(
             rvisit.original_url,
@@ -306,7 +305,7 @@ async function bindSidebarData(response: JsonObject) {
             rvisit.context,
             rvisit.locator,
             rvisit.duration,
-        ) // TODO ugh ugly..
+        )
     );
     visits.sort((f, s) => {
         // keep 'relatives' in the bottom
@@ -471,6 +470,16 @@ function requestVisits() {
         });
 }
 
+
+// eslint-disable-next-line no-unused-vars
+chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) => {
+    const method = msg.method
+    if (method == Methods.BIND_SIDEBAR_VISITS) {
+        bindSidebarData(msg.data)
+    } else {
+        console.error('unexpected message: %o', msg)
+    }
+})
 
 // TODO make configurable? or resizable?
 
