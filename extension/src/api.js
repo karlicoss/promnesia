@@ -40,6 +40,31 @@ export async function getBackendVisits(u: Url): Promise<Visits> {
     return queryBackendCommon<JsonObject>({url: u}, 'visits').then(rawToVisits);
 }
 
+
+// eslint-disable-next-line no-unused-vars
+function makeFakeVisits(count: number): Visits {
+    const res = []
+    const ref_ms = 1600000000 * 1000
+    for (let i = 0; i < count; i++) {
+        const  d = new Date(ref_ms + i * 1000)
+        res.push(new Visit(
+            `github.com/${i}`,
+            `github.com/${i}`,
+            ((d: any): AwareDate),
+            ((d: any): NaiveDate),
+            [],
+            i < count / 3 ? null : `context ${i}`,
+            null,
+            null,
+        ))
+    }
+    return new Visits(
+        'github.com',
+        'github.com',
+        res,
+    )
+}
+
 // TODO include browser visits here too?
 // see https://github.com/karlicoss/promnesia/issues/120
 export async function searchVisits(u: Url): Promise<Visits> {
