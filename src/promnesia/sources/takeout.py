@@ -4,6 +4,7 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogle
 
 from ..common import Visit, get_logger, PathIsh, Url, Loc, Results
 
+logger = get_logger()
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
 def index() -> Results:
@@ -46,14 +47,14 @@ TakeoutPath = Path
 
 
 def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
+    # TODO replace with my.core.kompress after hpi update (or even use some my. function directly?)
     from my.kython.kompress import kexists
-    logger = get_logger()
     # TODO glob
     # TODO not sure about windows path separators??
     spath = 'Takeout/My Activity/' + kind
     if not kexists(takeout, spath):
         logger.warning(f"{spath} is not present in {takeout}... skipping")
-        return []
+        return
     logger.info('processing %s %s', takeout, kind)
 
     locator = Loc.file(spath)
@@ -69,6 +70,8 @@ def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
 def _cpath(suffix: str):
     def fun(takeout: TakeoutPath):
         cache_dir = config.get().cache_dir
+        if cache_dir is None:
+            return None
         # doesn't need a nontrivial hash function, timestsamp is encoded in name
         return cache_dir / (takeout.name + '_' + suffix + '.cache')
     return fun
@@ -76,20 +79,20 @@ def _cpath(suffix: str):
 
 # todo caching should this be HPI responsibility?
 # todo set global cachew logging on init?
-@cachew(cache_path=_cpath('google_activity') , logger=get_logger())
+@cachew(cache_path=_cpath('google_activity') , logger=logger)
 def read_google_activity(takeout: TakeoutPath) -> Iterable[Visit]:
     return _read_myactivity_html(takeout, 'Chrome/MyActivity.html')
 
-@cachew(cache_path=_cpath('search_activity') , logger=get_logger())
+@cachew(cache_path=_cpath('search_activity') , logger=logger)
 def read_search_activity(takeout: TakeoutPath) -> Iterable[Visit]:
     return _read_myactivity_html(takeout, 'Search/MyActivity.html')
 
 # TODO add this to tests?
-@cachew(cache_path=_cpath('browser_activity'), logger=get_logger())
+@cachew(cache_path=_cpath('browser_activity'), logger=logger)
 def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
+    # TODO replace with my.core.kompress after hpi update (or even use some my. function directly?)
     from my.kython.kompress import kexists, kopen
     # not sure if this deserves moving to HPI? it's pretty trivial for now
-    logger = get_logger()
     spath = 'Takeout/Chrome/BrowserHistory.json'
 
     if not kexists(takeout, spath):

@@ -5,7 +5,7 @@ import importlib
 import importlib.util
 import warnings
 
-from .common import PathIsh, get_tmpdir, appdirs, default_output_dir
+from .common import PathIsh, get_tmpdir, appdirs, default_output_dir, default_cache_dir
 from .common import Res, Source
 
 
@@ -16,7 +16,7 @@ class Config(NamedTuple):
     # if not specified, uses user data dir
     OUTPUT_DIR: Optional[PathIsh] = None
 
-    CACHE_DIR: Optional[PathIsh] = None
+    CACHE_DIR: Optional[PathIsh] = ''
     FILTERS: List[str] = []
     #
     # NOTE: INDEXERS is deprecated, use SOURCES instead
@@ -51,16 +51,19 @@ class Config(NamedTuple):
                 yield Source(r)
 
     @property
-    def cache_dir(self) -> Path:
-        # TODO make it optional?
+    def cache_dir(self) -> Optional[Path]:
         cd = self.CACHE_DIR
-        # TODO maybe do not use cache if it's none?
-        assert cd is not None
-        res = Path(cd)
-        res.mkdir(exist_ok=True) # TODO not sure about parents=True
-        return res
+        cpath: Optional[Path]
+        if cd is None:
+            cpath = None # means 'disabled' in cachew
+        elif cd == '': # meh.. but need to make it None friendly..
+            cpath = default_cache_dir()
+        else:
+            cpath = Path(cd)
+        if cpath is not None:
+            cpath.mkdir(exist_ok=True, parents=True)
+        return cpath
 
-    # TODO make this optional, default to .cache or something?
     # TODO also tmp dir -- perhaps should be in cache or at least possible to specify in config? not sure if useful
     @property
     def output_dir(self) -> Path:

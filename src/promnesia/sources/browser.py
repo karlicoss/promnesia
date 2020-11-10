@@ -39,8 +39,8 @@ def _index_dbs(dbs: List[Path], cachew_name: str):
     import sys
     sys.setrecursionlimit(5000)
 
-    cache_dir = Path(config.get().cache_dir)
-    cpath = cache_dir / cachew_name
+    cache_dir = config.get().cache_dir
+    cpath = None if cache_dir is None else cache_dir / cachew_name
     emitted: Set = set()
     yield from _index_dbs_aux(cpath, dbs, emitted=emitted)
 

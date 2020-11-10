@@ -105,7 +105,8 @@ OUTPUT_DIR = '/data/promnesia'
 '''
 Optional setting.
 A directory to keep intemediate caches in order to speed up indexing.
-If not specified, caching isn't used.
+If not specified, will use user cache directory
+If set to None, cache is disabled
 '''
 CACHE_DIR = '/tmp/promnesia_cache/'
 
@@ -123,5 +124,4 @@ FILTERS = [
 
     # you can use regexes too!
     'redditmedia.com.*.(jpg|png|gif)',
-
 ]
