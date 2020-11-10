@@ -111,7 +111,6 @@ def test_takeout_directory(adhoc_config, tmp_path):
     assert_got_tzinfo(visits)
 
 
-
 def test_with_error() -> None:
     class ExtractionError(Exception):
         pass

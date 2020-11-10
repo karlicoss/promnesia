@@ -57,21 +57,27 @@ def extract_visits(extractor, *, src: SourceName) -> Iterable[Res[DbVisit]]:
         return
 
     handled: Set[Visit] = set()
-    for p in vit:
-        if isinstance(p, Exception):
-            # todo not sure if need it at all?
-            # parts = ['indexer emitted exception\n']
-            # eh, exception type is ignored by format_exception completely, apparently??
-            # parts.extend(traceback.format_exception(Exception, p, p.__traceback__))
-            # logger.error(''.join(parts))
-            yield p
-            continue
+    try:
+        for p in vit:
+            if isinstance(p, Exception):
+                # todo not sure if need it at all?
+                # parts = ['indexer emitted exception\n']
+                # eh, exception type is ignored by format_exception completely, apparently??
+                # parts.extend(traceback.format_exception(Exception, p, p.__traceback__))
+                # logger.error(''.join(parts))
+                yield p
+                continue
 
-        if p in handled: # no need to emit duplicates
-            continue
-        handled.add(p)
+            if p in handled: # no need to emit duplicates
+                continue
+            handled.add(p)
 
-        yield from as_db_visit(p, src=src)
+            yield from as_db_visit(p, src=src)
+    except Exception as e:
+        # todo critical error?
+        logger.exception(e)
+        yield e
+
 
     logger.info('extracting via %s: got %d visits', log_info, len(handled))
 
