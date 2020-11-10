@@ -616,22 +616,19 @@ def test_unreachable(tmp_path, browser) -> None:
 
 @browsers()
 def test_stress(tmp_path, browser) -> None:
-    page = tmp_path / 'dummy.html'
-    page.write_text('''
-<html>
-<head>HI</head>
-<body>test</body>
-</html>
-    ''')
-    url = f'file://{page}'
-
+    url = 'https://www.reddit.com/'
     urls = [
-        (url, f'ctx {i}' if i < 20 else None) for i in range(10000)
+        (f'{url}/subpath/{i}.html', f'context {i}' if i > 10000 else None) for i in range(50000)
     ]
     with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
-        # TODO so, should the response be immediate?
-        # TODO shouldn't do any work if we don't open the sidebar
-        manual.confirm('is performance reasonable?')
+        if has_x():
+            helper.activate()
+
+        manual.confirm('''
+Is performance reasonable?
+The sidebar should show up, and update gradually.
+You should be able to scroll the page, trigger tooltips, etc., without any lags.
+'''.strip())
 
     
 @browsers(FF, CH)
