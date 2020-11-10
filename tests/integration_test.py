@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import check_call, run
-from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping
+from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping, List
 
 from common import tdir, under_ci, DATA, GIT_ROOT
 
@@ -131,23 +131,25 @@ SOURCES = [chrome_extractor]
     index(cfg)
 
 
-def test_hypothesis(tdir) -> None:
-    index_hypothesis(tdir)
-
+def query_db_visits(tdir: Path) -> List[DbVisit]:
     # TODO copy pasting from server; need to unify
     engine, binder, table = _get_stuff(tdir)
     query = table.select()
     with engine.connect() as conn:
-        visits = [binder.from_row(row) for row in conn.execute(query)]
+        return [binder.from_row(row) for row in conn.execute(query)]
 
+
+def test_hypothesis(tdir: Path) -> None:
+    index_hypothesis(tdir)
+    visits = query_db_visits(tdir)
     assert len(visits) > 100
 
-    [vis] = [x for x in visits if 'fundamental fact of evolution' in x.context]
+    [vis] = [x for x in visits if 'fundamental fact of evolution' in (x.context or '')]
 
     assert vis.norm_url == 'wired.com/2017/04/the-myth-of-a-superhuman-ai'
     assert vis.orig_url == 'https://www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
     assert vis.locator.href == 'https://hyp.is/_Z9ccmVZEeexBOO7mToqdg/www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
-    assert 'misconception about evolution is fueling misconception about AI' in vis.context # contains notes as well
+    assert 'misconception about evolution is fueling misconception about AI' in (vis.context or '') # contains notes as well
 
 
 def test_comparison(tdir: Path) -> None:
@@ -178,7 +180,7 @@ def test_comparison(tdir: Path) -> None:
     assert len(list(compare_files(db, old_db))) == 1
 
 
-def test_index_many(tdir) -> None:
+def test_index_many(tdir: Path) -> None:
     # NOTE [20200521] experimenting with promnesia.dump._CHUNK_BY
     # inserting 100K visits
     # value=1000: 9 seconds
@@ -203,11 +205,32 @@ SOURCES = [Source(index)]
 OUTPUT_DIR = '{tdir}'
     """)
     index(cfg)
-    #
-    # TODO copy pasting from server; need to unify
-    engine, binder, table = _get_stuff(tdir)
-    query = table.select()
-    with engine.connect() as conn:
-        visits = [binder.from_row(row) for row in conn.execute(query)]
+    visits = query_db_visits(tdir)
 
     assert len(visits) == 100000
+
+
+def test_indexing_error(tdir: Path) -> None:
+    cfg = tdir / 'test_config.py'
+    cfg.write_text(f'''
+def bad_index():
+    import bad_import
+    yield from [] # dummy
+from promnesia import Source
+from promnesia.sources import demo
+
+SOURCES = [
+    bad_index,
+    Source(demo, count=3),
+]
+OUTPUT_DIR = '{tdir}'
+''')
+    with pytest.raises(SystemExit):
+        index(cfg)
+        # should exit(1)
+
+    # yet save the database
+    visits = query_db_visits(tdir)
+
+    [e, _, _, _] = visits
+    assert e.src == 'error'
