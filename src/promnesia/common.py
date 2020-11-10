@@ -328,6 +328,10 @@ def default_output_dir() -> Path:
     return Path(appdirs().user_data_dir)
 
 
+def default_cache_dir() -> Path:
+    return Path(appdirs().user_cache_dir)
+
+
 @lru_cache()
 def python3() -> str:
     '''
