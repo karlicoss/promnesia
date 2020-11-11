@@ -36,20 +36,50 @@ export const thisbrowser = {
         const delay = getDelayMs()
         const now = new Date()
 
+        // NOTE: this normalise won't necessarily be the same as backend's... not sure what we can do about it without sending visits?
+        const nurl = normalise_url(url)
+
         // NOTE: visitTime returns UTC epoch,
         const times: Array<Date> = results
-            .map(r => new Date(r['visitTime']))
+            .map(r => new Date(r['visitTime'] || 0.0))
             .filter(dt => now - dt > delay)
         const visits = times.map(t => new Visit(
             url,
-            // NOTE: this normalise won't necessarily be the same as backend's... not sure what we can do about it without sending visits?
-            normalise_url(url),
+            nurl,
             ((t: any): AwareDate),
             ((t: any): NaiveDate), // there is no TZ info in history anyway, so not much else we can do
             [THIS_BROWSER_TAG],
         ))
-        return new Visits(url, url, visits)
-    }
+        return new Visits(url, nurl, visits)
+    },
+    // TODO hmm I guess it's not necessarily searching url? any text
+    search: async function(url: Url): Promise<Visits> {
+        // TODO merge with actual visits for exact match?
+        const android = await isAndroid()
+        if (android) {
+            return new Visits(url, url, [])
+        }
+        const nurl = normalise_url(url)
+        const results = await achrome.history.search({text: url})
+        const visits = []
+        for (const r of results) {
+            const u = r.url
+            const ts = r.lastVisitTime
+            if (u == null || ts == null) {
+                continue
+            }
+            const t = new Date(ts)
+            visits.push(new Visit(
+                u,
+                normalise_url(u),
+                ((t: any): AwareDate),
+                ((t: any): NaiveDate),
+                [THIS_BROWSER_TAG],
+                // TODO need context?
+            ))
+        }
+        return new Visits(url, nurl, visits)
+    },
 }
 
 
@@ -178,7 +208,7 @@ export const allsources = {
         }
         return _merge(
             from_backend,
-            Promise.resolve(new Visits(url, url, [])), // TODO support proprely
+            thisbrowser.search(url),
             bookmarks  .search(url),
         )
     },

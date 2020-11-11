@@ -76,11 +76,25 @@ export const achrome = {
     },
     history: {
         // crap, missing in flow-interfaces-chrome
-        get getVisits    () { return new Awrap1<{url: string}>().wrap<Array<any>>(
+        get getVisits    () { return new Awrap1<{url: string }>().wrap<Array<VisitItem>>(
             // $FlowFixMe
             chrome.history.getVisits
         ) },
+        get search       () { return new Awrap1<{text: string}>().wrap<Array<HistoryItem>>(
+            // $FlowFixMe
+            chrome.history.search
+        )}
     },
+}
+
+// https://developer.chrome.com/extensions/history#type-HistoryItem
+type VisitItem = {
+    visitTime?: number,
+}
+
+type HistoryItem = {
+    url?: string,
+    lastVisitTime?: number,
 }
 
 
