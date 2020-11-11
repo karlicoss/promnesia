@@ -62,6 +62,7 @@ function helper<R, TArgs: *>(fn): ((...args: TArgs) => Promise<R>) {
 export const achrome = {
     bookmarks: {
         get search       () { return new Awrap1<{url: string}                              >().wrap(chrome.bookmarks.search  ) },
+        get getTree      () { return new Awrap0                                             ().wrap(chrome.bookmarks.getTree ) },
     },
     tabs: {
         get get          () { return new Awrap1<number                                     >().wrap(chrome.tabs.get          ) },

@@ -38,6 +38,7 @@ export function format_duration(seconds: Second): string {
     return parts.join(" ");
 }
 
+// TODO just use object
 export class Visit {
     original_url: string;
     normalised_url: string;
