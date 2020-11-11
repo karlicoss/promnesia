@@ -2,6 +2,7 @@
 __package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
 import os
+import sys
 import json
 from datetime import timedelta, datetime
 from pathlib import Path
@@ -18,7 +19,7 @@ import hug # type: ignore
 import hug.types as T # type: ignore
 
 from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc # type: ignore
-from sqlalchemy import Column, Table, func # type: ignore
+from sqlalchemy import Column, Table, func, types # type: ignore
 
 
 from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3, get_system_zone
@@ -32,6 +33,11 @@ _ENV_CONFIG = 'PROMNESIA_CONFIG'
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
 def get_logger():
+    # NOTE: uncomment to log sql queries
+    # logging.basicConfig()
+    # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+
+    # todo lazy log?
     logger = logging.getLogger('promnesia.server')
     setup_logger(logger, level=logging.DEBUG)
     return logger
@@ -39,7 +45,7 @@ def get_logger():
 
 def get_version() -> str:
     from pkg_resources import get_distribution
-    return get_distribution('promnesia').version
+    return get_distribution(__package__).version
 
 
 class ServerConfig(NamedTuple):
@@ -148,9 +154,10 @@ def search_common(url: str, where):
 
     with engine.connect() as conn:
         try:
+            # TODO make more defensive here
             visits = [binder.from_row(row) for row in conn.execute(query)]
         except exc.OperationalError as e:
-            if e.msg == 'no such table: visits':
+            if getattr(e, 'msg', None) == 'no such table: visits':
                 logger.warn('you may have to run indexer first!')
                 #result['visits'] = [{an error with a msg}] # TODO
                 #return result
@@ -246,16 +253,26 @@ def search_around(
 ):
     utc_timestamp = timestamp # old 'timestamp' name is legacy
 
-    # TODO meh. use count instead?
-    delta_back  = timedelta(hours=3).total_seconds()
+    # TODO meh. use count/pagination instead?
+    delta_back  = timedelta(hours=3  ).total_seconds()
     delta_front = timedelta(minutes=2).total_seconds()
-    # TODO not sure about front.. but it also serves as quick hack to accomodate for all the truncations etc
+    # TODO not sure about delta_front.. but it also serves as quick hack to accomodate for all the truncations etc
+
     return search_common(
-        url='http://dummy.org', # TODO remove it from search_common
+        url='http://dummy.org', # NOTE: not used in the where query (below).. perhaps need to get rid of this
         where=lambda table, url: between(
-            # %s is a unix timestamp
-            # TODO careful.. not sure how datetime works w.r.t. datetime string without the timezone info..
-            func.strftime('%s', func.datetime(table.c.dt)) - literal(utc_timestamp),
+            func.strftime(
+                '%s', # NOTE: it's tz aware, e.g. would distinguish +05:00 vs -03:00
+                # this is a bit fragile, relies on cachew internal timestamp format, e.g.
+                # 2020-11-10T06:13:03.196376+00:00 Europe/London
+                func.substr(
+                    table.c.dt,
+                    1, # substr is 1-indexed
+                    # instr finds the first match, but if not found it defaults to 0.. which we hack by concatting with ' '
+                    func.instr(func.cast(table.c.dt, types.Unicode).op('||')(' '), ' ') - 1,
+                    # for fucks sake.. seems that cast is necessary otherwise it tries to treat ' ' as datetime???
+                )
+            ) - literal(utc_timestamp),
             literal(-delta_back),
             literal(delta_front),
         ),
