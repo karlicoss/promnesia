@@ -1,12 +1,11 @@
 /* @flow */
 
-import type {Url, JsonArray} from './common';
+import type {Url} from './common';
 import {Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
-import {queryBackendCommon} from './api'
 
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
-import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
+import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify, notifications} from './notifications'
 import {Blacklist} from './blacklist'
 import {isAndroid, allsources} from './sources'
 
@@ -250,26 +249,28 @@ async function markVisited(tabId) {
 
     const blacklist = await Blacklist_get();
     // TODO ugh. filter can't be async, so we have to do this separately...
-    const res = [];
+    const urls = [];
     for (const u of good_urls) {
         const ur = await blacklist.contains(u);
         if (ur === null) {
-            res.push(u);
+            urls.push(u);
         }
     }
 
     // TODO check if zero? not sure if necessary...
     // TODO maybe, I need a per-site extension?
-    const resp = await queryBackendCommon<JsonArray>({
-        urls: res,
-    }, 'visited');
+    const resp = await allsources.visited(urls)
+    if (resp instanceof Error) {
+        await notifications.error(tabId, resp)
+        return
+    }
 
     // TODO ok, we received exactly same elements as in res. now what??
     // TODO cache results internally? At least for visited. ugh.
     // TODO make it custom option?
     const vis = {};
-    for (var i = 0; i < res.length; i++) {
-        vis[res[i]] = resp[i];
+    for (let i = 0; i < urls.length; i++) {
+        vis[urls[i]] = resp[i];
     }
     // TODO make a map from it..
     // TODO use CSS from settings?

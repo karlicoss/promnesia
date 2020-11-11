@@ -11,9 +11,11 @@ type VisitsResponse = {
     normalised_url: string,
 }
 
+type VisitedResponse = Array<boolean>
+
 export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R> {
     const opts = await getOptions()
-    if (opts.host == '') {
+    if (opts.host == '') { // use 'dummy' backend
         // the user only wants to use browser visits?
         // todo: won't work for all endpoints, but can think how to fix later..
         if (endp == 'visits' || endp == 'search') {
@@ -27,6 +29,12 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
                 original_url: url,
                 normalised_url: normalise_url(url),
             }
+            return ((res: any): R)
+        } else if (endp == 'visited') {
+            // $FlowFixMe
+            let urls: Array<Url> = params['urls']
+            const res: VisitedResponse = new Array(urls.length)
+            res.fill(false)
             return ((res: any): R)
         } else {
             throw Error(`'${endp}' isn't implemented without the backend yet. Please set host in the extension settings.`)
@@ -92,7 +100,11 @@ export const backend = {
         return await queryBackendCommon<JsonObject>({url: url}, 'search')
               .then(rawToVisits)
               .catch((err: Error) => err)
-    }
+    },
+    visited: async function(urls: Array<Url>): Promise<VisitedResponse | Error> {
+        return await queryBackendCommon<Array<boolean>>({urls: urls}, 'visited')
+               .catch((err: Error) => err)
+    },
 }
 
 function rawToVisits(vis: VisitsResponse): Visits {

@@ -96,6 +96,12 @@ export async function showTabNotification(tabId: number, message: string, ...arg
     }
 }
 
+export const notifications = {
+    error: async function(tabId: number, e: Error) {
+        await showTabNotification(tabId, e.toString(), 'red')
+    }
+}
+
 export async function showIgnoredNotification(tabId: number, url: Url) {
     await showTabNotification(tabId, `${url} is ignored`, 'red'); // TODO maybe red is not ideal here
 }
