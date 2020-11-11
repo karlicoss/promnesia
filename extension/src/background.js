@@ -1,6 +1,6 @@
 /* @flow */
 
-import type {Url} from './common';
+import type {Url, SearchPageParams} from './common';
 import {Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 
@@ -477,9 +477,16 @@ async function handleMarkVisited() {
     }
 }
 
-async function handleOpenSearch() {
+async function handleOpenSearch(p: SearchPageParams = {}) {
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(p)) {
+        // $FlowFixMe
+        params.append(k, v)
+    }
+    const ps = params.toString()
+    const search_url = chrome.runtime.getURL('search.html') + (ps.length == 0 ? '' : '?' + ps)
+    chrome.tabs.create({url: search_url})
     // TODO get current tab url and pass as get parameter?
-    chrome.tabs.create({ url: "search.html" });
 }
 
 
@@ -505,16 +512,14 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         // sendResponse(visits);
         // return true; // this is important!! otherwise message will not be sent?
     } else if (method == Methods.SEARCH_VISITS_AROUND) {
-        // TODO reuse handleOpenSearch?
-        const utc_timestamp_s: number = msg.utc_timestamp_s;
-        const params = new URLSearchParams();
-        params.append('utc_timestamp', utc_timestamp_s.toString());
-        const search_url = chrome.extension.getURL('search.html') + '?' + params.toString();
-        chrome.tabs.create({'url': search_url});
+        const utc_timestamp_s: number = msg.utc_timestamp_s
+        await handleOpenSearch({
+            utc_timestamp_s: utc_timestamp_s.toString()
+        })
     } else if (method == Methods.MARK_VISITED) {
-        await handleMarkVisited();
+        await handleMarkVisited()
     } else if (method == Methods.OPEN_SEARCH) {
-        await handleOpenSearch();
+        await handleOpenSearch()
     }
     return false;
 };

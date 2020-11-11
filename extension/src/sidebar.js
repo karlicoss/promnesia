@@ -345,6 +345,8 @@ async function* _bindSidebarData(response: JsonObject) {
     for (let [tag, count] of [[null, with_ctx.length], ...Array.from(all_tags).sort()]) {
         let predicate: ((string) => boolean);
         if (tag === null) {
+            // TODO https://github.com/karlicoss/promnesia/issues/132
+            // maybe just reorder them and show after visits with context?
             // meh
             tag = 'all';
             predicate = () => true;

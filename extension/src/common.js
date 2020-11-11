@@ -123,6 +123,10 @@ export const Methods = {
     OPEN_SEARCH         : 'openSearch',
 };
 
+export type SearchPageParams = {
+    // TODO allow passing iso string??
+    utc_timestamp_s?: string
+}
 
 // $FlowFixMe
 export function log() {
