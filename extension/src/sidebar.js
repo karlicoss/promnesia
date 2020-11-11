@@ -5,7 +5,7 @@ import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options'
 import type {Options} from './options';
 import {Binder, _fmt, asClass} from './display';
 import {defensify} from './notifications';
-import {chromeRuntimeSendMessage} from './async_chrome';
+import {achrome} from './async_chrome'
 
 // TODO how to prevent sidebar hiding on click??
 
@@ -67,7 +67,7 @@ class Sidebar {
             show_dots_button.appendChild(cdoc.createTextNode('Mark visited'));
             // TODO hmm. not sure if defensify is gonna work from here? no access to notifications api?
             show_dots_button.addEventListener('click', defensify(async () => {
-                await chromeRuntimeSendMessage({method: Methods.MARK_VISITED});
+                await achrome.runtime.sendMessage({method: Methods.MARK_VISITED});
             }, 'mark_visited.onClick'));
             // TODO maybe highlight or just use custom class for that?
             show_dots_button.title = "Mark visited links on the current page with dots";
@@ -77,7 +77,7 @@ class Sidebar {
             const searchb = cdoc.createElement('button');
             searchb.appendChild(cdoc.createTextNode('Search'));
             searchb.addEventListener('click', defensify(async () => {
-                await chromeRuntimeSendMessage({method: Methods.OPEN_SEARCH});
+                await achrome.runtime.sendMessage({method: Methods.OPEN_SEARCH});
             }, 'open_search.onClick'));
             cbody.appendChild(searchb);
         }
@@ -238,7 +238,7 @@ function _highlight(text: string, idx: number) {
         // target.name === 'body'
         if (target === doc.body) {
             // meh, but otherwise too spammy
-            console.warn('body matched for highlight; skipping it');
+            console.info('body matched for highlight; skipping it')
             continue;
         }
 
@@ -485,8 +485,8 @@ window.bindError = bindError;
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 // eslint-disable-next-line no-unused-vars
-function requestVisits() {
-    chromeRuntimeSendMessage({method: Methods.GET_SIDEBAR_VISITS})
+function requestVisits(): void {
+    achrome.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
         .then((response: ?Visits) => {
             if (response == null) {
                 return;

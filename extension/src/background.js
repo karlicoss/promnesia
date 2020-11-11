@@ -1,25 +1,14 @@
 /* @flow */
 
-import type {Url, JsonArray, AwareDate, NaiveDate} from './common';
-import {Visit, Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common';
+import type {Url, JsonArray} from './common';
+import {Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 import {queryBackendCommon, getBackendVisits} from './api'
 
-import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, chromeTabsQueryAsync, chromeRuntimeGetPlatformInfo, chromeTabsGet} from './async_chrome';
+import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 import {Blacklist} from './blacklist'
-import {normalise_url} from './normalise'
-
-async function isAndroid() {
-    try {
-        const platform = await chromeRuntimeGetPlatformInfo();
-        return platform.os === 'android';
-    } catch (error) {
-        // defensive just in case since isAndroid is kinda crucial for extension functioning
-        console.error('error while determining platfrom; assuming not android: %o', error);
-        return false;
-    }
-}
+import {getBrowserVisits, isAndroid} from './sources'
 
 const isMobile = isAndroid;
 
@@ -38,43 +27,6 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
     return res;
 }
 
-
-
-function getDelayMs(/*url*/) {
-    return 10 * 1000;
-}
-
-
-async function getBrowserVisits(url: Url): Promise<Visits> {
-    const android = await isAndroid();
-    if (android) {
-        // ugh. 'history' api is not supported on mobile (TODO mention that in readme)
-        // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
-        return new Visits(url, url, []);
-    }
-
-    // $FlowFixMe
-    const results = await new Promise((cb) => chrome.history.getVisits({url: url}, cb));
-
-    // without delay you will always be seeing website as visited
-    // TODO but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
-    const delay = getDelayMs();
-    const now = new Date();
-
-    // NOTE: visitTime returns UTC epoch,
-    const times: Array<Date> = results
-          .map(r => new Date(r['visitTime']))
-          .filter(dt => now - dt > delay);
-    const visits = times.map(t => new Visit(
-        url,
-        // NOTE: this normalise won't necessarily be the same as backend's... not sure what we can do about it without sending visits?
-        normalise_url(url),
-        ((t: any): AwareDate),
-        ((t: any): NaiveDate), // there is no TZ info in history anyway, so not much else we can do
-        [THIS_BROWSER_TAG],
-    ));
-    return new Visits(url, url, visits);
-}
 
 
 // TODO think about caching blacklist on background page?
@@ -100,6 +52,7 @@ export async function getVisits(url: Url): Promise<Result> {
     const backendRes: Visits | Error = await getBackendVisits(url)
           .catch((err: Error) => err);
 
+    // TODO def need to mixin and display all
     if (backendRes instanceof Error) {
         console.log('backend server request error:', backendRes);
         return backendRes;
@@ -242,7 +195,7 @@ async function updateState (tab: chrome$Tab) {
         const interesting = [
             'images/ic_visited_48.png',
             'images/ic_relatives_48.png',
-        ].includes(icon); // FIXME meh. hacky
+        ].includes(icon); // meh. hacky
         // TODO make dependent on options?
         if (interesting) {
             action.show(tabId);
@@ -265,7 +218,7 @@ async function updateState (tab: chrome$Tab) {
         // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
         // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
         // a little hacky, but kinda works? in Firefox too apparently
-        const isOk = (await chromeTabsGet(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg';
+        const isOk = (await achrome.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg';
 
         // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
         const locs = visits.self_contexts().map(l => l == null ? null : l.title);
@@ -307,7 +260,7 @@ async function markVisited(tabId) {
         return u === '#' || u.startsWith('javascript:');
     }
     // not sure why it's returning array..
-    const results = unwrap(mresults[0]);
+    const results = unwrap(mresults)[0];
 
     const unique = Array.from(new Set(results));
     const good_urls = unique.filter(u => !is_bad(u));
@@ -503,9 +456,9 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 
 
 export async function getActiveTab(): Promise<chrome$Tab> {
-    const tabs = await chromeTabsQueryAsync({
-        'currentWindow': true,
-        'active': true,
+    const tabs = await achrome.tabs.query({
+        currentWindow: true,
+        active: true,
     });
     // TODO can it be empty at all??
     if (tabs.length > 1) {
@@ -651,13 +604,14 @@ async function blacklist(e): Promise<void> {
       Quick way to exclude your own Github repostitories.
 `;
 
-    const to_blacklist = await chromeTabsExecuteScriptAsync(tabId, {
+    const res = await achrome.tabs.executeScript(tabId, {
         code: `prompt(\`${prompt}\`, "${url}");`
-    });
-    if (to_blacklist == null) {
+    })
+    if (res == null) {
         console.info('user chose not to blacklist %s', url);
         return;
     }
+    const to_blacklist: string = res[0]
 
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
     console.debug('blacklisting %s', to_blacklist);
