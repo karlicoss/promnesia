@@ -457,6 +457,7 @@ async function showActiveTabNotification(text: string, color: string): Promise<v
     await showTabNotification(unwrap(atab.id), text, color);
 }
 
+// TODO would be cool to display visited links summary...
 async function handleMarkVisited() {
     // TODO actually use mark visited setting?
     // const opts = await getOptions();
