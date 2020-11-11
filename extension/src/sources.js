@@ -237,6 +237,9 @@ export const allsources = {
             bookmarks  .search(url),
         )
     },
+    searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
+        return await backend.searchAround(utc_timestamp_s)
+    },
     /*
      * for each url, returns a boolean -- whether or not the link was visited before
      * TODO would be cool to make it more iterative..
@@ -254,6 +257,7 @@ export const allsources = {
         }
         // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
         // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
+        // note: search with empty query will retrieve all? but def needs to be iterative then..
         return res
     },
 }

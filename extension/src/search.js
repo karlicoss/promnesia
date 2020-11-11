@@ -1,9 +1,8 @@
 /* @flow */
 
 import {unwrap, addStyle, chunkBy} from './common';
-import type {Visits, Visit} from './common';
+import type {Visits, Visit, SearchPageParams} from './common'
 import {getOptions} from './options'
-import {searchAround} from './api'
 import {Binder, _fmt} from './display'
 import {allsources} from './sources'
 
@@ -154,18 +153,18 @@ window.onload = async () => {
     const opts = await getOptions()
     addStyle(doc, opts.position_css);
 
-    const url = new URL(window.location);
-    const params = url.searchParams;
-    if ([...params.keys()].length == 0) {
-        return;
+    const url = new URL(window.location)
+    const params: SearchPageParams = Object.fromEntries(url.searchParams)
+    if (Object.keys(params).length == 0) {
+        return
     }
 
     // todo need to be better tested, with various timezones etc
-    const ts_param = params.get('utc_timestamp');
+    const ts_param = params['utc_timestamp_s']
     if (ts_param != null) {
         const timestamp = parseInt(unwrap(ts_param));
         await doSearch(
-            searchAround(timestamp),
+            allsources.searchAround(timestamp),
             {
                 with_ctx_first: false,
                 // TODO duplication..

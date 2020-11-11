@@ -1,4 +1,10 @@
 /* @flow */
+
+/*
+ * Communication with backend
+ */
+
+
 import type {Locator, Src, Url, Second, JsonObject, AwareDate, NaiveDate} from './common'
 import {Visit, Visits} from './common'
 import {getOptions} from './options'
@@ -18,7 +24,7 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
     if (opts.host == '') { // use 'dummy' backend
         // the user only wants to use browser visits?
         // todo: won't work for all endpoints, but can think how to fix later..
-        if (endp == 'visits' || endp == 'search') {
+        if (endp == 'visits' || endp == 'search' || endp == 'search_around') {
             // $FlowFixMe
             let url = params['url']
             if (url == null) { // meh need to be stricter here..
@@ -90,16 +96,17 @@ function makeFakeVisits(count: number): Visits {
     )
 }
 
-export async function searchAround(timestamp: number): Promise<Visits> {
-    return queryBackendCommon<JsonObject>({timestamp: timestamp}, 'search_around').then(rawToVisits);
-}
-
 
 export const backend = {
     search: async function(url: Url): Promise<Visits | Error> {
         return await queryBackendCommon<JsonObject>({url: url}, 'search')
               .then(rawToVisits)
               .catch((err: Error) => err)
+    },
+    searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
+        return await queryBackendCommon<JsonObject>({timestamp: utc_timestamp_s}, 'search_around')
+               .then(rawToVisits)
+               .catch((err: Error) => err)
     },
     visited: async function(urls: Array<Url>): Promise<VisitedResponse | Error> {
         return await queryBackendCommon<Array<boolean>>({urls: urls}, 'visited')
