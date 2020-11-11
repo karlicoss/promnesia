@@ -182,6 +182,10 @@ async function _merge(ra: Visits, b: Promise<Visits>, c: Promise<Visits>): Promi
 }
 
 export const allsources = {
+    /*
+     * matches the exact url _or_ returns descendants with contexts
+     * mainly used in the sidebar
+     */
     visits: async function(url: Url): Promise<Visits | Error> {
         // TODO hmm. maybe have a special 'error' visit so we could just merge visits here?
         // it's gona be a mess though..
@@ -200,6 +204,9 @@ export const allsources = {
             bookmarks  .visits(url)
         )
     },
+    /*
+     * ideally finds anything containing the query, used in search tab
+     */
     search: async function(url: Url): Promise<Visits | Error> {
         const from_backend = await backend.search(url)
         if (from_backend instanceof Error) {
@@ -211,6 +218,18 @@ export const allsources = {
             thisbrowser.search(url),
             bookmarks  .search(url),
         )
+    },
+    /*
+     * for each url, returns a boolean -- whether or not the link was visited before
+     * TODO would be cool to make it more iterative..
+     */
+    visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
+        const from_backend = await backend.visited(urls)
+        if (from_backend instanceof Error) {
+            console.error('backend server request error: %o', from_backend)
+            return from_backend
+        }
+        return from_backend
     },
 }
 
