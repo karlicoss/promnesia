@@ -217,8 +217,8 @@ def visits(
         url=url,
         # odd, doesn't work just with: x or (y and z)
         where=lambda table, url: or_(
-            table.c.norm_url == url,
-            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True))
+            table.c.norm_url == url,  # exact match
+            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True)) # + child visits, but only 'interesting' ones
         ),
     )
 

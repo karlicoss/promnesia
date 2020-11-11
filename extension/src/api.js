@@ -16,7 +16,7 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
     if (opts.host == '') {
         // the user only wants to use browser visits?
         // todo: won't work for all endpoints, but can think how to fix later..
-        if (endp == 'visits') {
+        if (endp == 'visits' || endp == 'search') {
             // $FlowFixMe
             let url = params['url']
             if (url == null) { // meh need to be stricter here..
@@ -82,16 +82,18 @@ function makeFakeVisits(count: number): Visits {
     )
 }
 
-// TODO include browser visits here too?
-// see https://github.com/karlicoss/promnesia/issues/120
-export async function searchVisits(u: Url): Promise<Visits> {
-    return queryBackendCommon<JsonObject>({url: u}, 'search').then(rawToVisits);
-}
-
 export async function searchAround(timestamp: number): Promise<Visits> {
     return queryBackendCommon<JsonObject>({timestamp: timestamp}, 'search_around').then(rawToVisits);
 }
 
+
+export const backend = {
+    search: async function(url: Url): Promise<Visits | Error> {
+        return await queryBackendCommon<JsonObject>({url: url}, 'search')
+              .then(rawToVisits)
+              .catch((err: Error) => err)
+    }
+}
 
 function rawToVisits(vis: VisitsResponse): Visits {
     // TODO filter errors? not sure.

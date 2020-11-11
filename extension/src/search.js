@@ -3,8 +3,9 @@
 import {unwrap, addStyle, chunkBy} from './common';
 import type {Visits, Visit} from './common';
 import {getOptions} from './options'
-import {searchVisits, searchAround} from './api'
+import {searchAround} from './api'
 import {Binder, _fmt} from './display'
+import {allsources} from './sources'
 
 
 const doc = document;
@@ -31,17 +32,17 @@ function clearResults() {
 
 
 // TODO reuse it in sidebar??
-function showError(err) {
+function showError(err: Error): void {
     clearResults();
     const res = getResultsContainer();
     const err_c = doc.createElement('div'); res.appendChild(err_c);
     err_c.classList.add('error');
-    const err_text = doc.createTextNode(err); err_c.appendChild(err_text);
+    const err_text = doc.createTextNode(err.toString()); err_c.appendChild(err_text);
 }
 
 
 async function* _doSearch(
-    cb: Promise<Visits>,
+    cb: Promise<Visits | Error>,
     {
         with_ctx_first,
         highlight_if,
@@ -57,8 +58,12 @@ async function* _doSearch(
 
     clearResults();
 
-    // $FlowFixMe // hmm, not sure what it doesn't like here? seems to work fine..
-    const visits = (await cb).visits;
+    const errres = await cb
+    if (errres instanceof Error) {
+        throw errres // will be handled above
+    }
+    // TODO why is Flow complaining here??
+    const visits = ((errres: any): Visits).visits
     visits.sort((f, s) => (s.time - f.time));
     // TODO ugh, should do it via sort predicate...
 
@@ -98,11 +103,31 @@ async function* _doSearch(
     }
 }
 
+
+function showOrAlert(err: Error): void {
+    try {
+        showError(err)
+    } catch (e2) {
+        console.error(e2)
+        alert(e2) // last resort
+    }
+}
+
 async function doSearch(...args) {
     const dom_updates = _doSearch(...args)
     async function consume_one() {
         // consume head
-        const res = await dom_updates.next()
+        let res = null
+        try {
+            res = await dom_updates.next()
+        } catch (err) {
+            console.error(err)
+            showOrAlert(err)
+        }
+        if (res == null) {
+            // early exit because of the error
+            return
+        }
         if (!res.done) {
             // schedule tail
             setTimeout(consume_one)
@@ -111,25 +136,12 @@ async function doSearch(...args) {
     await consume_one()
 }
 
-async function doSearchDefensive(...args) {
-    try {
-        await _doSearch(...args);
-    } catch (err) {
-        console.error(err);
-        try {
-            showError(err);
-        } catch (err_2) {
-            // backup for worst case..
-            alert(err_2);
-        }
-    }
-}
 
 unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event: Event) => {
     event.preventDefault();
     // TODO make ctx first configurable?
-    await doSearchDefensive(
-        searchVisits(getQuery().value),
+    await doSearch(
+        allsources.search(getQuery().value),
         {
             with_ctx_first: true,
             highlight_if: null,

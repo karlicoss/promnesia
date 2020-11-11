@@ -7,6 +7,7 @@
 
 import type {Url, AwareDate, NaiveDate} from './common'
 import {Visit, Visits} from './common'
+import {backend, getBackendVisits} from './api'
 import {THIS_BROWSER_TAG} from './options'
 import {normalise_url} from './normalise'
 import {achrome} from './async_chrome'
@@ -126,8 +127,63 @@ export const bookmarks = {
             ))
         }
         return new Visits(url, nurl, visits)
-    }
+    },
+
+    search: async function(url: Url): Promise<Visits> {
+        // for bookmarks, search means the same as visits because they all come with context
+        return (await bookmarks.visits(url))
+    },
 }
+
+
+async function _merge(ra: Visits, b: Promise<Visits>, c: Promise<Visits>): Promise<Visits> {
+    const rb = await b
+    const rc = await c
+    const merged = [
+        ...ra.visits,
+        ...rb.visits,
+        ...rc.visits,
+    ]
+    return new Visits(
+        ra.original_url,
+        ra.normalised_url,
+        merged,
+    )
+}
+
+export const allsources = {
+    visits: async function(url: Url): Promise<Visits | Error> {
+        // TODO hmm. maybe have a special 'error' visit so we could just merge visits here?
+        // it's gona be a mess though..
+        const from_backend: Visits | Error = await getBackendVisits(url)
+            .catch((err: Error) => err)
+
+        // TODO def need to mixin and display all
+        if (from_backend instanceof Error) {
+            console.error('backend server request error: %o', from_backend)
+            return from_backend
+        }
+
+        return _merge(
+            from_backend,
+            thisbrowser.visits(url),
+            bookmarks  .visits(url)
+        )
+    },
+    search: async function(url: Url): Promise<Visits | Error> {
+        const from_backend = await backend.search(url)
+        if (from_backend instanceof Error) {
+            console.error('backend server request error: %o', from_backend)
+            return from_backend
+        }
+        return _merge(
+            from_backend,
+            Promise.resolve(new Visits(url, url, [])), // TODO support proprely
+            bookmarks  .search(url),
+        )
+    },
+}
+
 
 /*  to test bookmarks:
 for (let i = 0; i < 100; i++) {

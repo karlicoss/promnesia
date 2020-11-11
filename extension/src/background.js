@@ -3,12 +3,12 @@
 import type {Url, JsonArray} from './common';
 import {Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
-import {queryBackendCommon, getBackendVisits} from './api'
+import {queryBackendCommon} from './api'
 
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 import {Blacklist} from './blacklist'
-import {isAndroid, thisbrowser, bookmarks} from './sources'
+import {isAndroid, allsources} from './sources'
 
 const isMobile = isAndroid;
 
@@ -47,32 +47,8 @@ export async function getVisits(url: Url): Promise<Result> {
     if (bl != null) {
         return new Blacklisted(url, bl);
     }
-    // TODO hmm. maybe have a special 'error' visit so we could just merge visits here?
-    // it's gona be a mess though..
-    const backendRes: Visits | Error = await getBackendVisits(url)
-          .catch((err: Error) => err);
 
-    // TODO def need to mixin and display all
-    if (backendRes instanceof Error) {
-        console.log('backend server request error:', backendRes);
-        return backendRes;
-    }
-
-    const from_backend   = backendRes
-    const from_browser   = await thisbrowser.visits(url)
-    const from_bookmarks = await bookmarks  .visits(url)
-
-    const merged = [
-        ...from_backend  .visits,
-        ...from_browser  .visits,
-        ...from_bookmarks.visits,
-    ]
-
-    return new Visits(
-        from_backend.original_url,
-        from_backend.normalised_url,
-        merged,
-    )
+    return await allsources.visits(url)
 }
 
 type IconStyle = {
