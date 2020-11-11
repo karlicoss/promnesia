@@ -52,6 +52,44 @@ export const thisbrowser = {
 }
 
 
+type Bres = {
+    bm: chrome$BookmarkTreeNode,
+    nurl: Url,
+    path: string,
+}
+
+// right, apparently there is no way to search bookmarks by prefix in webext apis..
+// TODO need to be careful with performance..
+function* bookmarksContaining(
+    nurl: Url,
+    cur: chrome$BookmarkTreeNode,
+    path: ?string, // path in the bookmark tree
+): Iterator<Bres> {
+    const children = cur.children
+    if (children == null) {
+        return // shouldn't happen but makes flow happy anyway
+    }
+    for (const c of children) {
+        const u = c.url
+        if (u == null) {
+            // must be folder?
+            yield* bookmarksContaining(nurl, c, (path == null ? '' : path + ' :: ') + c.title)
+        } else {
+            const nu = normalise_url(u)
+            if (nu.includes(nurl)) { // 'fuzzy' match
+                yield {
+                    bm: c,
+                    nurl: nu,
+                    path: (path == null ? '' : path),
+                }
+            }
+        }
+    }
+}
+
+
+// TODO need to test it
+// TODO make togglable?
 export const bookmarks = {
     // eh. not sure if this method is super useful, there is already 'star' indicator in most browsers
     // however it could benefit from the normalisation functionality
@@ -60,15 +98,15 @@ export const bookmarks = {
             // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Browser_support_for_JavaScript_APIs#bookmarks :(
             return new Visits(url, url, [])
         }
-      
-        // NOTE: this url: results in exact match..
-        // might want to have a more fuzzy version, especially for child visits
-        const results = await achrome.bookmarks.search({url: url})
+        const nurl = normalise_url(url)
+        const root = (await achrome.bookmarks.getTree())[0]
+        const results = Array.from(bookmarksContaining(nurl, root, null))
 
         const visits = []
-        for (const r of results) {
-            if (r.url == null) {
-                // must be folder
+        for (const {bm: r, nurl: nu, path: path} of results) {
+            const u = r.url
+            if (u == null) {
+                // shouldn't happen, but makes flow happy
                 continue
             }
             const added = r.dateAdded
@@ -78,18 +116,29 @@ export const bookmarks = {
             }
             const t = new Date(added)
             visits.push(new Visit(
-                url,
-                normalise_url(url),
+                u,
+                nu,
                 ((t: any): AwareDate),
                 ((t: any): NaiveDate),
                 ['bookmark'],
                 r.title,
-                // todo not sure what could be a locator? path to the parent?
+                {title: path, href: null},
             ))
         }
-        return new Visits(url, normalise_url(url), visits)
+        return new Visits(url, nurl, visits)
     }
 }
+
+/*  to test bookmarks:
+for (let i = 0; i < 100; i++) {
+    chrome.bookmarks.create({
+        url: `https://example.com/${i}.html`,
+        title: `Example ${i}`,
+    }, (res) => {
+        console.log("CREATED %o", res)
+    })
+}
+*/
 
 
 export async function isAndroid(): Promise<boolean> {
