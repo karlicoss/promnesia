@@ -24,6 +24,7 @@
         "https://*/*",
         "http://*/*",
 
+        "bookmarks",
         "storage",
 
         "tabs",

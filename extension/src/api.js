@@ -2,7 +2,14 @@
 import type {Locator, Src, Url, Second, JsonObject, AwareDate, NaiveDate} from './common'
 import {Visit, Visits} from './common'
 import {getOptions} from './options'
+import {normalise_url} from './normalise'
 
+
+type VisitsResponse = {
+    visits: Array<JsonObject>,
+    original_url: string,
+    normalised_url: string,
+}
 
 export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R> {
     const opts = await getOptions()
@@ -10,7 +17,17 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
         // the user only wants to use browser visits?
         // todo: won't work for all endpoints, but can think how to fix later..
         if (endp == 'visits') {
-            return (({visits: []} : any): R)
+            // $FlowFixMe
+            let url = params['url']
+            if (url == null) { // meh need to be stricter here..
+                url = 'http://TODO_FIXME.org'
+            }
+            const res: VisitsResponse = {
+                visits: [],
+                original_url: url,
+                normalised_url: normalise_url(url),
+            }
+            return ((res: any): R)
         } else {
             throw Error(`'${endp}' isn't implemented without the backend yet. Please set host in the extension settings.`)
         }
@@ -52,7 +69,7 @@ function makeFakeVisits(count: number): Visits {
             `github.com/${i}`,
             ((d: any): AwareDate),
             ((d: any): NaiveDate),
-            [],
+            ['fake'],
             i < count / 3 ? null : `context ${i}`,
             null,
             null,
@@ -76,7 +93,7 @@ export async function searchAround(timestamp: number): Promise<Visits> {
 }
 
 
-function rawToVisits(vis: JsonObject): Visits {
+function rawToVisits(vis: VisitsResponse): Visits {
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
         const dts = v['dt']
