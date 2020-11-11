@@ -163,6 +163,24 @@ export const bookmarks = {
         // for bookmarks, search means the same as visits because they all come with context
         return (await bookmarks.visits(url))
     },
+
+    visited: async function(urls: Array<Url>): Promise<Array<boolean>> {
+        if (await isAndroid()) {
+            const res = new Array(urls.length)
+            res.fill(false)
+            return res
+        }
+
+        const root = (await achrome.bookmarks.getTree())[0]
+        const allBookmarks = bookmarksContaining('', root, null)
+
+        const nurls = new Set(Array.from(
+            allBookmarks,
+            ({bm: _bm, nurl: nurl, path: _path}) => nurl,
+        ))
+
+        return urls.map(u => nurls.has(normalise_url(u)))
+    }
 }
 
 
@@ -229,7 +247,14 @@ export const allsources = {
             console.error('backend server request error: %o', from_backend)
             return from_backend
         }
-        return from_backend
+        const res = from_backend
+        const from_bookmarks = await bookmarks.visited(urls)
+        for (let i = 0; i < urls.length; i++) {
+            res[i] = res[i] || from_bookmarks[i]
+        }
+        // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
+        // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
+        return res
     },
 }
 
