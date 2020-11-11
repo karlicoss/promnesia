@@ -95,7 +95,6 @@ def as_db_visit(v: Visit, *, src: SourceName) -> Iterable[Res[DbVisit]]:
 
 def filtered(url: Url) -> bool:
     return any(f(url) for f in filters())
-# FIXME add back filters from the config?
 
 
 def make_filter(thing: Union[str, Filter]) -> Filter:

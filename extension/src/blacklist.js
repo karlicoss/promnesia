@@ -63,7 +63,7 @@ export class Blacklist {
             // $FlowFixMe
              'basket.js/lib/basket.js'
         )
-        // FIXME defensive??
+        // TODO defensive??
 
         const resp = (await basket.require({
             url    : url,
