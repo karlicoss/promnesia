@@ -60,6 +60,9 @@ function helper<R, TArgs: *>(fn): ((...args: TArgs) => Promise<R>) {
 // fucking hell.. also had to make them properties because apis might not exist in certain contexts
 // e.g. access to chrome.tabs.get might crash
 export const achrome = {
+    bookmarks: {
+        get search       () { return new Awrap1<{url: string}                              >().wrap(chrome.bookmarks.search  ) },
+    },
     tabs: {
         get get          () { return new Awrap1<number                                     >().wrap(chrome.tabs.get          ) },
         get query        () { return new Awrap1<{currentWindow?: boolean, active?: boolean}>().wrap(chrome.tabs.query        ) },
@@ -69,6 +72,13 @@ export const achrome = {
     runtime: {
         get getPlatformInfo() { return new Awrap0    ().wrap(chrome.runtime.getPlatformInfo) },
         get sendMessage    () { return new Awrap1<{}>().wrap(chrome.runtime.sendMessage    ) },
+    },
+    history: {
+        // crap, missing in flow-interfaces-chrome
+        get getVisits    () { return new Awrap1<{url: string}>().wrap<Array<any>>(
+            // $FlowFixMe
+            chrome.history.getVisits
+        ) },
     },
 }
 

@@ -8,7 +8,7 @@ import {queryBackendCommon, getBackendVisits} from './api'
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
 import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify} from './notifications';
 import {Blacklist} from './blacklist'
-import {getBrowserVisits, isAndroid} from './sources'
+import {isAndroid, thisbrowser, bookmarks} from './sources'
 
 const isMobile = isAndroid;
 
@@ -58,14 +58,21 @@ export async function getVisits(url: Url): Promise<Result> {
         return backendRes;
     }
 
-    const backendVisits = backendRes;
-    const browserVisits = await getBrowserVisits(url);
-    const allVisits = backendVisits.visits.concat(browserVisits.visits);
+    const from_backend   = backendRes
+    const from_browser   = await thisbrowser.visits(url)
+    const from_bookmarks = await bookmarks  .visits(url)
+
+    const merged = [
+        ...from_backend  .visits,
+        ...from_browser  .visits,
+        ...from_bookmarks.visits,
+    ]
+
     return new Visits(
-        backendVisits.original_url,
-        backendVisits.normalised_url,
-        allVisits
-    );
+        from_backend.original_url,
+        from_backend.normalised_url,
+        merged,
+    )
 }
 
 type IconStyle = {
