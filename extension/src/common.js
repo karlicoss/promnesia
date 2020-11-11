@@ -184,7 +184,7 @@ export function getBrowser(): string {
     }
 }
 
-export function* chunkBy<T>(it: Iterator<T>, count: number): Iterator<Array<T>> {
+export function* chunkBy<T>(it: Iterable<T>, count: number): Iterator<Array<T>> {
     let group = []
     for (const i of it) {
         if (group.length == count) {
