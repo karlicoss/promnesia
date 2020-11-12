@@ -1,6 +1,6 @@
 /* @flow */
 
-import {unwrap, addStyle, chunkBy} from './common';
+import {unwrap, addStyle, chunkBy, Ids} from './common'
 import type {Visits, Visit, SearchPageParams} from './common'
 import {getOptions} from './options'
 import {Binder, _fmt} from './display'
@@ -18,7 +18,7 @@ function getQuery(): HTMLInputElement {
 }
 
 function getResultsContainer(): HTMLElement {
-    return ((doc.getElementById('visits'): any): HTMLElement);
+    return ((doc.getElementById(Ids.VISITS): any): HTMLElement);
 }
 
 
@@ -61,8 +61,7 @@ async function* _doSearch(
     if (errres instanceof Error) {
         throw errres // will be handled above
     }
-    // TODO why is Flow complaining here??
-    const visits = ((errres: any): Visits).visits
+    const [visits, errors] = errres.partition()
     visits.sort((f, s) => (s.time - f.time));
     // TODO ugh, should do it via sort predicate...
 
@@ -80,7 +79,11 @@ async function* _doSearch(
     const options = await getOptions()
     const binder = new Binder(doc, options)
     // TODO use something more generic for that!
-   
+
+    for (const err of errors) {
+        await binder.renderError(res, err.toString())
+    }
+
     const ONE_CHUNK = 250
     for (const chunk of chunkBy(visits, ONE_CHUNK)) {
     yield // give way to UI thread

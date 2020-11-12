@@ -69,15 +69,15 @@ export class Binder {
         return res;
     }
 
-    error(
+    async renderError(
         parent: HTMLElement,
-        message: string,
+        error: string,
     ) {
-        const child = this.makeChild.bind(this);
-        const tchild = this.makeTchild.bind(this); // TODO still necessary??
+        const child  = this.makeChild .bind(this)
+        const tchild = this.makeTchild.bind(this)
 
-        const item = child(parent, 'div', ['error']);
-        tchild(item, "ERROR: " + message);
+        const item = child(parent, 'li', ['error'])
+        tchild(item, `ERROR: ${error}`)
     }
 
     async render(
@@ -95,7 +95,7 @@ export class Binder {
             relative,
         }: Params,
     ) {
-        // todo ugh. looks like Flow can't guess the type of clouser that we get by .bind...
+        // todo ugh. looks like Flow can't guess the type of closure that we get by .bind...
         const child = this.makeChild.bind(this);
         const tchild = this.makeTchild.bind(this); // TODO still necessary??
 
