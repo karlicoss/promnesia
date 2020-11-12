@@ -166,6 +166,9 @@ module.exports = {
   // A map from regular expressions to paths to transformers
   // transform: null,
 
+  // ??? https://github.com/facebook/jest/issues/9395#issuecomment-665239070
+  // otherwise fails on importing
+  transformIgnorePatterns: ['node_modules/?!@webext-options-sync/']
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   // transformIgnorePatterns: [
   //   "/node_modules/"

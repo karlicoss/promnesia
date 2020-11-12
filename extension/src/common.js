@@ -64,6 +64,16 @@ export class Visit {
         this.locator = locator;
         this.duration = duration;
     }
+
+    // ugh..
+    static fromJObject(o: any): Visit {
+        o.time     = new Date(o.time)
+        o.dt_local = new Date(o.dt_local)
+        // $FlowFixMe
+        const v = new Visit()
+        Object.assign(v, o)
+        return v
+    }
 }
 
 type VisitsList = Array<Visit>;
@@ -102,6 +112,24 @@ export class Visits {
             }
         }
         return locs;
+    }
+
+    // NOTE: JSON.stringify will use this method
+    toJSON(): string {
+        return JSON.stringify({
+            original_url  : this.original_url,
+            normalised_url: this.normalised_url,
+            visits        : this.visits,
+        })
+    }
+
+    static fromJSON(js: string): Visits {
+        const po = JSON.parse(js)
+        po.visits = po.visits.map(Visit.fromJObject)
+        // $FlowFixMe
+        const r = new Visits()
+        Object.assign(r, po)
+        return r
     }
 }
 

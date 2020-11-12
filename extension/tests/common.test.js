@@ -18,6 +18,23 @@ test('formats duration', () => {
     expect(format_duration(24 * 60 * 60 + 95 * 60 + 20)).toBe('25 hours 35 minutes');
 });
 
+
+import {Visits} from '../src/common'
+import {makeFakeVisits} from '../src/api'
+
+test('visits', () => {
+    for (const vis of [
+        [],
+        makeFakeVisits(1).visits,
+        makeFakeVisits(10).visits,
+    ]) {
+        const v = new Visits('http://test', 'http://test', vis)
+        const vv = Visits.fromJSON(v.toJSON())
+        expect(v).toStrictEqual(vv)
+    }
+
+})
+
 import {normalise_url} from '../src/normalise.js';
 
 test('normalises', () => {
