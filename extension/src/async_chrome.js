@@ -80,7 +80,7 @@ export const achrome = {
             // $FlowFixMe
             chrome.history.getVisits
         ) },
-        get search       () { return new Awrap1<{text: string}>().wrap<Array<HistoryItem>>(
+        get search       () { return new Awrap1<{text: string, startTime?: number, endTime?: number}>().wrap<Array<HistoryItem>>(
             // $FlowFixMe
             chrome.history.search
         )}
@@ -92,7 +92,7 @@ type VisitItem = {
     visitTime?: number,
 }
 
-type HistoryItem = {
+export type HistoryItem = {
     url?: string,
     lastVisitTime?: number,
 }
