@@ -50,6 +50,7 @@
     "flow-bin": "^0.118.0",
     "flow-interfaces-chrome": "^0.6.0",
     "jest": "^24.8.0",
+    "node-fetch": "^2.6.1",
     "style-loader": "^1.1.3",
     "web-ext": "^4.1.0",
     "web-ext-submit": "^4.1.0",
