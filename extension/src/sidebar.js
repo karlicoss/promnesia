@@ -1,6 +1,6 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle, chunkBy} from './common';
-import type {JsonObject, Second} from './common';
+import type {Second} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
 import {Binder, _fmt, asClass} from './display';
@@ -278,7 +278,7 @@ async function bindError(message: string) {
 /**
  * yields UI updates, so it's possible to schedule them in blocks and avoid blocking
  */
-async function* _bindSidebarData(response: JsonObject) {
+async function* _bindSidebarData(response: Visits) {
     // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
     // TDO perhaps we need something reactive...
     // window.sidebarData = response;
@@ -294,21 +294,7 @@ async function* _bindSidebarData(response: JsonObject) {
     const items = binder.makeChild(cont, 'ul');
     items.id = 'visits';
 
-    // ugh. this ends up as json because we're passing them from the background page... annoying
-    const visits = response.visits.map(rvisit =>
-        new Visit(
-            rvisit.original_url,
-            rvisit.normalised_url,
-            // $FlowFixMe // dine assuming original types are correct
-            new Date(rvisit.time),  
-            // $FlowFixMe // fine assuming original types are correct
-            new Date(rvisit.dt_local),
-            rvisit.tags,
-            rvisit.context,
-            rvisit.locator,
-            rvisit.duration,
-        )
-    );
+    const visits = response.visits
     visits.sort((f, s) => {
         // keep 'relatives' in the bottom
         // TODO: this might slightly break local visits sorting, becuase they don't necessarily have proper normalisation
@@ -466,7 +452,7 @@ async function* _bindSidebarData(response: JsonObject) {
     }
 }
 
-async function bindSidebarData(response: JsonObject) {
+async function bindSidebarData(response: Visits) {
     const dom_updates_gen = _bindSidebarData(response)
     async function consume_one() {
         // consume head
@@ -489,12 +475,13 @@ window.bindError = bindError;
 // eslint-disable-next-line no-unused-vars
 function requestVisits(): void {
     achrome.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
-        .then((response: ?Visits) => {
-            if (response == null) {
-                return;
-            }
-            bindSidebarData(response);
-        });
+           .then((response: {}) => {
+               if (response == null) {
+                   // todo why would it be?
+                   return
+               }
+               bindSidebarData(Visits.fromJObject(response))
+           })
 }
 
 
@@ -502,7 +489,7 @@ function requestVisits(): void {
 chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) => {
     const method = msg.method
     if (method == Methods.BIND_SIDEBAR_VISITS) {
-        bindSidebarData(msg.data)
+        bindSidebarData(Visits.fromJObject(msg.data))
     } else {
         console.error('unexpected message: %o', msg)
     }
