@@ -43,14 +43,14 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
             res.fill(false)
             return ((res: any): R)
         } else {
-            throw Error(`'${endp}' isn't implemented without the backend yet. Please set host in the extension settings.`)
+            throw new Error(`'${endp}' isn't implemented without the backend yet. Please set host in the extension settings.`)
         }
     }
 
     const endpoint = `${opts.host}/${endp}`;
     // TODO cors mode?
     const response = await fetch(endpoint, {
-        method: 'POST',
+        method: 'POST', // todo use GET?
         headers: {
             'Content-Type' : 'application/json',
             'Authorization': "Basic " + btoa(opts.token),
@@ -60,7 +60,7 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
         // right, fetch API doesn't reject on HTTP error status...
         const ok = response.ok;
         if (!ok) {
-            throw Error(response.statusText + ' (' + response.status + ')');
+            throw new Error(response.statusText + ' (' + response.status + ')');
         }
         return response.json();
     });
