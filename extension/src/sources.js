@@ -19,6 +19,11 @@ function getDelayMs(/*url*/) {
 }
 
 
+// todo how to keep these deltas in sync with the backend?
+const DELTA_BACK_S  = 3 * 60 * 60 // 3h
+const DELTA_FRONT_S = 2 * 60      // 2min
+
+
 // NOTE: do not name this 'browser', it might be a builtin for apis (alias to 'chrome')
 export const thisbrowser = {
 // TODO async iterator?
@@ -88,14 +93,11 @@ export const thisbrowser = {
         if (android) {
             return new Visits(durl, ndurl, [])
         }
-        // todo how to keep these deltas in sync with the backend?
-        const delta_back_s  = 3 * 60 * 60 // 3h
-        const delta_front_s = 2 * 60      // 2min
         const results = await achrome.history.search({
             // NOTE: I checked and it does seem like this method takes UTC epoch (although not clear from the docs)
             // note: it wants millis
-            startTime: (utc_timestamp_s - delta_back_s ) * 1000,
-            endTime  : (utc_timestamp_s + delta_front_s) * 1000,
+            startTime: (utc_timestamp_s - DELTA_BACK_S ) * 1000,
+            endTime  : (utc_timestamp_s + DELTA_FRONT_S) * 1000,
             text: '',
         })
         // TODO shit. displayed visit times are gonna be wrong because
@@ -162,6 +164,32 @@ function* bookmarksContaining(
 }
 
 
+// todo take in from_, to?
+function* bookmarks2visits(bit: Iterable<Bres>) {
+    for (const {bm: r, nurl: nu, path: path} of bit) {
+        const u = r.url
+        if (u == null) {
+            // shouldn't happen, but makes flow happy
+            continue
+        }
+        const added = r.dateAdded
+        if (added == null) {
+            // why would it be?? but the docs say optional..
+            continue
+        }
+        const t = new Date(added)
+        yield new Visit(
+            u,
+            nu,
+            ((t: any): AwareDate),
+            ((t: any): NaiveDate),
+            ['bookmark'],
+            r.title,
+            {title: path, href: null},
+        )
+    }
+}
+
 // TODO need to test it
 // TODO make togglable?
 export const bookmarks = {
@@ -174,37 +202,36 @@ export const bookmarks = {
         }
         const nurl = normalise_url(url)
         const root = (await achrome.bookmarks.getTree())[0]
-        const results = Array.from(bookmarksContaining(nurl, root, null))
-
-        const visits = []
-        for (const {bm: r, nurl: nu, path: path} of results) {
-            const u = r.url
-            if (u == null) {
-                // shouldn't happen, but makes flow happy
-                continue
-            }
-            const added = r.dateAdded
-            if (added == null) {
-                // why would it be?? but the docs say optional..
-                continue
-            }
-            const t = new Date(added)
-            visits.push(new Visit(
-                u,
-                nu,
-                ((t: any): AwareDate),
-                ((t: any): NaiveDate),
-                ['bookmark'],
-                r.title,
-                {title: path, href: null},
-            ))
-        }
+        const all = bookmarksContaining(nurl, root, null)
+        const visits = Array.from(bookmarks2visits(all))
         return new Visits(url, nurl, visits)
     },
 
     search: async function(url: Url): Promise<Visits> {
         // for bookmarks, search means the same as visits because they all come with context
         return (await bookmarks.visits(url))
+    },
+
+    searchAround: async function(utc_timestamp_s: number): Promise<Visits> {
+        const durl = 'http://dummy.xyz'
+        const ndurl = normalise_url(durl)
+        if (await isAndroid()) {
+            // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Browser_support_for_JavaScript_APIs#bookmarks :(
+            return new Visits(durl, ndurl, [])
+        }
+        const root = (await achrome.bookmarks.getTree())[0]
+        const all = bookmarksContaining('', root, null)
+        // todo for the sake of optimization might be better to do this before building all the Visit objects..
+        // same in visited method actually
+        const back  = new Date((utc_timestamp_s - DELTA_BACK_S ) * 1000)
+        const front = new Date((utc_timestamp_s + DELTA_FRONT_S) * 1000)
+        const visits = []
+        for (const v of bookmarks2visits(all)) {
+            if (back <= v.time && v.time <= front) {
+                visits.push(v)
+            }
+        }
+        return new Visits(durl, ndurl, visits)
     },
 
     visited: async function(urls: Array<Url>): Promise<Array<boolean>> {
@@ -289,7 +316,7 @@ export const allsources = {
         return _merge(
             from_backend,
             thisbrowser.searchAround(utc_timestamp_s),
-            Promise.resolve(new Visits('', '', [])),
+            bookmarks  .searchAround(utc_timestamp_s),
         )
     },
     /*

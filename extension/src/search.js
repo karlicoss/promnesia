@@ -167,10 +167,10 @@ window.onload = async () => {
             allsources.searchAround(timestamp),
             {
                 with_ctx_first: false,
-                // TODO duplication..
-                highlight_if: (v: Visit) => v.time.getTime() / 1000 == timestamp,
+                // todo eh, need some proper handles here, e.g. some visit id...
+                highlight_if: (v: Visit) => Math.floor(v.time.getTime() / 1000) == timestamp,
             },
-        );
+        )
     }
     // TODO otherwise, error??
 };
