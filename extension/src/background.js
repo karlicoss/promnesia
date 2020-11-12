@@ -58,28 +58,37 @@ type IconStyle = {
 
 
 // TODO this can be tested?
-function getIconStyle(visits: Result): IconStyle {
-    if (visits instanceof Blacklisted) {
-        return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${visits.reason}`, text: ''};
+function getIconStyle(result: Result): IconStyle {
+    if (result instanceof Blacklisted) {
+        return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${result.reason}`, text: ''}
     }
 
-    if (visits instanceof Error) {
-        return {icon: 'images/ic_error.png'         , title: `ERROR: ${visits.message}`, text: ''};
+    // TODO I guess it's king of 'critical error'?
+    if (result instanceof Error) {
+        return {icon: 'images/ic_error.png'         , title: `ERROR: ${result.message}`, text: ''}
     }
 
-    const vcount = visits.visits.length;
+    const [good, errs] = result.partition()
+
+    if (errs.length > 0) {
+        return {icon: 'images/ic_error.png'         , title: `${errs.length} errors`, text: errs.map(x => x.toString()).join('\n')}
+    }
+    // TODO if there are errors, need to mix them in?
+
+    const vcount = good.length
     if (vcount === 0) {
         return {icon: 'images/ic_not_visited_48.png', title: 'No data', text: ''};
     }
     const cp = [];
 
-    const self_contexts = visits.self_contexts();
+    // meh.. accessing result after we 'deconstructed' it..
+    const self_contexts = result.self_contexts()
     const ccount = self_contexts.length;
     if (ccount > 0) {
         cp.push(`${ccount} contexts`);
     }
 
-    const rcontexts  = visits.relative_contexts();
+    const rcontexts  = result.relative_contexts()
     const rcount = rcontexts.length;
     if (rcount > 0) {
         // TODO rename to relative later?
@@ -92,10 +101,11 @@ function getIconStyle(visits: Result): IconStyle {
         return {icon: 'images/ic_visited_48.png'    , title: `${vcount} visits, ${ctext}`, text: btext};
     }
     if (rcount > 0) {
+        // TODO would be nice to add help aboud these icons somewhere...
         return {icon: 'images/ic_relatives_48.png'    , title: `${vcount} visits, ${ctext}`, text: btext};
     }
     // TODO a bit ugly, but ok for now.. maybe cut off by time?
-    const boring = visits.visits.every(v => v.tags.length == 1 && v.tags[0] == THIS_BROWSER_TAG);
+    const boring = good.every(v => v.tags.length == 1 && v.tags[0] == THIS_BROWSER_TAG)
     if (boring) {
         // TODO not sure if really worth distinguishing..
         return {icon: "images/ic_boring_48.png"     , title: `${vcount} visits (${THIS_BROWSER_TAG} only)`, text: ''};

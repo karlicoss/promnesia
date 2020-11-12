@@ -86,7 +86,6 @@ export class Visit {
     }
 }
 
-type RArray<T> = $ReadOnlyArray<T>
 type VisitsList = Array<Visit | Error>
 // TODO errors might have datetime?
 
@@ -102,9 +101,22 @@ export class Visits {
         this.visits = visits;
     }
 
+    partition(): [Array<Visit>, Array<Error>] {
+        const good  = []
+        const err   = []
+        for (const r of this.visits) {
+            if (r instanceof Visit) {
+                good.push(r)
+            } else {
+                err.push(r)
+            }
+        }
+        return [good, err]
+    }
+
     self_contexts(): Array<?Locator> {
         const locs = [];
-        for (const visit of this.visits) {
+        for (const visit of this.partition()[0]) {
             if (visit.context === null) {
                 continue;
             }
@@ -116,7 +128,7 @@ export class Visits {
     }
     relative_contexts(): Array<?Locator> {
         const locs = [];
-        for (const visit of this.visits) {
+        for (const visit of this.partition()[0]) {
             if (visit.context === null) {
                 continue;
             }
@@ -168,7 +180,12 @@ export const Methods = {
     SEARCH_VISITS_AROUND: 'searchVisitsAround',
     MARK_VISITED        : 'markVisited',
     OPEN_SEARCH         : 'openSearch',
-};
+}
+
+export const Ids = {
+    // visits container in sidebar/search (see sidebar.css)
+    VISITS: 'visits',
+}
 
 export type SearchPageParams = {
     // TODO allow passing iso string??

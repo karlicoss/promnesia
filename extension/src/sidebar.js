@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_duration, Methods, addStyle, chunkBy} from './common';
+import {Visits, Visit, unwrap, format_duration, Methods, addStyle, chunkBy, Ids} from './common'
 import type {Second} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
@@ -271,7 +271,10 @@ async function bindError(message: string) {
     await sidebar.clear(); // todo probably, unnecessary?
 
     const binder = new Binder(doc, opts)
-    binder.error(cont, message);
+    const items = binder.makeChild(cont, 'ul')
+    // todo meh, copypaste..
+    items.id = Ids.VISITS
+    await binder.renderError(items, message)
 }
 
 
@@ -292,9 +295,14 @@ async function* _bindSidebarData(response: Visits) {
 
     const all_tags_c = binder.makeChild(cont, 'div', ['src-filter']);
     const items = binder.makeChild(cont, 'ul');
-    items.id = 'visits';
+    items.id = Ids.VISITS
 
-    const visits = response.visits
+    const [visits, errors] = response.partition()
+
+    for (const err of errors) {
+        await binder.renderError(items, err.toString())
+    }
+
     visits.sort((f, s) => {
         // keep 'relatives' in the bottom
         // TODO: this might slightly break local visits sorting, becuase they don't necessarily have proper normalisation
