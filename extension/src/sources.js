@@ -10,6 +10,7 @@ import {Visit, Visits} from './common'
 import {backend, getBackendVisits} from './api'
 import {THIS_BROWSER_TAG} from './options'
 import {normalise_url} from './normalise'
+import type {HistoryItem} from './async_chrome'
 import {achrome} from './async_chrome'
 
 
@@ -80,6 +81,48 @@ export const thisbrowser = {
         }
         return new Visits(url, nurl, visits)
     },
+    searchAround: async function(utc_timestamp_s: number): Promise<Visits> {
+        const durl  = 'http://dummy.xyz'
+        const ndurl = normalise_url(durl)
+        const android = await isAndroid()
+        if (android) {
+            return new Visits(durl, ndurl, [])
+        }
+        // todo how to keep these deltas in sync with the backend?
+        const delta_back_s  = 3 * 60 * 60 // 3h
+        const delta_front_s = 2 * 60      // 2min
+        const results = await achrome.history.search({
+            // NOTE: I checked and it does seem like this method takes UTC epoch (although not clear from the docs)
+            // note: it wants millis
+            startTime: (utc_timestamp_s - delta_back_s ) * 1000,
+            endTime  : (utc_timestamp_s + delta_front_s) * 1000,
+            text: '',
+        })
+        // TODO shit. displayed visit times are gonna be wrong because
+        // only lastVisitTime is available... shit. maybe use in conjunction with getVisits and filter??
+        // https://developer.chrome.com/extensions/history#type-HistoryItem
+        // todo it also has maxResults? (default 100), not sure what should I do about it
+        return new Visits(durl, ndurl, Array.from(history2visits(results)))
+    }
+}
+
+function* history2visits(hi: Iterable<HistoryItem>) {
+    for (const r of hi) {
+        const u = r.url
+        const ts = r.lastVisitTime
+        if (u == null || ts == null) {
+            continue
+        }
+        const t = new Date(ts)
+        yield new Visit(
+            u,
+            normalise_url(u),
+            ((t: any): AwareDate),
+            ((t: any): NaiveDate),
+            [THIS_BROWSER_TAG],
+            // TODO need context?
+        )
+    }
 }
 
 
@@ -238,7 +281,16 @@ export const allsources = {
         )
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
-        return await backend.searchAround(utc_timestamp_s)
+        const from_backend = await backend.searchAround(utc_timestamp_s)
+        if (from_backend instanceof Error) {
+            console.error('backend server request error: %o', from_backend)
+            return from_backend
+        }
+        return _merge(
+            from_backend,
+            thisbrowser.searchAround(utc_timestamp_s),
+            Promise.resolve(new Visits('', '', [])),
+        )
     },
     /*
      * for each url, returns a boolean -- whether or not the link was visited before
