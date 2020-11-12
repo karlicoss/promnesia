@@ -14,11 +14,13 @@ from .common import get_logger, DbVisit, get_tmpdir, Res, now_tz, Loc
 from . import config
 
 
-# NOTE: experimental.. need to make it a proper cmdline argument later
-INDEX_POLICY = os.environ.get('PROMNESIA_INDEX_POLICY', 'overwrite_all')
-# if 'update' is passed, will run against the existing db and only tough the sources present in the current index run
-# not sue if a good name for this..
-policy_update = INDEX_POLICY == 'update'
+def update_policy_active() -> bool:
+    # NOTE: experimental.. need to make it a proper cmdline argument later
+    INDEX_POLICY = os.environ.get('PROMNESIA_INDEX_POLICY', 'overwrite_all')
+    # if 'update' is passed, will run against the existing db and only tough the sources present in the current index run
+    # not sue if a good name for this..
+    return INDEX_POLICY == 'update'
+
 
 # NOTE: I guess the main performance benefit from this is not creating too many tmp lists and avoiding overhead
 # since as far as sql is concerned it should all be in the same transaction. only a guess
@@ -56,6 +58,7 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]]) -> None:
                 yield ev
 
     tpath = Path(get_tmpdir().name) / 'promnesia.tmp.sqlite'
+    policy_update = update_policy_active()
     if not policy_update:
         engine = create_engine(f'sqlite:///{tpath}')
     else:
