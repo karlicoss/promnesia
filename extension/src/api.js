@@ -73,7 +73,7 @@ export async function getBackendVisits(u: Url): Promise<Visits> {
 
 
 // eslint-disable-next-line no-unused-vars
-function makeFakeVisits(count: number): Visits {
+export function makeFakeVisits(count: number): Visits {
     const res = []
     const ref_ms = 1600000000 * 1000
     for (let i = 0; i < count; i++) {
