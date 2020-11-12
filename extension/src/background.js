@@ -498,9 +498,10 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         if (!ignored(url)) { // TODO shouldn't have been requested in the first place?
             const visits = await getVisits(unwrap(atab.url));
             if (visits instanceof Visits) {
-                return visits;
+                return visits.toJObject()
             } else {
                 // hmm. generally shouldn't happen, since sidebar is not bound on blacklisted urls
+                // show notification in dev mode?
                 lerror("Shouldn't have happened! %s", visits);
             }
         }

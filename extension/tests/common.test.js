@@ -27,9 +27,11 @@ test('visits', () => {
         [],
         makeFakeVisits(1).visits,
         makeFakeVisits(10).visits,
+        [new Error('some error')],
+        [new Error('other error'), ...makeFakeVisits(2).visits],
     ]) {
         const v = new Visits('http://test', 'http://test', vis)
-        const vv = Visits.fromJSON(v.toJSON())
+        const vv = Visits.fromJObject(v.toJObject())
         expect(v).toStrictEqual(vv)
     }
 

@@ -66,6 +66,16 @@ export class Visit {
     }
 
     // ugh..
+    toJObject(): any {
+        const o = {}
+        Object.assign(o, this)
+        // $FlowFixMe
+        o.time     = o.time    .getTime()
+        // $FlowFixMe
+        o.dt_local = o.dt_local.getTime()
+        return o
+    }
+
     static fromJObject(o: any): Visit {
         o.time     = new Date(o.time)
         o.dt_local = new Date(o.dt_local)
@@ -76,12 +86,15 @@ export class Visit {
     }
 }
 
-type VisitsList = Array<Visit>;
+type RArray<T> = $ReadOnlyArray<T>
+type VisitsList = Array<Visit | Error>
+// TODO errors might have datetime?
 
 export class Visits {
-    original_url: Url;
-    normalised_url: Url;
-    visits: VisitsList;
+    original_url  : Url
+    normalised_url: Url
+    // TODO might be better to have a single list with Visit | Error type?
+    visits: VisitsList
 
     constructor(original_url: Url, normalised_url: Url, visits: VisitsList) {
         this.original_url = original_url;
@@ -115,20 +128,26 @@ export class Visits {
     }
 
     // NOTE: JSON.stringify will use this method
-    toJSON(): string {
-        return JSON.stringify({
-            original_url  : this.original_url,
-            normalised_url: this.normalised_url,
-            visits        : this.visits,
+    toJObject(): any {
+        const o = {}
+        Object.assign(o, this)
+        o.visits = o.visits.map(v => {
+            return (v instanceof Visit)
+                ? v.toJObject()
+                // $FlowFixMe
+                : {error: v.message}
         })
+        return o
     }
 
-    static fromJSON(js: string): Visits {
-        const po = JSON.parse(js)
-        po.visits = po.visits.map(Visit.fromJObject)
+    static fromJObject(o: any): Visits {
+        o.visits = o.visits.map(x => {
+            const err = x.error
+            return err != null ? new Error(err): Visit.fromJObject(x)
+        })
         // $FlowFixMe
         const r = new Visits()
-        Object.assign(r, po)
+        Object.assign(r, o)
         return r
     }
 }
