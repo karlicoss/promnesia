@@ -19,7 +19,7 @@
             See <a href="https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org">troubleshooting guide</a>
         </div>
         <div>
-            If you messed some extension settings up, you can check
+            If you messed up any extension settings, you can check
             <a href="https://github.com/karlicoss/promnesia/blob/master/extension/src/options.js">src/options.js</a>
         </div>
     <!-- TODO give some quick help on using CSS, some examples too? -->
@@ -27,22 +27,35 @@
 
 
     <fieldset>
-        <legend>Backend</legend>
-
-        <label for="host_id">Host</label>
-        <div class="description"><b>Don't forget to setup & run the <a href="https://github.com/karlicoss/promnesia#try-it-out">backend</a> first.</b>
-You can leave host empty if you want to use in-browser visits only.
-However support for that is still limited (see <a href="https://github.com/karlicoss/promnesia/issues/120">issues/120</a>)
-</div>
-        <input type="URL" id="host_id">
-        <label for="token_id">Auth token (if necessary)</label>
-        <td><input type="password" id="token_id">
-        <button id="backend_status_id">Check backend status</button>
+    <legend>Sources</legend>
+    <fieldset>
+        <legend>Backend settings</legend>
+        <b>Don't forget to setup & run the <a href="https://github.com/karlicoss/promnesia#try-it-out">backend</a> first.</b>
+        <br>However, you can leave it empty if you want to use in-browser visits only.
+        <div style='display:flex'>
+        <input title="Host" type="URL" id="host_id" style='flex-grow: 1'>
+        <input title="Basic auth token" type="password" id="token_id" placeholder="Basic auth token (if needed)">
+        <button id="backend_status_id">Check status</button>
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend>In-browser sources</legend>
+Note that these sources aren't typicaly as useful as the backend ones, and support for them is still limited (see <a href="https://github.com/karlicoss/promnesia/issues/120">issues/120</a>)
+        <table>
+            <tr>
+                <td><input  id="use_bookmarks_id" type="checkbox" /></td>
+                <td><label for="use_bookmarks_id">Browser bookmarks</label></td>
+            </tr>
+            <tr>
+                <td><input  id="use_browserhistory_id" type="checkbox" /></td>
+                <td><label for="use_browserhistory_id">Browser history</label></td>
+            </tr>
+        </table>
+    </fieldset>
     </fieldset>
 
     <fieldset>
         <legend>Behaviour</legend>
-
         <!-- <table> -->
         <!-- <tr> -->
         <!-- <td><input type="checkbox"  id="dots_id"/></td> -->
@@ -51,14 +64,6 @@ However support for that is still limited (see <a href="https://github.com/karli
         <!-- </table> -->
         <table>
             <tr>
-                <td><input type="checkbox" id="contexts_popup_id"/></td>
-                <td><label for="contexts_popup_id">Show 'Has contexts' popup (green)</label></td>
-            </tr>
-            <tr>
-                <td><input type="checkbox" id="verbose_errors_id"/></td>
-                <td><label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label></td>
-            </tr>
-            <tr>
                 <td><input type="checkbox" id="detect_sidebar_urls_id"/></td>
                 <td><label for="detect_sidebar_urls_id">Detect and linkify URLs in the sidebar</label></td>
             </tr>
@@ -66,17 +71,30 @@ However support for that is still limited (see <a href="https://github.com/karli
                 <td><input type="checkbox" id="highlight_id"/></td>
                 <td><label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label></td>
             </tr>
+            <tr>
+                <td><input type="checkbox" id="contexts_popup_id"/></td>
+                <td><label for="contexts_popup_id">Popup notification when link has contexts (may be spammy)</label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" id="verbose_errors_id"/></td>
+                <td><label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label></td>
+            </tr>
         </table>
         <hr>
         <div>
             <label for="blacklist_id">Blacklisted links and domains:</label>
+            <div class="description">Blacklisting might be useful for several purposes:
+- less distraction: if you don't need to be notified of specific pages (e.g. they are too broad)
+- privacy: to avoid passing sensitive information to the extension
+- performance: if you experience problems with certain pages
+            </div>
             <!-- TODO copy pasted from blacklist() function -->
             <div class="description">Supported formats:
 - <code>domain.name</code>, e.g.: <code>web.telegram.org</code>
       Will exclude whole Telegram website.
 - <code>http://exact/match</code>, e.g.: <code>http://github.com</code>
       Will only exclude Github main page. Subpages will still work.
-- <code>/regul.r.*expression/</code>, e.g.: <code>/github.*/username/</code>
+- <code>/regul.r.*expression/</code>, e.g.: <code>/github.*/yourusername/</code>
       Quick way to exclude your own Github repostitories.</div>
             <div id="blacklist_id"></div>
         </div>
@@ -102,6 +120,7 @@ They will be autoupdated every 3 days. Spec format (Json):<pre>[
     <!-- could be a bit confusing for user -->
     <fieldset>
         <legend>Style settings (CSS)</legend>
+        <div class="description">Not very documented at the moment; you can use your browser devtools to experiment</div>
         <div id="position_css_id"></div>
     </fieldset>
     <fieldset>

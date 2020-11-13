@@ -17,7 +17,7 @@
 import type {Url, AwareDate, NaiveDate} from './common'
 import {Visit, Visits} from './common'
 import {backend} from './api'
-import {THIS_BROWSER_TAG} from './options'
+import {THIS_BROWSER_TAG, getOptions} from './options'
 import {normalise_url} from './normalise'
 import type {HistoryItem} from './async_chrome'
 import {achrome} from './async_chrome'
@@ -35,14 +35,17 @@ const DELTA_FRONT_S = 2 * 60      // 2min
 
 // TODO eh, confusing that we have backend sources.. and these which are also sources, at the same time
 interface VisitsSource {
-    search(url: Url): Promise<Visits | Error>
+    visits(url: Url)                     : Promise<Visits | Error>,
+    search(url: Url)                     : Promise<Visits | Error>,
+    searchAround(utc_timestamp_s: number): Promise<Visits | Error>,
+    visited(urls: Array<Url>)            : Promise<Array<boolean> | Error>,
 }
 
 
 // NOTE: do not name this 'browser', it might be a builtin for apis (alias to 'chrome')
-export const thisbrowser = {
+export const thisbrowser: VisitsSource = {
 // TODO async iterator?
-    visits: async function(url: Url): Promise<Visits> {
+    visits: async function(url: Url): Promise<Visits | Error> {
         const android = await isAndroid()
         if (android) {
             // ugh. 'history' api is not supported on mobile (TODO mention that in readme)
@@ -120,7 +123,13 @@ export const thisbrowser = {
         // https://developer.chrome.com/extensions/history#type-HistoryItem
         // todo it also has maxResults? (default 100), not sure what should I do about it
         return new Visits(durl, ndurl, Array.from(history2visits(results)))
-    }
+    },
+    visited: async function(_urls: Array<Url>): Promise<Array<boolean> | Error> {
+        // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
+        // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
+        // note: search with empty query will retrieve all? but def needs to be iterative then..
+        return new Error("TODO 'visited' method isn't supported for browser history yet")
+    },
 }
 
 function* history2visits(hi: Iterable<HistoryItem>) {
@@ -205,9 +214,7 @@ function* bookmarks2visits(bit: Iterable<Bres>) {
     }
 }
 
-// TODO need to test it
-// TODO make togglable?
-export const bookmarks = {
+export const bookmarks: VisitsSource = {
     // eh. not sure if this method is super useful, there is already 'star' indicator in most browsers
     // however it could benefit from the normalisation functionality
     visits: async function(url: Url): Promise<Visits> {
@@ -249,7 +256,7 @@ export const bookmarks = {
         return new Visits(durl, ndurl, visits)
     },
 
-    visited: async function(urls: Array<Url>): Promise<Array<boolean>> {
+    visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
         if (await isAndroid()) {
             const res = new Array(urls.length)
             res.fill(false)
@@ -312,8 +319,60 @@ export class MultiSource implements VisitsSource {
         this.sources = sources
     }
 
+    async visits(url: Url) {
+        return await _merge(url, ...this.sources.map(s => s.visits(url)))
+    }
+
     async search(url: Url) {
         return await _merge(url, ...this.sources.map(s => s.search(url)))
+    }
+
+    async searchAround(utc_timestamp_s: number) {
+        return await _merge(null, ...this.sources.map(s => s.searchAround(utc_timestamp_s)))
+    }
+
+    async visited(urls: Array<Url>) {
+        const pms = this.sources.map(s => s.visited(urls))
+        const errors = []
+        let res = null
+        for (const p of pms) {
+            const r = await p.catch((e: Error) => e)
+            if (r instanceof Error) {
+                errors.push(r)
+            } else {
+                if (res == null) {
+                    res = r
+                } else {
+                    for (let i = 0; i < urls.length; i++) {
+                        res[i] = res[i] || r[i]
+                    }
+                }
+            }
+        }
+        // TODO later when I support some sidebar info for this method, propagate errors properly...
+        if (res != null) {
+            return res
+        }
+        if (errors.length > 0) {
+            return errors[0]
+        }
+        return new Error("No datasources?")
+    }
+
+    static async get(): Promise<MultiSource> {
+        const opts = await getOptions()
+        const srcs = []
+        if (opts.host != '') {
+            srcs.push(backend)
+        }
+        if (opts.use_bookmarks) {
+            srcs.push(bookmarks)
+        }
+        if (opts.use_browserhistory) {
+            srcs.push(thisbrowser)
+        }
+        // TODO error when no sources used??
+        return new MultiSource(...srcs)
     }
 }
 
@@ -324,50 +383,23 @@ export const allsources = {
      * mainly used in the sidebar
      */
     visits: async function(url: Url): Promise<Visits | Error> {
-        return _merge(
-            url,
-            backend    .visits(url),
-            thisbrowser.visits(url),
-            bookmarks  .visits(url),
-        )
+        return (await MultiSource.get()).visits(url)
     },
     /*
      * ideally finds anything containing the query, used in search tab
      */
     search: async function(url: Url): Promise<Visits | Error> {
-        return new MultiSource(
-            backend,
-            thisbrowser,
-            bookmarks,
-        ).search(url)
+        return (await MultiSource.get()).search(url)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
-        return _merge(
-            null,
-            backend    .searchAround(utc_timestamp_s),
-            thisbrowser.searchAround(utc_timestamp_s),
-            bookmarks  .searchAround(utc_timestamp_s),
-        )
+        return (await MultiSource.get()).searchAround(utc_timestamp_s)
     },
     /*
      * for each url, returns a boolean -- whether or not the link was visited before
      * TODO would be cool to make it more iterative..
      */
     visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
-        const from_backend = await backend.visited(urls)
-        if (from_backend instanceof Error) {
-            console.error('backend server request error: %o', from_backend)
-            return from_backend
-        }
-        const res = from_backend
-        const from_bookmarks = await bookmarks.visited(urls)
-        for (let i = 0; i < urls.length; i++) {
-            res[i] = res[i] || from_bookmarks[i]
-        }
-        // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
-        // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
-        // note: search with empty query will retrieve all? but def needs to be iterative then..
-        return res
+        return (await MultiSource.get()).visited(urls)
     },
 }
 

@@ -81,6 +81,8 @@ class Editor extends Option<string> {
 
 const o_host           = new Simple('host_id'               )
 const o_token          = new Simple('token_id'              )
+const o_use_bookmarks      = new Toggle('use_bookmarks_id'     )
+const o_use_browserhistory = new Toggle('use_browserhistory_id')
 const o_verbose_errors = new Toggle('verbose_errors_id'     )
 const o_contexts_popup = new Toggle('contexts_popup_id'     )
 const o_detect_urls    = new Toggle('detect_sidebar_urls_id')
@@ -126,6 +128,9 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await getOptions()
     o_host          .value = opts.host
     o_token         .value = opts.token
+    o_use_bookmarks .value = opts.use_bookmarks
+    o_use_browserhistory.value = opts.use_browserhistory
+
     o_verbose_errors.value = opts.verbose_errors_on
     o_contexts_popup.value = opts.contexts_popup_on
     o_detect_urls   .value = opts.detect_sidebar_urls
@@ -152,8 +157,10 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
 unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAlert(async () => {
     // todo make opts active object so we don't query unnecessary things like blacklist every time?
     const opts = {
-        host               : o_host          .value,
-        token              : o_token         .value,
+        host               : o_host              .value,
+        token              : o_token             .value,
+        use_bookmarks      : o_use_bookmarks     .value,
+        use_browserhistory : o_use_browserhistory.value,
         verbose_errors_on  : o_verbose_errors.value,
         contexts_popup_on  : o_contexts_popup.value,
         detect_sidebar_urls: o_detect_urls   .value,
