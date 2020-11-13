@@ -48,6 +48,19 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
     }
 
     const endpoint = `${opts.host}/${endp}`
+
+    function with_stack(e: Error): Error {
+        const stack = []
+        if (e.stack) {
+            stack.push(e.stack)
+        }
+        stack.push(`while requesting ${endpoint}`)
+        stack.push("check extension options, make sure you set backend or disable it (set to empty string)")
+        e.stack = stack.join('\n')
+        console.error(e, e.stack) // hopefully worth loging, meant to happen rarely
+        return e
+    }
+
     // TODO cors mode?
     return fetch(endpoint, {
         method: 'POST', // todo use GET?
@@ -60,28 +73,13 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
         // right, fetch API doesn't reject on HTTP error status...
         const ok = response.ok
         if (!ok) {
-            throw new Error(`${response.statusText} (${response.status}`)
+            return with_stack(new Error(`${response.statusText} (${response.status}`))
         }
         return response.json()
     }).catch((err: Error) => {
-        const stack = []
-        if (err.stack) {
-            stack.push(err.stack)
-        }
-        stack.push(`while requesting ${endpoint}`)
-        stack.push("check extension options, make sure you set backend or disable it (set to empty string)")
-        err.stack = stack.join('\n')
-        return err
+        return with_stack(err)
     })
 }
-
-export async function getBackendVisits(u: Url): Promise<Visits | Error> {
-    return queryBackendCommon<JsonObject>({url: u}, 'visits')
-        .then(rawToVisits)
-        .catch((err: Error) => err)
-    // todo not sure if this error handling should be here?
-}
-
 
 // eslint-disable-next-line no-unused-vars
 export function makeFakeVisits(count: number): Visits {
@@ -109,9 +107,15 @@ export function makeFakeVisits(count: number): Visits {
 
 
 export const backend = {
+    visits: async function(url: Url): Promise<Visits | Error> {
+        return await queryBackendCommon<JsonObject>({url: url}, 'visits')
+              .then(rawToVisits)
+              .catch((err: Error) => err)
+        // todo not sure if this error handling should be here?
+    },
     search: async function(url: Url): Promise<Visits | Error> {
         return await queryBackendCommon<JsonObject>({url: url}, 'search')
-              .then(r => rawToVisits(r, url))
+              .then(rawToVisits)
               .catch((err: Error) => err)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
@@ -125,12 +129,13 @@ export const backend = {
     },
 }
 
-function rawToVisits(vis: VisitsResponse | Error, url='http://shouldnothappen.xyz'): Visits | Error {
+function rawToVisits(vis: VisitsResponse | Error): Visits | Error {
     if (vis instanceof Error) {
         // most likely, network error.. so handle it defensively
-        return new Visits(url, url, [vis])
+        return vis
     }
     // TODO filter errors? not sure.
+    // TODO this could be more defensive too
     const visits = vis['visits'].map(v => {
         const dts = v['dt']
         // NOTE: server returns a string with TZ offset

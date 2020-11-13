@@ -1,6 +1,7 @@
 /* @flow */
 import type {Url} from './common';
 import type {Options} from './options'
+import {getOptions} from './options'
 import {asList, log} from './common';
 import {normalisedURLHostname} from './normalise';
 
@@ -100,5 +101,10 @@ export class Blacklist {
             }
         }
         return null;
+    }
+
+    static async get(): Promise<Blacklist> {
+        const opts = await getOptions()
+        return new Blacklist(opts)
     }
 }

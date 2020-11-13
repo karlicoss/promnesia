@@ -27,21 +27,10 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
 }
 
 
-
-// TODO think about caching blacklist on background page?
-// although need to be careful and invalidate it. ugh.
-
-// TODO ugh. can't keep getOptions in blacklist.js because jest complains..
-async function Blacklist_get(): Promise<Blacklist> {
-    const opts = await getOptions()
-    return new Blacklist(opts)
-}
-
-
-type Result = Visits | Blacklisted | Error;
+type Result = Visits | Blacklisted | Error
 
 export async function getVisits(url: Url): Promise<Result> {
-    const blacklist = await Blacklist_get();
+    const blacklist = await Blacklist.get()
     const bl = await blacklist.contains(url);
     if (bl != null) {
         return new Blacklisted(url, bl);
@@ -124,6 +113,7 @@ async function updateState (tab: chrome$Tab) {
     const tabId = unwrap(tab.id);
 
     if (ignored(url)) {
+        // todo reflect in the sidebar/popup?
         linfo("ignoring %s", url);
         return;
     }
@@ -262,7 +252,7 @@ async function markVisited(tabId) {
     const unique = Array.from(new Set(results));
     const good_urls = unique.filter(u => !is_bad(u));
 
-    const blacklist = await Blacklist_get();
+    const blacklist = await Blacklist.get();
     // TODO ugh. filter can't be async, so we have to do this separately...
     const urls = [];
     for (const u of good_urls) {
@@ -482,7 +472,7 @@ async function handleMarkVisited() {
     if (ignored(url)) {
         await showIgnoredNotification(tid, url);
     } else {
-        const blacklist = await Blacklist_get();
+        const blacklist = await Blacklist.get()
         const bl = await blacklist.contains(url);
         if (bl != null) {
             await showBlackListedNotification(tid, new Blacklisted(url, bl));
@@ -563,7 +553,7 @@ export async function injectSidebar(tab: chrome$Tab) {
         notify(`${url} is an ignored URL`);
         return;
     }
-    const blacklist = await Blacklist_get();
+    const blacklist = await Blacklist.get()
     const bl = await blacklist.contains(url);
     if (bl != null) {
         await showBlackListedNotification(tid, new Blacklisted(url, bl));
