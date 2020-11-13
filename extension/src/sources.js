@@ -19,7 +19,6 @@ import {Visit, Visits} from './common'
 import {backend} from './api'
 import {THIS_BROWSER_TAG, getOptions} from './options'
 import {normalise_url} from './normalise'
-import type {HistoryItem} from './async_chrome'
 import {achrome} from './async_chrome'
 
 
@@ -111,45 +110,64 @@ export const thisbrowser: VisitsSource = {
         if (android) {
             return new Visits(durl, ndurl, [])
         }
+        const start = (utc_timestamp_s - DELTA_BACK_S ) * 1000
+        const end   = (utc_timestamp_s + DELTA_FRONT_S) * 1000
         const results = await achrome.history.search({
             // NOTE: I checked and it does seem like this method takes UTC epoch (although not clear from the docs)
             // note: it wants millis
-            startTime: (utc_timestamp_s - DELTA_BACK_S ) * 1000,
-            endTime  : (utc_timestamp_s + DELTA_FRONT_S) * 1000,
+            startTime: start,
+            endTime  : end,
             text: '',
+            // todo it also has maxResults? (default 100), not sure what should I do about it
         })
-        // TODO shit. displayed visit times are gonna be wrong because
-        // only lastVisitTime is available... shit. maybe use in conjunction with getVisits and filter??
-        // https://developer.chrome.com/extensions/history#type-HistoryItem
-        // todo it also has maxResults? (default 100), not sure what should I do about it
-        return new Visits(durl, ndurl, Array.from(history2visits(results)))
+        // right. this only returns history items with lastVisitTime
+        // (see https://developer.chrome.com/extensions/history#type-HistoryItem)
+        // so we need another pass to collec the 'correct' visit times
+        const visits = []
+        for (const r of results) {
+            const u = r.url
+            if (u == null) {
+                continue
+            }
+            const nu = normalise_url(u)
+            // eh. apparently URL is the only useful?
+            for (const v of await achrome.history.getVisits({url: u})) {
+                const vt = v.visitTime || 0.0
+                if (start <= vt && vt <= end) {
+                    const t = new Date(vt)
+                    visits.push(new Visit(
+                        u,
+                        nu,
+                        ((t: any): AwareDate),
+                        ((t: any): NaiveDate),
+                        [THIS_BROWSER_TAG],
+                    ))
+                }
+            }
+        }
+        return new Visits(durl, ndurl, visits)
     },
-    visited: async function(_urls: Array<Url>): Promise<Array<boolean> | Error> {
+    visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
         // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
         // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
         // note: search with empty query will retrieve all? but def needs to be iterative then..
-        return new Error("TODO 'visited' method isn't supported for browser history yet")
+        // ok, for now as a compromise, query 1000 latest visits..
+        const res = await achrome.history.search({
+            maxResults: 1000,
+            text: '',
+        })
+        const set = new Set(res.map(r => r.url))
+        const nset = new Set()
+        set.forEach(x => {
+            if (x != null) {
+                nset.add(normalise_url(x))
+            }
+        })
+        // todo might be useful to pass in normalised urls in this method?
+        return urls.map(u => nset.has(normalise_url(u)))
     },
 }
 
-function* history2visits(hi: Iterable<HistoryItem>) {
-    for (const r of hi) {
-        const u = r.url
-        const ts = r.lastVisitTime
-        if (u == null || ts == null) {
-            continue
-        }
-        const t = new Date(ts)
-        yield new Visit(
-            u,
-            normalise_url(u),
-            ((t: any): AwareDate),
-            ((t: any): NaiveDate),
-            [THIS_BROWSER_TAG],
-            // TODO need context?
-        )
-    }
-}
 
 
 type Bres = {
@@ -271,6 +289,7 @@ export const bookmarks: VisitsSource = {
             ({bm: _bm, nurl: nurl, path: _path}) => nurl,
         ))
 
+        // todo normalised url might be worth a separate type..
         return urls.map(u => nurls.has(normalise_url(u)))
     }
 }
