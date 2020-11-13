@@ -6,7 +6,7 @@ global.chrome = {
             // meh.
             get: (name, res) => {
                 res({'options': {
-                    host: 'http://badhost:43210', // some random port
+                    host: 'http://badhost:43210', // some random port, to cause it fail
                 }})
             }
         },
@@ -47,6 +47,7 @@ import {allsources} from '../src/sources'
 // meh.
 global.chrome.history = {
     getVisits: (obj, res) => res([]),
+    search   : (obj, res) => res([]),
 }
 global.chrome.bookmarks = {
     getTree: (res) => res([{
@@ -62,6 +63,38 @@ test('visits_allsources', async() => {
     expect(vis.visits).toHaveLength(2)
     expect(vis.normalised_url).toStrictEqual('whatever.com')
 })
+
+
+test('search_works', async () => {
+    // at least shouldn't crash
+    const res = await allsources.search('https://123.coom')
+    const [e] = res.visits
+    expect(e.message).toMatch(/request .* failed/)
+})
+
+import {MultiSource, bookmarks, thisbrowser} from '../src/sources'
+
+test('search_defensive', async() => {
+    // precondition: some error in processing history api, e.g. it's unavailable or something
+    global.chrome.history.search    = (q, res) => res(null)
+    global.chrome.bookmarks.getTree = (res)    => res(null)
+
+    // TODO wtf?? for some reason deafult order (backend, browser, bookmarks) causes
+    // 'Promise rejection was handled asynchronously'
+    // I wonder if it's some issue with node fetch implementation... or just node version??
+    // for some reason different order works :shrug:
+
+    const res = await new MultiSource(thisbrowser, bookmarks, backend)
+          .search('http://whatever.com')
+
+    console.error(res.visits)
+    const [e1, e2, e3] = res.visits
+    // eh. fragile, but at least makes sure we test exactly the thing we want
+    expect(e1.message).toMatch(/results is not iterable/)
+    expect(e2.message).toMatch(/Cannot read property/)
+    expect(e3.message).toMatch(/request .* failed/)
+})
+
 
 import fetchMock from 'jest-fetch-mock'
 // TODO use it as a fixture..
