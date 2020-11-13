@@ -5,7 +5,7 @@ import {Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
-import {showTabNotification, showBlackListedNotification, showIgnoredNotification, defensify, notify, notifications} from './notifications'
+import {showTabNotification, defensify, notifications} from './notifications'
 import {Blacklist} from './blacklist'
 import {isAndroid, allsources} from './sources'
 
@@ -334,20 +334,20 @@ function isSpecialProtocol(url: string): boolean {
     return false;
 }
 
-function ignored(url: string): boolean {
+function ignored(url: string): ?string {
     if ([
         'https://www.google.com/_/chrome/newtab?ie=UTF-8', // ugh, not sure how to fix that properly
         'about:blank', // not sure why about:blank is loading like 5 times.. but this seems to fix it
     ].includes(url)) {
-        return true;
+        return 'blank page'
     }
 
     // TODO might be bad url
     if (isSpecialProtocol(url)) {
-        return true;
+        return 'special page'
     }
 
-    return false;
+    return null
 }
 
 /*
@@ -444,42 +444,66 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
 }, 'onUpdated'));
 
 
-export async function getActiveTab(): Promise<chrome$Tab> {
+export async function getActiveTab(): Promise<?chrome$Tab> {
     const tabs = await achrome.tabs.query({
         currentWindow: true,
         active: true,
-    });
-    // TODO can it be empty at all??
-    if (tabs.length > 1) {
-        console.error("Multiple active tabs: %o", tabs); // TODO handle properly?
+    })
+    if (tabs.length == 0) {
+        return null // might be on special pages..
     }
-    const tab = tabs[0];
-    return tab;
+
+    if (tabs.length > 1) {
+        console.error("Multiple active tabs: %o", tabs) // TODO handle properly?
+    }
+    const tab = tabs[0]
+    return tab
 }
 
-async function showActiveTabNotification(text: string, color: string): Promise<void> {
-    const atab = await getActiveTab();
-    await showTabNotification(unwrap(atab.id), text, color);
+
+type ShouldProcess = {|
+    url: string,
+    tid: number,
+|}
+
+// check if page needs handling and notify suer if/why it can't be processed
+async function shouldProcessPage(tab: ?chrome$Tab): Promise<?ShouldProcess> {
+    if (tab == null) {
+        await notifications.page_ignored(null, null, "Couldn't determine current tab: must be a special page (or a bug?)")
+        return
+    }
+    const url = unwrap(tab.url)
+    const tid = unwrap(tab.id)
+    let ireason = ignored(url)
+    if (ireason != null) {
+        await notifications.page_ignored(tid, url, ireason)
+        return null
+    }
+    const blacklist = await Blacklist.get()
+    const bl = await blacklist.contains(url)
+    // todo let blacklist return Blacklisted object?
+    if (bl != null) {
+        // TODO show popup; suggest to whitelist?
+        await notifications.blacklisted(tid, new Blacklisted(url, bl))
+        return null
+    }
+    return {
+        url: url,
+        tid: tid,
+    }
 }
 
 // TODO would be cool to display visited links summary...
 async function handleMarkVisited() {
     // TODO actually use mark visited setting?
     // const opts = await getOptions();
-    const atab = await getActiveTab();
-    const url = unwrap(atab.url);
-    const tid = unwrap(atab.id);
-    if (ignored(url)) {
-        await showIgnoredNotification(tid, url);
-    } else {
-        const blacklist = await Blacklist.get()
-        const bl = await blacklist.contains(url);
-        if (bl != null) {
-            await showBlackListedNotification(tid, new Blacklisted(url, bl));
-        } else {
-            await markVisited(tid);
-        }
+    const atab = await getActiveTab()
+    let should = await shouldProcessPage(atab)
+    if (should == null) {
+        return
     }
+    let {tid: tid} = should
+    await markVisited(tid) // no need to await?
 }
 
 async function handleOpenSearch(p: SearchPageParams = {}) {
@@ -498,9 +522,9 @@ async function handleOpenSearch(p: SearchPageParams = {}) {
 const onMessageCallback = async (msg) => { // TODO not sure if should defensify here?
     const method = msg.method;
     if (method == Methods.GET_SIDEBAR_VISITS) {
-        const atab = await getActiveTab();
-        const url = unwrap(atab.url);
-        if (!ignored(url)) { // TODO shouldn't have been requested in the first place?
+        const atab = unwrap(await getActiveTab())
+        const url = unwrap(atab.url)
+        if (!ignored(url)) { // TODO shouldn't have been requested in the first place? allso pass through shouldHandle?
             const visits = await getVisits(unwrap(atab.url));
             if (visits instanceof Visits) {
                 return visits.toJObject()
@@ -545,24 +569,15 @@ async function registerActions() {
     }
 }
 
+// note: this is user click callback
 export async function injectSidebar(tab: chrome$Tab) {
-    const url = unwrap(tab.url);
-    const tid = unwrap(tab.id);
-    if (ignored(url)) {
-        // TODO tab notification?
-        notify(`${url} is an ignored URL`);
-        return;
+    const should = await shouldProcessPage(tab)
+    if (should == null) {
+        return
     }
-    const blacklist = await Blacklist.get()
-    const bl = await blacklist.contains(url);
-    if (bl != null) {
-        await showBlackListedNotification(tid, new Blacklisted(url, bl));
-        // TODO show popup; suggest to whitelist?
-    } else {
-        // TODO ugh. messy
-        await chromeTabsExecuteScriptAsync(tid, {file: 'sidebar.js'});
-        await chromeTabsExecuteScriptAsync(tid, {code: 'toggleSidebar();'});
-    }
+    const {tid: tid} = should
+    await achrome.tabs.executeScript(tid, {file: 'sidebar.js'})
+    await achrome.tabs.executeScript(tid, {code: 'toggleSidebar();'})
 }
 
 
@@ -586,7 +601,7 @@ const onCommandCallback = defensify(async cmd => {
 
 async function blacklist(e): Promise<void> {
     const url = unwrap(e.pageUrl);
-    const atab = await getActiveTab();
+    const atab = unwrap(await getActiveTab())  // todo get url from tab?
     const tabId = unwrap(atab.id);
 
     // TODO I'm really not sure it's the right way to do this..
@@ -621,7 +636,7 @@ async function blacklist(e): Promise<void> {
     */
     const ll = opts.blacklist.split(/\n/).length;
     // TODO could open sidebar here and display blacklist??
-    await showActiveTabNotification(`Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue');
+    await showTabNotification(tabId, `Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue')
     await setOptions(opts);
 }
 
