@@ -2,7 +2,7 @@
 import type {Url} from './common';
 import type {Options} from './options'
 import {getOptions} from './options'
-import {asList, log} from './common';
+import {asList} from './common';
 import {normalisedURLHostname} from './normalise';
 
 type Reason = string;
@@ -57,7 +57,7 @@ export class Blacklist {
             return list;
         }
 
-        log('loading %s from %s', name, url)
+        console.debug('loading %s from %s', name, url)
 
         const {basket} = await import(
             /* webpackChunkName: "basket" */
