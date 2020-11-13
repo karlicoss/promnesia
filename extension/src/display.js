@@ -71,13 +71,15 @@ export class Binder {
 
     async renderError(
         parent: HTMLElement,
-        error: string,
+        error: Error,
     ) {
         const child  = this.makeChild .bind(this)
         const tchild = this.makeTchild.bind(this)
 
         const item = child(parent, 'li', ['error'])
-        tchild(item, `ERROR: ${error}`)
+        const ec   = child(item  , 'code')
+        // todo not sure if need any other info?
+        tchild(ec, `${error.name}: ${error.message}\n${error.stack}`)
     }
 
     async render(

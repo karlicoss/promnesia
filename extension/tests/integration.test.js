@@ -31,7 +31,9 @@ import {getBackendVisits} from '../src/api'
 test('visits', async() => {
     // const opts = await getOptions()
     // opts.host = host: 'http//bad.host',
+   
     // TODO have a defensive and offensive modes?
-    // but for network errors makes sense...
+    // but defensive for network errors makes def makes sense anyway
     const vis = await getBackendVisits()
+    expect(vis.visits[0]).toBeInstanceOf(Error)
 })

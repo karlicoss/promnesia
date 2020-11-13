@@ -35,6 +35,20 @@ test('visits', () => {
         expect(v).toStrictEqual(vv)
     }
 
+    // test for more elaborate error handling, make sure it preserves stack
+    // apparently Error comparison doesn't do anything to the stack..
+    for (const vis of [
+        [function () {
+            const err = new Error('some message')
+            err.stack = 'stack1\nstack2'
+            return err
+        }()],
+    ]) {
+        const v = new Visits('http://test', 'http://test', vis)
+        const vv = Visits.fromJObject(v.toJObject())
+        const e = vv.visits[0]
+        expect(e.stack).toStrictEqual('stack1\nstack2')
+    }
 })
 
 import {normalise_url} from '../src/normalise.js';

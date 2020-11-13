@@ -19,7 +19,7 @@ type VisitsResponse = {
 
 type VisitedResponse = Array<boolean>
 
-export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R> {
+export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R | Error> {
     const opts = await getOptions()
     if (opts.host == '') { // use 'dummy' backend
         // the user only wants to use browser visits?
@@ -47,9 +47,9 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
         }
     }
 
-    const endpoint = `${opts.host}/${endp}`;
+    const endpoint = `${opts.host}/${endp}`
     // TODO cors mode?
-    const response = await fetch(endpoint, {
+    return fetch(endpoint, {
         method: 'POST', // todo use GET?
         headers: {
             'Content-Type' : 'application/json',
@@ -58,17 +58,28 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
         body: JSON.stringify(params)
     }).then(response => {
         // right, fetch API doesn't reject on HTTP error status...
-        const ok = response.ok;
+        const ok = response.ok
         if (!ok) {
-            throw new Error(response.statusText + ' (' + response.status + ')');
+            throw new Error(`${response.statusText} (${response.status}`)
         }
-        return response.json();
-    });
-    return response;
+        return response.json()
+    }).catch((err: Error) => {
+        const stack = []
+        if (err.stack) {
+            stack.push(err.stack)
+        }
+        stack.push(`while requesting ${endpoint}`)
+        stack.push("check extension options, make sure you set backend or disable it (set to empty string)")
+        err.stack = stack.join('\n')
+        return err
+    })
 }
 
-export async function getBackendVisits(u: Url): Promise<Visits> {
-    return queryBackendCommon<JsonObject>({url: u}, 'visits').then(rawToVisits);
+export async function getBackendVisits(u: Url): Promise<Visits | Error> {
+    return queryBackendCommon<JsonObject>({url: u}, 'visits')
+        .then(rawToVisits)
+        .catch((err: Error) => err)
+    // todo not sure if this error handling should be here?
 }
 
 
@@ -100,7 +111,7 @@ export function makeFakeVisits(count: number): Visits {
 export const backend = {
     search: async function(url: Url): Promise<Visits | Error> {
         return await queryBackendCommon<JsonObject>({url: url}, 'search')
-              .then(rawToVisits)
+              .then(r => rawToVisits(r, url))
               .catch((err: Error) => err)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
@@ -114,7 +125,11 @@ export const backend = {
     },
 }
 
-function rawToVisits(vis: VisitsResponse): Visits {
+function rawToVisits(vis: VisitsResponse | Error, url='http://shouldnothappen.xyz'): Visits | Error {
+    if (vis instanceof Error) {
+        // most likely, network error.. so handle it defensively
+        return new Visits(url, url, [vis])
+    }
     // TODO filter errors? not sure.
     const visits = vis['visits'].map(v => {
         const dts = v['dt']
