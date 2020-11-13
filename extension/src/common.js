@@ -15,9 +15,9 @@ export opaque type NaiveDate: Date = Date;
 
 export function unwrap<T>(x: ?T): T {
     if (x == null) {
-        throw "undefined or null!";
+        throw new Error("undefined or null!")
     }
-    return x;
+    return x
 }
 
 

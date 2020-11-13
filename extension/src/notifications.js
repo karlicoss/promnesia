@@ -4,8 +4,10 @@ import {Blacklisted} from './common';
 import {getOptions} from './options';
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS} from './async_chrome';
 
-// TODO common?
-export function notify(message: string, priority: number=0) {
+
+// last resort.. because these could be annoying (also might not make sense to display globally)
+// only using it when there is no other context (e.g. current tab) to show a notification
+export function desktopNotify(message: string, priority: number=0) {
     chrome.notifications.create({
         'type'    : "basic",
         'title'   : "promnesia",
@@ -28,7 +30,7 @@ function errmsg(obj: any): string {
 export function notifyError(obj: any, context: string='') {
     const message = errmsg(obj);
     console.error('%o, context=%s', obj, context);
-    notify(message); // TODO maybe error icon or something?
+    desktopNotify(message)
 }
 
 
@@ -78,18 +80,26 @@ Toastify({
 }
 
 // TODO maybe if tabId = -1, show normal notification?
-// $FlowFixMe
-export async function showTabNotification(tabId: number, message: string, ...args) {
+export async function showTabNotification(tabId: ?number, message: string, ...args: Array<any>) {
+    if (tabId == null) {
+        // not much else we can do..
+        desktopNotify(message)
+        return
+    }
     try {
-        await _showTabNotification(tabId, message, ...args);
+        await _showTabNotification(tabId, message, ...args)
     } catch (error) {
         console.error('showTabNotification: %o %s', error, message)
-        if (error.message == 'Missing host permission for the tab') {
+        let errmsg = error.message || ''
             // ugh. might happen if the page is down..
+        if (errmsg.includes('Missing host permission for the tab') ||
+            // might happen on special pages?
+            errmsg.includes('Extension manifest must request permission to access this host')
+        ) {
             // in that case it doesn't have the context to show a popup.
             // could make it configurable??
             // tested by test_unreachable
-            notify(message)
+            desktopNotify(message)
         } else {
             throw error
         }
@@ -99,13 +109,11 @@ export async function showTabNotification(tabId: number, message: string, ...arg
 export const notifications = {
     error: async function(tabId: number, e: Error) {
         await showTabNotification(tabId, e.toString(), 'red')
+    },
+    page_ignored: async function(tabId: ?number, url: ?Url, reason: string) {
+        await showTabNotification(tabId, `${url || ''} is ignored: ${reason}`, 'red')
+    },
+    blacklisted: async function(tabId: number, b: Blacklisted) {
+        await showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red')
     }
-}
-
-export async function showIgnoredNotification(tabId: number, url: Url) {
-    await showTabNotification(tabId, `${url} is ignored`, 'red'); // TODO maybe red is not ideal here
-}
-
-export async function showBlackListedNotification(tabId: number, b: Blacklisted) {
-    await showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red');
 }
