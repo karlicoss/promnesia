@@ -596,7 +596,7 @@ async function blacklist(e): Promise<void> {
       Will exclude whole Telegram website.
 - http://exact/match, e.g.: http://github.com
       Will only exclude Github main page. Subpages will still work.
-- /regul.r.*expression/, e.g.: /github.*/username/
+- /regul.r.*expression/, e.g.: /github.*/yourusername/
       Quick way to exclude your own Github repostitories.
 `;
 

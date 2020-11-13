@@ -5,10 +5,12 @@ import {getBrowser} from './common'
 import OptionsSync from 'webext-options-sync';
 
 
-export type Options = {
+export type Options = {|
     host: string;
     token: string;
 
+    use_bookmarks     : boolean,
+    use_browserhistory: boolean,
 
     verbose_errors_on: boolean;
     contexts_popup_on: boolean;
@@ -29,7 +31,7 @@ export type Options = {
     /* NOTE: deprecated, perhaps should merge together with position_css and migrate propely */
     extra_css: string;
 
-}
+|}
 
 /*
  * If true , keep ghe original timezone (stored in the database)
@@ -53,6 +55,9 @@ function defaultOptions(): Options {
     return {
         host: 'http://localhost:13131',
         token: '',
+
+        use_bookmarks     : true,
+        use_browserhistory: true,
 
         verbose_errors_on: false,
         contexts_popup_on: false,
