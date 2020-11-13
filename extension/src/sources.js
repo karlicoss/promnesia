@@ -33,6 +33,12 @@ const DELTA_BACK_S  = 3 * 60 * 60 // 3h
 const DELTA_FRONT_S = 2 * 60      // 2min
 
 
+// TODO eh, confusing that we have backend sources.. and these which are also sources, at the same time
+interface VisitsSource {
+    search(url: Url): Promise<Visits | Error>
+}
+
+
 // NOTE: do not name this 'browser', it might be a builtin for apis (alias to 'chrome')
 export const thisbrowser = {
 // TODO async iterator?
@@ -216,7 +222,7 @@ export const bookmarks = {
         return new Visits(url, nurl, visits)
     },
 
-    search: async function(url: Url): Promise<Visits> {
+    search: async function(url: Url): Promise<Visits | Error> {
         // for bookmarks, search means the same as visits because they all come with context
         return (await bookmarks.visits(url))
     },
@@ -268,7 +274,14 @@ async function _merge(url: ?string, ...args: Array<Promise<Visits | Error>>): Pr
     let rnurl = null
     const parts = []
     for (const p of args) {
-        const r = await p
+        const r = await p.catch(
+            (e: Error) => {
+                // some hardcode defesiveness
+                // but justified in webext..
+                console.error(e)
+                return e
+            },
+        )
         if (r instanceof Error) {
             parts.push([r])
         } else {
@@ -291,6 +304,20 @@ async function _merge(url: ?string, ...args: Array<Promise<Visits | Error>>): Pr
     )
 }
 
+
+export class MultiSource implements VisitsSource {
+    // todo just move all methods from allsources inside like search
+    sources: Array<VisitsSource>;
+    constructor(...sources: Array<VisitsSource>) {
+        this.sources = sources
+    }
+
+    async search(url: Url) {
+        return await _merge(url, ...this.sources.map(s => s.search(url)))
+    }
+}
+
+
 export const allsources = {
     /*
      * matches the exact url _or_ returns descendants with contexts
@@ -308,12 +335,11 @@ export const allsources = {
      * ideally finds anything containing the query, used in search tab
      */
     search: async function(url: Url): Promise<Visits | Error> {
-        return _merge(
-            url,
-            backend    .search(url),
-            thisbrowser.search(url),
-            bookmarks  .search(url),
-        )
+        return new MultiSource(
+            backend,
+            thisbrowser,
+            bookmarks,
+        ).search(url)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
         return _merge(
