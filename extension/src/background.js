@@ -232,56 +232,112 @@ async function updateState (tab: chrome$Tab) {
 }
 
 
-// todo ugh. this can be tested on some static page... I guess?
-async function markVisited(tabId) {
-    const mresults = await chromeTabsExecuteScriptAsync(tabId, {
-        code: `
-     link_elements = document.getElementsByTagName("a");
-     Array.from(link_elements).map(el => el.href)
- `
-});
-    function is_bad(u: ?string): boolean {
-        if (u == null) {
-            return true;
+async function filter_urls(urls: Array<?Url>) {
+    const good: Set<Url> = new Set()
+    for (const u of urls) {
+        if (u == null || !u.includes('://')) {
+            continue
         }
-        return u === '#' || u.startsWith('javascript:');
+        good.add(u)
     }
-    // not sure why it's returning array..
-    const results = unwrap(mresults)[0];
-
-    const unique = Array.from(new Set(results));
-    const good_urls = unique.filter(u => !is_bad(u));
-
-    const blacklist = await Blacklist.get();
-    // TODO ugh. filter can't be async, so we have to do this separately...
-    const urls = [];
-    for (const u of good_urls) {
-        const ur = await blacklist.contains(u);
+    // TODO add smth like blacklist.filter(Iterable)?
+    const blacklist = await Blacklist.get()
+    const res: Array<Url> = []
+    for (const u of good) {
+        const ur = await blacklist.contains(u)
         if (ur === null) {
-            urls.push(u);
+            res.push(u)
         }
     }
+    return res
+}
 
-    // TODO check if zero? not sure if necessary...
-    // TODO maybe, I need a per-site extension?
-    const resp = await allsources.visited(urls)
+
+// todo ugh. this can be tested on some static page... I guess?
+async function doMarkVisited(tabId: number) {
+    // collect URLS from the page
+    const mresults = await achrome.tabs.executeScript(tabId, {
+        code: `
+     link_elements = document.getElementsByTagName("a")
+     Array.from(link_elements).map(el => {
+        try {
+            // handle relative urls
+            return new URL(el.href, document.baseURI).href
+        } catch {
+            return null
+        }
+     })
+ `
+})
+    // not sure why it's returning array..
+    const results: Array<?Url> = unwrap(mresults)[0]
+    const page_urls = Array.from(await filter_urls(results))
+    const resp = await allsources.visited(page_urls)
     if (resp instanceof Error) {
         await notifications.error(tabId, resp)
         return
     }
 
-    // TODO ok, we received exactly same elements as in res. now what??
-    // TODO cache results internally? At least for visited. ugh.
-    // TODO make it custom option?
-    const vis = {};
-    for (let i = 0; i < urls.length; i++) {
-        vis[urls[i]] = resp[i];
+    const visited: Map<Url, boolean> = new Map()
+    for (let i = 0; i < page_urls.length; i++) {
+        visited.set(page_urls[i], resp[i]) // response guaranteed to have the same length
     }
-    // TODO make a map from it..
-    // TODO use CSS from settings?
-    // TODO document how it can be configured
-    await chromeTabsInsertCSS(tabId, {
+   
+    // TODO just allow overriding some functions?
+    await achrome.tabs.executeScript(tabId, {
         code: `
+visited = new Map(JSON.parse('${JSON.stringify([...visited])}'))
+
+function addStyle(css) {
+    const style = document.createElement('style')
+    style.appendChild(document.createTextNode(css))
+    document.head.appendChild(style)
+}
+
+// returns extra elements to insert in DOM
+function decorateLink(element) {
+    const url = element.href
+    const v = visited.get(url)
+    if (!v) {
+        return // no visits
+    }
+
+    // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
+    element.classList.add('promnesia-visited')
+    // todo could use title??
+
+    return
+    // TODO support this later
+
+    // todo maybe display tag + move info on hover?
+    let popup = document.createElement('div')
+    popup.textContent = 'hi'
+
+    let rect = element.getBoundingClientRect()
+    popup.style.top  = (window.scrollY + rect.top  ).toString() + 'px'
+    popup.style.left = (window.scrollX + rect.right).toString() + 'px'
+    popup.style.zIndex = 9000
+    popup.style.position = 'absolute'
+    return [popup]
+}
+
+function decorateLinks() {
+    let cont = document.createElement('div') // todo class?
+    cont.title = 'promnesia: container for the tooltips'
+    document.body.appendChild(cont)
+
+    for (const link_element of link_elements) {
+        const elems = decorateLink(link_element)
+        if (elems != null) {
+            for (const e of elems) {
+                cont.appendChild(e)
+            }
+        }
+
+    }
+}
+
+addStyle(\`
 .promnesia-visited:after {
   content: "⚫";
   color: #FF4500;
@@ -294,26 +350,12 @@ async function markVisited(tabId) {
   position:absolute;
   z-index:100;
 }
+\`
+)
+
+decorateLinks()
 `
-    });
-    await chromeTabsExecuteScriptAsync(tabId, {
-        code: `
-vis = ${JSON.stringify(vis)}; // madness!
-{
-for (var i = 0; i < link_elements.length; i++) {
-    const a_tag = link_elements[i];
-    let url = a_tag.href;
-    if (url == null) {
-        continue;
-    }
-    if (vis[url] === true) {
-        // console.log("adding class to ", a_tag);
-        a_tag.classList.add('promnesia-visited');
-    }
-}
-}
-`
-    });
+    })
 }
 
 // ok, looks like this one was excessive..
@@ -503,7 +545,7 @@ async function handleMarkVisited() {
         return
     }
     let {tid: tid} = should
-    await markVisited(tid) // no need to await?
+    await doMarkVisited(tid) // no need to await?
 }
 
 async function handleOpenSearch(p: SearchPageParams = {}) {
