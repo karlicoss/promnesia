@@ -4,10 +4,19 @@
  * In addition to sources indexed on the backend, some stuff lives inside the browser, e.g. local history + bookmarks
  */
 
+/*
+ * Error handling strategy for individual data sources
+ * - if it's a critical error (network/deserialising/etc/just programming error), propagate it up as Error
+ * - if it's an individual item that's failed, put in in the Visits as Error
+ *
+ * TODO after that would be kinda nice to tell apart critical and non-critical errors?
+ * but unclear how, typing doesn't really help here..
+ * for now it's all just squashed into Visits.. but later might reconsider
+ */
 
 import type {Url, AwareDate, NaiveDate} from './common'
 import {Visit, Visits} from './common'
-import {backend, getBackendVisits} from './api'
+import {backend} from './api'
 import {THIS_BROWSER_TAG} from './options'
 import {normalise_url} from './normalise'
 import type {HistoryItem} from './async_chrome'
@@ -59,7 +68,7 @@ export const thisbrowser = {
         return new Visits(url, nurl, visits)
     },
     // TODO hmm I guess it's not necessarily searching url? any text
-    search: async function(url: Url): Promise<Visits> {
+    search: async function(url: Url): Promise<Visits | Error> {
         // TODO merge with actual visits for exact match?
         const android = await isAndroid()
         if (android) {
@@ -86,7 +95,7 @@ export const thisbrowser = {
         }
         return new Visits(url, nurl, visits)
     },
-    searchAround: async function(utc_timestamp_s: number): Promise<Visits> {
+    searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
         const durl  = 'http://dummy.xyz'
         const ndurl = normalise_url(durl)
         const android = await isAndroid()
@@ -254,18 +263,31 @@ export const bookmarks = {
 }
 
 
-async function _merge(ra: Visits, b: Promise<Visits>, c: Promise<Visits>): Promise<Visits> {
-    const rb = await b
-    const rc = await c
-    const merged = [
-        ...ra.visits,
-        ...rb.visits,
-        ...rc.visits,
-    ]
+async function _merge(url: ?string, ...args: Array<Promise<Visits | Error>>): Promise<Visits | Error> {
+    let rurl  = null
+    let rnurl = null
+    const parts = []
+    for (const p of args) {
+        const r = await p
+        if (r instanceof Error) {
+            parts.push([r])
+        } else {
+            if (rurl == null) {
+                // generally, prefer whatever backend has returned
+                rurl  = r.original_url
+                rnurl = r.normalised_url
+            }
+            parts.push(r.visits)
+        }
+    }
+    if (rurl == null || rnurl == null) {
+        rurl  = url || 'http://ERROR.ERROR' // last resort measure
+        rnurl = normalise_url(rurl)
+    }
     return new Visits(
-        ra.original_url,
-        ra.normalised_url,
-        merged,
+        rurl,
+        rnurl,
+        [].concat(...parts),
     )
 }
 
@@ -275,46 +297,28 @@ export const allsources = {
      * mainly used in the sidebar
      */
     visits: async function(url: Url): Promise<Visits | Error> {
-        // TODO hmm. maybe have a special 'error' visit so we could just merge visits here?
-        // it's gona be a mess though..
-        const from_backend: Visits | Error = await getBackendVisits(url)
-            .catch((err: Error) => err)
-
-        // TODO def need to mixin and display all
-        if (from_backend instanceof Error) {
-            console.error('backend server request error: %o', from_backend)
-            return from_backend
-        }
-
         return _merge(
-            from_backend,
+            url,
+            backend    .visits(url),
             thisbrowser.visits(url),
-            bookmarks  .visits(url)
+            bookmarks  .visits(url),
         )
     },
     /*
      * ideally finds anything containing the query, used in search tab
      */
     search: async function(url: Url): Promise<Visits | Error> {
-        const from_backend = await backend.search(url)
-        if (from_backend instanceof Error) {
-            console.error('backend server request error: %o', from_backend)
-            return from_backend
-        }
         return _merge(
-            from_backend,
+            url,
+            backend    .search(url),
             thisbrowser.search(url),
             bookmarks  .search(url),
         )
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
-        const from_backend = await backend.searchAround(utc_timestamp_s)
-        if (from_backend instanceof Error) {
-            console.error('backend server request error: %o', from_backend)
-            return from_backend
-        }
         return _merge(
-            from_backend,
+            null,
+            backend    .searchAround(utc_timestamp_s),
             thisbrowser.searchAround(utc_timestamp_s),
             bookmarks  .searchAround(utc_timestamp_s),
         )
