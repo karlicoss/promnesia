@@ -147,7 +147,7 @@ export class Visits {
             return (v instanceof Visit)
                 ? v.toJObject()
                 // $FlowFixMe
-                : {error: v.message}
+                : {error: v.message, stack: v.stack}
         })
         return o
     }
@@ -155,7 +155,14 @@ export class Visits {
     static fromJObject(o: any): Visits {
         o.visits = o.visits.map(x => {
             const err = x.error
-            return err != null ? new Error(err): Visit.fromJObject(x)
+            if (err != null) {
+                const e = new Error(err)
+                // todo preserve name?
+                e.stack = x.stack
+                return e
+            } else {
+                return Visit.fromJObject(x)
+            }
         })
         // $FlowFixMe
         const r = new Visits()

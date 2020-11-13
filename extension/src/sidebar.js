@@ -261,22 +261,6 @@ async function tryHighlight(text: string, idx: number) {
     }
 }
 
-// used dynamically
-// eslint-disable-next-line no-unused-vars
-async function bindError(message: string) {
-    const opts = await getOptions();
-    const sidebar = new Sidebar(opts);
-
-    const cont = await sidebar.getContainer();
-    await sidebar.clear(); // todo probably, unnecessary?
-
-    const binder = new Binder(doc, opts)
-    const items = binder.makeChild(cont, 'ul')
-    // todo meh, copypaste..
-    items.id = Ids.VISITS
-    await binder.renderError(items, message)
-}
-
 
 /**
  * yields UI updates, so it's possible to schedule them in blocks and avoid blocking
@@ -300,7 +284,7 @@ async function* _bindSidebarData(response: Visits) {
     const [visits, errors] = response.partition()
 
     for (const err of errors) {
-        await binder.renderError(items, err.toString())
+        await binder.renderError(items, err)
     }
 
     visits.sort((f, s) => {
@@ -475,8 +459,7 @@ async function bindSidebarData(response: Visits) {
 
 
 // hmm. otherwise it can't be called from executescript??
-window.bindSidebarData = bindSidebarData;
-window.bindError = bindError;
+window.bindSidebarData = bindSidebarData
 
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??

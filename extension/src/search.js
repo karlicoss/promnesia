@@ -81,7 +81,7 @@ async function* _doSearch(
     // TODO use something more generic for that!
 
     for (const err of errors) {
-        await binder.renderError(res, err.toString())
+        await binder.renderError(res, err)
     }
 
     const ONE_CHUNK = 250

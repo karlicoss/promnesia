@@ -63,7 +63,11 @@ function getIconStyle(result: Result): IconStyle {
         return {icon: 'images/ic_blacklisted_48.png', title: `Blacklisted: ${result.reason}`, text: ''}
     }
 
-    // TODO I guess it's king of 'critical error'?
+    // TODO I guess it's kind of 'critical error'?
+    // TODO could check if it's a network error
+    // then if it's offline, detect it and set a non-error indicator?
+    // https://stackoverflow.com/a/42334842/706389
+    // but considering 99% of usecases are localhost, doesn't matter
     if (result instanceof Error) {
         return {icon: 'images/ic_error.png'         , title: `ERROR: ${result.message}`, text: ''}
     }
@@ -141,7 +145,7 @@ async function updateState (tab: chrome$Tab) {
     await defensify(inject, `sidebar injection for tabId: ${tabId} url: ${url}`)();
     // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
 
-    const visits = await getVisits(url);
+    let visits = await getVisits(url)
     let {icon, title, text} = getIconStyle(visits);
 
     // TODO move to getIconStyle??
@@ -197,42 +201,43 @@ async function updateState (tab: chrome$Tab) {
         }
     }
 
-    // TODO ok, could bind blacklist here as well.. but later
-    // TODO wonder if I can do exhaustive check?
+    if (visits instanceof Blacklisted) {
+        // FIXME not sure if can even happend here??
+        return
+    }
+
     if (visits instanceof Error) {
-        // TODO share code with the Visits branch
-        await chromeTabsExecuteScriptAsync(tabId, {
-            code: `bindError("${visits.message}")`
-        });
-    } else if (visits instanceof Visits) {
-        // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
-        // TODO and show system wide notification instead of tab notification?
-        // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
-        // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
-        // a little hacky, but kinda works? in Firefox too apparently
-        const isOk = (await achrome.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg';
+        // meh. but I guess kinda does the trick
+        visits = new Visits(url, url, [visits])
+    }
+    console.assert(visits instanceof Visits)
+  
+    // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
+    // TODO and show system wide notification instead of tab notification?
+    // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
+    // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
+    // a little hacky, but kinda works? in Firefox too apparently
+    const isOk = (await achrome.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg'
 
-        // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
-        const locs = visits.self_contexts().map(l => l == null ? null : l.title);
-        if (locs.length !== 0) {
-            const msg = `${locs.length} contexts!\n${locs.join('\n')}`;
-            if (opts.contexts_popup_on) {
-                await showTabNotification(tabId, msg);
-            }
+    // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
+    const locs = visits.self_contexts().map(l => l == null ? null : l.title)
+    if (locs.length !== 0) {
+        const msg = `${locs.length} contexts!\n${locs.join('\n')}`
+        if (opts.contexts_popup_on) {
+            await showTabNotification(tabId, msg)
         }
+    }
 
-        if (isOk) {
-            // TODO even compiling this takes 50ms if 10K visits??
-            // faster means of communication are going to require
-            // so perhaps instead, truncate and suggest to use 'search-like' interface
-            chrome.tabs.sendMessage(tabId, {
-                method: Methods.BIND_SIDEBAR_VISITS,
-                data  : visits
-            })
-            // TODO is it possible to do dom operations in the background??
-        } else {
-            console.warn("TODO implement binding visits to popup?");
-        }
+    if (isOk) {
+        // TODO even compiling this takes 50ms if 10K visits??
+        // faster means of communication are going to require
+        // so perhaps instead, truncate and suggest to use 'search-like' interface
+        chrome.tabs.sendMessage(tabId, {
+            method: Methods.BIND_SIDEBAR_VISITS,
+            data  : visits.toJObject(),
+        })
+    } else {
+        console.warn("FIXME implement binding visits to popup? or at least show error message")
     }
 }
 
