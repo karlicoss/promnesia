@@ -1,7 +1,7 @@
 /* @flow */
 
 import type {Url, SearchPageParams} from './common';
-import {Visits, Blacklisted, unwrap, Methods} from './common'
+import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
@@ -278,7 +278,7 @@ async function doMarkVisited(tabId: number) {
         return
     }
 
-    const visited: Map<Url, boolean> = new Map()
+    const visited: Map<Url, boolean | Visit> = new Map()
     for (let i = 0; i < page_urls.length; i++) {
         visited.set(page_urls[i], resp[i]) // response guaranteed to have the same length
     }
