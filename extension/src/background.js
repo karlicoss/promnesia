@@ -258,8 +258,9 @@ async function doMarkVisited(tabId: number) {
     // collect URLS from the page
     const mresults = await achrome.tabs.executeScript(tabId, {
         code: `
-     link_elements = document.getElementsByTagName("a")
-     Array.from(link_elements).map(el => {
+     // NOTE: important to make a snapshot here.. otherwise might go in an infinite loop
+     link_elements = Array.from(document.getElementsByTagName("a"))
+     link_elements.map(el => {
         try {
             // handle relative urls
             return new URL(el.href, document.baseURI).href
