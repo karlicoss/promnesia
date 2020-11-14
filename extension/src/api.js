@@ -6,7 +6,7 @@
 
 
 import type {Locator, Src, Url, Second, JsonObject, AwareDate, NaiveDate} from './common'
-import {Visit, Visits} from './common'
+import {unwrap, Visit, Visits} from './common'
 import {getOptions} from './options'
 import {normalise_url} from './normalise'
 
@@ -17,7 +17,7 @@ type VisitsResponse = {
     normalised_url: string,
 }
 
-type VisitedResponse = Array<boolean>
+type VisitedResponse = Array<?Visit>
 
 export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R | Error> {
     const opts = await getOptions()
@@ -40,7 +40,7 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
             // $FlowFixMe
             let urls: Array<Url> = params['urls']
             const res: VisitedResponse = new Array(urls.length)
-            res.fill(false)
+            res.fill(null)
             return ((res: any): R)
         } else {
             throw new Error(`'${endp}' isn't implemented without the backend yet. Please set host in the extension settings.`)
@@ -124,7 +124,8 @@ export const backend = {
                .catch((err: Error) => err)
     },
     visited: async function(urls: Array<Url>): Promise<VisitedResponse | Error> {
-        return await queryBackendCommon<Array<boolean>>({urls: urls}, 'visited')
+        return await queryBackendCommon<JsonObject>({urls: urls}, 'visited')
+               .then(r => (r instanceof Error) ? r : r.map(rawToVisit))
                .catch((err: Error) => err)
     },
 }
@@ -136,24 +137,29 @@ function rawToVisits(vis: VisitsResponse | Error): Visits | Error {
     }
     // TODO filter errors? not sure.
     // TODO this could be more defensive too
-    const visits = vis['visits'].map(v => {
-        const dts = v['dt']
-        // NOTE: server returns a string with TZ offset
-        // Date class in js always keeps UTC inside
-        // so we just use two separate values and treat them differently
-        const dt_utc   = ((new Date(dts)                           : any): AwareDate)
-        const dt_local = ((new Date(dts.slice(0, -' +0000'.length)): any): NaiveDate)
-        const vtags: Array<Src> = [v['src']]; // todo hmm. shouldn't be array?
-        const vourl: string = v['original_url'];
-        const vnurl: string = v['normalised_url'];
-        const vctx: ?string = v['context'];
-        const vloc: ?Locator = v['locator']
-        const vdur: ?Second = v['duration'];
-        return new Visit(vourl, vnurl, dt_utc, dt_local, vtags, vctx, vloc, vdur);
-    });
+    const visits = vis['visits'].map(x => unwrap(rawToVisit(x)))
     return new Visits(
         vis['original_url'],
         vis['normalised_url'],
         visits
-    );
+    )
+}
+
+function rawToVisit(v: ?JsonObject): ?Visit {
+    if (v == null) {
+        return null
+    }
+    const dts = v['dt']
+    // NOTE: server returns a string with TZ offset
+    // Date class in js always keeps UTC inside
+    // so we just use two separate values and treat them differently
+    const dt_utc   = ((new Date(dts)                           : any): AwareDate)
+    const dt_local = ((new Date(dts.slice(0, -' +0000'.length)): any): NaiveDate)
+    const vtags: Array<Src> = [v['src']] // todo hmm. shouldn't be array?
+    const vourl: string = v['original_url']
+    const vnurl: string = v['normalised_url']
+    const vctx: ?string = v['context']
+    const vloc: ?Locator = v['locator']
+    const vdur: ?Second = v['duration']
+    return new Visit(vourl, vnurl, dt_utc, dt_local, vtags, vctx, vloc, vdur)
 }
