@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 from pathlib import Path
 import logging
 from functools import lru_cache
-from typing import Collection, List, NamedTuple, Dict, Optional, Any
+from typing import Collection, List, NamedTuple, Dict, Optional, Any, Tuple
 
 from cachew import NTBinder
 
@@ -150,8 +150,7 @@ def search_common(url: str, where):
     engine, binder, table = get_stuff()
 
     query = table.select().where(where(table=table, url=url))
-
-    logger.info('query: %s', query)
+    logger.debug('query: %s', query)
 
     with engine.connect() as conn:
         try:
@@ -281,12 +280,32 @@ def search_around(
         ),
     )
 
+# before 0.11.14 (including), extension didn't share the version
+# so if it's not shared, assume that version
+_NO_VERSION = (0, 11, 14)
+_LATEST = (9999, 9999, 9999)
+
+def as_version(version: str) -> Tuple[int, int, int]:
+    if version == '':
+        return _NO_VERSION
+    try:
+        [v1, v2, v3] = map(int, version.split('.'))
+        return (v1, v2, v3)
+    except Exception as e:
+        logger = get_logger()
+        logger.error('error while parsing version %s', version)
+        logger.exception(e)
+        return _LATEST
+
+
 @hug.local()
 @hug.post('/visited')
 def visited(
-        urls, # TODO type
+        urls,
+        client_version: str='',
 ):
     logger = get_logger()
+    version = as_version(client_version)
 
     nurls = [canonify(u) for u in urls]
     engine, binder, table = get_stuff()
@@ -312,18 +331,23 @@ SELECT queried, visits.*
         Column('match', types.Unicode),
         *table.columns,
     )
+    # TODO ugh, def need to profile this properly...
     # hmm that was quite slow...
     # SELECT queried FROM cte WHERE EXISTS (SELECT 1 FROM visits WHERE queried = visits.norm_url)
-    logger.debug(bdict)
-    logger.debug(query)
+    # logger.debug(bdict)
+    # logger.debug(query)
     with engine.connect() as conn:
         res = list(conn.execute(query))
         present = {row[0]: binder.from_row(row[1:]) for row in res}
-    print(present)
     results = []
     for nu in nurls:
         r = present.get(nu, None)
         results.append(None if r is None else as_json(r))
+
+    if version <= (0, 11, 14):
+        # older extension versions expected boolean result here
+        results = [r is not None for r in results] # type: ignore[misc]
+
     return results
 
 
