@@ -8,6 +8,7 @@
 
 <body>
 
+    <!-- TODO link from the page here straight to the features? -->
     <fieldset>
         <legend><strong>Don't forget to save settings after changing</strong></legend>
         <button id="save_id">Save</button>
@@ -16,7 +17,7 @@
     <fieldset>
         <legend>Troubleshoot</legend>
         <div>
-            See <a href="https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org">troubleshooting guide</a>
+            See <a href="https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org">troubleshooting guide/help</a>
         </div>
         <div>
             If you messed up any extension settings, you can check
@@ -56,12 +57,6 @@ Note that these sources aren't typicaly as useful as the backend ones, and suppo
 
     <fieldset>
         <legend>Behaviour</legend>
-        <!-- <table> -->
-        <!-- <tr> -->
-        <!-- <td><input type="checkbox"  id="dots_id"/></td> -->
-        <!-- <td><label for="dots_id">Show dots</label></td> -->
-        <!-- </tr> -->
-        <!-- </table> -->
         <table>
             <tr>
                 <td><input type="checkbox" id="detect_sidebar_urls_id"/></td>
@@ -69,7 +64,15 @@ Note that these sources aren't typicaly as useful as the backend ones, and suppo
             </tr>
             <tr>
                 <td><input type="checkbox" id="highlight_id"/></td>
-                <td><label for="highlight_id">Highlight contexts (experimental, may result in slowdown on huge pages)</label></td>
+                <td><label for="highlight_id">
+                    Highlight <a href="https://github.com/karlicoss/promnesia#glossary">contexts</a> (experimental, may result in slowdown on huge pages)
+                </label></td>
+            </tr>
+            <tr>
+                <td><input  id="always_mark_visited_id" type="checkbox"/></td>
+                <td><label for="always_mark_visited_id">
+                    Always <a href="https://karlicoss.github.io/promnesia-demos/mark-visited.webm">'mark visited'</a> on page load (experimental, may result in slowdowns/glitches)
+                </label></td>
             </tr>
             <tr>
                 <td><input type="checkbox" id="contexts_popup_id"/></td>
@@ -123,12 +126,14 @@ They will be autoupdated every 3 days. Spec format (Json):<pre>[
         <div class="description">Not very documented at the moment; you can use your browser devtools to experiment</div>
         <div id="position_css_id"></div>
     </fieldset>
-    <fieldset>
-        <legend>Sidebar style (DEPRECATED!)</legend>
-        <div>If you had any settings here, please move them to the field above</div>
-        <div id="extra_css_id"></div>
-    </fieldset>
-
+    <details>
+        <summary>Deprecated/misc settings</summary>
+        <fieldset>
+            <legend>Sidebar style (DEPRECATED!)</legend>
+            <div>If you had any settings here, please move them to the field above</div>
+            <div id="extra_css_id"></div>
+        </fieldset>
+    </details>
     <script src="options_page.js"/></script>
 </body>
 </html>

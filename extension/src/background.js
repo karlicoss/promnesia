@@ -29,21 +29,11 @@ async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction
 
 type Result = Visits | Blacklisted | Error
 
-export async function getVisits(url: Url): Promise<Result> {
-    const blacklist = await Blacklist.get()
-    const bl = await blacklist.contains(url);
-    if (bl != null) {
-        return new Blacklisted(url, bl);
-    }
-
-    return await allsources.visits(url)
-}
-
 type IconStyle = {
     icon: string,
     title: string,
     text: string,
-};
+}
 
 
 // TODO this can be tested?
@@ -118,8 +108,7 @@ async function updateState (tab: chrome$Tab) {
         return
     }
 
-    const opts = await getOptions();
-    // TODO this should be executed as an atomic block?
+    const opts = await getOptions()
 
     const inject = () => chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'})
     // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
@@ -135,8 +124,22 @@ async function updateState (tab: chrome$Tab) {
     await defensify(inject, `sidebar injection for tabId: ${tabId} url: ${url}`)();
     // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
 
-    let visits = await getVisits(url)
-    let {icon, title, text} = getIconStyle(visits);
+
+    let visits: Result
+    const blacklist = await Blacklist.get()
+    const bl = await blacklist.contains(url)
+    if (bl != null) {
+        visits = new Blacklisted(url, bl)
+    } else {
+        // ok to query
+        if (opts.always_mark_visited) {
+            // no need to await? it can work in parallel
+            doMarkVisited(tabId)
+        }
+        visits = await allsources.visits(url)
+    }
+
+    let {icon, title, text} = getIconStyle(visits)
 
     // TODO move to getIconStyle??
     if (visits instanceof Visits) {
@@ -500,7 +503,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         const should = await shouldProcessPage(atab)
         if (should) {
             const {url: url} = should
-            const visits = await getVisits(url)
+            const visits = await allsources.visits(url)
             if (visits instanceof Visits) {
                 return visits.toJObject()
             } else {
