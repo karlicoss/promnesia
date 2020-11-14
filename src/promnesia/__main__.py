@@ -87,7 +87,7 @@ def demo_sources():
 
 
 
-def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path]):
+def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name='demo'):
     logger = get_logger()
     from pprint import pprint
     with TemporaryDirectory() as tdir:
@@ -97,7 +97,7 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
             config.load_from(config_file)
         else:
             idx = demo_sources()[index_as]()
-            src = Source(idx, *params)
+            src = Source(idx, *params, name=name)
             cfg = config.Config(
                 OUTPUT_DIR=outdir,
                 SOURCES=[src],
@@ -222,6 +222,7 @@ def main() -> None:
     # TODO use docstring or something?
     #
 
+    ap.add_argument('--name', type=str, default='demo'               , help='Set custom source name')
     ap.add_argument('--port', type=str, default='13131'              , help='Port to serve on')
     ap.add_argument('--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server')
     ap.add_argument('--config', type=Path, required=False            , help='Config to run against. If omitted, will use empty base config')
@@ -264,7 +265,9 @@ def main() -> None:
         elif args.mode == 'serve':
             server.run(args)
         elif args.mode == 'demo':
-            do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port, config_file=args.config)
+            # TODO not sure if 'as' is that useful
+            # something like Telegram/Takeout is too hard to setup to justify adhoc mode like this?
+            do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port, config_file=args.config, name=args.name)
         elif args.mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
         elif args.mode == 'config':
