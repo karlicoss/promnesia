@@ -9,6 +9,7 @@ function createLink(href, title) {
     const a = document.createElement('a')
     a.title = title
     a.href  = href
+    a.style.color = 'blue' // sometimes parent overrides it?
     a.appendChild(document.createTextNode(title))
     return a
 }
@@ -24,13 +25,16 @@ function formatVisit(v) {
     e.style.maxWidth = '120ch'
     const {
         original_url: original,
+        normalised_url: normalised,
         dt_local    : dt,
         tags        : tags,
         context     : context,
         locator     : locator,
     } = v
     appendText(e, 'original: ')
-    e.appendChild(createLink(original, original))
+    const l = createLink(original, original)
+    l.title = `normalised: ${normalised}`
+    e.appendChild(l) // meh
     appendText(e, `\ndt      : ${new Date(dt).toLocaleString()}`) // meh
     appendText(e, `\ntags    : ${tags.join(' ')}`)
     if (context != null) {
@@ -60,6 +64,10 @@ function decorateLink(element) {
     let eyecolor = '#550000' // 'boring'
 
     const eye = document.createElement('span')
+    // for debugging
+    eye.dataset.promnesia_original   = v.original_url
+    eye.dataset.promnesia_normalised = v.normalised_url
+    //
     eye.classList.add('nonselectable')
     eye.textContent = '👁'
     eye.style.color = eyecolor
@@ -147,24 +155,29 @@ function decorateLinks() {
     let cont = document.createElement('div') // todo class?
     document.body.appendChild(cont)
 
-    // TODO make this async via setTimeout, just in case it's slow?
-
     // 'link_elements' passed in background.js
     // eslint-disable-next-line no-undef
-    for (const link_element of link_elements) {
-        let elems = null
-        try { // best to be defensive here..
-            elems = decorateLink(link_element)
-        } catch (e) {
-            console.error(e)
-        }
+    const elements = link_elements
+    const ONE_GROUP = 20
+    for (let i = 0; i < elements.length; i += ONE_GROUP) {
+        const group = elements.slice(i, i + ONE_GROUP)
+        // not necessary, but bet to process asynchronously to avoid performance issues
+        setTimeout(() => {
+            for (const link of group) {
+                let elems = null
+                try { // best to be defensive here..
+                    elems = decorateLink(link)
+                } catch (e) {
+                    console.error(e)
+                }
 
-        if (elems != null) {
-            for (const e of elems) {
-                cont.appendChild(e)
+                if (elems != null) {
+                    for (const e of elems) {
+                        cont.appendChild(e)
+                    }
+                }
             }
-        }
-
+        })
     }
 }
 
