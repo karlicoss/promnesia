@@ -240,9 +240,11 @@ def search(
     return search_common(
         url=url,
         where=lambda table, url: or_(
-            table.c.norm_url.contains(url, autoescape=True),
-            # TODO hmm. think about it, not sure if I need proper indexer for fuzzy search etc?
-            table.c.context.contains(url, autoescape=True),
+            # todo hmm. think about it, not sure if I need proper indexer for fuzzy search etc?
+            table.c.norm_url     .contains(url, autoescape=True),
+            table.c.orig_url     .contains(url, autoescape=True),
+            table.c.context      .contains(url, autoescape=True),
+            table.c.locator_title.contains(url, autoescape=True),
         ),
     )
 
