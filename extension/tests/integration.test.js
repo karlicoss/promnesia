@@ -14,6 +14,7 @@ global.chrome = {
     runtime: {
         lastError: null,
         getPlatformInfo: (res) => { res({}) },
+        getManifest    : () => { return {version: 'whatever'} },
     }
 }
 

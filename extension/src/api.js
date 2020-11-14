@@ -19,7 +19,8 @@ type VisitsResponse = {
 
 type VisitedResponse = Array<?Visit>
 
-export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R | Error> {
+// TODO ugh, why params: {} not working??
+export async function queryBackendCommon<R>(params: any, endp: string): Promise<R | Error> {
     const opts = await getOptions()
     if (opts.host == '') { // use 'dummy' backend
         // the user only wants to use browser visits?
@@ -48,6 +49,7 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
     }
 
     const endpoint = `${opts.host}/${endp}`
+    params['client_version'] = chrome.runtime.getManifest().version
 
     function with_stack(e: Error): Error {
         const stack = []
