@@ -34,7 +34,7 @@ const DELTA_FRONT_S = 2 * 60      // 2min
 
 
 // can be false, if no associated visits, otherwise true or an actual Visit if it's available
-type VisitedResult = Array<boolean | Visit>
+type VisitedResult = Array<boolean | ?Visit>
 
 // TODO eh, confusing that we have backend sources.. and these which are also sources, at the same time
 interface VisitsSource {
@@ -289,15 +289,18 @@ export const bookmarks: VisitsSource = {
         }
 
         const root = (await achrome.bookmarks.getTree())[0]
-        const allBookmarks = bookmarksContaining('', root, null)
+        const all = bookmarksContaining('', root, null)
 
-        const nurls = new Set(Array.from(
-            allBookmarks,
-            ({bm: _bm, nurl: nurl, path: _path}) => nurl,
-        ))
-
+        const vmap: Map<Url, Visit> = new Map()
+        // TODO hopefully this is not too slow?
+        for (const v of bookmarks2visits(all)) {
+            const nu = v.normalised_url
+            if (!vmap.has(nu)) {
+                vmap.set(nu, v) // first to set wins
+            }
+        }
         // todo normalised url might be worth a separate type..
-        return urls.map(u => nurls.has(normalise_url(u)))
+        return urls.map(u => vmap.get(normalise_url(u)) || null)
     }
 }
 

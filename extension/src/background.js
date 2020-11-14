@@ -279,7 +279,7 @@ async function doMarkVisited(tabId: number) {
         return
     }
 
-    const visited: Map<Url, boolean | Visit> = new Map()
+    const visited: Map<Url, boolean | ?Visit> = new Map()
     for (let i = 0; i < page_urls.length; i++) {
         visited.set(page_urls[i], resp[i]) // response guaranteed to have the same length
     }
