@@ -4,8 +4,7 @@
     "description": "Indicates whether and when the page was visited (and more!)",
     "web_accessible_resources": [
         "sidebar.js",
-        "sidebar.css",
-        "vendors_anchorme.js"
+        "sidebar.css"
     ],
     "background": {
         "scripts": ["background.js"],
