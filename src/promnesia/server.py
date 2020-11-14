@@ -20,6 +20,7 @@ import hug.types as T # type: ignore
 
 from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc # type: ignore
 from sqlalchemy import Column, Table, func, types # type: ignore
+from sqlalchemy.sql import text # type: ignore
 
 
 from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3, get_system_zone
@@ -285,11 +286,7 @@ def visited(
 ):
     logger = get_logger()
 
-    logger.debug(urls)
-    norms = [(u, canonify(u)) for u in urls]
-    # logger.debug('\n'.join(f'{u} -> {nu}' for u, nu in norms))
-
-    nurls = [n[1] for n in norms]
+    nurls = [canonify(u) for u in urls]
     engine, binder, table = get_stuff()
 
     snurls = list(sorted(set(nurls)))
@@ -298,25 +295,28 @@ def visited(
     # https://stackoverflow.com/questions/13190392/how-can-i-bind-a-list-to-a-parameter-in-a-custom-query-in-sqlalchemy
     bstring = ','.join(f'(:b{i})'   for i, _ in enumerate(snurls))
     bdict = {            f'b{i}': v for i, v in enumerate(snurls)}
-
-    query = f"""
+    # TODO hopefully, visits.* thing only returns one visit??
+    query = text(f"""
 WITH cte(queried) AS (SELECT * FROM (values {bstring}))
-SELECT queried
+SELECT queried, visits.*
     FROM cte JOIN visits
     ON queried = visits.norm_url
-    """
+    """).bindparams(**bdict).columns(
+        Column('match', types.Unicode),
+        *table.columns,
+    )
     # hmm that was quite slow...
     # SELECT queried FROM cte WHERE EXISTS (SELECT 1 FROM visits WHERE queried = visits.norm_url)
     logger.debug(bdict)
     logger.debug(query)
     with engine.connect() as conn:
-        res = list(conn.execute(query, bdict))
-        present = {x[0] for x in res}
-    results = [nu in present for nu in nurls]
-
-    # logger.debug('\n'.join(
-    #     f'{"X" if v else "-"} {u} -> {nu}' for v, (u, nu) in zip(results, norms)
-    # ))
+        res = list(conn.execute(query))
+        present = {row[0]: binder.from_row(row[1:]) for row in res}
+    print(present)
+    results = []
+    for nu in nurls:
+        r = present.get(nu, None)
+        results.append(None if r is None else as_json(r))
     return results
 
 
