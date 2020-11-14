@@ -63,7 +63,7 @@ function decorateLink(element) {
     }
 
     element.classList.add('promnesia-visited')
-    if (v == true) {
+    if (v === true) {
         // nothing else interesting we can do with such visit
         return
     }

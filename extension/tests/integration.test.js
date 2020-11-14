@@ -28,7 +28,7 @@ import fetch from 'node-fetch'
 global.fetch = fetch
 
 
-import {backend} from '../src/api'
+import {backend, makeFakeVisits} from '../src/api'
 test('visits', async() => {
     // const opts = await getOptions()
     // opts.host = host: 'http//bad.host',
@@ -90,7 +90,7 @@ test('search_defensive', async() => {
     console.error(res.visits)
     const [e1, e2, e3] = res.visits
     // eh. fragile, but at least makes sure we test exactly the thing we want
-    expect(e1.message).toMatch(/results is not iterable/)
+    expect(e1.message).toMatch(/is not iterable/)
     expect(e2.message).toMatch(/Cannot read property/)
     expect(e3.message).toMatch(/request .* failed/)
 })
@@ -104,7 +104,31 @@ import fetchMock from 'jest-fetch-mock'
 
 test('visits_badresponse', async() => {
     fetchMock.enableMocks()
-    fetchMock.mockResponse({body: 'bad!'})
+    fetchMock.mockResponse('bad!')
     const res = await backend.visits('http://mock.com')
     expect(res).toBeInstanceOf(Error)
+})
+
+
+import {fake} from '../src/api'
+
+test('visited', async() => {
+    fetchMock.enableMocks()
+    const [v] = fake.apiVisits(1)
+    {
+        fetchMock.mockOnce(`[null, ${JSON.stringify(v)}]`)
+        const r = await backend.visited(['http://link1', 'http://link2'])
+        expect(r).not.toBeInstanceOf(Error)
+        const [r1, r2] = r
+        expect(r1).toEqual(null)
+        expect(r2.tags).toEqual(['fake'])
+    }
+
+    {
+        // the backend is also allowed to return boolean values (for 'was visited'/'was not visited')
+        // in addition, this was legacy behaviour
+        fetchMock.mockOnce(`[false, true, null]`)
+        let r = await backend.visited(['http://link1', 'http://link2', 'http://link3'])
+        expect(r).toEqual([false, true, null])
+    }
 })
