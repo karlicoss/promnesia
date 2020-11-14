@@ -215,31 +215,49 @@ function findText(elem: Node, text: string): ?Node {
     return null
 }
 
+const _HL_CLASS = 'promnesia-highlight'
+
 // TODO not very effecient; replace with something existing (Hypothesis??)
-function _highlight(text: string, idx: number) {
+function _highlight(text: string, idx: number, v: Visit) {
     const to_hl = []
     for (const line of text.split('\n')) {
-        // TODO filter too short strings? or maybe only pick the longest one?
-        const found = findText(unwrap(doc.body), _sanitize(line));
-        if (found == null) {
-            console.debug('No match found for %s', line);
-            continue;
+        const sline = _sanitize(line)
+        if (sline.length <= 3) {
+            console.debug("line '%s' was completely sanitized/too short.. skipping", line)
+            continue
         }
-        console.debug("highlighting %o %s", found, line);
+        let target = findText(unwrap(doc.body), sline)
+        if (target == null) {
+            console.debug("No match target for '%s'", sline)
+            continue
+        }
+        console.debug("highlighting %o %s", target, sline)
 
-        // $FlowFixMe
-        const target: HTMLElement = unwrap(found.nodeType == Node.TEXT_NODE ? found.parentElement : found);
+        // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
+        while (target != null && target.nodeType != Node.ELEMENT_NODE) {
+            target = target.parentElement
+        }
+
+        if (target == null) {
+            // eh. only text nodes are present, can't attach highlight to anything
+            continue
+        }
+        target = ((target: any): HTMLElement)
+
+        if (target.classList.contains(_HL_CLASS)) {
+            continue // shouldn't act on self
+        }
 
         if (target.classList.contains('toastify')) {
-            // TODO hacky...
-            continue;
+            // hacky.. to avoid a race condition when toast notification is shown
+            continue
         }
 
         // TODO why doesn't flow warn about this??
         // target.name === 'body'
         if (target === doc.body) {
             // meh, but otherwise too spammy
-            console.info('body matched for highlight; skipping it')
+            console.debug('body matched for highlight; skipping it')
             continue;
         }
         const d = unwrap(document.documentElement)
@@ -250,27 +268,30 @@ function _highlight(text: string, idx: number) {
             console.warn('matched element %o is too big (ratio %f > %f). skipping it', target, ratio, RATIO)
             continue
         }
+        console.info("'%s': matched %o", sline, target)
+
         // defer changing DOM to avoid reflow? not sure if actually an issue but just in case..
         // https://gist.github.com/paulirish/5d52fb081b3570c81e3a
         to_hl.push(target)
     }
     for (const target of to_hl) {
-        target.classList.add('promnesia-highlight');
+        target.classList.add(_HL_CLASS)
         const ref = doc.createElement('span');
         ref.classList.add('promnesia-highlight-reference');
         ref.classList.add('nonselectable');
         ref.appendChild(doc.createTextNode(String(idx)));
+        ref.title = `${v.tags.join(' ')} ${(USE_ORIGINAL_TZ ? v.dt_local : v.time).toLocaleString()}`
         target.insertAdjacentElement('beforeend', ref);
     }
 }
 
-async function tryHighlight(text: string, idx: number) {
-    // TODO sidebar could also display if highlight matched or if it's "orphaned"
+async function tryHighlight(text: string, idx: number, v: Visit) {
+    // todo sidebar could also display if highlight matched or if it's "orphaned"
     // TODO use tag color for background?
     try {
-        _highlight(text, idx);
+        _highlight(text, idx, v)
     } catch (error) {
-        console.error('Error while highlighting %s: %o', text, error); // TODO come up with something better..
+        console.error('Error while highlighting %s %o: %o', text, v, error)
     }
 }
 
@@ -380,7 +401,7 @@ async function* _bindSidebarData(response: Visits) {
 
         if (!relative && opts.highlight_on) {
             // TODO ugh. why is it blocking here (judging by the log) even though it's async??
-            tryHighlight(ctx, idx1);
+            tryHighlight(ctx, idx1, v)
         }
 
         const [dates, times] = visit_date_time(v)
