@@ -217,6 +217,7 @@ function findText(elem: Node, text: string): ?Node {
 
 // TODO not very effecient; replace with something existing (Hypothesis??)
 function _highlight(text: string, idx: number) {
+    const to_hl = []
     for (const line of text.split('\n')) {
         // TODO filter too short strings? or maybe only pick the longest one?
         const found = findText(unwrap(doc.body), _sanitize(line));
@@ -241,7 +242,19 @@ function _highlight(text: string, idx: number) {
             console.info('body matched for highlight; skipping it')
             continue;
         }
-
+        const d = unwrap(document.documentElement)
+        const rect = target.getBoundingClientRect()
+        const ratio = (rect.width * rect.height) / (d.scrollWidth * d.scrollHeight)
+        const RATIO = 0.5 // kinda arbitrary
+        if (ratio > RATIO) {
+            console.warn('matched element %o is too big (ratio %f > %f). skipping it', target, ratio, RATIO)
+            continue
+        }
+        // defer changing DOM to avoid reflow? not sure if actually an issue but just in case..
+        // https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+        to_hl.push(target)
+    }
+    for (const target of to_hl) {
         target.classList.add('promnesia-highlight');
         const ref = doc.createElement('span');
         ref.classList.add('promnesia-highlight-reference');
