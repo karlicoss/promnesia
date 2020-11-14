@@ -83,25 +83,10 @@ export async function queryBackendCommon<R>(params: {}, endp: string): Promise<R
 
 // eslint-disable-next-line no-unused-vars
 export function makeFakeVisits(count: number): Visits {
-    const res = []
-    const ref_ms = 1600000000 * 1000
-    for (let i = 0; i < count; i++) {
-        const  d = new Date(ref_ms + i * 1000)
-        res.push(new Visit(
-            `github.com/${i}`,
-            `github.com/${i}`,
-            ((d: any): AwareDate),
-            ((d: any): NaiveDate),
-            ['fake'],
-            i < count / 3 ? null : `context ${i}`,
-            null,
-            null,
-        ))
-    }
     return new Visits(
         'github.com',
         'github.com',
-        res,
+        fake.apiVisits(count).map(v => unwrap(rawToVisit(v))),
     )
 }
 
@@ -125,8 +110,15 @@ export const backend = {
     },
     visited: async function(urls: Array<Url>): Promise<VisitedResponse | Error> {
         return await queryBackendCommon<JsonObject>({urls: urls}, 'visited')
-               .then(r => (r instanceof Error) ? r : r.map(rawToVisit))
-               .catch((err: Error) => err)
+            .then(r => (r instanceof Error) ? r : r.map(x => {
+                if (typeof x === "boolean") {
+                    // legacy behaviour
+                    return x
+                } else { // must be visit
+                    return rawToVisit(x)
+                }
+            }))
+            .catch((err: Error) => err)
     },
 }
 
@@ -154,7 +146,13 @@ function rawToVisit(v: ?JsonObject): ?Visit {
     // Date class in js always keeps UTC inside
     // so we just use two separate values and treat them differently
     const dt_utc   = ((new Date(dts)                           : any): AwareDate)
-    const dt_local = ((new Date(dts.slice(0, -' +0000'.length)): any): NaiveDate)
+    let dtl = new Date(dts.slice(0, -' +0000'.length))
+    // ugh. parsing doesn't even throw?
+    if (isNaN(dtl.getTime())) {
+        console.error('error parsing %s', dts)
+        dtl = new Date(dts)
+    }
+    const dt_local = ((dtl: any): NaiveDate)
     const vtags: Array<Src> = [v['src']] // todo hmm. shouldn't be array?
     const vourl: string = v['original_url']
     const vnurl: string = v['normalised_url']
@@ -162,4 +160,24 @@ function rawToVisit(v: ?JsonObject): ?Visit {
     const vloc: ?Locator = v['locator']
     const vdur: ?Second = v['duration']
     return new Visit(vourl, vnurl, dt_utc, dt_local, vtags, vctx, vloc, vdur)
+}
+
+
+export const fake = {
+    apiVisits: function(count: number): Array<JsonObject> {
+        const res = []
+        const ref_s = 1600000000
+        for (let i = 0; i < count; i++) {
+            res.push({
+                original_url  : `http://github.com/${i}/`,
+                normalised_url: `github.com/${i}`,
+                dt      : new Date((ref_s + i) * 1000).toISOString(),
+                src     : 'fake',
+                context : i < count / 3 ? null : `context ${i}`,
+                locator : null,
+                duration: null,
+            })
+        }
+        return res
+    }
 }
