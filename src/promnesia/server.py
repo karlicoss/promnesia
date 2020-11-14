@@ -301,6 +301,11 @@ WITH cte(queried) AS (SELECT * FROM (values {bstring}))
 SELECT queried, visits.*
     FROM cte JOIN visits
     ON queried = visits.norm_url
+/*  order stuff without contexts last
+    this actually doesn't make sense, locially it should be ASC??
+    but somehow DESC is the one that actually works..
+*/
+    ORDER BY visits.context IS NULL DESC
     """).bindparams(**bdict).columns(
         Column('match', types.Unicode),
         *table.columns,
