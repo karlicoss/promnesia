@@ -294,6 +294,7 @@ function addStyle(css) {
     document.head.appendChild(style)
 }
 
+// TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 // returns extra elements to insert in DOM
 function decorateLink(element) {
     const url = element.href
@@ -302,32 +303,80 @@ function decorateLink(element) {
         return // no visits
     }
 
-    // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
     element.classList.add('promnesia-visited')
-    // todo could use title??
+    if (v == true) {
+        // nothing else interesting we can do with such visit
+        return
+    }
 
-    return
-    // TODO support this later
-
-    // todo maybe display tag + move info on hover?
     let popup = document.createElement('div')
-    popup.textContent = 'hi'
+    let toggler  = document.createElement('span')
+    popup.appendChild(toggler)
+    toggler.textContent = '⚫⚫⚫' // TODO decorate url as well??
+    toggler.classList.add('nonselectable')
 
+    let content = document.createElement('pre')
+    content.textContent = JSON.stringify(v, null, 2) // meh
+    // TODO use an actual style or something?
+    content.style.background = 'lightyellow'
+    content.visibility = 'hidden'
+
+    popup.appendChild(content)
+
+    // TODO would be cool to reuse the same style used by the sidebar...
     let rect = element.getBoundingClientRect()
-    popup.style.top  = (window.scrollY + rect.top  ).toString() + 'px'
-    popup.style.left = (window.scrollX + rect.right).toString() + 'px'
-    popup.style.zIndex = 9000
-    popup.style.position = 'absolute'
+    for (const e of [toggler, content]) {
+        e.style.top  = (window.scrollY + rect.top  ).toString() + 'px'
+        e.style.left = (window.scrollX + rect.right).toString() + 'px'
+        e.style.position = 'absolute'
+    }
+    // logic as follows: when over toggler, show the popup
+    const over = () => {
+       content.classList.remove('nonselectable')
+       content.style.display = 'block'
+       toggler.style.opacity = 1
+
+       toggler.removeEventListener('mouseover', over)
+       toggler.addEventListener   ('mouseout' , out )
+    }
+    // when out toggler, hide it
+    const out = () => {
+       content.classList.add('nonselectable')
+       content.style.display = 'none'
+       toggler.style.opacity = 0.1
+
+       toggler.removeEventListener('mouseout' , out )
+       toggler.addEventListener   ('mouseover', over)
+    }
+    // and click to pin/unpin!
+    const click = () => {
+       const pinned = content.pinned || false
+       if (pinned) {
+           over() // let default behaviour take over
+       } else {
+           toggler.removeEventListener('mouseout' , out)
+           toggler.removeEventListener('mouseover', over)
+       }
+       content.pinned = !pinned
+    }
+    toggler.addEventListener('click', click)
+    out()
+    element.appendChild(popup)
     return [popup]
 }
 
 function decorateLinks() {
     let cont = document.createElement('div') // todo class?
-    cont.title = 'promnesia: container for the tooltips'
     document.body.appendChild(cont)
 
     for (const link_element of link_elements) {
-        const elems = decorateLink(link_element)
+        let elems = null
+        try { // best to be defensive here..
+            elems = decorateLink(link_element)
+        } catch (e) {
+            console.error(e)
+        }
+
         if (elems != null) {
             for (const e of elems) {
                 cont.appendChild(e)
