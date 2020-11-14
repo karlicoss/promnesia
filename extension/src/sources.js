@@ -19,6 +19,7 @@ import {Visit, Visits} from './common'
 import {backend} from './api'
 import {THIS_BROWSER_TAG, getOptions} from './options'
 import {normalise_url} from './normalise'
+import type {HistoryItem} from './async_chrome'
 import {achrome} from './async_chrome'
 
 
@@ -32,14 +33,36 @@ const DELTA_BACK_S  = 3 * 60 * 60 // 3h
 const DELTA_FRONT_S = 2 * 60      // 2min
 
 
+// can be false, if no associated visits, otherwise true or an actual Visit if it's available
+type VisitedResult = Array<boolean | Visit>
+
 // TODO eh, confusing that we have backend sources.. and these which are also sources, at the same time
 interface VisitsSource {
     visits(url: Url)                     : Promise<Visits | Error>,
     search(url: Url)                     : Promise<Visits | Error>,
     searchAround(utc_timestamp_s: number): Promise<Visits | Error>,
-    visited(urls: Array<Url>)            : Promise<Array<boolean> | Error>,
+    visited(urls: Array<Url>)            : Promise<VisitedResult | Error>,
 }
 
+
+function* search2visits(it: Iterable<HistoryItem>): Iterator<Visit> {
+    for (const r of it) {
+        const u = r.url
+        const ts = r.lastVisitTime
+        if (u == null || ts == null) {
+            continue
+        }
+        const t = new Date(ts)
+        yield new Visit(
+            u,
+            normalise_url(u),
+            ((t: any): AwareDate),
+            ((t: any): NaiveDate),
+            [THIS_BROWSER_TAG],
+            // TODO need context?
+        )
+    }
+}
 
 // NOTE: do not name this 'browser', it might be a builtin for apis (alias to 'chrome')
 export const thisbrowser: VisitsSource = {
@@ -84,23 +107,7 @@ export const thisbrowser: VisitsSource = {
         }
         const nurl = normalise_url(url)
         const results = await achrome.history.search({text: url})
-        const visits = []
-        for (const r of results) {
-            const u = r.url
-            const ts = r.lastVisitTime
-            if (u == null || ts == null) {
-                continue
-            }
-            const t = new Date(ts)
-            visits.push(new Visit(
-                u,
-                normalise_url(u),
-                ((t: any): AwareDate),
-                ((t: any): NaiveDate),
-                [THIS_BROWSER_TAG],
-                // TODO need context?
-            ))
-        }
+        const visits = Array.from(search2visits(results))
         return new Visits(url, nurl, visits)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
@@ -147,7 +154,7 @@ export const thisbrowser: VisitsSource = {
         }
         return new Visits(durl, ndurl, visits)
     },
-    visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
+    visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
         // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
         // note: search with empty query will retrieve all? but def needs to be iterative then..
@@ -156,15 +163,15 @@ export const thisbrowser: VisitsSource = {
             maxResults: 1000,
             text: '',
         })
-        const set = new Set(res.map(r => r.url))
-        const nset = new Set()
-        set.forEach(x => {
-            if (x != null) {
-                nset.add(normalise_url(x))
+        const map: Map<Url, Visit> = new Map()
+        for (const v of search2visits(res)) {
+            const nurl = v.normalised_url
+            if (!map.has(nurl)) {
+                map.set(nurl, v)
             }
-        })
+        }
         // todo might be useful to pass in normalised urls in this method?
-        return urls.map(u => nset.has(normalise_url(u)))
+        return urls.map(u => map.get(normalise_url(u)) || false)
     },
 }
 
@@ -274,7 +281,7 @@ export const bookmarks: VisitsSource = {
         return new Visits(durl, ndurl, visits)
     },
 
-    visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
+    visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         if (await isAndroid()) {
             const res = new Array(urls.length)
             res.fill(false)
@@ -353,7 +360,7 @@ export class MultiSource implements VisitsSource {
     async visited(urls: Array<Url>) {
         const pms = this.sources.map(s => s.visited(urls))
         const errors = []
-        let res = null
+        let res: ?VisitedResult = null
         for (const p of pms) {
             const r = await p.catch((e: Error) => e)
             if (r instanceof Error) {
@@ -363,7 +370,17 @@ export class MultiSource implements VisitsSource {
                     res = r
                 } else {
                     for (let i = 0; i < urls.length; i++) {
-                        res[i] = res[i] || r[i]
+                        const a = res[i]
+                        if (a instanceof Visit) {
+                            // todo later maybe return multiple visits associated with a link? might have a performance impact..
+                            continue
+                        }
+                        const b = r[i]
+                        if (b instanceof Visit) {
+                            res[i] = b
+                            continue
+                        }
+                        res[i] = a || b
                     }
                 }
             }
@@ -417,7 +434,7 @@ export const allsources = {
      * for each url, returns a boolean -- whether or not the link was visited before
      * TODO would be cool to make it more iterative..
      */
-    visited: async function(urls: Array<Url>): Promise<Array<boolean> | Error> {
+    visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         return (await MultiSource.get()).visited(urls)
     },
 }
