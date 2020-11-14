@@ -87,7 +87,7 @@ const o_verbose_errors = new Toggle('verbose_errors_id'     )
 const o_contexts_popup = new Toggle('contexts_popup_id'     )
 const o_detect_urls    = new Toggle('detect_sidebar_urls_id')
 const o_highlights_on  = new Toggle('highlight_id'          )
-// TODO ('dots_id');
+const o_always_mark    = new Toggle('always_mark_visited_id')
 
 const o_blacklist    = new Editor('blacklist_id'   , {mode: null  })
 const o_filterlists  = new Editor('filterlists_id' , {mode: 'javascript'})
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     o_contexts_popup.value = opts.contexts_popup_on
     o_detect_urls   .value = opts.detect_sidebar_urls
     o_highlights_on .value = opts.highlight_on
-    // todo getDots().checked    = opts.dots;
+    o_always_mark   .value = opts.always_mark_visited
 
     const CodeMirror = await importCM()
 
@@ -165,7 +165,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         contexts_popup_on  : o_contexts_popup.value,
         detect_sidebar_urls: o_detect_urls   .value,
         highlight_on       : o_highlights_on .value,
-        dots          : true, // todo? getDots().checked,
+        always_mark_visited: o_always_mark   .value,
         blacklist          : o_blacklist     .value,
         filterlists        : o_filterlists   .value,
         src_map            : o_src_map       .value,

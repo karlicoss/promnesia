@@ -18,7 +18,7 @@ export type Options = {|
 
     highlight_on: boolean;
 
-    dots: boolean;
+    always_mark_visited: boolean;
     // this is kept as string to preserve formatting and comments
     blacklist: string;
     // kept as string to preserve formatting
@@ -65,7 +65,7 @@ function defaultOptions(): Options {
 
         highlight_on: true,
 
-        dots: true,
+        always_mark_visited: false,
         blacklist: '',
         // todo would be nice to validate on saving...
         filterlists: `[

@@ -6,6 +6,10 @@ textarea {
     width: 100%;
 }
 
+a {
+    text-decoration: none;
+}
+
 .CodeMirror {
     height: auto !important;
 }
