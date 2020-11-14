@@ -209,11 +209,6 @@ export function log() {
     console.trace('[background] ' + arguments[0], ...args);
 }
 
-export const ldebug = log; // TODO
-export const lwarn = log; // TODO
-export const linfo = log; // TODO
-export const lerror = log; // TODO
-
 
 export function asList(bl: string): Array<string> {
     return bl.split(/\n/).filter(s => s.length > 0);
