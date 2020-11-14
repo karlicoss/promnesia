@@ -282,16 +282,43 @@ async function doMarkVisited(tabId: number) {
     for (let i = 0; i < page_urls.length; i++) {
         visited.set(page_urls[i], resp[i]) // response guaranteed to have the same length
     }
-   
+
+    // todo ugh. errors inside the script (e.g. syntax errors) get swallowed..
     // TODO just allow overriding some functions?
     await achrome.tabs.executeScript(tabId, {
         code: `
-visited = new Map(JSON.parse('${JSON.stringify([...visited])}'))
+visited = new Map(JSON.parse(
+    ${JSON.stringify(JSON.stringify([...visited]))}
+))
 
 function addStyle(css) {
     const style = document.createElement('style')
     style.appendChild(document.createTextNode(css))
     document.head.appendChild(style)
+}
+
+function formatVisit(v) {
+    const e = document.createElement('code')
+    e.style.whiteSpace = 'pre'
+    e.style.display = 'block'
+    const {original_url: original, dt_local: dt, tags: tags, context: context, locator: locator} = v
+    e.textContent = \`
+original: $\{original}
+dt      : $\{dt}
+tags    : $\{tags.join(' ')}
+context : $\{(context || '').trim()}
+\`.trim()
+    const els = [e]
+    console.error('fewfewf %o', v)
+    const {href: href, title: title} = locator || {}
+    if (href != null) {
+        const a = document.createElement('a')
+        a.title = title
+        a.href  = href
+        a.appendChild(document.createTextNode(title))
+        els.push(a)
+    }
+    return els
 }
 
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
@@ -315,19 +342,25 @@ function decorateLink(element) {
     toggler.textContent = '⚫⚫⚫' // TODO decorate url as well??
     toggler.classList.add('nonselectable')
 
-    let content = document.createElement('pre')
-    content.textContent = JSON.stringify(v, null, 2) // meh
-    // TODO use an actual style or something?
+    let content = document.createElement('div')
+    content.style.border = 'solid 1px'
     content.style.background = 'lightyellow'
     content.visibility = 'hidden'
-
     popup.appendChild(content)
+    // TODO max width??
+    // TODO use an actual style or something?
+    let ev = formatVisit(v)
+    for (const e of ev) {
+        console.error(e)
+        content.appendChild(e)
+    }
+
 
     // TODO would be cool to reuse the same style used by the sidebar...
     let rect = element.getBoundingClientRect()
-    for (const e of [toggler, content]) {
-        e.style.top  = (window.scrollY + rect.top  ).toString() + 'px'
-        e.style.left = (window.scrollX + rect.right).toString() + 'px'
+    for (const [e, y] of [[toggler, 0], [content, 20]]) {
+        e.style.top  = (window.scrollY + rect.top + y).toString() + 'px'
+        e.style.left = (window.scrollX + rect.right  ).toString() + 'px'
         e.style.position = 'absolute'
     }
     // logic as follows: when over toggler, show the popup
@@ -635,7 +668,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
             utc_timestamp_s: utc_timestamp_s.toString()
         })
     } else if (method == Methods.MARK_VISITED) {
-        await handleMarkVisited()
+        await defensify(handleMarkVisited, 'handleMarkVisited')()
     } else if (method == Methods.OPEN_SEARCH) {
         await handleOpenSearch()
     }
