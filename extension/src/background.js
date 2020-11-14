@@ -1,7 +1,7 @@
 /* @flow */
 
 import type {Url, SearchPageParams} from './common';
-import {Visits, Blacklisted, unwrap, Methods, ldebug, linfo, lerror, lwarn} from './common'
+import {Visits, Blacklisted, unwrap, Methods} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 
 import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
@@ -114,8 +114,8 @@ async function updateState (tab: chrome$Tab) {
 
     if (ignored(url)) {
         // todo reflect in the sidebar/popup?
-        linfo("ignoring %s", url);
-        return;
+        console.info("ignoring %s", url)
+        return
     }
 
     const opts = await getOptions();
@@ -376,7 +376,10 @@ function isSpecialProtocol(url: string): boolean {
     return false;
 }
 
-function ignored(url: string): ?string {
+function ignored(url: ?string): ?string {
+    if (url == null) {
+        return 'URL not set'
+    }
     if ([
         'https://www.google.com/_/chrome/newtab?ie=UTF-8', // ugh, not sure how to fix that properly
         'about:blank', // not sure why about:blank is loading like 5 times.. but this seems to fix it
@@ -421,29 +424,19 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
 
 // chrome.tabs.onReplaced.addListener(updateState);
 
-chrome.tabs.onCreated.addListener((tab) => {
-    ldebug("onCreated %s", tab);
-});
-
-
 // $FlowFixMe
-chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
+chrome.tabs.onUpdated.addListener(defensify(async (tabId: number, info, tab: chrome$Tab) => {
     // too spammy in logs
-    delete tab.favIconUrl;
-    delete info.favIconUrl;
+    delete tab.favIconUrl
+    delete info.favIconUrl
     //
-    ldebug("onUpdated %s %s", tab, info);
+    console.debug('onUpdated %o %o', tab, info)
 
-    const url = tab.url;
-    if (!url) { /* on Vivaldi I've seen url being "" */
-        ldebug('onUpdated: ignoring as URL is not set');
-        return;
-    }
-
-    // TODO make logging optional? not sure if there are any downsides
-    if (ignored(url)) {
-        linfo('onUpdated: ignored explicitly %s', url);
-        return;
+    const url = tab.url
+    const ireason = ignored(url)
+    if (ireason != null) {
+        /* on Vivaldi I've seen url being "" */
+        console.debug('onUpdated %s: ignoring, reason: %s', url, ireason)
     }
     // right, tab updated triggered quite a lot, e.g. when the title is blinking
     // ok, so far there are basically two cases
@@ -461,9 +454,9 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId, info, tab) => {
     // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
 
     if (info['status'] != 'complete') {
-        return;
+        return
     }
-    linfo('requesting! %s', url);
+    console.info('requesting! %s', url)
     try {
         await updateState(tab);
     } catch (error) {
@@ -521,6 +514,7 @@ async function shouldProcessPage(tab: ?chrome$Tab): Promise<?ShouldProcess> {
         await notifications.page_ignored(tid, url, ireason)
         return null
     }
+    // TODO ideally only do this once, at the injection site?
     const blacklist = await Blacklist.get()
     const bl = await blacklist.contains(url)
     // todo let blacklist return Blacklisted object?
@@ -562,18 +556,21 @@ async function handleOpenSearch(p: SearchPageParams = {}) {
 
 
 const onMessageCallback = async (msg) => { // TODO not sure if should defensify here?
-    const method = msg.method;
+    const method = msg.method
     if (method == Methods.GET_SIDEBAR_VISITS) {
-        const atab = unwrap(await getActiveTab())
-        const url = unwrap(atab.url)
-        if (!ignored(url)) { // TODO shouldn't have been requested in the first place? allso pass through shouldHandle?
-            const visits = await getVisits(unwrap(atab.url));
+        // TODO not sure if it might do unnecessary notifications here?
+        const atab = await getActiveTab()
+        // not sure if can happen.. but just in case
+        const should = await shouldProcessPage(atab)
+        if (should) {
+            const {url: url} = should
+            const visits = await getVisits(url)
             if (visits instanceof Visits) {
                 return visits.toJObject()
             } else {
                 // hmm. generally shouldn't happen, since sidebar is not bound on blacklisted urls
                 // show notification in dev mode?
-                lerror("Shouldn't have happened! %s", visits);
+                console.trace("Shouldn't have happened! %o", visits)
             }
         }
         // TODO err. not sure what's happening here...
@@ -607,17 +604,18 @@ async function registerActions() {
     // NOTE: on mobile, this sets action for both icon (if it's displayed) and in the menu
     for (const action of (await actions())) {
         // $FlowFixMe
-        action.onClicked.addListener(defensify(injectSidebar, 'action.onClicked'));
+        action.onClicked.addListener(defensify(openSidebar, 'action.onClicked'));
     }
 }
 
 // note: this is user click callback
-export async function injectSidebar(tab: chrome$Tab) {
+export async function openSidebar(tab: chrome$Tab) {
     const should = await shouldProcessPage(tab)
     if (should == null) {
         return
     }
     const {tid: tid} = should
+    // todo hmm, it sould already be inserted by now? but whatever..
     await achrome.tabs.executeScript(tid, {file: 'sidebar.js'})
     await achrome.tabs.executeScript(tid, {code: 'toggleSidebar();'})
 }
@@ -631,14 +629,13 @@ const onCommandCallback = defensify(async cmd => {
     // ok apparently background page shouldn't communicate with itself via messages. wonder how could it work for me before..
     // https://stackoverflow.com/a/35858654/706389
     if (cmd === COMMAND_MARK_VISITED) {
-        await handleMarkVisited();
+        await handleMarkVisited()
     } else if (cmd === COMMAND_SEARCH) {
-        await handleOpenSearch();
+        await handleOpenSearch()
     } else {
-        // TODO throw? // yea probably
-        lerror("unexpected command %s", cmd);
+        throw new Error(`unexpected command ${cmd}`)
     }
-}, 'onCommand');
+}, 'onCommand')
 
 
 async function blacklist(e): Promise<void> {
@@ -772,7 +769,7 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
 
     // TODO elaborate
     if (aurl && isSpecialProtocol(aurl)) {
-        lwarn("Suppressing special background page %s", aurl);
+        console.warn("Suppressing special background page %s", aurl)
         return;
     }
 
