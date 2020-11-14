@@ -162,8 +162,7 @@ for t in CODE:
 Replacer = Optional[Callable[[str], str]]
 
 def index(
-        path: Union[List[PathIsh], PathIsh],
-        *,
+        *paths: Union[PathIsh],
         ignored: Union[Sequence[str], str]=(),
         follow=True,
         replacer: Replacer=None,
@@ -174,14 +173,10 @@ def index(
     follow : whether to follow symlinks or not
     '''
     # TODO document replacer?
-
-    # TODO *args?
-    # TODO meh, unify with glob traversing..
-    paths = path if isinstance(path, list) else [path]
     ignored = (ignored,) if isinstance(ignored, str) else ignored
     for p in paths:
         # TODO for displaying maybe better not to expand/absolute, but need it for correct mime handling
-        apath = Path(p).expanduser().absolute()
+        apath = Path(p).expanduser().resolve().absolute()
         root = apath if apath.is_dir() else None
         opts = Options(
             ignored=ignored,
