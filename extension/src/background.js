@@ -305,8 +305,36 @@ async function doMarkVisited(tabId: number) {
         }
         visited.set(page_urls[i], r)
     }
+
+    // if a link appears on the page too many times,
+    // either it's not very importitant, or normalisation is wrong?
+    // either way it ends up very spammy on the page.. easy way to check is on something like reddit, or google search page..
+    // so let's filter them..
+    const THRESHOLD = 10 // todo add to settings?
+    const stats: Map<Url, number> = new Map()
+    for (const url of results) { // NOTE: traverse over original results, duplicates need to be taken into the account
+        if (url == null) {
+            continue
+        }
+        const v = visited.get(url)
+        if (v == null) {
+            continue
+        }
+        const nu = v.normalised_url
+        stats.set(nu, (stats.get(nu) || 0) + 1)
     }
 
+    for (const url of page_urls) {
+        let v = visited.get(url)
+        if (v == null) {
+            continue
+        }
+        const stat = stats.get(v.normalised_url) || 0
+        if (stat > THRESHOLD) {
+            // todo log it somehow?? dunno, might be too spammy
+            visited.delete(url)
+        }
+    }
     // todo ugh. errors inside the script (e.g. syntax errors) get swallowed..
     // TODO just allow overriding some functions?
     await achrome.tabs.executeScript(tabId, {
