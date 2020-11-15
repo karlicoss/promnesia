@@ -182,3 +182,18 @@ export async function setOptions(opts: Options) {
     const os = optSync();
     await os.set(opts);
 }
+
+
+function toggleOption(toggle: (Options) => void): () => Promise<void> {
+    return async () => {
+        const opts = await getOptions()
+        toggle(opts)
+        await setOptions(opts)
+    }
+}
+
+export const Toggles = {
+    showSidebar   : toggleOption((opts) => { opts.sidebar_always_show = !opts.sidebar_always_show; }),
+    showVisited   : toggleOption((opts) => { opts.always_mark_visited = !opts.always_mark_visited; }),
+    showHighlights: toggleOption((opts) => { opts.highlight_on        = !opts.highlight_on       ; }),
+}

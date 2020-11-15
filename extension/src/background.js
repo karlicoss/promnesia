@@ -2,7 +2,7 @@
 
 import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
-import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
+import {Toggles, getOptions, setOptions, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
 import {showTabNotification, defensify, notifications} from './notifications'
@@ -590,10 +590,10 @@ const onCommandCallback = defensify(async cmd => {
 }, 'onCommand')
 
 
-async function blacklist(e): Promise<void> {
-    const url = unwrap(e.pageUrl);
-    const atab = unwrap(await getActiveTab())  // todo get url from tab?
-    const tabId = unwrap(atab.id);
+async function blacklist() {
+    const atab = unwrap(await getActiveTab())
+    const url = unwrap(atab.url)
+    const tabId = unwrap(atab.id)
 
     // TODO I'm really not sure it's the right way to do this..
 
@@ -609,9 +609,9 @@ async function blacklist(e): Promise<void> {
     const res = await achrome.tabs.executeScript(tabId, {
         code: `prompt(\`${prompt}\`, "${url}");`
     })
-    if (res == null) {
-        console.info('user chose not to blacklist %s', url);
-        return;
+    if (res == null || res[0] == null) {
+        console.info('user chose not to blacklist %s', url)
+        return
     }
     const to_blacklist: string = res[0]
 
@@ -632,23 +632,54 @@ async function blacklist(e): Promise<void> {
 }
 
 
-const MENU_BLACKLIST   = 'menu_blacklist';
-const MENU_MARK_VISITS = 'menu_mark_visits';
-const MENU_SEARCH      = 'menu_search'
 
+type MenuEntry = {
+    id: string,
+    title: string,
+    callback: ?(() => Promise<void>),
+    parentId?: string
+}
 
-// looks like onClicked is more portable...
-const onMenuClickedCallback = defensify(async (info) => {
-    const mid = info.menuItemId;
-    if (       mid === MENU_BLACKLIST) {
-        await blacklist(info);
-    } else if (mid === MENU_MARK_VISITS) {
-        await handleMarkVisited();
-    } else if (mid === MENU_SEARCH) {
-        await handleOpenSearch();
-    }
-}, 'onMenuClicked');
-
+const MENUS: Array<MenuEntry> = [
+    {
+        id      : 'menu_blacklist',
+        title   : "Blacklist (domain/specific page/subpages)",
+        callback: blacklist,
+    },
+    {
+        id      : 'menu_mark_visited',
+        title   : "Mark visited urls",
+        callback: handleMarkVisited,
+    },
+    {
+        id      : 'menu_search',
+        title   : "Search in browsing history",
+        callback: handleOpenSearch,
+    },
+    {
+        id      : 'menu_toggles',
+        title   : 'Quick settings',
+        callback: null,
+    },
+        {
+            parentId: 'menu_toggles', // meh
+            id      : 'menu_toggles_sidebar',
+            title   : "Toggle 'always show sidebar'",
+            callback: Toggles.showSidebar,
+        },
+        {
+            parentId: 'menu_toggles', // meh
+            id      : 'menu_toggles_visited',
+            title   : "Toggle 'always mark visited links'",
+            callback: Toggles.showVisited,
+        },
+        {
+            parentId: 'menu_toggles', // meh
+            id      : 'menu_toggles_highlights',
+            title   : "Toggle 'always show highlights'",
+            callback: Toggles.showHighlights,
+        },
+]
 
 /*
   Right, that's a hack for some nasty bug/behaviour that happens both in firefox and chrome.
@@ -679,21 +710,27 @@ function initBackground() {
         chrome.commands.onCommand.addListener(onCommandCallback);
 
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
-        chrome.contextMenus.create({
-            'id'       : MENU_BLACKLIST,
-            'contexts' : ['page', 'browser_action'],
-            'title'    : "Blacklist (domain/specific page/subpages)",
-        });
-        chrome.contextMenus.create({
-            'id'       : MENU_MARK_VISITS,
-            'contexts' : ['page', 'browser_action'],
-            'title'    : "Mark visited urls",
-        });
-        chrome.contextMenus.create({
-            'id'       : MENU_SEARCH,
-            'contexts' : ['page', 'browser_action'],
-            'title'    : "Search in browsing history",
-        })
+        for (const {id: id, title: title, parentId: parentId} of MENUS) {
+            chrome.contextMenus.create({
+                id: id,
+                parentId: parentId,
+                title: title,
+                contexts: ['page', 'browser_action'],
+            })
+        }
+
+        const onMenuClickedCallback = defensify(async (info) => {
+            const mid = info.menuItemId
+            for (const m of MENUS) {
+                if (mid == m.id) {
+                    const cb = m.callback
+                    if (cb != null) {
+                        await cb()
+                    }
+                    break
+                }
+            }
+        }, 'onMenuClicked');
 
         //  $FlowFixMe // err, complains at Promise but nevertheless works
         chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
