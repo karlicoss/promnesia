@@ -13,7 +13,7 @@ Also some experiments to establish 'URL hierarchy'.
 
 import re
 import typing
-from typing import Iterable, NamedTuple, Set, Optional, List, Sequence, Union, Tuple, Dict
+from typing import Iterable, NamedTuple, Set, Optional, List, Sequence, Union, Tuple, Dict, Any
 
 import urllib.parse
 from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
@@ -38,6 +38,7 @@ def try_cutr(suffix, s):
     else:
         return s
 
+# TODO move this to site-specific normalisers?
 dom_subst = [
     ('m.youtube.'     , 'youtube.'),
     ('studio.youtube.', 'youtube.'),
@@ -199,6 +200,37 @@ def get_spec(dom: str) -> Spec:
             return sp
     return _def_spec
 
+
+
+# ideally we'd just be able to reference the domain name and use it in the subst?
+# some sort of hierarchical matchers? not sure what's got better performance..
+# if 'from?site=' in url:
+#     return p.query('site')
+
+Spec2 = Any # TODO
+
+# TODO this should be a map
+Frag = Any
+Parts = Sequence[Tuple[str, str]]
+
+
+def _yc(domain, path, qq: Parts, frag: Frag) -> Tuple[Any, Any, Parts, Frag]:
+    if path[:5] == '/from':
+        site = dict(qq).get('site')
+        if site is not None:
+            domain = site
+            path = ''
+            qq = ()
+            frag = ''
+    # TODO this should be in-place? for brevity?
+    return (domain, path, qq, frag)
+
+def get_spec2(dom: str) -> Optional[Spec2]:
+    return {
+        'news.ycombinator.com': _yc,
+    }.get(dom)
+
+
 class CanonifyException(Exception):
     pass
 
@@ -287,6 +319,7 @@ def transform_split(split: SplitResult):
 
         (netloc, path, qq) = [t.format(**gd) for t in to]
         qparts.extend(parse_qsl(qq)) # TODO hacky..
+        # TODO eh, qparts should really be a map or something...
         break
 
 
@@ -361,6 +394,12 @@ def canonify(url: str) -> str:
         return canonify(res)
 
     domain, path, qq, _frag = transform_split(parts)
+
+    spec2 = get_spec2(domain)
+    if spec2 is not None:
+        # meh
+        domain, path, qq, _frag = spec2(domain, path, qq, _frag)
+
 
     spec = get_spec(domain)
 
@@ -579,6 +618,8 @@ FB_PATTERNS = [
     r'F/notes/U/P',
 ]
 
+
+# NOTE: right, I think this is just for analysis so far... not actually used
 PATTERNS = {
     'twitter'   : TW_PATTERNS,
     'reddit'    : RD_PATTERNS,
@@ -587,6 +628,7 @@ PATTERNS = {
     'stackoverflow': SO_PATTERNS,
     'facebook'  : FB_PATTERNS,
     'wikipedia' : WK_PATTERNS,
+    # 'news.ycombinator.com': YC_PATTERNS,
 }
 
 

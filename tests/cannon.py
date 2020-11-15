@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest # type: ignore
 
 from promnesia.cannon import canonify, CanonifyException
@@ -10,6 +12,17 @@ from promnesia.cannon import canonify, CanonifyException
 
 
 param = pytest.mark.parametrize
+
+
+# mark stuff that in interesting as a testcase, but I'm not sure about yet
+TODO = cast(str, object())
+
+
+def check(url, expected):
+    if expected is TODO:
+        pytest.skip(f"'{url}' will be handled later")
+    assert canonify(url) == expected
+
 
 # TODO assume spaces are not meaninfgul??
 # then could align URLs etc?
@@ -67,6 +80,21 @@ def test_youtube(url, expected):
 )])
 def test_archiveorg(url, expected):
     assert canonify(url) == expected
+
+
+# ugh. good example of motication for cannon.py?
+@param('url,expected', [(
+    'https://news.ycombinator.com/from?site=jacopo.io',
+    'jacopo.io',
+), (
+    'https://news.ycombinator.com/item?id=25099862',
+    'news.ycombinator.com/item?id=25099862',
+), (
+    'https://news.ycombinator.com/reply?id=25100035&goto=item%3Fid%3D25099862%2325100035',
+    TODO,
+)])
+def test_hackernews(url, expected):
+    check(url, expected)
 
 
 @param('url, expected', [
