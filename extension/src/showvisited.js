@@ -18,6 +18,9 @@ function appendText(e, text) {
     e.appendChild(document.createTextNode(text))
 }
 
+// TODO make sure it's easy to toggle 'show visited' for a specific page
+
+// maybe use something else instead of eye? so it's not spammy
 function formatVisit(v) {
     const e = document.createElement('code')
     e.style.whiteSpace = 'pre-wrap'
@@ -56,7 +59,7 @@ function decorateLink(element) {
     // eslint-disable-next-line no-undef
     const v = visited.get(url)
     if (!v) {
-        return // no visits
+        return // no visits or was excluded (add some data attribute maybe?)
     }
 
     element.classList.add('promnesia-visited')
@@ -78,6 +81,7 @@ function decorateLink(element) {
         eye.style.left =      `${(window.scrollX + rect.right)}px`
     }
 
+    // todo 'interesting' visits would have either context or locator? dunno
     if (v === true) {
         // nothing else interesting we can do with such visit
         return [eye]
@@ -173,6 +177,9 @@ function decorateLinks() {
 
                 if (elems != null) {
                     for (const e of elems) {
+                        // NOTE: attaching to the link element itself (or its parent) seems like a bad idea
+                        // .e.g see on https://old.reddit.com/r/archlinux/comments/juianf/is_there_a_software_that_runs_a_command_at_a_time/
+                        // the invisible menu appears when eyes are on
                         cont.appendChild(e)
                     }
                 }
