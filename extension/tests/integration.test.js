@@ -37,8 +37,8 @@ test('visits', async() => {
     // TODO have a defensive and offensive modes?
     // but defensive for network errors makes def makes sense anyway
     const vis = await backend.visits('http://123.com')
-    // FIXME test specific error?
     expect(vis).toBeInstanceOf(Error)
+    expect(vis.message).toMatch(/request .* failed/)
 })
 
 

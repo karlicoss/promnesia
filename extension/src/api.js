@@ -29,7 +29,7 @@ export async function queryBackendCommon<R>(params: any, endp: string): Promise<
             // $FlowFixMe
             let url = params['url']
             if (url == null) { // meh need to be stricter here..
-                url = 'http://TODO_FIXME.org'
+                url = 'http://DUMMYURL.org'
             }
             const res: VisitsResponse = {
                 visits: [],

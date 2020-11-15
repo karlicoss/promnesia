@@ -33,3 +33,7 @@ hr {
 pre {
     margin: 0 0 0 0;
 }
+
+label {
+    display: block;
+}
