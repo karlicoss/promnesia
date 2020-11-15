@@ -23,7 +23,9 @@ import type {HistoryItem} from './async_chrome'
 import {achrome} from './async_chrome'
 
 
+/* todo add to settings? */
 function getDelayMs(/*url*/) {
+    /* this is useful so we don't treat the page we visited for the first tiem as visited */
     return 10 * 1000;
 }
 
@@ -46,6 +48,8 @@ interface VisitsSource {
 
 
 function* search2visits(it: Iterable<HistoryItem>): Iterator<Visit> {
+    const delay = getDelayMs()
+    const now = new Date()
     for (const r of it) {
         const u = r.url
         const ts = r.lastVisitTime
@@ -53,6 +57,9 @@ function* search2visits(it: Iterable<HistoryItem>): Iterator<Visit> {
             continue
         }
         const t = new Date(ts)
+        if (now - t <= delay) {
+            continue // filter it out
+        }
         yield new Visit(
             u,
             normalise_url(u),
@@ -117,6 +124,8 @@ export const thisbrowser: VisitsSource = {
         if (android) {
             return new Visits(durl, ndurl, [])
         }
+        const opts = await getOptions()
+
         const start = (utc_timestamp_s - DELTA_BACK_S ) * 1000
         const end   = (utc_timestamp_s + DELTA_FRONT_S) * 1000
         const results = await achrome.history.search({
@@ -125,7 +134,7 @@ export const thisbrowser: VisitsSource = {
             startTime: start,
             endTime  : end,
             text: '',
-            // todo it also has maxResults? (default 100), not sure what should I do about it
+            maxResults: opts.browserhistory_max_results,
         })
         // right. this only returns history items with lastVisitTime
         // (see https://developer.chrome.com/extensions/history#type-HistoryItem)
@@ -155,12 +164,9 @@ export const thisbrowser: VisitsSource = {
         return new Visits(durl, ndurl, visits)
     },
     visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
-        // TODO hmm. unclear how to check it efficiently for browser history.. we'd need a query per URL
-        // definitely would be nice to implement this iteratively instead.. so it could check in the background thread?
-        // note: search with empty query will retrieve all? but def needs to be iterative then..
-        // ok, for now as a compromise, query 1000 latest visits..
+        const opts = await getOptions()
         const res = await achrome.history.search({
-            maxResults: 1000,
+            maxResults: opts.browserhistory_max_results,
             text: '',
         })
         const map: Map<Url, Visit> = new Map()

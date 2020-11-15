@@ -195,7 +195,6 @@ async function updateState (tab: chrome$Tab) {
     }
 
     if (visits instanceof Blacklisted) {
-        // FIXME not sure if can even happend here??
         return
     }
 
@@ -230,7 +229,7 @@ async function updateState (tab: chrome$Tab) {
             data  : visits.toJObject(),
         })
     } else {
-        console.warn("FIXME implement binding visits to popup? or at least show error message")
+        console.warn("TODO implement binding visits to popup? or at least show error message")
     }
 }
 

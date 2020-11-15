@@ -10,7 +10,9 @@ export type Options = {|
     token: string;
 
     use_bookmarks     : boolean,
+
     use_browserhistory: boolean,
+    browserhistory_max_results: number,
 
     verbose_errors_on: boolean;
     contexts_popup_on: boolean;
@@ -57,7 +59,9 @@ function defaultOptions(): Options {
         token: '',
 
         use_bookmarks     : true,
+
         use_browserhistory: true,
+        browserhistory_max_results: 10000,
 
         verbose_errors_on: false,
         contexts_popup_on: false,

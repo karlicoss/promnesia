@@ -42,16 +42,30 @@
     <fieldset>
         <legend>In-browser sources</legend>
 Note that these sources aren't typicaly as useful as the backend ones, and support for them is still limited (see <a href="https://github.com/karlicoss/promnesia/issues/120">issues/120</a>)
-        <table>
-            <tr>
-                <td><input  id="use_bookmarks_id" type="checkbox" /></td>
-                <td><label for="use_bookmarks_id">Browser bookmarks</label></td>
-            </tr>
-            <tr>
-                <td><input  id="use_browserhistory_id" type="checkbox" /></td>
-                <td><label for="use_browserhistory_id">Browser history</label></td>
-            </tr>
-        </table>
+            <fieldset>
+            <legend>Browser bookmarks</legend>
+            <table>
+                <tr>
+                    <td><input  id="use_bookmarks_id" type="checkbox" /></td>
+                    <td><label for="use_bookmarks_id">Enable</label></td>
+                </tr>
+            </table>
+            </fieldset>
+
+            <fieldset>
+            <legend>Browser history</legend>
+            <table>
+                <tr>
+                    <td><input  id="use_browserhistory_id" type="checkbox" /></td>
+                    <td><label for="use_browserhistory_id">Enable</label></td>
+                </tr>
+            </table>
+            <hr>
+            <label for="browserhistory_max_results_id">
+                History results limit
+                (controls <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/history/search#Parameters">this</a> parameter).
+                Set it to lower value if you suspect browsery history search is causing slowdowns for you (pretty unlikely though)</label>
+            <input  id="browserhistory_max_results_id" title="History results limit" type="number">
     </fieldset>
     </fieldset>
 

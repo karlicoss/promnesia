@@ -39,6 +39,15 @@ class Simple extends Option<string> {
     }
 }
 
+class ONumber extends Option<number> {
+    set value(x: number): void {
+        this.element.value = String(x)
+    }
+    get value(): number {
+        return parseInt(this.element.value)
+    }
+}
+
 class Toggle extends Option<boolean> {
     set value(x: boolean): void {
         this.element.checked = x
@@ -68,7 +77,7 @@ class Editor extends Option<string> {
         CodeMirror(this.element, {
             mode: this.mode,
             lineNumbers: true,
-            value: 'FIXME default',
+            value: 'IF YOU SEE THIS PLEASE REPORT AS A BUG!',
         })
     }
 
@@ -83,6 +92,7 @@ const o_host           = new Simple('host_id'               )
 const o_token          = new Simple('token_id'              )
 const o_use_bookmarks      = new Toggle('use_bookmarks_id'     )
 const o_use_browserhistory = new Toggle('use_browserhistory_id')
+const o_browserhistory_max_results = new ONumber('browserhistory_max_results_id')
 const o_verbose_errors = new Toggle('verbose_errors_id'     )
 const o_contexts_popup = new Toggle('contexts_popup_id'     )
 const o_detect_urls    = new Toggle('detect_sidebar_urls_id')
@@ -130,6 +140,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     o_token         .value = opts.token
     o_use_bookmarks .value = opts.use_bookmarks
     o_use_browserhistory.value = opts.use_browserhistory
+    o_browserhistory_max_results.value = opts.browserhistory_max_results
 
     o_verbose_errors.value = opts.verbose_errors_on
     o_contexts_popup.value = opts.contexts_popup_on
@@ -161,6 +172,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         token              : o_token             .value,
         use_bookmarks      : o_use_bookmarks     .value,
         use_browserhistory : o_use_browserhistory.value,
+        browserhistory_max_results: o_browserhistory_max_results.value,
         verbose_errors_on  : o_verbose_errors.value,
         contexts_popup_on  : o_contexts_popup.value,
         detect_sidebar_urls: o_detect_urls   .value,
