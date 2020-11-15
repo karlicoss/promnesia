@@ -17,7 +17,8 @@ type VisitsResponse = {
     normalised_url: string,
 }
 
-type VisitedResponse = Array<?Visit>
+// NOTE: boolean is legacy behaviour
+type VisitedBackendResponse = Array<?JsonObject | boolean>
 
 // TODO ugh, why params: {} not working??
 export async function queryBackendCommon<R>(params: any, endp: string): Promise<R | Error> {
@@ -40,7 +41,7 @@ export async function queryBackendCommon<R>(params: any, endp: string): Promise<
         } else if (endp == 'visited') {
             // $FlowFixMe
             let urls: Array<Url> = params['urls']
-            const res: VisitedResponse = new Array(urls.length)
+            const res: VisitedBackendResponse = new Array(urls.length)
             res.fill(null)
             return ((res: any): R)
         } else {
@@ -110,16 +111,44 @@ export const backend = {
                .then(rawToVisits)
                .catch((err: Error) => err)
     },
-    visited: async function(urls: Array<Url>): Promise<VisitedResponse | Error> {
-        return await queryBackendCommon<JsonObject>({urls: urls}, 'visited')
-            .then(r => (r instanceof Error) ? r : r.map(x => {
-                if (typeof x === "boolean") {
-                    // legacy behaviour
-                    return x
-                } else { // must be visit
-                    return rawToVisit(x)
+    visited: async function(urls: Array<Url>): Promise<Array<?Visit> | Error> {
+        return await queryBackendCommon<VisitedBackendResponse>({urls: urls}, 'visited')
+            .then(r => {
+                if (r instanceof Error) {
+                    return r
                 }
-            }))
+                const res: Array<?Visit> = new Array(r.length)
+                res.fill(null)
+                const now = new Date() // TODO hmm, need to think of smth better?
+                for (let i = 0; i < r.length; i++) {
+                    let x: ?JsonObject | boolean = r[i]
+                    if (x == null) {
+                        res[i] = null
+                        continue
+                    }
+                    let url = urls[i]
+                    let v: ?Visit
+                    if (typeof x === "boolean") {
+                        // legavy behaviour
+                        if (x === false) {
+                            v = null
+                        } else {
+                            v = new Visit(
+                                url,
+                                normalise_url(url),
+                                ((now: any): AwareDate),
+                                ((now: any): NaiveDate),
+                                ['backend'], // TODO suggest to update the backend?
+                            )
+                        }
+                    } else {
+                        // visit already?
+                        v = rawToVisit(x)
+                    }
+                    res[i] = v
+                }
+                return res
+            })
             .catch((err: Error) => err)
     },
 }

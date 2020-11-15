@@ -36,7 +36,7 @@ const DELTA_FRONT_S = 2 * 60      // 2min
 
 
 // can be false, if no associated visits, otherwise true or an actual Visit if it's available
-type VisitedResult = Array<boolean | ?Visit>
+type VisitedResult = Array<?Visit>
 
 // TODO eh, confusing that we have backend sources.. and these which are also sources, at the same time
 interface VisitsSource {
@@ -177,7 +177,7 @@ export const thisbrowser: VisitsSource = {
             }
         }
         // todo might be useful to pass in normalised urls in this method?
-        return urls.map(u => map.get(normalise_url(u)) || false)
+        return urls.map(u => map.get(normalise_url(u)) || null)
     },
 }
 
@@ -290,7 +290,7 @@ export const bookmarks: VisitsSource = {
     visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         if (await isAndroid()) {
             const res = new Array(urls.length)
-            res.fill(false)
+            res.fill(null)
             return res
         }
 
@@ -374,22 +374,13 @@ export class MultiSource implements VisitsSource {
             const r = await p.catch((e: Error) => e)
             if (r instanceof Error) {
                 errors.push(r)
+            } else if (res == null) {
+                res = r
             } else {
-                if (res == null) {
-                    res = r
-                } else {
-                    for (let i = 0; i < urls.length; i++) {
-                        const a = res[i]
-                        if (a instanceof Visit) {
-                            // todo later maybe return multiple visits associated with a link? might have a performance impact..
-                            continue
-                        }
-                        const b = r[i]
-                        if (b instanceof Visit) {
-                            res[i] = b
-                            continue
-                        }
-                        res[i] = a || b
+                for (let i = 0; i < urls.length; i++) {
+                    if (res[i] == null) {
+                        // first visit 'wins' (generaly it's from the backend, so the 'best' one)
+                        res[i] = r[i]
                     }
                 }
             }
@@ -440,7 +431,7 @@ export const allsources = {
         return (await MultiSource.get()).searchAround(utc_timestamp_s)
     },
     /*
-     * for each url, returns a boolean -- whether or not the link was visited before
+     * for each url, returns a Visit (any) or null if it was never visited
      * TODO would be cool to make it more iterative..
      */
     visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {

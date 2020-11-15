@@ -130,6 +130,9 @@ test('visited', async() => {
         // in addition, this was legacy behaviour
         fetchMock.mockOnce(`[false, true, null]`)
         let r = await backend.visited(['http://link1', 'http://link2', 'http://link3'])
-        expect(r).toEqual([false, true, null])
+        const [r1, r2, r3] = r
+        expect(r1).toEqual(null)
+        expect(r2).not.toEqual(null)
+        expect(r3).toEqual(null)
     }
 })
