@@ -187,6 +187,8 @@ export const Methods = {
     SEARCH_VISITS_AROUND: 'searchVisitsAround',
     MARK_VISITED        : 'markVisited',
     OPEN_SEARCH         : 'openSearch',
+    SIDEBAR_TOGGLE      : 'sidebarToggle',
+    SIDEBAR_SHOW        : 'sidebarShow',
 }
 
 export const Ids = {

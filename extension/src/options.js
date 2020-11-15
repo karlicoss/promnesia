@@ -16,7 +16,8 @@ export type Options = {|
 
     verbose_errors_on: boolean;
     contexts_popup_on: boolean;
-    detect_sidebar_urls: boolean;
+    sidebar_always_show: boolean,
+    sidebar_detect_urls: boolean;
 
     highlight_on: boolean;
 
@@ -63,9 +64,12 @@ function defaultOptions(): Options {
         use_browserhistory: true,
         browserhistory_max_results: 10000,
 
+        // todo might be nice to have some of these none to tell apart from default set by me, or user set...
+
         verbose_errors_on: false,
         contexts_popup_on: false,
-        detect_sidebar_urls: true,
+        sidebar_detect_urls: true,
+        sidebar_always_show: false,
 
         highlight_on: true,
 
