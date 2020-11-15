@@ -157,7 +157,7 @@ export class Binder {
             }
             let handle_plain = do_simple
 
-            if (this.options.detect_sidebar_urls) {
+            if (this.options.sidebar_detect_urls) {
                 let anchorme = null
                 try {
                     const {default: anchorme_} = await import(

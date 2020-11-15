@@ -4,7 +4,7 @@ import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
 import {getOptions, setOptions, THIS_BROWSER_TAG} from './options';
 
-import {chromeTabsExecuteScriptAsync, chromeTabsInsertCSS, achrome} from './async_chrome'
+import {achrome} from './async_chrome'
 import {showTabNotification, defensify, notifications} from './notifications'
 import {Blacklist} from './blacklist'
 import {isAndroid, allsources} from './sources'
@@ -110,11 +110,15 @@ async function updateState (tab: chrome$Tab) {
 
     const opts = await getOptions()
 
-    const inject = () => chromeTabsExecuteScriptAsync(tabId, {file: 'sidebar.js'})
+    // TODO right... so if sidebar isn't injected, the messages will not be delivered.. well, hopefully it's quick enough..
+    // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages recieved multiple times)
+
+    // TODO only inject after blacklist check? just in case?
+    const inject = () => achrome.tabs.executeScript(tabId, {file: 'sidebar.js'})
     // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
     // not sure, but using deferred promises just in case
-          .then(() => chromeTabsInsertCSS(tabId, {file: 'sidebar-outer.css'}))
-          .then(() => chromeTabsInsertCSS(tabId, {code: opts.position_css}));
+          .then(() => achrome.tabs.insertCSS(tabId, {file: 'sidebar-outer.css'}))
+          .then(() => achrome.tabs.insertCSS(tabId, {code: opts.position_css}))
 
 
     // NOTE: if the page is unreachable, we can't inject stuff in it
@@ -133,8 +137,7 @@ async function updateState (tab: chrome$Tab) {
     } else {
         // ok to query
         if (opts.always_mark_visited) {
-            // no need to await? it can work in parallel
-            doMarkVisited(tabId)
+            setTimeout(() => doMarkVisited(tabId)) // run it in parallel
         }
         visits = await allsources.visits(url)
     }
@@ -198,6 +201,12 @@ async function updateState (tab: chrome$Tab) {
         return
     }
 
+    if (opts.sidebar_always_show) {
+        // TODO maybe hide if there are no visits?
+        // let it sxecute asynchronously
+        setTimeout(() => openSidebar(tab))
+    }
+
     if (visits instanceof Error) {
         // meh. but I guess kinda does the trick
         visits = new Visits(url, url, [visits])
@@ -224,13 +233,19 @@ async function updateState (tab: chrome$Tab) {
         // TODO even compiling this takes 50ms if 10K visits??
         // faster means of communication are going to require
         // so perhaps instead, truncate and suggest to use 'search-like' interface
-        chrome.tabs.sendMessage(tabId, {
+        sendSidebarMessage(tabId, {
             method: Methods.BIND_SIDEBAR_VISITS,
             data  : visits.toJObject(),
         })
     } else {
         console.warn("TODO implement binding visits to popup? or at least show error message")
     }
+}
+
+
+function sendSidebarMessage(tabId: number, message: any) {
+    // ugh.. just so I don't shoot myself in the foot again with using runtime.sendMessage...
+    chrome.tabs.sendMessage(tabId, message)
 }
 
 
@@ -553,9 +568,8 @@ export async function openSidebar(tab: chrome$Tab) {
         return
     }
     const {tid: tid} = should
-    // todo hmm, it sould already be inserted by now? but whatever..
-    await achrome.tabs.executeScript(tid, {file: 'sidebar.js'})
-    await achrome.tabs.executeScript(tid, {code: 'toggleSidebar();'})
+    // TODO eh, if the user clicks the icon too fast, it might not have a receiver? is there a way to find out??
+    sendSidebarMessage(tid, {method: Methods.SIDEBAR_TOGGLE})
 }
 
 

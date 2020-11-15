@@ -95,7 +95,8 @@ const o_use_browserhistory = new Toggle('use_browserhistory_id')
 const o_browserhistory_max_results = new ONumber('browserhistory_max_results_id')
 const o_verbose_errors = new Toggle('verbose_errors_id'     )
 const o_contexts_popup = new Toggle('contexts_popup_id'     )
-const o_detect_urls    = new Toggle('detect_sidebar_urls_id')
+const o_sidebar_detect_urls = new Toggle('sidebar_detect_urls_id')
+const o_sidebar_always_show = new Toggle('sidebar_always_show_id')
 const o_highlights_on  = new Toggle('highlight_id'          )
 const o_always_mark    = new Toggle('always_mark_visited_id')
 
@@ -144,7 +145,8 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
 
     o_verbose_errors.value = opts.verbose_errors_on
     o_contexts_popup.value = opts.contexts_popup_on
-    o_detect_urls   .value = opts.detect_sidebar_urls
+    o_sidebar_detect_urls.value = opts.sidebar_detect_urls
+    o_sidebar_always_show.value = opts.sidebar_always_show
     o_highlights_on .value = opts.highlight_on
     o_always_mark   .value = opts.always_mark_visited
 
@@ -175,7 +177,8 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         browserhistory_max_results: o_browserhistory_max_results.value,
         verbose_errors_on  : o_verbose_errors.value,
         contexts_popup_on  : o_contexts_popup.value,
-        detect_sidebar_urls: o_detect_urls   .value,
+        sidebar_detect_urls: o_sidebar_detect_urls.value,
+        sidebar_always_show: o_sidebar_always_show.value,
         highlight_on       : o_highlights_on .value,
         always_mark_visited: o_always_mark   .value,
         blacklist          : o_blacklist     .value,

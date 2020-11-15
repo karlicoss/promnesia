@@ -128,6 +128,7 @@ class Sidebar {
     }
 
     async show() {
+        // NOTE: this is idempotent and should be this way
         const frame = await this.ensureFrame();
         this.body.classList.add(SIDEBAR_ACTIVE);
         frame.style.display = 'block';
@@ -181,15 +182,9 @@ class Sidebar {
 }
 
 async function sidebar(): Promise<Sidebar> {
-    const opts = await getOptions();
-    return new Sidebar(opts);
+    const opts = await getOptions()
+    return new Sidebar(opts)
 }
-
-async function toggleSidebar() {
-    (await sidebar()).toggle();
-}
-// to make function available for executeScript... gross
-window.toggleSidebar = toggleSidebar;
 
 
 function _sanitize(text: string): string {
@@ -492,9 +487,6 @@ async function bindSidebarData(response: Visits) {
 }
 
 
-// hmm. otherwise it can't be called from executescript??
-window.bindSidebarData = bindSidebarData
-
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 // eslint-disable-next-line no-unused-vars
@@ -513,11 +505,16 @@ function requestVisits(): void {
 // eslint-disable-next-line no-unused-vars
 chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) => {
     const method = msg.method
-    if (method == Methods.BIND_SIDEBAR_VISITS) {
+    if        (method == Methods.BIND_SIDEBAR_VISITS) {
         bindSidebarData(Visits.fromJObject(msg.data))
+    } else if (method == Methods.SIDEBAR_SHOW) {
+        sidebar().then(s => s.show())
+    } else if (method == Methods.SIDEBAR_TOGGLE) {
+        sidebar().then(s => s.toggle())
     } else {
-        console.error('unexpected message: %o', msg)
+        console.debug('unexpected message: %o', msg)
     }
+    // todo do I need to return anything?
 })
 
 // TODO make configurable? or resizable?

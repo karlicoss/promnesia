@@ -97,11 +97,3 @@ export type HistoryItem = {
     lastVisitTime?: number,
 }
 
-
-// TODO legacy, remove
-export function chromeTabsExecuteScriptAsync(tabId: number, opts: any): Promise<?Array<any>> {
-    return achrome.tabs.executeScript(tabId, opts)
-}
-export function chromeTabsInsertCSS(tabId: number, opts: any): Promise<void> {
-    return achrome.tabs.insertCSS(tabId, opts)
-}
