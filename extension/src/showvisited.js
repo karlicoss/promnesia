@@ -53,6 +53,17 @@ function formatVisit(v) {
     return els
 }
 
+function create0SpaceElement(el) {
+    // hack to 'attach' it to the element without occupying DOM space
+    // https://stackoverflow.com/a/6040258/706389
+    const w = document.createElement('span')
+    w.style.width   = '0px'
+    w.style.height  = '0px'
+    w.style.position = 'relative'
+    w.appendChild(el)
+    return w
+}
+
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 // returns extra elements to insert in DOM
 function showMark(element) {
@@ -69,6 +80,10 @@ function showMark(element) {
     let eyecolor = '#550000' // 'boring'
 
     const eye = document.createElement('span')
+    // meh, but works
+    const wrapper = create0SpaceElement(eye)
+    wrapper.classList.add('promnesia-visited-wrapper')
+
     // for debugging
     eye.dataset.promnesia_original   = v.original_url
     eye.dataset.promnesia_normalised = v.normalised_url
@@ -77,21 +92,27 @@ function showMark(element) {
     eye.textContent = '👁'
     eye.style.color = eyecolor
     eye.style.position = 'absolute'
-    {
-        let rect = element.getBoundingClientRect()
-        eye.style.top  = `calc(${(window.scrollY + rect.top  )}px - 0.8em)`
-        eye.style.left =      `${(window.scrollX + rect.right)}px`
-    }
-
+    element.appendChild(wrapper)
     // todo 'interesting' visits would have either context or locator? dunno
     if (v === true) {
         // nothing else interesting we can do with such visit
-        return [eye]
+        return []
     }
 
     eyecolor = v.context == null ? '#6666ff' : '#00ff00' // copy-pasted from 'generate' script..
     eye.style.color = eyecolor
 
+    /*
+     * So, toggler 'wraps around' the link
+     * TODO not sure about that.. potentially might break DOM
+     * yeah, touches it a bit, e.g. on HN..
+     * another issue is that if it's parent zindex is lower, the popup will be below the body..
+     * can see on the left stackoverflow sidebar...
+     * also on github repositories, in the top bar where issues/PRs are
+     * or in the file view
+     * ugh. not sure what's the right way to deal with it. i.e. absolute position might break when scrolling
+     * also generally cause grief if mispositioned
+     */
     let toggler = document.createElement('span')
     toggler.classList.add('promnesia-visited-popup-toggler')
     toggler.title = 'click to pin'
@@ -99,28 +120,46 @@ function showMark(element) {
     toggler.style.cursor = 'pointer'
     toggler.style.paddingTop    = '0.5em'
     toggler.style.paddingBottom = '0.5em'
+    toggler.style.display = 'inline-block'
     toggler.appendChild(element)
 
-    let popup = document.createElement('div')
+    /* popup body */
     let content = document.createElement('div')
     content.style.border = 'solid 1px'
     content.style.background = 'lightyellow'
     content.style.padding = '1px'
+    content.style.width = 'max-content'
     // eh. seems necessary, e.g. on youtube subscriptions list on the left??
     content.style.zIndex = 10000
-    popup.appendChild(content)
-    // TODO max width??
-    // TODO use an actual style or something?
+    // TODO would be cool to reuse the same style used by the sidebar...
     let ev = formatVisit(v)
     for (const e of ev) {
         content.appendChild(e)
     }
+    // TODO would be nice to add close button or something
+    // NOTE: popup content can't be under 'a' itself, otherwise it all ends up linking to the original URL
+    // it can't be under toggle as well, because then any popup click toggles
+    // so it seems we need even extra container.. sigh
+    let outer = document.createElement('span')
+    outer.classList.add('promnesia-visited-wrapper')
+    toggler.replaceWith(outer)
+    outer.appendChild(toggler)
+    let wrapper2 = create0SpaceElement(content)
+    outer.appendChild(wrapper2)
 
-    // TODO would be cool to reuse the same style used by the sidebar...
-    let rect = toggler.getBoundingClientRect()
-    content.style.top  = `${(window.scrollY + rect.bottom)}px`
-    content.style.left = `${(window.scrollX + rect.left  )}px`
+    const movetotop = () => {
+        // jeez. but kind of works.. (needs to be shared across all visits..)
+        let lastz = window.lastz || 1
+        wrapper2.style.zIndex = lastz
+        window.lastz = lastz + 1
+    }
+
+    // let rect = toggler.getBoundingClientRect()
+    // content.style.top  = `${(window.scrollY + rect.bottom)}px`
+    // content.style.left = `${(window.scrollX + rect.left  )}px`
     content.style.position = 'absolute'
+    content.style.left = '0px' // not sure?
+    content.style.top  = '0px'
     // hmm, :hover pseudo class didn't work on that span for some reason...
     // https://stackoverflow.com/questions/12361244/css-hover-pseudo-class-not-working#comment17060438_12361291
     // logic as follows: when over toggler, show the popup
@@ -129,6 +168,8 @@ function showMark(element) {
         toggler.style.background = 'lightyellow'
         eye    .style.color      = 'lightyellow'
         toggler.style.outline = '1px solid'
+
+        movetotop()
 
         toggler.removeEventListener('mouseover', over)
         toggler.addEventListener   ('mouseout' , out )
@@ -155,26 +196,34 @@ function showMark(element) {
         content.pinned = !pinned
     }
     toggler.addEventListener('click', click)
+    content.addEventListener('click', movetotop)
     out()
-    element.appendChild(popup)
-    return [eye, popup]
+    return []
 }
 
 /*
  * Ideally should be an inverse for showMark
  */
 function hideMark(element) {
-    if (!element.classList.contains('promnesia-visited-link')) {
+    const VISITED = 'promnesia-visited-link'
+    const WRAPPER = 'promnesia-visited-wrapper'
+    if (!element.classList.contains(VISITED)) {
         return
     }
-    // NOTE: eyes and popup will be handled by hideMarks, they are attached to the special container
-    // only need to deal with the toggler
-    const toggler = element.parentElement
-    if (!toggler.classList.contains('promnesia-visited-popup-toggler')) {
-        console.warning("Expected %o to be the toggler for %o, but couln't find it", toggler, element)
-        return
+    element.classList.remove(VISITED)
+    // need to deal with the toggler & wrappers
+    // TODO this is only gonna be the case if it was indeed wrapped?
+    const outer = element.parentElement.parentElement
+    if (outer.classList.contains(WRAPPER)) {
+        outer.replaceWith(element)
+        // do we need anything else?? presumably it would be orphaned in DOM?
     }
-    toggler.replaceWith(element)
+    // ok, now we also have an eye inside the link
+    // todo use different class?
+    // TODO maybe also keep it in the outer container?? dunno
+    for (const el of element.getElementsByClassName(WRAPPER)) {
+        el.remove()
+    }
 }
 
 function _doMarks(show /* boolean */) {
