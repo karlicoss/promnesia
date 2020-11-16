@@ -612,10 +612,11 @@ const COMMAND_SEARCH       = 'search';
 const COMMAND_MARK_VISITED = 'mark_visited';
 
 const onCommandCallback = defensify(async cmd => {
+    // todo maybe show a notification or something on command? just to give a sense of progress...
     // ok apparently background page shouldn't communicate with itself via messages. wonder how could it work for me before..
     // https://stackoverflow.com/a/35858654/706389
     if (cmd === COMMAND_MARK_VISITED) {
-        await handleMarkVisited()
+        await handleMarkVisited() // TODO use message passing? so it's a single point of entry? not sure
     } else if (cmd === COMMAND_SEARCH) {
         await handleOpenSearch()
     } else {

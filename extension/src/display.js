@@ -160,6 +160,8 @@ export class Binder {
             if (this.options.sidebar_detect_urls) {
                 let anchorme = null
                 try {
+                    // note: performance is OK
+                    // 339 iterations passed, took  200  ms -- and it's counting other DOM operations as well
                     const {default: anchorme_} = await import(
                         /* webpackChunkName: "anchorme" */
                         // $FlowFixMe
