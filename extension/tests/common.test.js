@@ -68,7 +68,7 @@ test('normalisedURLHostname', () => {
 import {Filterlist} from '../src/filterlist.js'
 
 
-test('filterlist membership', () => {
+test('filterlists', () => {
     // TODO make tests literate so they contribute to help docs?
     const bl_string = `
 mail.google.com

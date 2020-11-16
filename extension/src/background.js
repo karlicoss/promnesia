@@ -3,7 +3,7 @@
 import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
 import type {Options} from './options'
-import {Toggles, getOptions, setOptions, THIS_BROWSER_TAG} from './options'
+import {Toggles, getOptions, setOptions, setOption, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
 import {showTabNotification, defensify, notifications, Notify} from './notifications'
@@ -137,7 +137,7 @@ async function updateState (tab: chrome$Tab) {
         visits = new Blacklisted(url, bl)
     } else {
         // ok to query
-        if (opts.always_mark_visited) {
+        if (opts.mark_visited_always) {
             setTimeout(() => doToggleMarkVisited(tabId)) // run it in parallel
         }
         visits = await allsources.visits(url)
@@ -530,8 +530,7 @@ async function shouldProcessPage(tab: ?chrome$Tab): Promise<?ShouldProcess> {
     const bl = await filterlist.contains(url)
     // todo let blacklist return Blacklisted object?
     if (bl != null) {
-        // TODO show popup; suggest to whitelist?
-        await notifications.blacklisted(tid, new Blacklisted(url, bl))
+        await notifications.excluded(tid, new Blacklisted(url, bl))
         return null
     }
     return {
@@ -688,7 +687,7 @@ async function handleGlobalBlacklist() {
     */
     const ll = opts.blacklist.split(/\n/).length;
     // TODO could open sidebar here and display blacklist??
-    await showTabNotification(tabId, `Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue')
+    await Notify.notify(tabId, `Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue')
     await setOptions(opts);
 }
 
@@ -700,18 +699,30 @@ type MenuInfo = {
 }
 
 
-async function handleDoNotMarkLink(info: MenuInfo) {
+async function handleDoNotMarkLink(info: MenuInfo, tab: chrome$Tab) {
     const url = info.linkUrl
     if (url == null) {
         console.error('received null url')
         return
     }
+    const tabId = unwrap(tab.id)
 
+    // TODO also show prompt?? not sure, might be too annoying on the first run?
 
     const opts = await getOptions()
+    let cur = opts.mark_visited_excludelist
+    cur += (cur.endsWith('\n') ? '' : '\n') + url
 
-    // TODO notification? just show normal?
-    console.error("CLIIICKED! %o", );
+    const lines = (cur.match(/\n/g) || '').length + 1
+    // TODO hmm, editing here might be nice in case of garbage in the URL... not sure
+    await setOption({mark_visited_excludelist: cur})
+    await Notify.notify(
+        tabId,
+`
+Added ${url} to excludelist (${lines} items now).
+You should see the change after reloading the page.
+`.trim(),
+    )
 }
 
 
@@ -719,7 +730,7 @@ const DEFAULT_CONTEXTS = ['page', 'browser_action']
 type MenuEntry = {
     id: string,
     title: string,
-    callback: ?((info: MenuInfo) => Promise<void>),
+    callback: ?((info: MenuInfo, tab: chrome$Tab) => Promise<void>),
     contexts?: Array<chrome$ContextType>, // NOTE: not present interpreted as DEFAULT_CONTEXTS
     parentId?: string,
 }
@@ -745,7 +756,7 @@ const MENUS: Array<MenuEntry> = [
     {
         id      : 'menu_search',
         title   : "Search in browsing history",
-        callback: (_info) => handleOpenSearch(),
+        callback: (_info, _tab) => handleOpenSearch(),
     },
     {
         id      : 'menu_toggles',
@@ -770,7 +781,7 @@ const TOGGLES: Array<MenuToggle> = [
         parentId: 'menu_toggles', // meh
         id      : 'menu_toggles_visited',
         title   : 'Always mark visited links',
-        checker : opts => opts.always_mark_visited,
+        checker : opts => opts.mark_visited_always,
         callback: Toggles.markVisited,
     },
     {
@@ -832,13 +843,13 @@ function initBackground() {
             }
         }))
 
-        const onMenuClickedCallback = defensify(async (info: MenuInfo, _tab: chrome$Tab) => {
+        const onMenuClickedCallback = defensify(async (info: MenuInfo, tab: chrome$Tab) => {
             const mid = info.menuItemId
             for (const m of [...MENUS, ...TOGGLES]) {
                 if (mid == m.id) {
                     const cb = m.callback
                     if (cb != null) {
-                        await cb(info)
+                        await cb(info, tab)
                     }
                     break
                 }

@@ -98,7 +98,7 @@ const o_contexts_popup = new Toggle('contexts_popup_id'     )
 const o_sidebar_detect_urls = new Toggle('sidebar_detect_urls_id')
 const o_sidebar_always_show = new Toggle('sidebar_always_show_id')
 const o_highlights_on  = new Toggle('highlight_id'          )
-const o_always_mark    = new Toggle('always_mark_visited_id')
+const o_mark_visited_always = new Toggle('mark_visited_always_id')
 
 const o_blacklist    = new Editor('blacklist_id'   , {mode: null  })
 const o_filterlists  = new Editor('filterlists_id' , {mode: 'javascript'})
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     o_sidebar_detect_urls.value = opts.sidebar_detect_urls
     o_sidebar_always_show.value = opts.sidebar_always_show
     o_highlights_on .value = opts.highlight_on
-    o_always_mark   .value = opts.always_mark_visited
+    o_mark_visited_always.value = opts.mark_visited_always
 
     const CodeMirror = await importCM()
 
@@ -180,7 +180,7 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         sidebar_detect_urls: o_sidebar_detect_urls.value,
         sidebar_always_show: o_sidebar_always_show.value,
         highlight_on       : o_highlights_on .value,
-        always_mark_visited: o_always_mark   .value,
+        mark_visited_always: o_mark_visited_always.value,
         blacklist          : o_blacklist     .value,
         filterlists        : o_filterlists   .value,
         src_map            : o_src_map       .value,
@@ -228,3 +228,6 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
         alertError(`${err}. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`);
     });
 }));
+
+
+// FIXME need at least a simple options export... or point the users how to backup settings?
