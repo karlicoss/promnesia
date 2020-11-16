@@ -4,6 +4,8 @@
 // - link_element: list of <a> DOM elements on the page
 // - visited: Map<Url, ?Visit>
 // then you can walk through this and decorate as you please
+// ideally you just can override/monkey patch showMark and hideMark and rely on showMarks/hideMarks to do the correct thing?
+
 
 function createLink(href, title) {
     const a = document.createElement('a')
@@ -53,7 +55,7 @@ function formatVisit(v) {
 
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 // returns extra elements to insert in DOM
-function decorateLink(element) {
+function showMark(element) {
     const url = element.href
     // 'visited' passed in backgroud.js
     // eslint-disable-next-line no-undef
@@ -62,7 +64,7 @@ function decorateLink(element) {
         return // no visits or was excluded (add some data attribute maybe?)
     }
 
-    element.classList.add('promnesia-visited')
+    element.classList.add('promnesia-visited-link')
 
     let eyecolor = '#550000' // 'boring'
 
@@ -91,6 +93,7 @@ function decorateLink(element) {
     eye.style.color = eyecolor
 
     let toggler = document.createElement('span')
+    toggler.classList.add('promnesia-visited-popup-toggler')
     toggler.title = 'click to pin'
     element.replaceWith(toggler)
     toggler.style.cursor = 'pointer'
@@ -103,6 +106,8 @@ function decorateLink(element) {
     content.style.border = 'solid 1px'
     content.style.background = 'lightyellow'
     content.style.padding = '1px'
+    // eh. seems necessary, e.g. on youtube subscriptions list on the left??
+    content.style.zIndex = 10000
     popup.appendChild(content)
     // TODO max width??
     // TODO use an actual style or something?
@@ -155,9 +160,34 @@ function decorateLink(element) {
     return [eye, popup]
 }
 
-function decorateLinks() {
-    let cont = document.createElement('div') // todo class?
-    document.body.appendChild(cont)
+/*
+ * Ideally should be an inverse for showMark
+ */
+function hideMark(element) {
+    if (!element.classList.contains('promnesia-visited-link')) {
+        return
+    }
+    // NOTE: eyes and popup will be handled by hideMarks, they are attached to the special container
+    // only need to deal with the toggler
+    const toggler = element.parentElement
+    if (!toggler.classList.contains('promnesia-visited-popup-toggler')) {
+        console.warning("Expected %o to be the toggler for %o, but couln't find it", toggler, element)
+        return
+    }
+    toggler.replaceWith(element)
+}
+
+function _doMarks(show /* boolean */) {
+    let cont = document.getElementById('promnesia-marks-container-id')
+    if (cont == null) {
+        cont = document.createElement('div') // todo class?
+        cont.id = 'promnesia-marks-container-id'
+        document.body.appendChild(cont)
+    }
+
+    if (!show) {
+        cont.remove()
+    }
 
     // 'link_elements' passed in background.js
     // eslint-disable-next-line no-undef
@@ -170,12 +200,14 @@ function decorateLinks() {
             for (const link of group) {
                 let elems = null
                 try { // best to be defensive here..
-                    elems = decorateLink(link)
+                    const fn = show ? showMark : hideMark
+                    elems = fn(link)
                 } catch (e) {
                     console.error(e)
                 }
 
                 if (elems != null) {
+                    // only relevant to 'show' mode??
                     for (const e of elems) {
                         // NOTE: attaching to the link element itself (or its parent) seems like a bad idea
                         // .e.g see on https://old.reddit.com/r/archlinux/comments/juianf/is_there_a_software_that_runs_a_command_at_a_time/
@@ -188,4 +220,15 @@ function decorateLinks() {
     }
 }
 
-decorateLinks()
+
+// called from background.js
+// eslint-disable-next-line no-unused-vars
+function showMarks() {
+    _doMarks(true)
+}
+
+// called from background.js
+// eslint-disable-next-line no-unused-vars
+function hideMarks() {
+    _doMarks(false)
+}

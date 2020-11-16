@@ -115,5 +115,9 @@ export const notifications = {
     },
     blacklisted: async function(tabId: number, b: Blacklisted) {
         await showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red')
-    }
+    },
+    desktop: desktopNotify,
 }
+
+// probably makes moresense as a name?
+export const Notify = notifications
