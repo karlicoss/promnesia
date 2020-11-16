@@ -5,6 +5,11 @@ import {getBrowser} from './common'
 import OptionsSync from 'webext-options-sync';
 
 
+// ugh. hacky way to support partial option setting...
+type Opt1 = {|
+    mark_visited_excludelist: string;
+|}
+
 export type Options = {|
     host: string;
     token: string;
@@ -21,11 +26,18 @@ export type Options = {|
 
     highlight_on: boolean;
 
-    always_mark_visited: boolean;
+
+    mark_visited_always    : boolean;
+    ...Opt1,
+
+
     // this is kept as string to preserve formatting and comments
     blacklist: string;
     // kept as string to preserve formatting
     filterlists: string;
+
+
+    // todo need to document this...
     src_map    : string;
 
     /* NOTE: a bit misleading name; it keeps all style settings now */
@@ -73,7 +85,9 @@ function defaultOptions(): Options {
 
         highlight_on: true,
 
-        always_mark_visited: false,
+        mark_visited_always     : false,
+        mark_visited_excludelist: '',
+
         blacklist: '',
         // todo would be nice to validate on saving...
         filterlists: `[
@@ -178,9 +192,15 @@ export async function getOptions(): Promise<Options> {
     return r
 }
 
+// TODO would be nice to accept a substructure of Options??
 export async function setOptions(opts: Options) {
-    const os = optSync();
-    await os.set(opts);
+    const os = optSync()
+    await os.set(opts)
+}
+
+export async function setOption(opt: Opt1) {
+    const os = optSync()
+    await os.set(opt)
 }
 
 
@@ -194,6 +214,6 @@ function toggleOption(toggle: (Options) => void): () => Promise<void> {
 
 export const Toggles = {
     showSidebar   : toggleOption((opts) => { opts.sidebar_always_show = !opts.sidebar_always_show; }),
-    markVisited   : toggleOption((opts) => { opts.always_mark_visited = !opts.always_mark_visited; }),
+    markVisited   : toggleOption((opts) => { opts.mark_visited_always = !opts.mark_visited_always; }),
     showHighlights: toggleOption((opts) => { opts.highlight_on        = !opts.highlight_on       ; }),
 }

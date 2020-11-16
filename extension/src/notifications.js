@@ -107,14 +107,17 @@ export async function showTabNotification(tabId: ?number, message: string, ...ar
 }
 
 export const notifications = {
+    notify: async function(tabId: ?number, message: string, ...args: Array<any>) {
+        return showTabNotification(tabId, message, ...args)
+    },
     error: async function(tabId: number, e: Error) {
-        await showTabNotification(tabId, e.toString(), 'red')
+        return notifications.notify(tabId, e.toString(), 'red')
     },
     page_ignored: async function(tabId: ?number, url: ?Url, reason: string) {
-        await showTabNotification(tabId, `${url || ''} is ignored: ${reason}`, 'red')
+        return notifications.notify(tabId, `${url || ''} is ignored: ${reason}`, 'red')
     },
-    blacklisted: async function(tabId: number, b: Blacklisted) {
-        await showTabNotification(tabId, `${b.url} is blacklisted: ${b.reason}`, 'red')
+    excluded: async function(tabId: number, b: Blacklisted) {
+        return notifications.notify(tabId, `${b.url} is excluded: ${b.reason}`, 'red')
     },
     desktop: desktopNotify,
 }

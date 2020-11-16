@@ -10,7 +10,7 @@ type UrllistSpec = [string, string]
 
 
 export class Filterlist {
-    filterlist: Array<string>
+    filterlist: Set<string>
     urllists: Array<UrllistSpec>
 
     // cache
@@ -18,24 +18,24 @@ export class Filterlist {
 
     constructor({filterlist: filterlist, urllists_json: urllists_json}: {filterlist: string, urllists_json: string}) {
         // FIXME: make it defensive? maybe ignore all on erorrs??
-        this.filterlist = asList(filterlist)
+        this.filterlist = new Set(asList(filterlist))
         this.urllists   = JSON.parse(urllists_json)
 
         this._lists = new Map()
     }
 
+    // TODO use some extra cache?
     _helper(url: Url): ?Reason {
         // https://github.com/gorhill/uBlock/wiki/How-to-whitelist-a-web-site kind of following this logic and syntax
 
         // TODO need to be careful about normalising domains here; e.g. cutting off amp/www could be bit unexpected...
-        const bl = this.filterlist
-        if (bl.includes(url)) {
+        if (this.filterlist.has(url)) {
             return "User-defined filterlist (exact page)"
         }
 
         const hostname = normalisedURLHostname(url)
-        if (bl.includes(hostname)) {
-            return "User-defined filterlist (domain)" // TODO maybe supply item number?
+        if (this.filterlist.has(hostname)) {
+            return `User-defined filterlist (domain ${hostname})` // TODO maybe supply item number?
         }
 
         // TODO eh, it's a bit annoying; it tries to handle path segments which we don't really want...
@@ -45,10 +45,10 @@ export class Filterlist {
         //     return "User-defined filterlist (wildcard)";
         // }
 
-        const regexes = bl.filter(s => s[0] == '/' && s.slice(-1) == '/');
-        for (const regex of regexes) {
-            if (url.search(RegExp(regex)) >= 0) {
-                return `User-defined filterlist (regex: ${regex})`;
+        for (const f of this.filterlist) {
+            const is_regex = f[0] == '/' && f.slice(-1) == '/'
+            if (is_regex && url.search(RegExp(f)) >= 0) {
+                return `User-defined filterlist (regex: ${f})`;
             }
         }
         return null
@@ -115,6 +115,11 @@ export class Filterlist {
     }
 
     static async forMarkVisited(): Promise<Filterlist> {
-        return Filterlist.global() // FIXME implement
+        const opts = await getOptions()
+        // merges together both global and the one for mark visited
+        return new Filterlist({
+            filterlist   : opts.blacklist + '\n' + opts.mark_visited_excludelist,
+            urllists_json: opts.filterlists,
+        })
     }
 }
