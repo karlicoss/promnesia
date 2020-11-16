@@ -167,9 +167,29 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     }
 }));
 
+
+// https://stackoverflow.com/a/34156339/706389
+function download(content: string, fileName: string, contentType: string) {
+    var a = document.createElement("a")
+    var file = new Blob([content], {type: contentType})
+    a.href = URL.createObjectURL(file)
+    a.download = fileName
+    a.click()
+}
+
+unwrap(document.getElementById(
+    'export_settings_id'
+)).addEventListener('click', defensifyAlert(async () => {
+    // NOTE: gets all keys, including the old onces, just what we need
+    const opts = await getOptions()
+    download(JSON.stringify(opts), 'promnesia_settings.json', 'text/json')
+}))
+
 // TODO careful here if I ever implement not showing notifications?
 // defensify might need to alert then...
-unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAlert(async () => {
+unwrap(document.getElementById(
+    'save_id'
+)).addEventListener('click', defensifyAlert(async () => {
     // todo make opts active object so we don't query unnecessary things like blacklist every time?
     const opts = {
         host               : o_host              .value,
@@ -231,6 +251,3 @@ unwrap(document.getElementById('backend_status_id')).addEventListener('click', d
         alertError(`${err}. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`);
     });
 }));
-
-
-// FIXME need at least a simple options export... or point the users how to backup settings?
