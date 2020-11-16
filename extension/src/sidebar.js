@@ -195,39 +195,55 @@ function _sanitize(text: string): string {
                .trim();
 }
 
-function findText(elem: Node, text: string): ?Node {
-    // start with the most specific element to highlight
+// yields all DOM nodes that matched against some of the lines
+function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> {
+    // first try to highlight the most specific element possible
     const children = elem.childNodes || []
-    for (let x of children) {
-        let cr = findText(x, text)
-        if (cr != null) {
-            return cr
+    let found = false
+    for (let c of children) {
+        for (const m of findMatches(c, lines)) {
+            found = true
+            yield m
         }
     }
-    if (_sanitize(elem.textContent).includes(text)) {
-        return elem
+    if (found) {
+        // some of the children matched.. so no need to process the element itself?
+        return
     }
-    return null
+    // todo would be nice to cache it between highlight calls?
+    // maybe just set on the element?
+    const stext = _sanitize(elem.textContent)
+    let matched = null
+    for (const line of lines) {
+        if (stext.includes(line)) {
+            matched = line // make sure we break from the loop first so the iterator isn't invalidated
+            break
+        }
+    }
+    if (matched != null) {
+        // no need to process it further
+        lines.delete(matched)
+        yield [matched, elem]
+    }
 }
 
 const _HL_CLASS = 'promnesia-highlight'
 
-// TODO not very effecient; replace with something existing (Hypothesis??)
+// TODO potentially not very effecient; replace with something existing (Hypothesis??)
 function _highlight(text: string, idx: number, v: Visit) {
-    const to_hl = []
+    const lines = new Set()
     for (const line of text.split('\n')) {
         const sline = _sanitize(line)
         if (sline.length <= 3) {
             console.debug("line '%s' was completely sanitized/too short.. skipping", line)
             continue
         }
-        let target = findText(unwrap(doc.body), sline)
-        if (target == null) {
-            console.debug("No match target for '%s'", sline)
-            continue
-        }
-        console.debug("highlighting %o %s", target, sline)
+        lines.add(sline)
+    }
 
+    // TODO make sure they are unique? so we don't hl the same element twice..
+    const to_hl = []
+    for (let [line, target] of findMatches(unwrap(doc.body), lines)) {
         // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
         while (target != null && target.nodeType != Node.ELEMENT_NODE) {
             target = target.parentElement
@@ -263,7 +279,7 @@ function _highlight(text: string, idx: number, v: Visit) {
             console.warn('matched element %o is too big (ratio %f > %f). skipping it', target, ratio, RATIO)
             continue
         }
-        console.info("'%s': matched %o", sline, target)
+        console.info("'%s': matched %o", line, target)
 
         // defer changing DOM to avoid reflow? not sure if actually an issue but just in case..
         // https://gist.github.com/paulirish/5d52fb081b3570c81e3a
@@ -280,7 +296,7 @@ function _highlight(text: string, idx: number, v: Visit) {
     }
 }
 
-async function tryHighlight(text: string, idx: number, v: Visit) {
+function tryHighlight(text: string, idx: number, v: Visit) {
     // todo sidebar could also display if highlight matched or if it's "orphaned"
     // TODO use tag color for background?
     try {
@@ -414,8 +430,9 @@ async function* _bindSidebarData(response: Visits) {
         const relative = v.normalised_url != response.normalised_url;
 
         if (!relative && opts.highlight_on) {
-            // TODO ugh. why is it blocking here (judging by the log) even though it's async??
-            tryHighlight(ctx, idx1, v)
+            // todo this might compete for execution with the sidebar rendering...
+            // later maybe integrate it in the yield mechanism..
+            setTimeout(() => tryHighlight(ctx, idx1, v))
         }
 
         // TODO maybe shouldn't attach immediately? not sure
