@@ -6,6 +6,7 @@ from ..common import Results, Visit, Loc, extract_urls
 
 
 def index() -> Results:
+    from . import hpi
     from my.fbmessenger import messages
     for m in messages():
         text = m.text

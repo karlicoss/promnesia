@@ -1,12 +1,12 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myinstapaper][instapaper]] module
 '''
-from ..common import Results, get_logger, Visit, Loc
+from ..common import Results, logger, Visit, Loc
 
 
 def index() -> Results:
+    from . import hpi
     import my.instapaper as ip
-    logger = get_logger()
 
     for p in ip.pages():
         bm = p.bookmark
