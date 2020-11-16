@@ -100,8 +100,9 @@ const o_sidebar_always_show = new Toggle('sidebar_always_show_id')
 const o_highlights_on  = new Toggle('highlight_id'          )
 const o_mark_visited_always = new Toggle('mark_visited_always_id')
 
-const o_blacklist    = new Editor('blacklist_id'   , {mode: null  })
-const o_filterlists  = new Editor('filterlists_id' , {mode: 'javascript'})
+const o_mark_visited_excludelist = new Editor('mark_visited_excludelist_id', {mode: null        })
+const o_global_excludelist       = new Editor('global_excludelist_id'      , {mode: null        })
+const o_global_excludelists_ext  = new Editor('global_excludelists_ext_id' , {mode: 'javascript'})
 const o_src_map      = new Editor('source_map_id'  , {mode: 'javascript'})
 const o_position_css = new Editor('position_css_id', {mode: 'css' })
 const o_extra_css    = new Editor('extra_css_id'   , {mode: 'css' })
@@ -154,11 +155,12 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
 
     // TODO it should know the syntax? or infer from the class??
     for (const [el, value] of [
-        [o_blacklist   , opts.blacklist   ],
-        [o_filterlists , opts.filterlists ],
-        [o_src_map     , opts.src_map     ],
-        [o_position_css, opts.position_css],
-        [o_extra_css   , opts.extra_css   ],
+        [o_mark_visited_excludelist, opts.mark_visited_excludelist],
+        [o_global_excludelist      , opts.blacklist               ],
+        [o_global_excludelists_ext , opts.global_excludelists_ext ],
+        [o_src_map                 , opts.src_map                 ],
+        [o_position_css            , opts.position_css            ],
+        [o_extra_css               , opts.extra_css               ],
     ]) {
         el.bind({CodeMirror: CodeMirror})
         el.value = value
@@ -181,8 +183,9 @@ unwrap(document.getElementById('save_id')).addEventListener('click', defensifyAl
         sidebar_always_show: o_sidebar_always_show.value,
         highlight_on       : o_highlights_on .value,
         mark_visited_always: o_mark_visited_always.value,
-        blacklist          : o_blacklist     .value,
-        filterlists        : o_filterlists   .value,
+        mark_visited_excludelist: o_mark_visited_excludelist.value,
+        blacklist               : o_global_excludelist      .value,
+        global_excludelists_ext : o_global_excludelists_ext .value,
         src_map            : o_src_map       .value,
         position_css       : o_position_css  .value,
         extra_css          : o_extra_css     .value,
