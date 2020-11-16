@@ -1,58 +1,61 @@
 /* @flow */
 import type {Url} from './common';
-import type {Options} from './options'
 import {getOptions} from './options'
 import {asList} from './common';
 import {normalisedURLHostname} from './normalise';
 
-type Reason = string;
+type Reason = string
+
+type UrllistSpec = [string, string]
 
 
-export class Blacklist {
-    blacklist: Array<string>
-    lists: Map<string, Set<string>>
-    filterlists: Array<Array<string>>
+export class Filterlist {
+    filterlist: Array<string>
+    urllists: Array<UrllistSpec>
 
-    constructor(opts: Options) {
-        // FIXME: make it defensive?
-        this.blacklist = asList(opts.blacklist)
-        this.filterlists = JSON.parse(opts.filterlists)
-        this.lists = new Map()
+    // cache
+    _lists: Map<string, Set<string>>
+
+    constructor({filterlist: filterlist, urllists_json: urllists_json}: {filterlist: string, urllists_json: string}) {
+        // FIXME: make it defensive? maybe ignore all on erorrs??
+        this.filterlist = asList(filterlist)
+        this.urllists   = JSON.parse(urllists_json)
+
+        this._lists = new Map()
     }
 
-    _helper(url: Url): ?string {
+    _helper(url: Url): ?Reason {
         // https://github.com/gorhill/uBlock/wiki/How-to-whitelist-a-web-site kind of following this logic and syntax
 
         // TODO need to be careful about normalising domains here; e.g. cutting off amp/www could be bit unexpected...
-        const bl = this.blacklist
+        const bl = this.filterlist
         if (bl.includes(url)) {
-            return "User-defined blacklist (exact page)";
+            return "User-defined filterlist (exact page)"
         }
 
-        const hostname = normalisedURLHostname(url);
+        const hostname = normalisedURLHostname(url)
         if (bl.includes(hostname)) {
-            return "User-defined blacklist (domain)"; // TODO maybe supply item number?
+            return "User-defined filterlist (domain)" // TODO maybe supply item number?
         }
 
         // TODO eh, it's a bit annoying; it tries to handle path segments which we don't really want...
         // const mm = require('micromatch');
         // // console.log(pm.isMatch('http://github.com/issues', ['*github.com/issues*']));
         // if (mm.isMatch(url, bl, {contains: true})) {
-        //     return "User-defined blacklist (wildcard)";
+        //     return "User-defined filterlist (wildcard)";
         // }
 
         const regexes = bl.filter(s => s[0] == '/' && s.slice(-1) == '/');
         for (const regex of regexes) {
             if (url.search(RegExp(regex)) >= 0) {
-                return `User-defined blacklist (regex: ${regex})`;
+                return `User-defined filterlist (regex: ${regex})`;
             }
         }
-
-        return null;
+        return null
     }
 
     async _list(name: string, url: string): Promise<Set<string>> {
-        let list = this.lists.get(name);
+        let list = this._lists.get(name)
         if (list != null) {
             return list;
         }
@@ -72,7 +75,7 @@ export class Blacklist {
             expire : 24 * 3, // 3 days
         }))[0]
         list = new Set(asList(resp.data))
-        this.lists.set(name, list);
+        this._lists.set(name, list);
         return list;
     }
 
@@ -92,19 +95,26 @@ export class Blacklist {
 
         const hostname = normalisedURLHostname(url);
         // TODO perhaps use binary search?
-        for (let spec of this.filterlists) {
+        for (let spec of this.urllists) {
             let bname = spec[0]
             let bfile = spec[1]
             const domains = await this._list(bname, bfile);
             if (domains.has(hostname)) {
-                return `'${bname}' blacklist`;
+                return `'${bname}' filterlist`
             }
         }
         return null;
     }
 
-    static async get(): Promise<Blacklist> {
+    static async global(): Promise<Filterlist> {
         const opts = await getOptions()
-        return new Blacklist(opts)
+        return new Filterlist({
+            filterlist   : opts.blacklist,
+            urllists_json: opts.filterlists,
+        })
+    }
+
+    static async forMarkVisited(): Promise<Filterlist> {
+        return Filterlist.global() // FIXME implement
     }
 }
