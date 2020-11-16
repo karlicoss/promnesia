@@ -4,12 +4,12 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit
 
 from itertools import chain
 
-from ..common import Visit, Loc, extract_urls, Results, get_logger
+from ..common import Visit, Loc, extract_urls, Results, logger
 
 
 def index() -> Results:
+    from . import hpi
     from my.reddit import submissions, comments, saved, upvoted
-    logger = get_logger()
     # TODO should probably use markdown parser here?
 
     logger.info('processing saves')

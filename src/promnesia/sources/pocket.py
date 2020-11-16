@@ -5,6 +5,7 @@ from ..common import Visit, Loc, Results
 
 
 def index() -> Results:
+    from . import hpi
     from my.pocket import articles
     # TODO use docstring from my. module? E.g. describing which pocket format is expected
 

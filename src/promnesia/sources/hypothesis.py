@@ -1,13 +1,12 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypothesis][hypothesis]] module
 '''
-from ..common import Visit, Results, get_logger, Loc
+from ..common import Visit, Results, logger, Loc
 
 
 def index() -> Results:
+    from . import hpi
     import my.hypothesis as hyp
-    logger = get_logger()
-
     for h in hyp.get_highlights():
         if isinstance(h, Exception):
             yield h

@@ -2,12 +2,11 @@
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
 '''
 
-from ..common import Visit, get_logger, PathIsh, Url, Loc, Results
-
-logger = get_logger()
+from ..common import Visit, logger, PathIsh, Url, Loc, Results
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
 def index() -> Results:
+    from . import hpi
     from my.google.takeout.paths import get_takeouts
     takeouts = list(get_takeouts())
     # TODO if no takeouts, raise?
