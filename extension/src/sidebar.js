@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_duration, Methods, addStyle, chunkBy, Ids} from './common'
+import {Visits, Visit, unwrap, format_duration, Methods, addStyle, Ids} from './common'
 import type {Second} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
@@ -294,6 +294,7 @@ async function tryHighlight(text: string, idx: number, v: Visit) {
 /**
  * yields UI updates, so it's possible to schedule them in blocks and avoid blocking
  */
+// TODO ugh. how to profile it? how to make sure it can never slow down user UI?
 async function* _bindSidebarData(response: Visits) {
     // TODO ugh. we probably only want to set data, don't want to do anything with dom until we trigger the sidebar?
     // TDO perhaps we need something reactive...
@@ -303,6 +304,26 @@ async function* _bindSidebarData(response: Visits) {
 
     const cont = await sidebar.getContainer();
     await sidebar.clear(); // TODO probably, unnecessary?
+
+    // a way to ensure the sidebar rendering isn't impacting the browsing experience
+    // TODO use the same logic in search?
+    const YIELD_DELAY_MS = 200
+    let last_yield = 0
+    let iterations_since = 0
+    function shouldYield() {
+        let cur = new Date().getTime()
+        iterations_since += 1
+        const took = cur - last_yield
+        if (took < YIELD_DELAY_MS) {
+            return false
+        }
+        // todo eh, would be nice to log something more useful here..
+        console.debug('bindSidebarData: %d iterations passed, took %o ms', iterations_since, took)
+        last_yield = cur
+        iterations_since = 0
+        return true
+    }
+    //
 
     const binder = new Binder(doc, opts)
 
@@ -382,12 +403,10 @@ async function* _bindSidebarData(response: Visits) {
      * ugh. hacky way to defer UI thread updating... otherwise it blocks the interface on too many visits
      * TBH this is a beat stupid... surely async style execution would be super useful for this, why is it not here by default?
      */
-
-    const ONE_CHUNK = 300 // kinda arbitrary
-    for (const chunk of chunkBy(entries, ONE_CHUNK)) {
-    yield // give way to UI thread
-
-    for (const [idx0, v] of chunk) {
+    for (const [idx0, v] of entries) {
+        if (shouldYield()) {
+            yield
+        }
         const idx1 = idx0 + 1; // eh, I guess that makes more sense for humans
         const ctx = unwrap(v.context);
 
@@ -399,6 +418,7 @@ async function* _bindSidebarData(response: Visits) {
             tryHighlight(ctx, idx1, v)
         }
 
+        // TODO maybe shouldn't attach immediately? not sure
         const [dates, times] = visit_date_time(v)
         binder.render(items, dates, times, v.tags, {
             idx           : idx1,
@@ -409,7 +429,6 @@ async function* _bindSidebarData(response: Visits) {
             locator       : v.locator,
             relative      : relative,
         })
-    }
     }
 
     const delta_ms = GROUP_CONSECUTIVE_SECONDS * 1000;
@@ -434,9 +453,10 @@ async function* _bindSidebarData(response: Visits) {
     // todo maybe it should be a generic hook instead?
     // todo how to make it defensive?..
     const tag_map = JSON.parse(opts.src_map)
-    for (const chunk of chunkBy(groups(), ONE_CHUNK)) {
-    yield // give way to UI thread
-    for (const group of chunk) {
+    for (const group of groups()) {
+        if (shouldYield()) {
+            yield // give way to UI thread
+        }
         const first = group[0];
         const last  = group[group.length - 1];
         // eslint-disable-next-line no-unused-vars
@@ -469,7 +489,6 @@ async function* _bindSidebarData(response: Visits) {
             locator: null,
             relative: false,
         });
-    }
     }
 }
 
