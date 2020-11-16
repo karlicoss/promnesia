@@ -2,6 +2,7 @@
 
 import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
+import type {Options} from './options'
 import {Toggles, getOptions, setOptions, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
@@ -691,12 +692,13 @@ async function blacklist() {
 }
 
 
-
+const DEFAULT_CONTEXTS = ['page', 'browser_action']
 type MenuEntry = {
     id: string,
     title: string,
     callback: ?(() => Promise<void>),
-    parentId?: string
+    contexts?: Array<chrome$ContextType>, // NOTE: not present interpreted as DEFAULT_CONTEXTS
+    parentId?: string,
 }
 
 const MENUS: Array<MenuEntry> = [
@@ -720,24 +722,34 @@ const MENUS: Array<MenuEntry> = [
         title   : 'Quick settings',
         callback: null,
     },
-        {
-            parentId: 'menu_toggles', // meh
-            id      : 'menu_toggles_sidebar',
-            title   : "Toggle 'always show sidebar'",
-            callback: Toggles.showSidebar,
-        },
-        {
-            parentId: 'menu_toggles', // meh
-            id      : 'menu_toggles_visited',
-            title   : "Toggle 'always mark visited links'",
-            callback: Toggles.markVisited,
-        },
-        {
-            parentId: 'menu_toggles', // meh
-            id      : 'menu_toggles_highlights',
-            title   : "Toggle 'always show highlights'",
-            callback: Toggles.showHighlights,
-        },
+]
+
+type MenuToggle = MenuEntry & {
+    checker: (opts: Options) => boolean,
+}
+
+const TOGGLES: Array<MenuToggle> = [
+    {
+        parentId: 'menu_toggles', // meh
+        id      : 'menu_toggles_sidebar',
+        title   : 'Always show sidebar',
+        checker : opts => opts.sidebar_always_show,
+        callback: Toggles.showSidebar,
+    },
+    {
+        parentId: 'menu_toggles', // meh
+        id      : 'menu_toggles_visited',
+        title   : 'Always mark visited links',
+        checker : opts => opts.always_mark_visited,
+        callback: Toggles.markVisited,
+    },
+    {
+        parentId: 'menu_toggles', // meh
+        id      : 'menu_toggles_highlights',
+        title   : 'Always show highlights',
+        checker : opts => opts.highlight_on,
+        callback: Toggles.showHighlights,
+    },
 ]
 
 /*
@@ -769,18 +781,30 @@ function initBackground() {
         chrome.commands.onCommand.addListener(onCommandCallback);
 
         // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
-        for (const {id: id, title: title, parentId: parentId} of MENUS) {
+        for (const {id: id, title: title, parentId: parentId, contexts: contexts} of MENUS) {
             chrome.contextMenus.create({
                 id: id,
                 parentId: parentId,
                 title: title,
-                contexts: ['page', 'browser_action'],
+                contexts: contexts || DEFAULT_CONTEXTS,
             })
         }
+        setTimeout(() => getOptions().then((opts) => {
+            for (const {id: id, title: title, parentId: parentId, checker: checker, contexts: contexts} of TOGGLES) {
+                chrome.contextMenus.create({
+                    id: id,
+                    parentId: parentId,
+                    title: title,
+                    contexts: contexts || DEFAULT_CONTEXTS,
+                    type: 'checkbox',
+                    checked: checker(opts),
+                })
+            }
+        }))
 
         const onMenuClickedCallback = defensify(async (info) => {
             const mid = info.menuItemId
-            for (const m of MENUS) {
+            for (const m of [...MENUS, ...TOGGLES]) {
                 if (mid == m.id) {
                     const cb = m.callback
                     if (cb != null) {
