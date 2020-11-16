@@ -65,10 +65,10 @@ test('normalisedURLHostname', () => {
 });
 
 
-import {Blacklist} from '../src/blacklist.js';
+import {Filterlist} from '../src/filterlist.js'
 
 
-test('blacklist membership', () => {
+test('filterlist membership', () => {
     // TODO make tests literate so they contribute to help docs?
     const bl_string = `
 mail.google.com
@@ -77,7 +77,7 @@ https://vk.com
 /github.com/issues.*/
 `;
 
-    const b = new Blacklist({blacklist: bl_string, filterlists: '[]'})
+    const b = new Filterlist({filterlist: bl_string, urllists_json: '[]'})
 
     // TODO eh, doesn't work with links without schema; not sure if it's ok
     expect(b._helper('http://instagram.com/')).toBe(null);

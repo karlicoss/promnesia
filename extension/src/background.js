@@ -7,7 +7,7 @@ import {Toggles, getOptions, setOptions, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
 import {showTabNotification, defensify, notifications, Notify} from './notifications'
-import {Blacklist} from './blacklist'
+import {Filterlist} from './filterlist'
 import {isAndroid, allsources} from './sources'
 
 const isMobile = isAndroid;
@@ -131,8 +131,8 @@ async function updateState (tab: chrome$Tab) {
 
 
     let visits: Result
-    const blacklist = await Blacklist.get()
-    const bl = await blacklist.contains(url)
+    const filterlist = await Filterlist.global()
+    const bl = await filterlist.contains(url)
     if (bl != null) {
         visits = new Blacklisted(url, bl)
     } else {
@@ -259,10 +259,10 @@ async function filter_urls(urls: Array<?Url>) {
         good.add(u)
     }
     // TODO add smth like blacklist.filter(Iterable)?
-    const blacklist = await Blacklist.get()
+    const filterlist = await Filterlist.forMarkVisited()
     const res: Array<Url> = []
     for (const u of good) {
-        const ur = await blacklist.contains(u)
+        const ur = await filterlist.contains(u)
         if (ur === null) {
             res.push(u)
         }
@@ -526,8 +526,8 @@ async function shouldProcessPage(tab: ?chrome$Tab): Promise<?ShouldProcess> {
         return null
     }
     // TODO ideally only do this once, at the injection site?
-    const blacklist = await Blacklist.get()
-    const bl = await blacklist.contains(url)
+    const filterlist = await Filterlist.global()
+    const bl = await filterlist.contains(url)
     // todo let blacklist return Blacklisted object?
     if (bl != null) {
         // TODO show popup; suggest to whitelist?
@@ -650,14 +650,15 @@ const onCommandCallback = defensify(async cmd => {
 }, 'onCommand')
 
 
-async function blacklist() {
+async function handleGlobalBlacklist() {
+    // NOTE: needs to take active tab becaue tab isn't present in the 'info' object if it was clicked from the launcher etc.
     const atab = unwrap(await getActiveTab())
     const url = unwrap(atab.url)
     const tabId = unwrap(atab.id)
 
     // TODO I'm really not sure it's the right way to do this..
 
-    let prompt = `Blacklist. Supported formats:
+    let prompt = `Global blacklist. Supported formats:
 - domain.name, e.g.: web.telegram.org
       Will exclude whole Telegram website.
 - http://exact/match, e.g.: http://github.com
@@ -691,21 +692,50 @@ async function blacklist() {
     await setOptions(opts);
 }
 
+// todo would be nice to remove decoration.. but kind of minor..
+
+type MenuInfo = {
+    menuItemId: string,
+    linkUrl?: string,
+}
+
+
+async function handleDoNotMarkLink(info: MenuInfo) {
+    const url = info.linkUrl
+    if (url == null) {
+        console.error('received null url')
+        return
+    }
+
+
+    const opts = await getOptions()
+
+    // TODO notification? just show normal?
+    console.error("CLIIICKED! %o", );
+}
+
 
 const DEFAULT_CONTEXTS = ['page', 'browser_action']
 type MenuEntry = {
     id: string,
     title: string,
-    callback: ?(() => Promise<void>),
+    callback: ?((info: MenuInfo) => Promise<void>),
     contexts?: Array<chrome$ContextType>, // NOTE: not present interpreted as DEFAULT_CONTEXTS
     parentId?: string,
 }
 
+
 const MENUS: Array<MenuEntry> = [
+    {
+        id      : 'menu_exclude_mark_visited',
+        title   : 'Promnesia: do not mark this link',
+        callback: handleDoNotMarkLink,
+        contexts: ['link'],
+    },
     {
         id      : 'menu_blacklist',
         title   : "Blacklist (domain/specific page/subpages)",
-        callback: blacklist,
+        callback: handleGlobalBlacklist,
     },
     {
         id      : 'menu_mark_visited',
@@ -715,7 +745,7 @@ const MENUS: Array<MenuEntry> = [
     {
         id      : 'menu_search',
         title   : "Search in browsing history",
-        callback: handleOpenSearch,
+        callback: (_info) => handleOpenSearch(),
     },
     {
         id      : 'menu_toggles',
@@ -802,13 +832,13 @@ function initBackground() {
             }
         }))
 
-        const onMenuClickedCallback = defensify(async (info) => {
+        const onMenuClickedCallback = defensify(async (info: MenuInfo, _tab: chrome$Tab) => {
             const mid = info.menuItemId
             for (const m of [...MENUS, ...TOGGLES]) {
                 if (mid == m.id) {
                     const cb = m.callback
                     if (cb != null) {
-                        await cb()
+                        await cb(info)
                     }
                     break
                 }
