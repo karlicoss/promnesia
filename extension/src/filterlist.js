@@ -11,6 +11,7 @@ type UrllistSpec = [string, string]
 
 export class Filterlist {
     filterlist: Set<string>
+    // TODO rename to 'external lists or something'
     urllists: Array<UrllistSpec>
 
     // cache
@@ -110,7 +111,7 @@ export class Filterlist {
         const opts = await getOptions()
         return new Filterlist({
             filterlist   : opts.blacklist,
-            urllists_json: opts.filterlists,
+            urllists_json: opts.global_excludelists_ext,
         })
     }
 
@@ -119,7 +120,7 @@ export class Filterlist {
         // merges together both global and the one for mark visited
         return new Filterlist({
             filterlist   : opts.blacklist + '\n' + opts.mark_visited_excludelist,
-            urllists_json: opts.filterlists,
+            urllists_json: opts.global_excludelists_ext,
         })
     }
 }

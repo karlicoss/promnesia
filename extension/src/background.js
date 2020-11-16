@@ -760,7 +760,7 @@ const MENUS: Array<MenuEntry> = [
     },
     {
         id      : 'menu_toggles',
-        title   : 'Quick settings',
+        title   : 'Quick toggles',
         callback: null,
     },
 ]

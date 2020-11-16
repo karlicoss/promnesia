@@ -10,9 +10,15 @@ a {
     text-decoration: none;
 }
 
+/* some magic to make it scrollabel on too much content, yet not always expand to max-height  */
 .CodeMirror {
     height: auto !important;
 }
+.CodeMirror-scroll {
+    max-height: 25em; /*  */
+}
+/*  */
+
 
 input:invalid {
     background-color: red;

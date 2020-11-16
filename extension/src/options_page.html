@@ -7,11 +7,11 @@
     </head>
 
 <body>
-
     <!-- TODO link from the page here straight to the features? -->
     <fieldset>
         <legend><strong>Don't forget to save settings after changing</strong></legend>
         <button id="save_id">Save</button>
+        <div>Note: you can quickly toggle some of these settings via the context menu on any page (typically need to reload the page to see the effect).</div>
     </fieldset>
 
     <fieldset>
@@ -19,13 +19,15 @@
         <div>
             See <a href="https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org">troubleshooting guide/help</a>
         </div>
+        <!-- FIXME add export settings -->
         <div>
             If you messed up any extension settings, you can check
             <a href="https://github.com/karlicoss/promnesia/blob/master/extension/src/options.js">src/options.js</a>
         </div>
-    <!-- TODO give some quick help on using CSS, some examples too? -->
+        <div>
+        </div>
+        <!-- TODO give some quick help on using CSS, some examples too?<!--  -->
     </fieldset>
-
 
     <fieldset>
     <legend>Sources</legend>
@@ -64,35 +66,48 @@ Note that these sources aren't typicaly as useful as the backend ones, and suppo
             <label for="browserhistory_max_results_id">
                 History results limit
                 (controls <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/history/search#Parameters">this</a> parameter).
-                Set it to lower value if you suspect browsery history search is causing slowdowns for you (pretty unlikely though)</label>
+                Set it to lower value if you suspect browser history search is causing slowdowns for you (pretty unlikely though)</label>
             <input  id="browserhistory_max_results_id" title="History results limit" type="number">
+            </fieldset>
     </fieldset>
     </fieldset>
 
     <fieldset>
-        <legend>Behaviour</legend>
-        Note: you can also quickly toggle some of these settings via the context menu on any page.
+        <legend>Sidebar</legend>
         <table>
             <tr>
                 <td><input  id="sidebar_detect_urls_id" type="checkbox"/></td>
                 <td><label for="sidebar_detect_urls_id">Detect and linkify URLs in the sidebar</label></td>
             </tr>
             <tr>
-                <td><input type="checkbox" id="highlight_id"/></td>
-                <td><label for="highlight_id">
-                    Highlight <a href="https://github.com/karlicoss/promnesia#glossary">contexts</a> (experimental, may result in slowdown on huge pages)
-                </label></td>
-            </tr>
-            <tr>
                 <td><input  id="sidebar_always_show_id" type="checkbox"/></td>
-                <td><label for="sidebar_always_show_id">
-                    Always show sidebar (experimental)
-                </label></td>
+                <td><label for="sidebar_always_show_id">Always show sidebar (experimental)</label></td>
             </tr>
+        </table>
+    </fieldset>
+    <fieldset>
+       <legend><a href="https://www.youtube.com/watch?v=9PsOeYheIY4">'Mark visited'</a> feature</legend>
+       <table>
             <tr>
                 <td><input  id="mark_visited_always_id" type="checkbox"/></td>
                 <td><label for="mark_visited_always_id">
-                    Always <a href="https://karlicoss.github.io/promnesia-demos/mark-visited.webm">'mark visited'</a> on page load (experimental, may result in slowdowns/glitches)
+                    Mark visited on page load (experimental, but highly recommended to try)
+                </label></td>
+                <!-- TODO use excludelist -->
+            </tr>
+       </table>
+        <label for="mark_visited_excludelist_id">Exclude links from being marked as visited:</label>
+        <!-- TODO  may result in slowdowns/glitches) -->
+        <div    id="mark_visited_excludelist_id"></div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Other behaviour</legend>
+        <table>
+            <tr>
+                <td><input type="checkbox" id="highlight_id"/></td>
+                <td><label for="highlight_id">
+                    Highlight <a href="https://github.com/karlicoss/promnesia#glossary">contexts/annotaions</a>
                 </label></td>
             </tr>
             <tr>
@@ -104,15 +119,17 @@ Note that these sources aren't typicaly as useful as the backend ones, and suppo
                 <td><label for="verbose_errors_id">Verbose errors (for debugging, may result in notification spam)</label></td>
             </tr>
         </table>
-        <hr>
-        <div>
-            <label for="blacklist_id">Blacklisted links and domains:</label>
-            <div class="description">Blacklisting might be useful for several purposes:
-- less distraction: if you don't need to be notified of specific pages (e.g. they are too broad)
-- privacy: to avoid passing sensitive information to the extension
+    </fieldset>
+    <fieldset>
+        <legend>Global excludes</legend>
+        <div style='white-space: pre;'>Global excluding might be useful for several purposes:
+- less distraction: if you don't want to be notified of specific pages (e.g. they are too broad, like "google.com")
+- privacy: to avoid passing sensitive information to the extension (e.g. from your bank website)
 - performance: if you experience problems with certain pages
-            </div>
-            <!-- TODO copy pasted from blacklist() function -->
+NOTE: you can also exclude links from the context menu.</div>
+        <div>
+            <label for="global_excludelist_id">Globally excluded links and domains:</label>
+            <!-- TODO copy pasted from filterlist.js -->
             <div class="description">Supported formats:
 - <code>domain.name</code>, e.g.: <code>web.telegram.org</code>
       Will exclude whole Telegram website.
@@ -120,26 +137,19 @@ Note that these sources aren't typicaly as useful as the backend ones, and suppo
       Will only exclude Github main page. Subpages will still work.
 - <code>/regul.r.*expression/</code>, e.g.: <code>/github.*/yourusername/</code>
       Quick way to exclude your own Github repostitories.</div>
-            <div id="blacklist_id"></div>
+            <div    id="global_excludelist_id"></div>
         </div>
         <hr>
         <div>
-            <label for="filterlists_id">Filter lists:<label>
-            <div class="description">In addition to specific blacklisting above, you can specify links to filter lists.
+            <label for="global_excludelists_ext_id">External exclude lists:<label>
+            <div class="description">In addition to specific excludes above, you can specify links to external filter lists.
 They will be autoupdated every 3 days. Spec format (Json):<pre>[
     ["name (arbitrary)", "link"],
     ["name2"           , "link 2", "optional comment"]
 ]</pre></div>
-            <div id="filterlists_id"></div>
-        </div>
-        <hr>
-        <div>
-            <label for="source_map_id">Source map (json):</label>
-            <div class="description">Can be used to rename the sources</div>
-            <div id="source_map_id"></div>
+            <div    id="global_excludelists_ext_id"></div>
         </div>
     </fieldset>
-
     <!-- TODO hmm. iframe css can't be applied from outside; so we have to use two separate CSS settings.. -->
     <!-- could be a bit confusing for user -->
     <fieldset>
@@ -147,14 +157,24 @@ They will be autoupdated every 3 days. Spec format (Json):<pre>[
         <div class="description">Not very documented at the moment; you can use your browser devtools to experiment</div>
         <div id="position_css_id"></div>
     </fieldset>
-    <details>
-        <summary>Deprecated/misc settings</summary>
+    <!-- TODO shit, under details, codemirror breaks... -->
+    <!-- <details> -->
+    <fieldset>
+        <legend>Deprecated/misc settings</legend>
+        <fieldset>
+            <div>
+                <label for="source_map_id">Source map (json):</label>
+                <div class="description">Can be used to rename the sources</div>
+                <div id="source_map_id"></div>
+            </div>
+        </fieldset>
         <fieldset>
             <legend>Sidebar style (DEPRECATED!)</legend>
             <div>If you had any settings here, please move them to the field above</div>
             <div id="extra_css_id"></div>
         </fieldset>
-    </details>
+    </fieldset>
+        <!-- </details> -->
     <script src="options_page.js"/></script>
 </body>
 </html>

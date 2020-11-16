@@ -291,7 +291,7 @@ function _highlight(text: string, idx: number, v: Visit) {
         ref.classList.add('promnesia-highlight-reference');
         ref.classList.add('nonselectable');
         ref.appendChild(doc.createTextNode(String(idx)));
-        ref.title = `${v.tags.join(' ')} ${(USE_ORIGINAL_TZ ? v.dt_local : v.time).toLocaleString()}`
+        ref.title = `promnesia: ${v.tags.join(' ')} ${(USE_ORIGINAL_TZ ? v.dt_local : v.time).toLocaleString()}`
         target.insertAdjacentElement('beforeend', ref);
     }
 }

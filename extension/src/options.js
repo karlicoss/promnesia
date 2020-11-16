@@ -5,6 +5,10 @@ import {getBrowser} from './common'
 import OptionsSync from 'webext-options-sync';
 
 
+
+/* NOTE: options can only be renamed in-between store releases */
+/* maybe later will bother with migrations for consistent naming, but that would require tests first */
+
 // ugh. hacky way to support partial option setting...
 type Opt1 = {|
     mark_visited_excludelist: string;
@@ -34,7 +38,7 @@ export type Options = {|
     // this is kept as string to preserve formatting and comments
     blacklist: string;
     // kept as string to preserve formatting
-    filterlists: string;
+    global_excludelists_ext: string;
 
 
     // todo need to document this...
@@ -90,7 +94,7 @@ function defaultOptions(): Options {
 
         blacklist: '',
         // todo would be nice to validate on saving...
-        filterlists: `[
+        global_excludelists_ext: `[
   ["Webmail",
    "https://raw.githubusercontent.com/cbuijs/shallalist/master/webmail/domains"        ],
   ["Banking",
