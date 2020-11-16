@@ -194,6 +194,6 @@ function toggleOption(toggle: (Options) => void): () => Promise<void> {
 
 export const Toggles = {
     showSidebar   : toggleOption((opts) => { opts.sidebar_always_show = !opts.sidebar_always_show; }),
-    showVisited   : toggleOption((opts) => { opts.always_mark_visited = !opts.always_mark_visited; }),
+    markVisited   : toggleOption((opts) => { opts.always_mark_visited = !opts.always_mark_visited; }),
     showHighlights: toggleOption((opts) => { opts.highlight_on        = !opts.highlight_on       ; }),
 }

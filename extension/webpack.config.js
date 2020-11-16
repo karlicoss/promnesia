@@ -43,7 +43,7 @@ const commandsExtra = {
         }
     },
     "mark_visited": {
-        "description": "Mark visited link on the current page",
+        "description": "Mark/Unmark visited links on the current page",
         "suggested_key": {
             "default": `Ctrl+${modifier}+V`,
             "mac":  `Command+${modifier}+V`

@@ -5,7 +5,7 @@ import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
 import {Toggles, getOptions, setOptions, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
-import {showTabNotification, defensify, notifications} from './notifications'
+import {showTabNotification, defensify, notifications, Notify} from './notifications'
 import {Blacklist} from './blacklist'
 import {isAndroid, allsources} from './sources'
 
@@ -137,7 +137,7 @@ async function updateState (tab: chrome$Tab) {
     } else {
         // ok to query
         if (opts.always_mark_visited) {
-            setTimeout(() => doMarkVisited(tabId)) // run it in parallel
+            setTimeout(() => doToggleMarkVisited(tabId)) // run it in parallel
         }
         visits = await allsources.visits(url)
     }
@@ -271,7 +271,25 @@ async function filter_urls(urls: Array<?Url>) {
 
 
 // todo ugh. this can be tested on some static page... I guess?
-async function doMarkVisited(tabId: number) {
+async function doToggleMarkVisited(tabId: number) {
+    // first check if we need to disable
+    const _shows = await achrome.tabs.executeScript(tabId, {
+        code: `
+{
+    const shown = window.promnesiaShowsVisits || false
+    if (shown) {
+        setTimeout(() => hideMarks()) // async to return straightaway
+        window.promnesiaShowsVisits = false
+    }
+    shown
+}
+`})
+    const shown: boolean = unwrap(_shows)[0]
+    if (shown) {
+        console.debug('marks were already shown; hiding them')
+        return
+    }
+
     // collect URLS from the page
     const mresults = await achrome.tabs.executeScript(tabId, {
         code: `
@@ -292,7 +310,7 @@ async function doMarkVisited(tabId: number) {
     const page_urls = Array.from(await filter_urls(results))
     const resp = await allsources.visited(page_urls)
     if (resp instanceof Error) {
-        await notifications.error(tabId, resp)
+        await Notify.error(tabId, resp)
         return
     }
 
@@ -336,12 +354,17 @@ async function doMarkVisited(tabId: number) {
         }
     }
     // todo ugh. errors inside the script (e.g. syntax errors) get swallowed..
-    // TODO just allow overriding some functions?
-    await achrome.tabs.executeScript(tabId, {
-        code: `visited = new Map(JSON.parse(${JSON.stringify(JSON.stringify([...visited]))}))`
-    })
+    // TODO not sure.. probably need to inject the script once and then use a message listener or something like in sidebar??
     await achrome.tabs.executeScript(tabId, {
         file: 'showvisited.js',
+    })
+    await achrome.tabs.executeScript(tabId, {
+        code: `
+visited = new Map(JSON.parse(${JSON.stringify(JSON.stringify([...visited]))}))
+setTimeout(() => showMarks())
+// best to set it in case of partial processing
+window.promnesiaShowsVisits = true
+`
     })
 }
 
@@ -517,7 +540,7 @@ async function shouldProcessPage(tab: ?chrome$Tab): Promise<?ShouldProcess> {
 }
 
 // TODO would be cool to display visited links summary...
-async function handleMarkVisited() {
+async function handleToggleMarkVisited() {
     // TODO actually use mark visited setting?
     // const opts = await getOptions();
     const atab = await getActiveTab()
@@ -526,7 +549,7 @@ async function handleMarkVisited() {
         return
     }
     let {tid: tid} = should
-    await doMarkVisited(tid) // no need to await?
+    await doToggleMarkVisited(tid) // no need to await?
 }
 
 async function handleOpenSearch(p: SearchPageParams = {}) {
@@ -573,7 +596,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
             utc_timestamp_s: utc_timestamp_s.toString()
         })
     } else if (method == Methods.MARK_VISITED) {
-        await defensify(handleMarkVisited, 'handleMarkVisited')()
+        await defensify(handleToggleMarkVisited, 'handleToggleMarkVisited')()
     } else if (method == Methods.OPEN_SEARCH) {
         await handleOpenSearch()
     }
@@ -607,7 +630,8 @@ export async function openSidebar(tab: chrome$Tab) {
 }
 
 
-// TODO reuse these in webpack config...
+// NOTE: these have to be in sync with webpack.config.js
+// presumably shouldn't rename either otherwise will impact existing user keybindings
 const COMMAND_SEARCH       = 'search';
 const COMMAND_MARK_VISITED = 'mark_visited';
 
@@ -616,7 +640,7 @@ const onCommandCallback = defensify(async cmd => {
     // ok apparently background page shouldn't communicate with itself via messages. wonder how could it work for me before..
     // https://stackoverflow.com/a/35858654/706389
     if (cmd === COMMAND_MARK_VISITED) {
-        await handleMarkVisited() // TODO use message passing? so it's a single point of entry? not sure
+        await handleToggleMarkVisited() // TODO use message passing? so it's a single point of entry? not sure
     } else if (cmd === COMMAND_SEARCH) {
         await handleOpenSearch()
     } else {
@@ -683,8 +707,8 @@ const MENUS: Array<MenuEntry> = [
     },
     {
         id      : 'menu_mark_visited',
-        title   : "Mark visited urls",
-        callback: handleMarkVisited,
+        title   : "Mark/unmark visited urls",
+        callback: handleToggleMarkVisited,
     },
     {
         id      : 'menu_search',
@@ -706,7 +730,7 @@ const MENUS: Array<MenuEntry> = [
             parentId: 'menu_toggles', // meh
             id      : 'menu_toggles_visited',
             title   : "Toggle 'always mark visited links'",
-            callback: Toggles.showVisited,
+            callback: Toggles.markVisited,
         },
         {
             parentId: 'menu_toggles', // meh
