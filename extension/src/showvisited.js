@@ -68,7 +68,12 @@ function create0SpaceElement(el) {
     return w
 }
 
-// TODO crap.. still shifts some elements on lobsters?
+
+/* NOTE: deliberately not used const because script is injected several times.. */
+var Cls = {
+    VISITED: 'promnesia-visited-link'   ,
+    WRAPPER: 'promnesia-visited-wrapper',
+}
 
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 /*
@@ -80,6 +85,11 @@ function create0SpaceElement(el) {
  * - shouldn't break text selection
  * Returns extra elements to insert in DOM: (i.e. if they don't belong to any particular existing dom element)
  */
+/*
+ * Current implementation
+ *
+ * <a href... (element)> => <span (outer)><a href ... (element)>  <toggler> <eye> <popup> </span>
+ */
 function showMark(element) {
     const url = element.href
     // 'visited' passed in backgroud.js
@@ -89,14 +99,13 @@ function showMark(element) {
         return // no visits or was excluded (add some data attribute maybe?)
     }
 
-    element.classList.add('promnesia-visited-link')
+    element.classList.add(Cls.VISITED)
 
     let eyecolor = '#550000' // 'boring'
 
     const eye = document.createElement('span')
     // meh, but works
     const eye_w = create0SpaceElement(eye)
-    eye_w.classList.add('promnesia-visited-wrapper')
 
     // for debugging
     eye.dataset.promnesia_original   = v.original_url
@@ -114,9 +123,11 @@ function showMark(element) {
 
     // outer decorates link along with its associated stuff added by promnesia
     const outer = document.createElement('span')
+    outer.classList.add(Cls.WRAPPER)
     outer.style.display = 'inline-flex'
     outer.style.flexDirection = 'column'
-    // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears
+    // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears and stays when disappears
+    element.orig_outline = element.style.outline // keep to restore later
     element.style.outline = '0.5em solid '
 
     element.replaceWith(outer)
@@ -229,32 +240,28 @@ function showMark(element) {
  * Ideally should be an inverse for showMark
  */
 function hideMark(element) {
-    const VISITED = 'promnesia-visited-link'
-    const WRAPPER = 'promnesia-visited-wrapper'
-    if (!element.classList.contains(VISITED)) {
+    if (!element.classList.contains(Cls.VISITED)) {
         return
     }
-    element.classList.remove(VISITED)
+    element.classList.remove(Cls.VISITED)
     // need to deal with the toggler & wrappers
-    // TODO this is only gonna be the case if it was indeed wrapped?
-    const outer = element.parentElement.parentElement
-    if (outer.classList.contains(WRAPPER)) {
+    const outer = element.parentElement
+    if (outer.classList.contains(Cls.WRAPPER)) {
         outer.replaceWith(element)
         // do we need anything else?? presumably it would be orphaned in DOM?
     }
-    // ok, now we also have an eye inside the link
-    // todo use different class?
-    // TODO maybe also keep it in the outer container?? dunno
-    for (const el of element.getElementsByClassName(WRAPPER)) {
-        el.remove()
-    }
+    element.style.outline = element.orig_outline
+}
+
+var Ids = {
+    CONTAINER_ID: 'promnesia-marks-container-id',
 }
 
 function _doMarks(show /* boolean */) {
-    let cont = document.getElementById('promnesia-marks-container-id')
+    let cont = document.getElementById(Ids.CONTAINER_ID)
     if (cont == null) {
         cont = document.createElement('div') // todo class?
-        cont.id = 'promnesia-marks-container-id'
+        cont.id = Ids.CONTAINER_ID
         document.body.appendChild(cont)
     }
 
@@ -305,3 +312,23 @@ function showMarks() {
 function hideMarks() {
     _doMarks(false)
 }
+
+/*
+ * TESTING:
+ * would be nice to have something automatic...
+ * check on
+ * - wikipedia
+ * - discord
+ * - stackoverflow
+ * - twitter
+ * - github
+ * - reddit (todo shift the content...)
+     TODO fuck. on reddit annotations are hiding below the items
+     I think this is just too common problem..
+ * - hackernews
+ * - lobsters (todo seems to change DOM a bit)
+ *   ugh. might be because of actual <li> items?
+ * eh. I guess need to add a warning that some websites might get shifter
+ * link to an issue to collect them + suggest to blocklist..
+ * TODO or maybe bind to the sidebar?
+ */
