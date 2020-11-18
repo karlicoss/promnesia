@@ -128,9 +128,11 @@ def use_cores() -> Optional[int]:
         return 0
 
 
-def extra_fd_args() -> str:
+def extra_fd_args() -> List[str]:
     '''
     Not sure where it belongs yet... so via env variable for now
     Can be used to pass --ignore-file parameter
     '''
-    return os.environ.get('PROMNESIA_FD_EXTRA_ARGS', '')
+    v = os.environ.get('PROMNESIA_FD_EXTRA_ARGS', '')
+    extra = v.split() # eh, hopefully splitting that way is ok...
+    return extra
