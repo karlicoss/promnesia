@@ -6,7 +6,7 @@ import type {Options} from './options'
 import {Toggles, getOptions, setOptions, setOption, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
-import {showTabNotification, defensify, notifications, Notify} from './notifications'
+import {defensify, notifications, Notify} from './notifications'
 import {Filterlist} from './filterlist'
 import {isAndroid, allsources} from './sources'
 
@@ -226,7 +226,7 @@ async function updateState (tab: chrome$Tab) {
     if (locs.length !== 0) {
         const msg = `${locs.length} contexts!\n${locs.join('\n')}`
         if (opts.contexts_popup_on) {
-            await showTabNotification(tabId, msg)
+            await Notify.notify(tabId, msg, {color: 'green'})
         }
     }
 
@@ -666,7 +666,7 @@ async function active(): Promise<TabUrl> {
 }
 
 
-async function handleAddToGlobalExcludelist() {
+async function globalExcludelistPrompt(): Promise<Array<Url>> {
     // NOTE: needs to take active tab becaue tab isn't present in the 'info' object if it was clicked from the launcher etc.
     const {tabId: tabId, url: url} = await active()
     let prompt = `Global excludelist. Supported formats:
@@ -678,29 +678,36 @@ async function handleAddToGlobalExcludelist() {
       Quick way to exclude your own Github repostitories.
 `;
 
+    // ugh. won't work for multiple urls, prompt can only be single line...
     const res = await achrome.tabs.executeScript(tabId, {
         code: `prompt(\`${prompt}\`, "${url}");`
     })
     if (res == null || res[0] == null) {
-        console.info('user chose not to blacklist %s', url)
+        console.info('user chose not to add %s', url)
+        return []
+    }
+    return [res[0]]
+}
+
+async function handleAddToGlobalExcludelist() {
+    const added: Array<Url> = await globalExcludelistPrompt()
+    if (added.length == 0) {
         return
     }
-    const to_blacklist: string = res[0]
-
+    const {tabId: tabId, url: _url} = await active()
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
-    console.debug('blacklisting %s', to_blacklist);
+    console.debug('excluding %o', added)
 
     const opts = await getOptions();
-    opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + to_blacklist;
-
+    opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + added.join('\n')
     /*
     TODO ''.split('\n') gives an emptly line, which would block local files
     will fix later if necessary, it's not a big issue I guess
     */
     const ll = opts.blacklist.split(/\n/).length;
     // TODO could open sidebar here and display blacklist??
-    await Notify.notify(tabId, `Added ${to_blacklist} to blacklist (${ll} items now)`, 'blue')
-    await setOptions(opts);
+    await Notify.notify(tabId, `Added ${String(added)} to blacklist (${ll} items now)`, {color: 'blue'})
+    await setOptions(opts)
 }
 
 type TabUrl = {|
@@ -737,15 +744,20 @@ document.addEventListener('click', e => {
 
     // FIXME ugh. it also captures file:// links and javascript:
     // should't traverse inside promnesia clases...
-    const links = Array.from(e.target.getElementsByTagName('a')).map(el => {
+    let links = Array.from(e.target.getElementsByTagName('a')).map(el => {
+        const href = el.href
+        if (href == null) {
+            return null
+        }
         try {
             // handle relative urls
-            return new URL(el.href, document.baseURI).href
+            return new URL(href, document.baseURI).href
         } catch (e) {
             console.error(e)
             return null
         }
     }).filter(e => e != null)
+    links = [...new Set(links)].sort() // make unique
     //
     chrome.runtime.sendMessage({method: '${Methods.ZAPPER_EXCLUDELIST}', data: links})
 })
@@ -768,7 +780,7 @@ window.addEventListener('keydown', cancel)
         // TODO filter against existing list first? not sure + global list??
         const {tabId: tabId, url: _tabUrl} = await active()
         if (urls.length > 1) {
-            // FIXME prompt to filter?
+            // TODO prompt to filter?
         }
 
         if (urls.length == 0) {
@@ -781,19 +793,26 @@ window.addEventListener('keydown', cancel)
 
         const opts = await getOptions()
         let cur = opts.mark_visited_excludelist
+        // TODO add  comment, i.e. from which website?
         cur += (cur.endsWith('\n') ? '' : '\n') + urls.join('\n')
 
-        const lines = (cur.match(/\n/g) || '').length + 1
         // TODO hmm, editing here might be nice in case of garbage in the URL... not sure
         await setOption({mark_visited_excludelist: cur})
 
-        const surl = urls.length == 1 ? urls[0] : `${urls.length} URLs `
+        const surl = urls.filter(u => '    ' + u).join('\n')
         await Notify.notify(
             tabId,
     `
-    Added ${surl} to excludelist (${lines} items now).
-    You should see the change after reloading the page.
+Excludelist updated with ${urls.length} URLs.
+You should see the change after reloading the page.
+If you excluded too many by accident, you can edit excludelist in the extension settings.
+
+${surl}
     `.trim(),
+            {
+                color: 'green',
+                duration_ms: 10 * 1000,
+            },
         )
     },
     onMenuClick: async function(info: MenuInfo, _tab: chrome$Tab) {
@@ -825,7 +844,7 @@ const MENUS: Array<MenuEntry> = [
     },
     {
         id      : 'menu_global_excludelist',
-        title   : "Add to global excludelist (domain/specific page/subpages)",
+        title   : "Exclude globally (domain/specific page/subpages)",
         callback: handleAddToGlobalExcludelist,
     },
     {

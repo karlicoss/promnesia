@@ -59,7 +59,15 @@ export function defensifyAlert(pf: (...any) => Promise<any>): (any) => Promise<a
     return (...args) => pf(...args).catch(alertError);
 }
 
-export async function _showTabNotification(tabId: number, text: string, color: string='green') {
+
+type ToastOptions = {
+    color?: string,
+    duration_ms?: number,
+}
+
+export async function _showTabNotification(tabId: number, text: string, {color: color, duration_ms: duration_ms}: ToastOptions) {
+    color = color || 'green'
+    duration_ms = duration_ms || 2 * 1000
     // TODO can it be remote script?
     text = text.replace(/\n/g, "\\n"); // ....
 
@@ -69,25 +77,27 @@ export async function _showTabNotification(tabId: number, text: string, color: s
     await achrome.tabs.executeScript(tabId, { code: `
 Toastify({
   text: "${text}",
-  duration: 2000,
+  duration: ${duration_ms},
   newWindow: true,
   close: true,
+  stopOnFocus: true, // prevent dismissing on hover
   gravity: "top",
   positionLeft: false,
   backgroundColor: "${color}",
 }).showToast();
     ` });
+    // todo ugh. close icon is shown on the bottom?..
 }
 
 // TODO maybe if tabId = -1, show normal notification?
-export async function showTabNotification(tabId: ?number, message: string, ...args: Array<any>) {
+async function showTabNotification(tabId: ?number, message: string, opts: ToastOptions) {
     if (tabId == null) {
         // not much else we can do..
         desktopNotify(message)
         return
     }
     try {
-        await _showTabNotification(tabId, message, ...args)
+        await _showTabNotification(tabId, message, opts)
     } catch (error) {
         console.error('showTabNotification: %o %s', error, message)
         let errmsg = error.message || ''
@@ -107,17 +117,17 @@ export async function showTabNotification(tabId: ?number, message: string, ...ar
 }
 
 export const notifications = {
-    notify: async function(tabId: ?number, message: string, ...args: Array<any>) {
-        return showTabNotification(tabId, message, ...args)
+    notify: async function(tabId: ?number, message: string, opts: ToastOptions) {
+        return showTabNotification(tabId, message, opts)
     },
     error: async function(tabId: number, e: Error | string) {
-        return notifications.notify(tabId, String(e), 'red')
+        return notifications.notify(tabId, String(e), {color: 'red'})
     },
     page_ignored: async function(tabId: ?number, url: ?Url, reason: string) {
-        return notifications.notify(tabId, `${url || ''} is ignored: ${reason}`, 'red')
+        return notifications.notify(tabId, `${url || ''} is ignored: ${reason}`, {color: 'red'})
     },
     excluded: async function(tabId: number, b: Blacklisted) {
-        return notifications.notify(tabId, `${b.url} is excluded: ${b.reason}`, 'red')
+        return notifications.notify(tabId, `${b.url} is excluded: ${b.reason}`, {color: 'red'})
     },
     desktop: desktopNotify,
 }
