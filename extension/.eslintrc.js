@@ -36,6 +36,9 @@ module.exports = {
         "no-console": "off",
         "no-inner-declarations": "off",
         "flowtype/space-before-type-colon": "off",
-        "no-unused-vars": ["error", {"argsIgnorePattern": "^_"}],
+        "no-unused-vars": ["error", {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_"
+        }],
     }
 };

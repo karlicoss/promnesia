@@ -189,6 +189,7 @@ export const Methods = {
     OPEN_SEARCH         : 'openSearch',
     SIDEBAR_TOGGLE      : 'sidebarToggle',
     SIDEBAR_SHOW        : 'sidebarShow',
+    ZAPPER_EXCLUDELIST  : 'zapperExcludelist',
 }
 
 export const Ids = {
