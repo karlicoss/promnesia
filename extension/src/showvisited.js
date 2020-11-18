@@ -24,10 +24,13 @@ function appendText(e, text) {
 
 // maybe use something else instead of eye? so it's not spammy
 function formatVisit(v) {
+    // TODO disable link decoration?
     const e = document.createElement('code')
     e.style.whiteSpace = 'pre-wrap'
     e.style.display = 'block'
+    // TODO max-width/color should def be css
     e.style.maxWidth = '120ch'
+    e.style.backgroundColor = 'lightyellow' // ugh.. might inherit page css otherwise?
     const {
         original_url: original,
         normalised_url: normalised,
@@ -36,10 +39,11 @@ function formatVisit(v) {
         context     : context,
         locator     : locator,
     } = v
-    appendText(e, 'original: ')
+    appendText(e, 'url     : ') // todo I guess original would be the same as element link?
     const l = createLink(original, original)
     l.title = `normalised: ${normalised}`
     e.appendChild(l) // meh
+    appendText(e, '\n' + l.title) // TODO do not commit
     appendText(e, `\ndt      : ${new Date(dt).toLocaleString()}`) // meh
     appendText(e, `\ntags    : ${tags.join(' ')}`)
     if (context != null) {
@@ -64,8 +68,18 @@ function create0SpaceElement(el) {
     return w
 }
 
+// TODO crap.. still shifts some elements on lobsters?
+
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
-// returns extra elements to insert in DOM
+/*
+ * So, there are a few requirements from the marks we're trying to achieve here
+ * - popups should be togglable (otherwise too spammy if shown by default)
+ * - should show some visual hints that the popup is present at all (but shouldn't be too spammy)
+ * - shouldn't change links placement in DOM -- that breaks many websites (and kind of annoying)
+ * - shouldn't overlay any existing dom elements unless popup was clicked
+ * - shouldn't break text selection
+ * Returns extra elements to insert in DOM: (i.e. if they don't belong to any particular existing dom element)
+ */
 function showMark(element) {
     const url = element.href
     // 'visited' passed in backgroud.js
@@ -81,8 +95,8 @@ function showMark(element) {
 
     const eye = document.createElement('span')
     // meh, but works
-    const wrapper = create0SpaceElement(eye)
-    wrapper.classList.add('promnesia-visited-wrapper')
+    const eye_w = create0SpaceElement(eye)
+    eye_w.classList.add('promnesia-visited-wrapper')
 
     // for debugging
     eye.dataset.promnesia_original   = v.original_url
@@ -92,83 +106,92 @@ function showMark(element) {
     eye.textContent = '👁'
     eye.style.color = eyecolor
     eye.style.position = 'absolute'
-    element.appendChild(wrapper)
-    // todo 'interesting' visits would have either context or locator? dunno
-    if (v === true) {
-        // nothing else interesting we can do with such visit
-        return []
-    }
+    eye.style.bottom = '1em'
 
+    // todo 'interesting' visits would have either context or locator? dunno
     eyecolor = v.context == null ? '#6666ff' : '#00ff00' // copy-pasted from 'generate' script..
     eye.style.color = eyecolor
 
-    /*
-     * So, toggler 'wraps around' the link
-     * TODO not sure about that.. potentially might break DOM
-     * yeah, touches it a bit, e.g. on HN..
-     * another issue is that if it's parent zindex is lower, the popup will be below the body..
-     * can see on the left stackoverflow sidebar...
+    // outer decorates link along with its associated stuff added by promnesia
+    const outer = document.createElement('span')
+    outer.style.display = 'inline-flex'
+    outer.style.flexDirection = 'column'
+    // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears
+    element.style.outline = '0.5em solid '
+
+    element.replaceWith(outer)
+    outer.appendChild(element)
+
+    /* toggler shows/hides popup
+     * TODO: issue that if it's parent zindex is lower, the popup will be below the body..
+     * can see on the left stackoverflow sidebar... or in Element web app
      * also on github repositories, in the top bar where issues/PRs are
      * or in the file view
      * ugh. not sure what's the right way to deal with it. i.e. absolute position might break when scrolling
      * also generally cause grief if mispositioned
+     * maybe.. have some 'force' button or something?
      */
-    let toggler = document.createElement('span')
-    toggler.classList.add('promnesia-visited-popup-toggler')
-    toggler.title = 'click to pin'
-    element.replaceWith(toggler)
-    toggler.style.cursor = 'pointer'
-    toggler.style.paddingTop    = '0.5em'
-    toggler.style.paddingBottom = '0.5em'
-    toggler.style.display = 'inline-block'
-    toggler.appendChild(element)
+    const toggler = document.createElement('span')
+    toggler.classList.add('nonselectable')
+    toggler.title = 'click to pin/unpin the popup'
+    toggler.style.cursor     = 'crosshair' // TODO maybe custom cursor?
+    // toggler.style.background = '#ff000077' // TODO debug
+    toggler.style.position = 'absolute' // otherwise displays as a second col
+    toggler.style.whiteSpace = 'pre' // otherwsie not displayed (since empty)
+    /* the three rightmost characters cause the toggle to show.
+     * the rest is left intect so it's possible to click on the URL
+     */
+    toggler.style.paddingLeft =  `${Math.floor(element.clientWidth / 4)}px` // meh..
+    toggler.textContent = ' ' // otherwise not displayed
+    toggler.style.alignSelf = 'end'
+    outer.appendChild(toggler)
+
+    eye_w.style.alignSelf = 'end'
+    outer.appendChild(eye_w)
 
     /* popup body */
-    let content = document.createElement('div')
-    content.style.border = 'solid 1px'
-    content.style.background = 'lightyellow'
-    content.style.padding = '1px'
-    content.style.width = 'max-content'
-    // eh. seems necessary, e.g. on youtube subscriptions list on the left??
-    content.style.zIndex = 10000
+    // TODO ugh. this messes up with selection
+    // i.e. when we select over parent, it also selects all highligh stuff
+    // not sure what to do.. maybe make nonselectable and only allow selection on the click on the popup?
+    const popup = document.createElement('span')
+    popup.style.outline = 'solid 1px'
+    popup.style.background = 'lightyellow'
+    popup.style.padding = '1px'
+    popup.style.width = 'max-content' // otherwise too narrow
+    popup.style.position = 'relative' // necessary for  zIndex to work
     // TODO would be cool to reuse the same style used by the sidebar...
+    const close = document.createElement('span')
+    close.classList.add('nonselectable')
+    close.style.float = 'right'
+    close.style.color = 'red'
+    close.style.cursor = 'pointer'
+    close.style.fontWeight = 'bold'
+    close.title = 'close popup'
+    close.textContent = "×"
+    popup.appendChild(close)
     let ev = formatVisit(v)
     for (const e of ev) {
-        content.appendChild(e)
+        popup.appendChild(e)
     }
-    // TODO would be nice to add close button or something
-    // NOTE: popup content can't be under 'a' itself, otherwise it all ends up linking to the original URL
-    // it can't be under toggle as well, because then any popup click toggles
-    // so it seems we need even extra container.. sigh
-    let outer = document.createElement('span')
-    outer.classList.add('promnesia-visited-wrapper')
-    toggler.replaceWith(outer)
-    outer.appendChild(toggler)
-    let wrapper2 = create0SpaceElement(content)
-    outer.appendChild(wrapper2)
+
+    // need a wrapper to make sure showing popup doesn't impact the link DOM
+    const popup_w = create0SpaceElement(popup)
+    popup_w.style.alignSelf = 'start'
+    outer.appendChild(popup_w)
 
     const movetotop = () => {
         // jeez. but kind of works.. (needs to be shared across all visits..)
         let lastz = window.lastz || 1
-        wrapper2.style.zIndex = lastz
+        popup .style.zIndex = lastz
         window.lastz = lastz + 1
     }
-
-    // let rect = toggler.getBoundingClientRect()
-    // content.style.top  = `${(window.scrollY + rect.bottom)}px`
-    // content.style.left = `${(window.scrollX + rect.left  )}px`
-    content.style.position = 'absolute'
-    content.style.left = '0px' // not sure?
-    content.style.top  = '0px'
-    // hmm, :hover pseudo class didn't work on that span for some reason...
-    // https://stackoverflow.com/questions/12361244/css-hover-pseudo-class-not-working#comment17060438_12361291
-    // logic as follows: when over toggler, show the popup
     const over = () => {
-        content.style.display = 'block'
-        toggler.style.background = 'lightyellow'
-        eye    .style.color      = 'lightyellow'
-        toggler.style.outline = '1px solid'
+        popup.style.display = 'block'
+        element.style.outlineColor = eyecolor
+        toggler.style.background = '#ff000099' // meh not sure if I need it?
 
+        // TODO kinda annoying that popup might go over the links?
+        // maybe duplicate link display in the popup? not sure..
         movetotop()
 
         toggler.removeEventListener('mouseover', over)
@@ -176,27 +199,28 @@ function showMark(element) {
     }
     // when out toggler, hide it
     const out = () => {
-        content.style.display = 'none'
-        toggler.style.background = eyecolor + '77' // transparency
-        eye    .style.color      = eyecolor
-        toggler.style.outline = ''
+        popup.style.display = 'none'
+        element.style.outlineColor = eyecolor + '22' // transparency
+        toggler.style.background = '' // meh
 
         toggler.removeEventListener('mouseout' , out )
         toggler.addEventListener   ('mouseover', over)
     }
+
     // and click to pin/unpin!
-    const click = () => {
-        const pinned = content.pinned || false
+    const toggle = () => {
+        const pinned = popup.pinned || false
         if (pinned) {
-            over() // let default behaviour take over
+            out() // let default behaviour take over
         } else {
             toggler.removeEventListener('mouseout' , out)
             toggler.removeEventListener('mouseover', over)
         }
-        content.pinned = !pinned
+        popup.pinned = !pinned
     }
-    toggler.addEventListener('click', click)
-    content.addEventListener('click', movetotop)
+    toggler.addEventListener('click', toggle)
+    close  .addEventListener('click', toggle)
+    popup.addEventListener('click', movetotop)
     out()
     return []
 }
