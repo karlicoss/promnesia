@@ -110,8 +110,8 @@ export const notifications = {
     notify: async function(tabId: ?number, message: string, ...args: Array<any>) {
         return showTabNotification(tabId, message, ...args)
     },
-    error: async function(tabId: number, e: Error) {
-        return notifications.notify(tabId, e.toString(), 'red')
+    error: async function(tabId: number, e: Error | string) {
+        return notifications.notify(tabId, String(e), 'red')
     },
     page_ignored: async function(tabId: ?number, url: ?Url, reason: string) {
         return notifications.notify(tabId, `${url || ''} is ignored: ${reason}`, 'red')

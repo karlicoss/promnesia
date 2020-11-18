@@ -328,6 +328,8 @@ function hideMarks() {
  * - hackernews
  * - lobsters (todo seems to change DOM a bit)
  *   ugh. might be because of actual <li> items?
+ * - slack
+ *   todo some stuff is broken too..
  * eh. I guess need to add a warning that some websites might get shifter
  * link to an issue to collect them + suggest to blocklist..
  * TODO or maybe bind to the sidebar?

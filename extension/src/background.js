@@ -599,9 +599,11 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
         await defensify(handleToggleMarkVisited, 'handleToggleMarkVisited')()
     } else if (method == Methods.OPEN_SEARCH) {
         await handleOpenSearch()
+    } else if (method == Methods.ZAPPER_EXCLUDELIST) {
+        await AddToMarkVisitedExcludelist.handleZapperResult(msg)
     }
     return false;
-};
+}
 
 
 /*
@@ -649,15 +651,25 @@ const onCommandCallback = defensify(async cmd => {
 }, 'onCommand')
 
 
-async function handleGlobalBlacklist() {
-    // NOTE: needs to take active tab becaue tab isn't present in the 'info' object if it was clicked from the launcher etc.
+type MenuInfo = {
+    menuItemId: string,
+    linkUrl?: string,
+}
+
+
+async function active(): Promise<TabUrl> {
     const atab = unwrap(await getActiveTab())
-    const url = unwrap(atab.url)
-    const tabId = unwrap(atab.id)
+    return {
+        tabId: unwrap(atab.id ),
+        url  : unwrap(atab.url),
+    }
+}
 
-    // TODO I'm really not sure it's the right way to do this..
 
-    let prompt = `Global blacklist. Supported formats:
+async function handleAddToGlobalExcludelist() {
+    // NOTE: needs to take active tab becaue tab isn't present in the 'info' object if it was clicked from the launcher etc.
+    const {tabId: tabId, url: url} = await active()
+    let prompt = `Global excludelist. Supported formats:
 - domain.name, e.g.: web.telegram.org
       Will exclude whole Telegram website.
 - http://exact/match, e.g.: http://github.com
@@ -691,39 +703,107 @@ async function handleGlobalBlacklist() {
     await setOptions(opts);
 }
 
+type TabUrl = {|
+    tabId: number,
+    url: string,
+|}
+
+
+const AddToMarkVisitedExcludelist = {
+    zapper: async function () {
+        // TODO only call prompts if more than one? sort before showing?
+        const {tabId: tabId, url: _url} = await active()
+
+        await achrome.tabs.executeScript(tabId, {
+            code: `{
+let listener = e => {
+    e.stopPropagation()
+
+    const tgt = e.target
+    const old = tgt.style.outline
+
+    tgt.addEventListener('mouseout', e => {
+        tgt.style.outline = old
+    })
+    // display zapper frame
+    tgt.style.outline = '4px solid #07C'
+    // todo use css class?
+}
+document.addEventListener('mouseover', listener)
+
+document.addEventListener('click', e => {
+    // console.error("CLiCK!!! %o", e)
+    document.removeEventListener('mouseover', listener)
+
+    // FIXME ugh. it also captures file:// links and javascript:
+    // should't traverse inside promnesia clases...
+    const links = Array.from(e.target.getElementsByTagName('a')).map(el => {
+        try {
+            // handle relative urls
+            return new URL(el.href, document.baseURI).href
+        } catch (e) {
+            console.error(e)
+            return null
+        }
+    }).filter(e => e != null)
+    //
+    chrome.runtime.sendMessage({method: '${Methods.ZAPPER_EXCLUDELIST}', data: links})
+})
+let cancel = e => {
+    // console.error("ESCAPE!!!, %o", e)
+    if (e.key == 'Escape') {
+        document.removeEventListener('mouseover', listener)
+        window.removeEventListener('keydown', cancel)
+    }
+}
+window.addEventListener('keydown', cancel)
+
+}`})
+    },
+    handleZapperResult: async function(msg) {
+        const urls: Array<Url> = msg.data
+        await AddToMarkVisitedExcludelist.add(urls)
+    },
+    add: async function(urls: Array<Url>) {
+        // TODO filter against existing list first? not sure + global list??
+        const {tabId: tabId, url: _tabUrl} = await active()
+        if (urls.length > 1) {
+            // FIXME prompt to filter?
+        }
+
+        if (urls.length == 0) {
+            await Notify.error(
+                tabId,
+                'No URLs were detected'
+            )
+            return
+        }
+
+        const opts = await getOptions()
+        let cur = opts.mark_visited_excludelist
+        cur += (cur.endsWith('\n') ? '' : '\n') + urls.join('\n')
+
+        const lines = (cur.match(/\n/g) || '').length + 1
+        // TODO hmm, editing here might be nice in case of garbage in the URL... not sure
+        await setOption({mark_visited_excludelist: cur})
+
+        const surl = urls.length == 1 ? urls[0] : `${urls.length} URLs `
+        await Notify.notify(
+            tabId,
+    `
+    Added ${surl} to excludelist (${lines} items now).
+    You should see the change after reloading the page.
+    `.trim(),
+        )
+    },
+    onMenuClick: async function(info: MenuInfo, _tab: chrome$Tab) {
+        const url = unwrap(info.linkUrl)
+        await AddToMarkVisitedExcludelist.add([url])
+    },
+}
+
 // todo would be nice to remove decoration.. but kind of minor..
 
-type MenuInfo = {
-    menuItemId: string,
-    linkUrl?: string,
-}
-
-
-async function handleDoNotMarkLink(info: MenuInfo, tab: chrome$Tab) {
-    const url = info.linkUrl
-    if (url == null) {
-        console.error('received null url')
-        return
-    }
-    const tabId = unwrap(tab.id)
-
-    // TODO also show prompt?? not sure, might be too annoying on the first run?
-
-    const opts = await getOptions()
-    let cur = opts.mark_visited_excludelist
-    cur += (cur.endsWith('\n') ? '' : '\n') + url
-
-    const lines = (cur.match(/\n/g) || '').length + 1
-    // TODO hmm, editing here might be nice in case of garbage in the URL... not sure
-    await setOption({mark_visited_excludelist: cur})
-    await Notify.notify(
-        tabId,
-`
-Added ${url} to excludelist (${lines} items now).
-You should see the change after reloading the page.
-`.trim(),
-    )
-}
 
 
 const DEFAULT_CONTEXTS = ['page', 'browser_action']
@@ -740,13 +820,18 @@ const MENUS: Array<MenuEntry> = [
     {
         id      : 'menu_exclude_mark_visited',
         title   : 'Promnesia: do not mark this link',
-        callback: handleDoNotMarkLink,
+        callback: AddToMarkVisitedExcludelist.onMenuClick,
         contexts: ['link'],
     },
     {
-        id      : 'menu_blacklist',
-        title   : "Blacklist (domain/specific page/subpages)",
-        callback: handleGlobalBlacklist,
+        id      : 'menu_global_excludelist',
+        title   : "Add to global excludelist (domain/specific page/subpages)",
+        callback: handleAddToGlobalExcludelist,
+    },
+    {
+        id      : 'menu_mark_visited_excludelist',
+        title   : "Exclude multiple links from 'mark as visited' (element zapper)",
+        callback: AddToMarkVisitedExcludelist.zapper,
     },
     {
         id      : 'menu_mark_visited',
