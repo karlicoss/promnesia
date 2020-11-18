@@ -47,7 +47,10 @@ def _do_index() -> Iterable[Exception]:
                     errors.append(v)
                 yield v
 
-    visits_to_sqlite(iter_all_visits())
+    dump_errors = visits_to_sqlite(iter_all_visits())
+    for e in dump_errors:
+        logger.exception(e)
+        errors.append(e)
     return errors
 
 
@@ -59,6 +62,9 @@ def do_index(config_file: Path) -> None:
     finally:
         config.reset()
     if len(errors) > 0:
+        logger.error('%d errors, printing them out:', len(errors))
+        for e in errors:
+            logger.error('    %s', e)
         logger.error('%d errors, exit code 1', len(errors))
         sys.exit(1)
 

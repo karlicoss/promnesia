@@ -29,7 +29,8 @@ def update_policy_active() -> bool:
 _CHUNK_BY = 10
 
 
-def visits_to_sqlite(vit: Iterable[Res[DbVisit]]) -> None:
+# returns critical warnings
+def visits_to_sqlite(vit: Iterable[Res[DbVisit]]) -> List[Exception]:
     logger = get_logger()
     output_dir = Path(config.get().output_dir)
     db_path = output_dir / 'promnesia.sqlite'
@@ -86,4 +87,10 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]]) -> None:
         shutil.move(str(tpath), str(db_path))
 
     errs = '' if errors == 0 else f', {errors} ERRORS'
-    logger.info('saved database to "%s". %d total (%d OK%s)', db_path, ok + errors, ok, errs)
+    total = ok + errors
+    what = 'updated' if policy_update else 'overwritten'
+    logger.info('%s database "%s". %d total (%d OK%s)', what, db_path, total, ok, errs)
+    res: List[Exception] = []
+    if total == 0:
+        res.append(RuntimeError('No visits were indexed, something is probably wrong!'))
+    return res

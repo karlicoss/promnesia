@@ -399,9 +399,8 @@ def find_args(root: Path, follow: bool) -> List[str]:
 
 def fdfind_args(root: Path, follow: bool) -> List[str]:
     from .config import extra_fd_args
-    extra = extra_fd_args().split() # eh, hopefully splitting that way is ok...
     return [
-        *extra,
+        *extra_fd_args(),
         *(['--follow'] if follow else []),
         '--type', 'f',
         '.',
@@ -425,7 +424,9 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
     else:
         warnings.warn("'fdfind' is recommended for the best indexing performance. See https://github.com/sharkdp/fd#installation. Falling back to 'find'")
 
+    logger.debug('running: %s', cmd)
     # TODO split by \0?
+    # TODO should it check return code? not sure
     with Popen(cmd, stdout=PIPE) as p:
         out = p.stdout
         assert out is not None

@@ -204,7 +204,6 @@ def _index_file_aux(path: Path, opts: Options):
         return e
 
 
-# TODO eh. might be good to use find or fdfind to speed it up...
 def _index(path: Path, opts: Options) -> Results:
     logger = get_logger()
 
