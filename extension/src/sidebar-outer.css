@@ -58,3 +58,10 @@ body.promnesia {
     /* vertical-align: super; */
     margin: 0.1em;
 }
+
+
+div.toastify {
+    /* eh. just a quick hack to make close button appear on the top instead of bottom */
+    /* otherwise if the notification is too long, it might be hidden */
+    display: flex;
+}
