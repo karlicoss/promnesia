@@ -29,8 +29,13 @@ export class Filterlist {
     _helper(url: Url): ?Reason {
         // https://github.com/gorhill/uBlock/wiki/How-to-whitelist-a-web-site kind of following this logic and syntax
 
+        const noslash = url.replace(/\/+$/, '') // meh
         // TODO need to be careful about normalising domains here; e.g. cutting off amp/www could be bit unexpected...
-        if (this.filterlist.has(url)) {
+        // TODO maybe use URL class instead?
+        if (   this.filterlist.has(url)
+            || this.filterlist.has(noslash)
+            || this.filterlist.has(url + '/')
+           ) {
             return "User-defined filterlist (exact page)"
         }
 
@@ -84,8 +89,7 @@ export class Filterlist {
         try {
             new URL(url);
         } catch {
-            // TODO test this?
-            return "invalid URL";
+            return "invalid URL"
         }
 
         // for now assumes it's exact domain match domain level
