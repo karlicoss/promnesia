@@ -81,6 +81,18 @@ function create0SpaceElement(el) {
 }
 
 
+function getExtContainer() {
+    const id = 'promnesia-marks-container-id'
+    let cont = document.getElementById(id)
+    if (cont == null) {
+        cont = document.createElement('div') // todo class?
+        cont.id = id
+        document.body.appendChild(cont)
+    }
+    return cont
+}
+
+
 /* NOTE: deliberately not used const because script is injected several times.. */
 var Cls = {
     VISITED: 'promnesia-visited-link'   ,
@@ -134,9 +146,7 @@ function showMark(element) {
     // outer decorates link along with its associated stuff added by promnesia
     const outer = document.createElement('span')
     outer.classList.add(Cls.WRAPPER)
-    // outer.style.display = 'inline-block'
     outer.style.display = 'inline'
-    outer.style.flexDirection = 'column'
     // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears and stays when disappears
     element.orig_outline = element.style.outline // keep to restore later
     element.style.outline = '0.5em solid '
@@ -165,6 +175,7 @@ function showMark(element) {
      * also on github repositories, in the top bar where issues/PRs are
      * or in the file view
      * ugh. not sure what's the right way to deal with it. i.e. absolute position might break when scrolling
+     * TODO (put in comments which websites since I can't reproduce anymore..)
      * also generally cause grief if mispositioned
      * maybe.. have some 'force' button or something?
      */
@@ -215,6 +226,10 @@ function showMark(element) {
     // need a wrapper to make sure showing popup doesn't impact the link DOM
     const popup_w = create0SpaceElement(popup)
     outer.appendChild(popup_w)
+    // ugh. absolute positions still might not work (e.g. on discord)
+    // to make absolute always work need to attach to the document so it's guaranteed a stacking context...
+    // but then might be mispositioned.. sigh
+    popup_w.style.position = 'absolute'
 
     const movetotop = () => {
         // jeez. but kind of works.. (needs to be shared across all visits..)
@@ -258,9 +273,24 @@ function showMark(element) {
         }
         popup.pinned = !pinned
     }
+    const forcetop = () => {
+        // ugh. last resort measure... for the most stubborn websites
+        const rect = popup_w.getBoundingClientRect()
+        const atop  = window.scrollY + rect.top
+        const aleft = window.scrollX + rect.left
+        popup_w.remove()
+        popup_w.style.top  = `${atop }px`
+        popup_w.style.left = `${aleft}px`
+
+        const cont = getExtContainer()
+        cont.appendChild(popup_w)
+        // TODO restore it back on another double click?
+    }
     toggler.addEventListener('click', toggle)
     close  .addEventListener('click', toggle)
-    popup.addEventListener('click', movetotop)
+    popup.addEventListener('click'   , movetotop)
+    popup.title = 'double click to force popup on top'
+    popup.addEventListener('dblclick', forcetop)
     out()
     return []
 }
@@ -283,17 +313,8 @@ function hideMark(element) {
     element.style.display = element.orig_display
 }
 
-var Ids = {
-    CONTAINER_ID: 'promnesia-marks-container-id',
-}
-
 function _doMarks(show /* boolean */) {
-    let cont = document.getElementById(Ids.CONTAINER_ID)
-    if (cont == null) {
-        cont = document.createElement('div') // todo class?
-        cont.id = Ids.CONTAINER_ID
-        document.body.appendChild(cont)
-    }
+    const cont = getExtContainer()
 
     if (!show) {
         cont.remove()
@@ -351,6 +372,7 @@ function hideMarks() {
  * check on
  * - wikipedia
  * - discord
+ *   ugh. too much dynamic shit in discord to make it work reliably...
  * - stackoverflow
  * - twitter
  * - github
