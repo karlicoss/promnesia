@@ -68,34 +68,42 @@ test('normalisedURLHostname', () => {
 import {Filterlist} from '../src/filterlist.js'
 
 
-test('filterlists', () => {
+test('filterlists', async () => {
     // TODO make tests literate so they contribute to help docs?
     const bl_string = `
 mail.google.com
 https://vk.com
 **github.com/issues**
 /github.com/issues.*/
-`;
+
+//comment.com
+
+https://reddit.com/
+
+`
 
     const b = new Filterlist({filterlist: bl_string, urllists_json: '[]'})
 
     // TODO eh, doesn't work with links without schema; not sure if it's ok
-    expect(b._helper('http://instagram.com/')).toBe(null);
+    expect(await b.contains('http://instagram.com/')).toBe(null)
 
     // whole domain is blocked
-    expect(b._helper('https://mail.google.com/mail/u/0/#inbox')).toContain('domain');
+    expect(await b.contains('https://mail.google.com/mail/u/0/#inbox')).toContain('domain')
 
 
     // specific page is blocked
-    expect(b._helper('https://vk.com')).toContain('page');
-    // TODO test with trailing slash as well??
-    expect(b._helper('https://vk.com/user/whatever')).toBe(null);
-
+    expect(await b.contains('https://vk.com' )).toContain('exact page')
+    expect(await b.contains('https://vk.com/')).toContain('exact page')
+    expect(await b.contains('https://vk.com/user/whatever')).toBe(null)
+    expect(await b.contains('https://reddit.com')).toContain('exact page')
 
     // wildcard blockig
-    expect(b._helper('http://github.com/')).toBe(null);
-    expect(b._helper('http://github.com/issues/hello/123')).toContain('regex');
+    expect(await b.contains('http://github.com/')).toBe(null)
+    expect(await b.contains('http://github.com/issues/hello/123')).toContain('regex')
 
     // TODO later, doesn't work ATM
-    // expect(b._helper('http://github.com/issues/hello/123', bl)).toContain('wildcard');
-});
+    // expect(b.contains('http://github.com/issues/hello/123', bl)).toContain('wildcard');
+
+    expect(await b.contains('123456')).toBe('invalid URL')
+    expect(await b.contains('http://comment.com')).toBe(null)
+})
