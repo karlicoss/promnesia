@@ -6,6 +6,14 @@
 // then you can walk through this and decorate as you please
 // ideally you just can override/monkey patch showMark and hideMark and rely on showMarks/hideMarks to do the correct thing?
 
+/*
+ * NOTE at the moment it's pretty messy, and I often have very little idea what's happening...
+ * would be very grateful if someone better at web helped with this
+ *
+ * ideally perhaps best to use some existing library for this that can handle in a generic manner?
+ * could be useful for many applications..
+ */
+
 
 function createLink(href, title) {
     const a = document.createElement('a')
@@ -26,10 +34,14 @@ function appendText(e, text) {
 function formatVisit(v) {
     // TODO disable link decoration?
     const e = document.createElement('code')
-    e.style.whiteSpace = 'pre-wrap'
+    e.style.whiteSpace = 'pre-wrap' // keep whitespace intact
     e.style.display = 'block'
+    // meh .. otherwise disturbs parent elements
+    e.style.margin  = '0px'
+    e.style.padding = '0px'
+    e.style.border  = '0px'
+
     // TODO max-width/color should def be css
-    e.style.maxWidth = '120ch'
     e.style.backgroundColor = 'lightyellow' // ugh.. might inherit page css otherwise?
     const {
         original_url: original,
@@ -88,7 +100,7 @@ var Cls = {
 /*
  * Current implementation
  *
- * <a href... (element)> => <span (outer)><a href ... (element)>  <toggler> <eye> <popup> </span>
+ * <a href... (element)> => <span (outer)><a href ... (element)>  <toggler eye ... > <popup> </span>
  */
 function showMark(element) {
     const url = element.href
@@ -100,13 +112,11 @@ function showMark(element) {
     }
 
     element.classList.add(Cls.VISITED)
+    const erect = element.getBoundingClientRect()
 
     let eyecolor = '#550000' // 'boring'
 
     const eye = document.createElement('span')
-    // meh, but works
-    const eye_w = create0SpaceElement(eye)
-
     // for debugging
     eye.dataset.promnesia_original   = v.original_url
     eye.dataset.promnesia_normalised = v.normalised_url
@@ -114,7 +124,7 @@ function showMark(element) {
     eye.classList.add('nonselectable')
     eye.textContent = '👁'
     eye.style.color = eyecolor
-    eye.style.position = 'absolute'
+    eye.style.position = 'relative'
     eye.style.bottom = '1em'
 
     // todo 'interesting' visits would have either context or locator? dunno
@@ -124,11 +134,27 @@ function showMark(element) {
     // outer decorates link along with its associated stuff added by promnesia
     const outer = document.createElement('span')
     outer.classList.add(Cls.WRAPPER)
-    outer.style.display = 'inline-flex'
+    // outer.style.display = 'inline-block'
+    outer.style.display = 'inline'
     outer.style.flexDirection = 'column'
     // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears and stays when disappears
     element.orig_outline = element.style.outline // keep to restore later
     element.style.outline = '0.5em solid '
+
+    function getDisplayType(element) {
+        const cStyle = element.currentStyle || window.getComputedStyle(element, "")
+        return cStyle.display
+    }
+
+    const old_display = getDisplayType(element)
+    // TODO shit. seems necessary but doesn't work in discord? fucking hell... something to do with flex?
+    // maybe it's only relevant to navbars etc..
+    const fix_display = old_display == 'block' ? 'inline-block' : old_display
+    element.orig_display  = old_display
+    element.style.display = fix_display
+
+    // TODO hmmm... maybe check if the position is absolute on the element or some of its parents?
+    // and display absolute here as well then?
 
     element.replaceWith(outer)
     outer.appendChild(element)
@@ -146,19 +172,19 @@ function showMark(element) {
     toggler.classList.add('nonselectable')
     toggler.title = 'click to pin/unpin the popup'
     toggler.style.cursor     = 'crosshair' // TODO maybe custom cursor?
-    // toggler.style.background = '#ff000077' // TODO debug
-    toggler.style.position = 'absolute' // otherwise displays as a second col
+    toggler.style.display = 'inline-block'
     toggler.style.whiteSpace = 'pre' // otherwsie not displayed (since empty)
     /* the three rightmost characters cause the toggle to show.
      * the rest is left intect so it's possible to click on the URL
      */
-    toggler.style.paddingLeft =  `${Math.floor(element.clientWidth / 4)}px` // meh..
-    toggler.textContent = ' ' // otherwise not displayed
-    toggler.style.alignSelf = 'end'
+    const width = `${Math.floor(erect.width / 4)}px`
+    toggler.style.paddingLeft =       width // meh..
+    toggler.style.marginLeft  = '-' + width
+    toggler.style.width = '0px'
+    toggler.textContent = ' ' // otherwise not displayed at all
     outer.appendChild(toggler)
 
-    eye_w.style.alignSelf = 'end'
-    outer.appendChild(eye_w)
+    toggler.appendChild(eye)
 
     /* popup body */
     // TODO ugh. this messes up with selection
@@ -167,8 +193,9 @@ function showMark(element) {
     const popup = document.createElement('span')
     popup.style.outline = 'solid 1px'
     popup.style.background = 'lightyellow'
-    popup.style.padding = '1px'
+    // popup.style.padding = '1px'
     popup.style.width = 'max-content' // otherwise too narrow
+    popup.style.maxWidth = '120ch'
     popup.style.position = 'relative' // necessary for  zIndex to work
     // TODO would be cool to reuse the same style used by the sidebar...
     const close = document.createElement('span')
@@ -187,7 +214,6 @@ function showMark(element) {
 
     // need a wrapper to make sure showing popup doesn't impact the link DOM
     const popup_w = create0SpaceElement(popup)
-    popup_w.style.alignSelf = 'start'
     outer.appendChild(popup_w)
 
     const movetotop = () => {
@@ -197,9 +223,11 @@ function showMark(element) {
         window.lastz = lastz + 1
     }
     const over = () => {
-        popup.style.display = 'block'
+        popup  .style.display = 'block'
+        // ugh. why does this work?? inline seems necessary so it doesn't disturb the content...
+        popup_w.style.display = 'inline-grid'
+        toggler.style.background   = '#ff000099' // meh not sure if I need it?
         element.style.outlineColor = eyecolor
-        toggler.style.background = '#ff000099' // meh not sure if I need it?
 
         // TODO kinda annoying that popup might go over the links?
         // maybe duplicate link display in the popup? not sure..
@@ -210,9 +238,10 @@ function showMark(element) {
     }
     // when out toggler, hide it
     const out = () => {
-        popup.style.display = 'none'
-        element.style.outlineColor = eyecolor + '22' // transparency
-        toggler.style.background = '' // meh
+        popup  .style.display = 'none'
+        popup_w.style.display = 'none'
+        toggler.style.background   = eyecolor + '22' // transparency
+        element.style.outlineColor = eyecolor + '22'
 
         toggler.removeEventListener('mouseout' , out )
         toggler.addEventListener   ('mouseover', over)
@@ -251,6 +280,7 @@ function hideMark(element) {
         // do we need anything else?? presumably it would be orphaned in DOM?
     }
     element.style.outline = element.orig_outline
+    element.style.display = element.orig_display
 }
 
 var Ids = {
@@ -314,6 +344,8 @@ function hideMarks() {
 }
 
 /*
+ * I guess the most important thing is that as little layout disturbed when the user isn't showing popups, as possible
+ *
  * TESTING:
  * would be nice to have something automatic...
  * check on
@@ -329,7 +361,8 @@ function hideMarks() {
  * - lobsters (todo seems to change DOM a bit)
  *   ugh. might be because of actual <li> items?
  * - slack
- *   todo some stuff is broken too..
+ * - https://www.w3schools.com/jsref/met_document_addeventlistener.asp
+ * - youtube
  * eh. I guess need to add a warning that some websites might get shifter
  * link to an issue to collect them + suggest to blocklist..
  * TODO or maybe bind to the sidebar?
