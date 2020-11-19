@@ -222,7 +222,6 @@ function showMark(element) {
      */
     const toggler = document.createElement('span')
     toggler.classList.add('nonselectable')
-    toggler.title = 'click to pin/unpin the popup'
     toggler.style.cursor     = 'crosshair' // TODO maybe custom cursor?
     toggler.style.display = 'inline-block'
     toggler.style.whiteSpace = 'pre' // otherwsie not displayed (since empty)
@@ -256,7 +255,6 @@ function showMark(element) {
     close.style.color = 'red'
     close.style.cursor = 'pointer'
     close.style.fontWeight = 'bold'
-    close.title = 'close popup'
     close.textContent = "×"
     popup.appendChild(close)
     let ev = formatVisit(v)
@@ -274,8 +272,9 @@ function showMark(element) {
 
     const bumpZindex = () => {
         // jeez. but kind of works.. (needs to be shared across all visits..)
-        let lastz = window.lastz || 1
-        popup .style.zIndex = lastz
+        let lastz = window.lastz || 9999
+        // TODO careful.. eyes seep throught? although maybe it's good
+        popup_w.style.zIndex = lastz
         window.lastz = lastz + 1
     }
     let undoMove = null
@@ -299,7 +298,7 @@ function showMark(element) {
         bumpZindex() // not sure why it is here??
 
         if (shouldForceTop()) {
-            forcePopupOnTop()
+            PopupOnTop.show()
         }
     }
     // when out toggler, hide it
@@ -311,39 +310,101 @@ function showMark(element) {
 
         if (undoMove != null) {
             undoMove()
+            undoMove = null
         }
 
         toggler.removeEventListener('mouseout' , out )
         toggler.addEventListener   ('mouseover', over)
     }
 
-    // and click to pin/unpin!
-    const toggle = (e) => {
-        e.stopPropagation()
-        const pinned = popup.pinned || false
-        if (pinned) {
-            out() // let default behaviour take over
-        } else {
-            toggler.removeEventListener('mouseout' , out)
-            toggler.removeEventListener('mouseover', over)
+    const PopupPin = {
+        // e.stopPropagation()
+        toggle: (pin=null) => {
+            const pinned = popup.pinned || false
+            if (pinned === pin) {
+                return
+            }
+            if (pinned) {
+                out() // let default behaviour take over
+            } else {
+                if (undoMove != null) { // meh, duplication..
+                    undoMove()
+                    undoMove = null
+                }
+                toggler.removeEventListener('mouseout' , out)
+                toggler.removeEventListener('mouseover', over)
+            }
+            popup.pinned = !pinned
         }
-        popup.pinned = !pinned
     }
-    const forcePopupOnTop = () => {
-        // ugh. last resort measure... for the most stubborn websites
-        moveToTop(popup_w)
-        // TODO restore it back on another double click?
+
+    // ugh. last resort measure... for the most stubborn websites
+    let undoPopup = null
+    const PopupOnTop = {
+        toggle: (show=null) => {
+            const shown = undoPopup != null
+            if (shown === show) {
+                return
+            }
+            // otherwise actually toggle
+            if (shown) {
+                undoPopup()
+                undoPopup = null
+            } else {
+                undoPopup = moveToTop(popup_w)
+            }
+        },
+        hide: () => PopupOnTop.toggle(false),
+        show: () => PopupOnTop.toggle(true),
     }
+
+    // handler capable of both singel and double clicks handling..
+    // https://stackoverflow.com/a/60177326/706389
+    let clickTimer = null
+    function clickHandler(single, double) {
+        return e => {
+            e.stopPropagation() // very important, otherwise might click the underlying links by accident
+            const TIMEOUT_MS = 300
+            if (clickTimer == null) { // first click
+                // ugh. without it, if we move the cursor too fast after first click, it disappears...
+                toggler.removeEventListener('mouseout' , out)
+                clickTimer = setTimeout(() => {
+                    clickTimer = null
+                    single(e)
+                }, TIMEOUT_MS)
+            } else { // second click
+                clearTimeout(clickTimer)
+                clickTimer = null
+                double(e)
+            }
+        }
+    }
+
     // FIXME clicking on popup link closes all popups?? for now just open in new tab?
-    toggler.addEventListener('click', toggle)
-    close  .addEventListener('click', toggle)
-    popup  .addEventListener('click', bumpZindex)
+    toggler.addEventListener('click', clickHandler(
+        () => PopupPin.toggle(),
+        () => {
+            PopupPin.toggle(true)
+            PopupOnTop.show()
+        },
+    ))
+    close  .addEventListener('click', (_e) => PopupPin.toggle(false))
+    close.title = 'close popup'
+    toggler.title = `
+- single click to pin/unpin popup
+- double click to force popup to display on top of other elements
+    double click mode may cause glitches, however it's necessary on some sites
+    please report such sites here https://github.com/karlicoss/promnesia/issues/168
+`.trim()
     popup.title = `
 - single click to move popup up,
 - double click to force popup on top of other elements
-  may cause glitches, please report such sites here https://github.com/karlicoss/promnesia/issues/168
+    double click mode may cause glitches, however it's necessary on some sites
+    please report such sites here https://github.com/karlicoss/promnesia/issues/168
 `.trim()
-    popup.addEventListener('dblclick', forcePopupOnTop)
+    // TODO also use combined click helper
+    popup  .addEventListener('click', bumpZindex)
+    popup  .addEventListener('dblclick', () => PopupOnTop.toggle())
     out()
     return []
 }
@@ -438,6 +499,7 @@ function hideMarks() {
  * - slack
  * - https://www.w3schools.com/jsref/met_document_addeventlistener.asp
  * - youtube
+ * - superorganizers
  * eh. I guess need to add a warning that some websites might get shifter
  * link to an issue to collect them + suggest to blocklist..
  * TODO or maybe bind to the sidebar?
