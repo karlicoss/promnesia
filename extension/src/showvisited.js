@@ -14,6 +14,20 @@
  * could be useful for many applications..
  */
 
+function shouldForceTop() {
+    // some websites are really full of dynamic shit and it's impossible to display popups without messing with the document root..
+    const host = new URL(window.location).hostname
+    for (const d of [
+        'youtube.',
+    ]) {
+        // meh, need to integrate with normaliser somehow..
+        if (host.includes(d)) {
+            return true
+        }
+    }
+    return false
+}
+
 
 function createLink(href, title) {
     const a = document.createElement('a')
@@ -92,6 +106,33 @@ function getExtContainer() {
     return cont
 }
 
+
+function moveToTop(el) {
+    const rect = el.getBoundingClientRect()
+    const atop  = window.scrollY + rect.top
+    const aleft = window.scrollX + rect.left
+    const parent = el.parentElement
+
+    el.remove()
+    const cont = getExtContainer()
+    cont.appendChild(el)
+
+    const new_vals = {
+        position: 'absolute',
+        top     : `calc(${atop }px + ${el.style.paddingTop  || '0px'})`,
+        left    : `calc(${aleft}px + ${el.style.paddingLeft || '0px'})`,
+        zIndex  :  9999, // ugh. necessary on youtube, otherwise links seep through??
+    }
+    const orig_vals = Object.fromEntries(Object.keys(new_vals).map(k => [k, el.style.getPropertyValue(k)]))
+    Object.assign(el.style, new_vals)
+
+    return () => { // reverse operation
+        el.remove()
+        // FIXME restore orig position in parent?
+        parent.appendChild(el)
+        Object.assign(el.style, orig_vals)
+    }
+}
 
 /* NOTE: deliberately not used const because script is injected several times.. */
 var Cls = {
@@ -231,12 +272,13 @@ function showMark(element) {
     // but then might be mispositioned.. sigh
     popup_w.style.position = 'absolute'
 
-    const movetotop = () => {
+    const bumpZindex = () => {
         // jeez. but kind of works.. (needs to be shared across all visits..)
         let lastz = window.lastz || 1
         popup .style.zIndex = lastz
         window.lastz = lastz + 1
     }
+    let undoMove = null
     const over = () => {
         popup  .style.display = 'block'
         // ugh. why does this work?? inline seems necessary so it doesn't disturb the content...
@@ -244,12 +286,21 @@ function showMark(element) {
         toggler.style.background   = '#ff000099' // meh not sure if I need it?
         element.style.outlineColor = eyecolor
 
-        // TODO kinda annoying that popup might go over the links?
-        // maybe duplicate link display in the popup? not sure..
-        movetotop()
+        // make sure it's on the very top...
+        // otherwise on some naughty sites like youtube it's impossible to click without clicking on the video
+        undoMove = moveToTop(toggler)
 
         toggler.removeEventListener('mouseover', over)
         toggler.addEventListener   ('mouseout' , out )
+
+        // TODO kinda annoying that popup might go over the links?
+        // maybe duplicate link display in the popup? not sure..
+        // ught. naming kind clashes...
+        bumpZindex() // not sure why it is here??
+
+        if (shouldForceTop()) {
+            forcePopupOnTop()
+        }
     }
     // when out toggler, hide it
     const out = () => {
@@ -258,12 +309,17 @@ function showMark(element) {
         toggler.style.background   = eyecolor + '22' // transparency
         element.style.outlineColor = eyecolor + '22'
 
+        if (undoMove != null) {
+            undoMove()
+        }
+
         toggler.removeEventListener('mouseout' , out )
         toggler.addEventListener   ('mouseover', over)
     }
 
     // and click to pin/unpin!
-    const toggle = () => {
+    const toggle = (e) => {
+        e.stopPropagation()
         const pinned = popup.pinned || false
         if (pinned) {
             out() // let default behaviour take over
@@ -273,24 +329,21 @@ function showMark(element) {
         }
         popup.pinned = !pinned
     }
-    const forcetop = () => {
+    const forcePopupOnTop = () => {
         // ugh. last resort measure... for the most stubborn websites
-        const rect = popup_w.getBoundingClientRect()
-        const atop  = window.scrollY + rect.top
-        const aleft = window.scrollX + rect.left
-        popup_w.remove()
-        popup_w.style.top  = `${atop }px`
-        popup_w.style.left = `${aleft}px`
-
-        const cont = getExtContainer()
-        cont.appendChild(popup_w)
+        moveToTop(popup_w)
         // TODO restore it back on another double click?
     }
+    // FIXME clicking on popup link closes all popups?? for now just open in new tab?
     toggler.addEventListener('click', toggle)
     close  .addEventListener('click', toggle)
-    popup.addEventListener('click'   , movetotop)
-    popup.title = 'double click to force popup on top'
-    popup.addEventListener('dblclick', forcetop)
+    popup  .addEventListener('click', bumpZindex)
+    popup.title = `
+- single click to move popup up,
+- double click to force popup on top of other elements
+  may cause glitches, please report such sites here https://github.com/karlicoss/promnesia/issues/168
+`.trim()
+    popup.addEventListener('dblclick', forcePopupOnTop)
     out()
     return []
 }
