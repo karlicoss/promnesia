@@ -164,6 +164,13 @@ function showMark(element) {
         return // no visits or was excluded (add some data attribute maybe?)
     }
 
+    // meh. might not work well on images etc...
+    // todo would be nice though, e.g. on github in the 'contributors' view only avatars are displayed
+    if (element.textContent.trim().length == 0) {
+        console.debug("promnesia: can't attach a popup to %o yet (most likely an image)", element)
+        return
+    }
+
     element.classList.add(Cls.VISITED)
 
     let eyecolor = '#550000' // 'boring'
@@ -191,10 +198,12 @@ function showMark(element) {
     element.style.outline = '0.5em solid '
 
     const estyle = element.currentStyle || window.getComputedStyle(element, "")
-    const old_display = estyle.display;
-    const block_link = old_display == 'block' // FIXME support other block-like elems?
-    outer.style.display = block_link ? 'flex' : 'inline'
-    outer.style.float = estyle.float // TODO don't assign if undefined
+    const old_display = estyle.display || ''
+    const inline_link = old_display.includes('inline')
+    outer.style.display = inline_link ? 'inline' : 'flex' // not sure why, but required, see test.html
+    if (estyle.float) {
+        outer.style.float = estyle.float // not sure why, but required, see test.html
+    }
     // TODO if flex, need to patch up toggler as well?
     // TODO shit. seems necessary but doesn't work in discord? fucking hell... something to do with flex?
     // maybe it's only relevant to navbars etc..
@@ -219,22 +228,23 @@ function showMark(element) {
     const toggler = document.createElement('span')
     toggler.classList.add('promnesia-visited-toggler')
     toggler.classList.add('nonselectable')
-    toggler.style.display = 'inline-block'
     toggler.style.whiteSpace = 'pre' // otherwsie not displayed (since empty)
-    /* the three rightmost characters cause the toggle to show.
+    /* the 25% of the element width will cause the popup to show
      * the rest is left intect so it's possible to click on the URL
      */
     const width = `${Math.floor(erect.width / 4)}px`
     toggler.style.paddingLeft =       width // meh..
     toggler.style.marginLeft  = '-' + width
     toggler.style.width = '0px'
+    const TOGGLER_STYLE_DISPLAY = 'inline-block'
+    toggler.style.display = TOGGLER_STYLE_DISPLAY
     toggler.textContent = ' ' // otherwise not displayed at all
-    toggler.style.position = estyle.position // ugh. seems necessary, check on tests/test.html...
 
-    if (element.textContent.trim().length != 0) {
-        // meh. might not work well on images etc...
-        outer.appendChild(toggler)
-    }
+    const tw = create0SpaceElement(toggler)
+    toggler.style.position = 'absolute'
+    outer.appendChild(tw)
+
+    toggler.appendChild(eye)
 
     /* popup body */
     // TODO ugh. this messes up with selection
@@ -246,6 +256,7 @@ function showMark(element) {
     popup.style.width = 'max-content' // otherwise too narrow
     popup.style.maxWidth = '120ch'
     popup.style.position = 'relative' // necessary for  zIndex to work
+    popup.style.top = `${erect.height}px` // TODO add test for this (need a multiline header, like on youtube)
     // TODO would be cool to reuse the same style used by the sidebar...
     const close = document.createElement('span')
     close.classList.add('promnesia-visited-popup-close')
@@ -302,6 +313,11 @@ function showMark(element) {
         popup_w.style.display = 'none'
         toggler.style.background   = eyecolor + '22' // transparency
         element.style.outlineColor = eyecolor + '22'
+
+        // WTF??
+        // on Firefox if setting it directly, the toggle is displayed in the bottom for some links at first? (e.g. hn)
+        // untoggling and toggling display attributed fixes it somehow.. ugh
+        setTimeout(() => toggler.style.display = TOGGLER_STYLE_DISPLAY)
 
         if (undoMove != null) {
             undoMove()
@@ -475,10 +491,10 @@ function hideMarks() {
 /*
  * I guess the most important thing is that as little layout disturbed when the user isn't showing popups, as possible
  *
- * TESTING:
+ * NOTE: TESTING:
  * see tests/test.html, it's meant to simulate weird complicated webpages to test the logic
  * would be nice to have something automatic...
- * check on
+ * if testing manually, check on
  * - wikipedia
  * - discord
  *   ugh. too much dynamic shit in discord to make it work reliably...

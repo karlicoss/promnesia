@@ -7,6 +7,9 @@
 
     /* absolute relative to the parent wrapper that forces zero space */
     position: absolute;
+
+    /* display slightly above the text */
+    bottom: 1em;
 }
 
 /* invisible area taking 25% of the link and lets you click and pin the popup */
