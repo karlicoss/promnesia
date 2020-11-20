@@ -237,7 +237,11 @@ function showMark(element) {
     toggler.style.marginLeft  = '-' + width
     toggler.style.width = '0px'
     const TOGGLER_STYLE_DISPLAY = 'inline-block'
-    toggler.style.display = TOGGLER_STYLE_DISPLAY
+    // WTF??
+    // on Firefox if setting it directly, the toggle is displayed in the bottom for some links at first? (e.g. hn)
+    // untoggling and toggling display attributed fixes it somehow.. ugh
+    // toggler.style.display = TOGGLER_STYLE_DISPLAY
+    // see setTimeout later...
     toggler.textContent = ' ' // otherwise not displayed at all
 
     const tw = create0SpaceElement(toggler)
@@ -313,11 +317,6 @@ function showMark(element) {
         popup_w.style.display = 'none'
         toggler.style.background   = eyecolor + '22' // transparency
         element.style.outlineColor = eyecolor + '22'
-
-        // WTF??
-        // on Firefox if setting it directly, the toggle is displayed in the bottom for some links at first? (e.g. hn)
-        // untoggling and toggling display attributed fixes it somehow.. ugh
-        setTimeout(() => toggler.style.display = TOGGLER_STYLE_DISPLAY)
 
         if (undoMove != null) {
             undoMove()
@@ -417,6 +416,12 @@ function showMark(element) {
     popup  .addEventListener('click', bumpZindex)
     popup  .addEventListener('dblclick', () => PopupOnTop.toggle())
     out()
+
+    // see the comment near TOGGLER_STYLE_DISPLAY above
+    toggler.style.display = 'none' // disable first to avoid flickering
+    setTimeout(() => toggler.style.display = TOGGLER_STYLE_DISPLAY)
+    //
+
     return []
 }
 
