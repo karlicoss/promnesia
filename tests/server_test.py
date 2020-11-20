@@ -123,8 +123,9 @@ def test_search(tdir):
 def test_visited(tmp_path):
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
-        response = post(f'http://localhost:{helper.port}/visited', f"""urls:=["{test_url}","http://badurl.org"]""")
-        assert response == [True, False]
+        endp = f'http://localhost:{helper.port}/visited'
+        assert post(endp, f'''urls:=["{test_url}","http://badurl.org"]''') == [True, False]
+        assert post(endp, f'''urls:=[]''') == []
 
 
 def index_extra(tdir: Path) -> None:

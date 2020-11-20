@@ -41,6 +41,12 @@ def get_logger():
     # todo lazy log?
     logger = logging.getLogger('promnesia.server')
     setup_logger(logger, level=logging.DEBUG)
+
+    # ugh. doesn't work becuase local mode isn't using HTTPInterfaceAPI ?? wtf??
+    # from hug.middleware import LogMiddleware
+    # h = __hug__ # NOTE: defined by hug; need to be defensive
+    # h.add_middleware(LogMiddleware(logger=logger))
+
     return logger
 
 
@@ -110,7 +116,7 @@ def get_db_path() -> Path:
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime):
-    get_logger().info('Reloading DB: %s', db_path)
+    get_logger().debug('Reloading DB: %s', db_path)
     # TODO how to open read only?
     engine = create_engine(f'sqlite:///{db_path.path}') # , echo=True)
 
@@ -220,6 +226,7 @@ def status():
 def visits(
         url: T.text,
 ):
+    get_logger().info('/visited %s', url)
     return search_common(
         url=url,
         # odd, doesn't work just with: x or (y and z)
@@ -235,7 +242,7 @@ def visits(
 def search(
         url: T.text
 ):
-    # TODO rely on hug logger for query
+    get_logger().info('/search %s', url)
     return search_common(
         url=url,
         where=lambda table, url: or_(
@@ -253,6 +260,7 @@ def search(
 def search_around(
         timestamp: T.number,
 ):
+    get_logger().info('/search_around %s', timestamp)
     utc_timestamp = timestamp # old 'timestamp' name is legacy
 
     # TODO meh. use count/pagination instead?
@@ -298,6 +306,7 @@ def as_version(version: str) -> Tuple[int, int, int]:
         return _LATEST
 
 
+# todo ugh. hug chokes over annotation types? List[Dict[str, Any]]
 @hug.local()
 @hug.post('/visited')
 def visited(
@@ -305,12 +314,18 @@ def visited(
         client_version: str='',
 ):
     logger = get_logger()
+    logger.info('/visited %s %s', urls, client_version)
+
     version = as_version(client_version)
 
     nurls = [canonify(u) for u in urls]
+    snurls = list(sorted(set(nurls)))
+
+    if len(snurls) == 0:
+        return []
+
     engine, binder, table = get_stuff()
 
-    snurls = list(sorted(set(nurls)))
     # sqlalchemy doesn't seem to support SELECT FROM (VALUES (...)) in its api
     # also doesn't support array binding...
     # https://stackoverflow.com/questions/13190392/how-can-i-bind-a-list-to-a-parameter-in-a-custom-query-in-sqlalchemy
