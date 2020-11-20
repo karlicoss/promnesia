@@ -1,9 +1,28 @@
 <!doctype html>
+
+<!-- Recommended way to check: open the same tab both in normal (with the extension active) and incognitro mode and alt-tab to compare -->
+
 <html>
     <head>
         <meta charset="utf-8">
         <title>Test page for 'mark visited'. Make sure the elements are not disturbed when marks are displayed</title>
+    <style>
+    .pageheader {
+        width: 1ch;
+        height: 1ch;
+        position: absolute;
+    }
+    </style>
     </head>
+
+    <!-- simulate weird invisible Github header -->
+    <div style="position: relative !important;">
+    <a style="padding: 24px !important; overflow: hidden" class="pageheader" href="https://github.com">github</a>
+    <!-- <header style="padding: 16px">hello</header> -->
+    </div>
+
+    <!-- TODO header from lobsters -->
+
     <!-- copied from hackernews -->
     <body style="margin:0px">
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="padding:0px"><tbody><tr>

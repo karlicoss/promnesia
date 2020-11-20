@@ -174,11 +174,11 @@ function showMark(element) {
     eye.dataset.promnesia_original   = v.original_url
     eye.dataset.promnesia_normalised = v.normalised_url
     //
+    eye.classList.add('promnesia-visited-eye')
     eye.classList.add('nonselectable')
-    eye.textContent = '👁'
+    eye.textContent = '👁' // TODO control with css
+    // TODO should rely on tag color?
     eye.style.color = eyecolor
-    eye.style.position = 'relative'
-    eye.style.bottom = '1em'
 
     // todo 'interesting' visits would have either context or locator? dunno
     eyecolor = v.context == null ? '#6666ff' : '#00ff00' // copy-pasted from 'generate' script..
@@ -192,12 +192,8 @@ function showMark(element) {
     element.orig_outline = element.style.outline // keep to restore later
     element.style.outline = '0.5em solid '
 
-    function getDisplayType(element) {
-        const cStyle = element.currentStyle || window.getComputedStyle(element, "")
-        return cStyle.display
-    }
-
-    const old_display = getDisplayType(element)
+    const estyle = element.currentStyle || window.getComputedStyle(element, "")
+    const old_display = estyle.display;
     // TODO shit. seems necessary but doesn't work in discord? fucking hell... something to do with flex?
     // maybe it's only relevant to navbars etc..
     const fix_display = old_display == 'block' ? 'inline-block' : old_display
@@ -221,8 +217,8 @@ function showMark(element) {
      * maybe.. have some 'force' button or something?
      */
     const toggler = document.createElement('span')
+    toggler.classList.add('promnesia-visited-toggler')
     toggler.classList.add('nonselectable')
-    toggler.style.cursor     = 'crosshair' // TODO maybe custom cursor?
     toggler.style.display = 'inline-block'
     toggler.style.whiteSpace = 'pre' // otherwsie not displayed (since empty)
     /* the three rightmost characters cause the toggle to show.
@@ -233,28 +229,25 @@ function showMark(element) {
     toggler.style.marginLeft  = '-' + width
     toggler.style.width = '0px'
     toggler.textContent = ' ' // otherwise not displayed at all
+    toggler.style.position = estyle.position // ugh. seems necessary, check on tests/test.html...
     outer.appendChild(toggler)
 
-    toggler.appendChild(eye)
+    toggler.appendChild(create0SpaceElement(eye))
 
     /* popup body */
     // TODO ugh. this messes up with selection
     // i.e. when we select over parent, it also selects all highligh stuff
     // not sure what to do.. maybe make nonselectable and only allow selection on the click on the popup?
     const popup = document.createElement('span')
-    popup.style.outline = 'solid 1px'
-    popup.style.background = 'lightyellow'
+    popup.classList.add('promnesia-visited-popup')
     // popup.style.padding = '1px'
     popup.style.width = 'max-content' // otherwise too narrow
     popup.style.maxWidth = '120ch'
     popup.style.position = 'relative' // necessary for  zIndex to work
     // TODO would be cool to reuse the same style used by the sidebar...
     const close = document.createElement('span')
+    close.classList.add('promnesia-visited-popup-close')
     close.classList.add('nonselectable')
-    close.style.float = 'right'
-    close.style.color = 'red'
-    close.style.cursor = 'pointer'
-    close.style.fontWeight = 'bold'
     close.textContent = "×"
     popup.appendChild(close)
     let ev = formatVisit(v)
@@ -482,6 +475,7 @@ function hideMarks() {
  * I guess the most important thing is that as little layout disturbed when the user isn't showing popups, as possible
  *
  * TESTING:
+ * see tests/test.html, it's meant to simulate weird complicated webpages to test the logic
  * would be nice to have something automatic...
  * check on
  * - wikipedia

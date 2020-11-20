@@ -356,6 +356,9 @@ async function doToggleMarkVisited(tabId: number) {
     }
     // todo ugh. errors inside the script (e.g. syntax errors) get swallowed..
     // TODO not sure.. probably need to inject the script once and then use a message listener or something like in sidebar??
+    await achrome.tabs.insertCSS(tabId, {
+        file: 'showvisited.css',
+    })
     await achrome.tabs.executeScript(tabId, {
         file: 'showvisited.js',
     })

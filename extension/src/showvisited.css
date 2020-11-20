@@ -1,0 +1,30 @@
+/* TODO non-selectable? should probably be from the parent.. */
+
+/* TODO use variables */
+
+/* the mark that shows near the link */
+.promnesia-visited-eye {
+
+    /* absolute relative to the parent wrapper that forces zero space */
+    position: absolute;
+}
+
+/* invisible area taking 25% of the link and lets you click and pin the popup */
+.promnesia-visited-toggler {
+    cursor: crosshair;
+}
+
+
+/* actual popup with the metadata */
+.promnesia-visited-popup {
+    outline: solid 1px;
+    background: lightyellow;
+}
+
+/* close buton within the popup */
+.promnesia-visited-popup-close {
+    color: red;
+    font-weight: bold;
+    cursor: pointer;
+    float: right;
+}
