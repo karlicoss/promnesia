@@ -6,12 +6,45 @@
     <head>
         <meta charset="utf-8">
         <title>Test page for 'mark visited'. Make sure the elements are not disturbed when marks are displayed</title>
-    <style>
-    .pageheader {
-        width: 1ch;
-        height: 1ch;
-        position: absolute;
-    }
+        <style>
+.promnesia-visited-toggler {
+    /* for debug */
+    background: #ff000066 !important;
+}
+
+
+body {
+         /* line-height: 1.6; */
+}
+.logo {
+    height: 20px;
+    overflow: hidden;
+}
+.pageheader {
+    width: 1ch;
+    height: 1ch;
+    position: absolute;
+}
+
+#l_holder {
+    background-position: center;
+    display: block;
+    width: 16px;
+    height: 16px;
+    padding: 1px;
+    margin-left: 4px;
+    margin-right: 11px;
+}
+
+#l_holder:after {
+    content: '';
+    /* TODO use svg? */
+    background: red no-repeat;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
     </style>
     </head>
 
@@ -21,24 +54,61 @@
     <!-- <header style="padding: 16px">hello</header> -->
     </div>
 
+    <header class="page-header" data-testid="header"><a href="https://developer.mozilla.org/en-US/" class="logo" aria-label="MDN Web Docs">
+        <svg width="200" height="50">
+            <rect width="200" height="50" style="fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)" />
+        </svg>
+    </a>
+    </header>
+
+    <div>Headers above are testing position: absolute behaviour and overflow handling</div>
     <!-- TODO header from lobsters -->
+
+    <div>This vvv is testing block-like layout handling </div>
+
+    <div>
+        <a style="display: block;"" href="https://github.com">Github 1</a>
+        <a style="display: block;"" href="https://github.com">Github 2</a>
+        <a style="display: block;"" href="https://github.com">Github 3</a>
+    </div>
+
+    <!-- like on lobsters -->
+<div id="headerleft">
+        <!-- float:left causes it to display on the same line despite display: block... -->
+        <a style="float:left" id="l_holder" style="background-color: #7f0000;" href="https://lobste.rs/" title="Lobsters">hdr</a>
+
+        <span class="headerlinks">
+            <a href="https://lobste.rs/" class="cur_url">Lobsters</a>
+            <a href="https://lobste.rs/recent" class="">Recent</a>
+            <a href="https://lobste.rs/comments" class="">Comments</a>
+            <a href="https://lobste.rs/search" class="">Search</a>
+        </span>
+      </div>
 
     <!-- copied from hackernews -->
     <body style="margin:0px">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="padding:0px"><tbody><tr>
-            <td style="line-height:12pt; height:10px;">
-                <b class="hnname">
-                  <a href="https://news.ycombinator.com/news">Hacker News</a></b>
-                | <a href="https://news.ycombinator.com/newest">new</a>
-                | <a href="https://news.ycombinator.com/front">past</a>
-                | <a href="https://news.ycombinator.com/newcomments">comments</a>
-            </td></tr><tr><td>
-                | <a href="https://news.ycombinator.com/ask">ask</a>
-                | <a href="https://news.ycombinator.com/show">show</a>
-                | <a href="https://news.ycombinator.com/jobs">jobs</a>
-                | <a href="https://news.ycombinator.com/submit">submit</a>
-            </td>
-        </tr></tbody></table>
+        <table><tbody>
+            <tr><td>
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="padding:0px"><tbody><tr>
+                <td style="width:18px;padding-right:4px" bgcolor="#ff6600"><a href="https://news.ycombinator.com">
+                    <img src="https://news.ycombinator.com/y18.gif" width="18" height="18" style="border:1px white solid;">
+                </a></td>
+                <td style="line-height:12pt; height:10px;" bgcolor="#ff6600">
+                    <b class="hnname">
+                      <a href="https://news.ycombinator.com/news">Hacker News</a></b>
+                    | <a href="https://news.ycombinator.com/newest">new</a>
+                    | <a href="https://news.ycombinator.com/front">past</a>
+                    | <a href="https://news.ycombinator.com/newcomments">comments</a>
+                    | <a href="https://news.ycombinator.com/ask">ask</a>
+                    | <a href="https://news.ycombinator.com/show">show</a>
+                    | <a href="https://news.ycombinator.com/jobs">jobs</a>
+                    | <a href="https://news.ycombinator.com/submit">submit</a>
+                </td>
+                </tr>
+            </tbody></table>
+            </td></tr>
+        <tr id="pagespace" title="" style="height:10px"></tr>
+        </tbody></table>
 
         <div><a href="https://github.com">Github</a></div>
         <div><a href="https://github.com">Github</a></div>

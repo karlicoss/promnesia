@@ -165,7 +165,6 @@ function showMark(element) {
     }
 
     element.classList.add(Cls.VISITED)
-    const erect = element.getBoundingClientRect()
 
     let eyecolor = '#550000' // 'boring'
 
@@ -187,24 +186,25 @@ function showMark(element) {
     // outer decorates link along with its associated stuff added by promnesia
     const outer = document.createElement('span')
     outer.classList.add(Cls.WRAPPER)
-    outer.style.display = 'inline'
     // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears and stays when disappears
     element.orig_outline = element.style.outline // keep to restore later
     element.style.outline = '0.5em solid '
 
     const estyle = element.currentStyle || window.getComputedStyle(element, "")
     const old_display = estyle.display;
+    const block_link = old_display == 'block' // FIXME support other block-like elems?
+    outer.style.display = block_link ? 'flex' : 'inline'
+    outer.style.float = estyle.float // TODO don't assign if undefined
+    // TODO if flex, need to patch up toggler as well?
     // TODO shit. seems necessary but doesn't work in discord? fucking hell... something to do with flex?
     // maybe it's only relevant to navbars etc..
-    const fix_display = old_display == 'block' ? 'inline-block' : old_display
-    element.orig_display  = old_display
-    element.style.display = fix_display
-
-    // TODO hmmm... maybe check if the position is absolute on the element or some of its parents?
-    // and display absolute here as well then?
 
     element.replaceWith(outer)
     outer.appendChild(element)
+
+    // NOTE: deliberately compute rect AFTER we reinsert the element under span
+    // otherwise if the element took whole parent width before (e.g. full page) size might be off
+    const erect = element.getBoundingClientRect()
 
     /* toggler shows/hides popup
      * TODO: issue that if it's parent zindex is lower, the popup will be below the body..
@@ -230,9 +230,11 @@ function showMark(element) {
     toggler.style.width = '0px'
     toggler.textContent = ' ' // otherwise not displayed at all
     toggler.style.position = estyle.position // ugh. seems necessary, check on tests/test.html...
-    outer.appendChild(toggler)
 
-    toggler.appendChild(create0SpaceElement(eye))
+    if (element.textContent.trim().length != 0) {
+        // meh. might not work well on images etc...
+        outer.appendChild(toggler)
+    }
 
     /* popup body */
     // TODO ugh. this messes up with selection
@@ -417,7 +419,6 @@ function hideMark(element) {
         // do we need anything else?? presumably it would be orphaned in DOM?
     }
     element.style.outline = element.orig_outline
-    element.style.display = element.orig_display
 }
 
 function _doMarks(show /* boolean */) {
