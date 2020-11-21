@@ -1,7 +1,7 @@
 /* @flow */
-import {unwrap} from './common';
-import {getOptions, setOptions} from './options'
-import {defensifyAlert, alertError} from './notifications';
+import {unwrap} from './common'
+import {getOptions, setOptions, resetOptions} from './options'
+import {defensifyAlert, alertError} from './notifications'
 
 // re: codemirror imports
 // err. that's a bit stupid, js injected css? surely it can be done via webpack and static files...
@@ -213,6 +213,15 @@ unwrap(document.getElementById(
     await setOptions(opts);
     alert("Saved!");
 }));
+
+unwrap(document.getElementById(
+    'reset_id',
+)).addEventListener('click', defensifyAlert(async() => {
+    if (confirm('This will RESET your settings! Make sure you exported them first.')) {
+        await resetOptions()
+        alert('Reset! Reload the page to see the effect.')
+    }
+}))
 
 
 // https://stackoverflow.com/questions/46946380/fetch-api-request-timeout

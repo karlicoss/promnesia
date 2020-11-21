@@ -207,6 +207,10 @@ export async function setOption(opt: Opt1) {
     await os.set(opt)
 }
 
+export async function resetOptions() {
+    const os = optSync()
+    await os.setAll({})
+}
 
 function toggleOption(toggle: (Options) => void): () => Promise<void> {
     return async () => {
@@ -221,3 +225,5 @@ export const Toggles = {
     markVisited   : toggleOption((opts) => { opts.mark_visited_always = !opts.mark_visited_always; }),
     showHighlights: toggleOption((opts) => { opts.highlight_on        = !opts.highlight_on       ; }),
 }
+
+// TODO try optionsStorage.syncForm?
