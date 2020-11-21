@@ -19,6 +19,17 @@ function get_or_default(obj, key, def) {
 const SIDEBAR_ID   = 'promnesia-sidebar';
 const CONTAINER_ID = 'promnesia-sidebar-container';
 
+
+const Cls = {
+    /* marks the highlighted block of text */
+    HIGHLIGHT: 'promnesia-highlight',
+    /* points to the visit/context that caused the highlight */
+    HIGHLIGHT_REF: 'promnesia-highlight-reference',
+    /* just a wrapper trick to force it not take any space */
+    HIGHLIGHT_REF_WRAPPER: 'promnesia-highlight-reference-wrapper',
+}
+
+
 const SIDEBAR_ACTIVE = 'promnesia';
 
 const doc = document;
@@ -227,8 +238,6 @@ function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> 
     }
 }
 
-const _HL_CLASS = 'promnesia-highlight'
-
 // TODO potentially not very effecient; replace with something existing (Hypothesis??)
 function _highlight(text: string, idx: number, v: Visit) {
     const lines = new Set()
@@ -255,7 +264,7 @@ function _highlight(text: string, idx: number, v: Visit) {
         }
         target = ((target: any): HTMLElement)
 
-        if (target.classList.contains(_HL_CLASS)) {
+        if (target.classList.contains(Cls.HIGHLIGHT)) {
             continue // shouldn't act on self
         }
 
@@ -286,13 +295,25 @@ function _highlight(text: string, idx: number, v: Visit) {
         to_hl.push(target)
     }
     for (const target of to_hl) {
-        target.classList.add(_HL_CLASS)
+        // NOTE: there is <mark> tag, but it doesn't do anything apart from
+        // so perhaps best to keep the DOM intact
+        target.classList.add(Cls.HIGHLIGHT)
+
+        const refc = doc.createElement('span')
+        refc.classList.add(Cls.HIGHLIGHT_REF_WRAPPER)
+        refc.classList.add('nonselectable')
+        refc.style.width  = '0px'
+        refc.style.height = '0px'
+        refc.style.position = 'absolute'
+
         const ref = doc.createElement('span');
-        ref.classList.add('promnesia-highlight-reference');
-        ref.classList.add('nonselectable');
-        ref.appendChild(doc.createTextNode(String(idx)));
-        ref.title = `promnesia: ${v.tags.join(' ')} ${(USE_ORIGINAL_TZ ? v.dt_local : v.time).toLocaleString()}`
-        target.insertAdjacentElement('beforeend', ref);
+        ref.classList.add(Cls.HIGHLIGHT_REF);
+        ref.textContent = String(idx)
+        ref.title = `promnesia #${idx}: ${v.tags.join(' ')} ${(USE_ORIGINAL_TZ ? v.dt_local : v.time).toLocaleString()}`
+        ref.style.position = 'relative'
+        refc.appendChild(ref)
+
+        target.insertAdjacentElement('beforeend', refc);
     }
 }
 
