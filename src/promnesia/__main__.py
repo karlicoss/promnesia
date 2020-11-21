@@ -14,7 +14,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, get_logger, get_tmpdir, DbVisit, Res
-from .common import Source, appdirs, python3, get_system_zone
+from .common import Source, appdirs, python3, get_system_tz
 from .dump import visits_to_sqlite
 from .extract import extract_visits, make_filter
 
@@ -120,7 +120,15 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
         if port is None:
             logger.warning(f"Port isn't specified, not serving!\nYou can inspect the database in the meantime, e.g. 'sqlitebrowser {dbp}'")
         else:
-            server._run(port=port, db=dbp, timezone=get_system_zone(), quiet=False)
+            from .server import ServerConfig
+            server._run(
+                port=port,
+                quiet=False,
+                config=ServerConfig(
+                    db=dbp,
+                    timezone=get_system_tz()
+                ),
+            )
 
         if sys.stdin.isatty():
             input("Press any key when ready")

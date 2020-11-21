@@ -23,17 +23,13 @@ from sqlalchemy import Column, Table, func, types # type: ignore
 from sqlalchemy.sql import text # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3, get_system_zone
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3, get_system_tz
 from .cannon import canonify
 
-_ENV_CONFIG = 'PROMNESIA_CONFIG'
-
-
-# TODO not sure about utc in database... keep orig timezone?
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
-def get_logger():
+def get_logger() -> logging.Logger:
     # NOTE: uncomment to log sql queries
     # logging.basicConfig()
     # logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
@@ -42,11 +38,9 @@ def get_logger():
     logger = logging.getLogger('promnesia.server')
     setup_logger(logger, level=logging.DEBUG)
 
-    # ugh. doesn't work becuase local mode isn't using HTTPInterfaceAPI ?? wtf??
     # from hug.middleware import LogMiddleware
-    # h = __hug__ # NOTE: defined by hug; need to be defensive
-    # h.add_middleware(LogMiddleware(logger=logger))
-
+    # api = hug.API(__name__)
+    # api.http.add_middleware(LogMiddleware(logger=logger))
     return logger
 
 
@@ -59,28 +53,37 @@ class ServerConfig(NamedTuple):
     db: Path
     timezone: BaseTzInfo
 
+    def as_str(self) -> str:
+        return json.dumps({
+            'timezone': self.timezone.zone,
+            'db'      : str(self.db),
+        })
+
     @classmethod
-    def make(cls, timezone: str, db: Optional[PathIsh]=None) -> 'ServerConfig':
-        tz = pytz.timezone(timezone)
-
-        if db is None:
-            dbp = default_db_path()
-        else:
-            dbp = Path(db)
-
-        return cls(db=dbp, timezone=tz)
+    def from_str(cls, cfgs: str) -> 'ServerConfig':
+        d = json.loads(cfgs)
+        return cls(
+            db      =Path         (d['db']),
+            timezone=pytz.timezone(d['timezone'])
+        )
 
 
-@lru_cache(1)
-def get_config() -> ServerConfig:
-    cfg = os.environ.get(_ENV_CONFIG)
-    assert cfg is not None
-    return ServerConfig.make(**json.loads(cfg))
+class EnvConfig:
+    KEY = 'PROMNESIA_CONFIG'
 
+    # apparently the only way to communicate with hug...
+    @staticmethod
+    @lru_cache(1)
+    def get() -> ServerConfig:
+        cfgs = os.environ.get(EnvConfig.KEY)
+        assert cfgs is not None
+        return ServerConfig.from_str(cfgs)
 
-# TODO use that?? https://github.com/timothycrosley/hug/blob/develop/tests/test_async.py
+    @staticmethod
+    def set(cfg: ServerConfig) -> None:
+        os.environ[EnvConfig.KEY] = cfg.as_str()
 
-# TODO how to return exception in error?
+# todo how to return exception in error?
 
 def as_json(v: DbVisit) -> Dict:
     # yep, this is NOT %Y-%m-%d as is seems to be the only format with timezone that Date.parse in JS accepts. Just forget it.
@@ -103,12 +106,10 @@ def as_json(v: DbVisit) -> Dict:
     }
 
 
-def get_db_path_nothrow() -> Path:
-    return get_config().db
-
-def get_db_path() -> Path:
-    db = get_db_path_nothrow()
-    assert db.exists(), db
+def get_db_path(check: bool=True) -> Path:
+    db = EnvConfig.get().db
+    if check:
+        assert db.exists(), db
     return db
 
 
@@ -117,7 +118,7 @@ def get_db_path() -> Path:
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime):
     get_logger().debug('Reloading DB: %s', db_path)
-    # TODO how to open read only?
+    # todo how to open read only?
     engine = create_engine(f'sqlite:///{db_path.path}') # , echo=True)
 
     binder = NTBinder.make(DbVisit)
@@ -138,7 +139,7 @@ def get_stuff(db_path=None): # TODO better name
 
 def search_common(url: str, where):
     logger = get_logger()
-    config = get_config()
+    config = EnvConfig.get()
 
     logger.info('url: %s', url)
     original_url = url
@@ -174,7 +175,7 @@ def search_common(url: str, where):
     vlist: List[DbVisit] = []
     for vis in visits:
         dt = vis.dt
-        if dt.tzinfo is None:
+        if dt.tzinfo is None: # FIXME need this for /visits endpoint as well?
             tz = config.timezone
             dt = tz.localize(dt)
             vis = vis._replace(dt=dt)
@@ -196,16 +197,13 @@ def status():
     '''
     # TODO hug stats?
 
-    db_status_msg = 'ok'
-
-    db_path: Optional[str]
+    db = get_db_path(check=False)
     try:
-        db_path = str(get_db_path())
+        assert db.exists(), db
+        db_path = str(db)
         # TODO use 'db_stats' instead? add count or something else
     except Exception as e:
-        # TODO not sure how to properly communicate the error to frontend?
-        db_path = None
-        db_status_msg = f'Database file not found (or unreadable): "{get_db_path_nothrow()}". Run indexer.'
+        db_path = f'ERROR: db not found/unreadable (expected path {db}). You probably forgot to run indexer first. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org'
 
     version: Optional[str]
     try:
@@ -216,9 +214,7 @@ def status():
     return {
         'db'     : db_path,
         'version': version,
-        'db_status_msg': db_status_msg,
     }
-# TODO might be good to include the frontend version in the requests?
 
 
 @hug.local()
@@ -366,42 +362,35 @@ SELECT queried, visits.*
     return results
 
 
-def _run(*, port: str, db: Optional[Path]=None, timezone: str, quiet: bool):
+def _run(*, port: str, quiet: bool, config: ServerConfig) -> None:
     logger = get_logger()
-    env = {
-        **os.environ,
-        # not sure if there is a simpler way to communicate with hug..
-        # # TODO here
-        _ENV_CONFIG: json.dumps({
-            'timezone': timezone,
-            **({} if db is None else {'db': str(db)})
-        }),
-    }
-    args = [
-        python3(),
-        '-m', 'hug', # TODO eh, not sure about this. what if user had it already installed?? it's a mess..
-        *(['--silent'] if quiet else []),
-        '-p', port,
-        '-f', __file__,
-    ]
-    logger.info('Running server: %s', args)
-    logger.info(f'with env {_ENV_CONFIG}={env[_ENV_CONFIG]}')
-    os.execvpe(python3(), args, env)
+
+    logger.info('Running hug with %s', config)
+
+    EnvConfig.set(config)
+    import hug.development_runner # type: ignore
+    hug.development_runner.hug(
+        file=__file__,
+        port=int(port),
+    )
 
 
-def run(args):
-    _run(port=args.port, db=args.db, timezone=args.timezone, quiet=args.quiet)
-
-
-_DEFAULT_CONFIG = Path('config.py')
+def run(args) -> None:
+    _run(
+        port=args.port,
+        quiet=args.quiet,
+        config=ServerConfig(
+            db=args.db,
+            timezone=args.timezone,
+        )
+    )
 
 
 def default_db_path() -> Path:
     return default_output_dir() / 'promnesia.sqlite'
 
 
-# TODO rename to 'backend'?
-def setup_parser(p):
+def setup_parser(p) -> None:
     p.add_argument(
         '--port',
         type=str,
@@ -409,27 +398,23 @@ def setup_parser(p):
         help='Port for communicating with extension',
     )
 
-    # TODO need to keep consistent with the backend...
-    # TODO use output_dir instead?
-
-    p.add_argument(
-        '--db',
-        type=Path,
-        required=False,
-        default=None,
-        help='Path to the links database (optional, uses user data dir by default)',
-    )
-
-    # TODO mm. should add fallback timezone to frontend instead, perhaps?
-    p.add_argument(
-        '--timezone',
-        type=str,
-        default=get_system_zone(),
-        help='Fallback timezone, defaults to the system timezone if not specified',
-    )
-    
     p.add_argument(
         '--quiet',
         action='store_true',
         help='Pass to log less',
+    )
+    # TODO need to keep consistent with the backend...
+    # todo use output_dir instead?
+    p.add_argument(
+        '--db',
+        type=Path,
+        default=default_db_path(),
+        help='Path to the links database (optional, uses user data dir by default)',
+    )
+
+    p.add_argument(
+        '--timezone',
+        type=pytz.timezone,
+        default=get_system_tz(),
+        help='Fallback timezone, defaults to the system timezone if not specified',
     )
