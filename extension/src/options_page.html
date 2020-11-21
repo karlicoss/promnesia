@@ -10,7 +10,7 @@
     <!-- TODO link from the page here straight to the features? -->
     <fieldset>
         <legend><strong>Don't forget to save settings after changing</strong></legend>
-        <button id="save_id">Save</button>
+        <button id="save_id" style="color:green">Save</button>
         <div>Note: you can quickly toggle some of these settings via the context menu on any page (typically need to reload the page to see the effect).</div>
     </fieldset>
 
@@ -21,7 +21,8 @@
         </div>
         <div>
             If you messed up any extension settings, you can check
-            <a href="https://github.com/karlicoss/promnesia/blob/master/extension/src/options.js">src/options.js</a>
+            <a href="https://github.com/karlicoss/promnesia/blob/master/extension/src/options.js">src/options.js</a>.
+            Alternatively, use 'reset settings' button in the bottom of the page.
         </div>
         Make sure to regularly <strong>export/backup</strong> settings (after saving first): <button id="export_settings_id">Export</button>
         (there is no import yet, will be added later)
@@ -172,6 +173,7 @@ They will be autoupdated every 3 days. Spec format (Json):<pre>[
             <div>If you had any settings here, please move them to the field above</div>
             <div id="extra_css_id"></div>
         </fieldset>
+        <button id="reset_id" style="color:red">DANGER: reset settings to defaults</button>
     </fieldset>
         <!-- </details> -->
     <script src="options_page.js"/></script>
