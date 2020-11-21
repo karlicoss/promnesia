@@ -55,8 +55,10 @@ body.promnesia {
 .promnesia-highlight-reference {
     color: orange;
     font-weight: bold;
-    /* vertical-align: super; */
     margin: 0.1em;
+
+    white-space: nowrap; /* prevent from breaking numbers onto newlines */
+    bottom: 1em;
 }
 
 
