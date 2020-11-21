@@ -113,7 +113,6 @@ def get_db_path(check: bool=True) -> Path:
     return db
 
 
-# TODO maybe, keep db connection? need to recycle it properly..
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime):
@@ -126,6 +125,18 @@ def _get_stuff(db_path: PathWithMtime):
     meta = MetaData(engine)
     table = Table('visits', meta, *binder.columns)
 
+    from sqlalchemy import Index # type: ignore
+    idx = Index('index_norm_url', table.c.norm_url)
+    try:
+        idx.create(bind=engine)
+    except exc.OperationalError as e:
+        if 'already exists' in str(e):
+            # meh, but no idea how to check it properly...
+            pass
+        else:
+            raise e
+
+    # NOTE: apparently it's ok to open connection on every request? at least my comparisons didn't show anything
     return engine, binder, table
 
 
@@ -342,11 +353,10 @@ SELECT queried, visits.*
         Column('match', types.Unicode),
         *table.columns,
     )
-    # TODO ugh, def need to profile this properly...
-    # hmm that was quite slow...
-    # SELECT queried FROM cte WHERE EXISTS (SELECT 1 FROM visits WHERE queried = visits.norm_url)
-    # logger.debug(bdict)
-    # logger.debug(query)
+    # TODO might be very beneficial for performance to have an intermediate table
+    # SELECT visits.* FROM visits GROUP BY visits.norm_url ORDER BY visits.context IS NULL DESC
+    # + unique index in norm_url
+    # brings down large queries to 50ms...
     with engine.connect() as conn:
         res = list(conn.execute(query))
         present = {row[0]: binder.from_row(row[1:]) for row in res}
