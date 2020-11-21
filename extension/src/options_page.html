@@ -10,8 +10,16 @@
     <!-- TODO link from the page here straight to the features? -->
     <fieldset>
         <legend><strong>Don't forget to save settings after changing</strong></legend>
-        <button id="save_id" style="color:green">Save</button>
+        <table>
+            <tr>
+                <td>
+        <button id="save_id" style="color:green; font-size: 2em">Save</button>
+                </td>
+                <td>
         <div>Note: you can quickly toggle some of these settings via the context menu on any page (typically need to reload the page to see the effect).</div>
+                </td>
+            </tr>
+        </table>
     </fieldset>
 
     <fieldset>
@@ -91,7 +99,7 @@ Note that these sources aren't typicaly as useful as the backend ones, and suppo
             <tr>
                 <td><input  id="mark_visited_always_id" type="checkbox"/></td>
                 <td><label for="mark_visited_always_id">
-                    Mark visited on page load (experimental, but highly recommended to try)
+                    Mark visited links on page load (experimental, but highly recommended to try)
                 </label></td>
                 <!-- TODO use excludelist -->
             </tr>

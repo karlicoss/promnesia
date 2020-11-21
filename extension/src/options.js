@@ -141,7 +141,7 @@ function defaultOptions(): StoredOptions {
         // TODO add docs on positioning
         // TODO eh, would be nice to make it work with --right: true. right now it doesn't
         position_css: `
-/* you can use devtools to find other CSS you can tweak */
+/* you can use devtools to find other CSS attributes you can tweak */
 
 /* tweak sidebar position/size/style */
 #promnesia-sidebar {
@@ -160,6 +160,17 @@ function defaultOptions(): StoredOptions {
 /* tweak elements within the sidebar */
 #promnesia-sidebar .src {
     font-weight: bold;
+}
+
+
+/* tweak 'visited' marks: specify hex color here */
+:root {
+  --promnesia-src-sourcename-color: #ff00ff;
+  /* e.g.
+  --promnesia-src-reddit-color: #ff0000;
+  or
+  --promnesia-src-twitter-color: #0000ff;
+   */
 }
 
 
