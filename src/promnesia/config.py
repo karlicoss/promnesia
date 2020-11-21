@@ -1,13 +1,15 @@
 from pathlib import Path
 import os
-from typing import List, Optional, Union, NamedTuple, Iterable
+from typing import List, Optional, Union, NamedTuple, Iterable, Callable
 import importlib
 import importlib.util
 import warnings
 
 from .common import PathIsh, get_tmpdir, appdirs, default_output_dir, default_cache_dir
-from .common import Res, Source
+from .common import Res, Source, DbVisit
 
+
+HookT = Callable[[Res[DbVisit]], Iterable[Res[DbVisit]]]
 
 class Config(NamedTuple):
     # TODO remove default from sources once migrated
@@ -18,6 +20,9 @@ class Config(NamedTuple):
 
     CACHE_DIR: Optional[PathIsh] = ''
     FILTERS: List[str] = []
+
+    HOOK: Optional[HookT] = None
+
     #
     # NOTE: INDEXERS is deprecated, use SOURCES instead
     INDEXERS: List = []
@@ -73,6 +78,9 @@ class Config(NamedTuple):
         else:
             return default_output_dir()
 
+    @property
+    def hook(self) -> Optional[HookT]:
+        return self.HOOK
 
 instance: Optional[Config] = None
 

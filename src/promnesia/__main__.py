@@ -13,41 +13,49 @@ from tempfile import TemporaryDirectory
 from . import config
 from . import server
 from .misc import install_server
-from .common import PathIsh, get_logger, get_tmpdir, DbVisit, Res
+from .common import PathIsh, logger, get_tmpdir, DbVisit, Res
 from .common import Source, appdirs, python3, get_system_tz
 from .dump import visits_to_sqlite
 from .extract import extract_visits, make_filter
 
 
-def _do_index() -> Iterable[Exception]:
+def iter_all_visits() -> Iterator[Res[DbVisit]]:
     cfg = config.get()
-
-    logger = get_logger()
-
-    indexers = cfg.sources
-
     output_dir = cfg.output_dir
+    # not sure if belongs here??
     if not output_dir.exists():
         logger.warning("OUTPUT_DIR '%s' didn't exist, creating", output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
 
+    hook = cfg.hook
+
+    indexers = cfg.sources
+    for idx in indexers:
+        if isinstance(idx, Exception):
+            yield idx
+            continue
+        # todo use this context? not sure where to attach...
+        einfo = f'{getattr(idx.ff, "__module__", None)}:{getattr(idx.ff, "__name__", None)} {idx.args} {idx.kwargs}'
+        for v in extract_visits(idx, src=idx.name):
+            if hook is None:
+                yield v
+            else:
+                try:
+                    yield from hook(v)
+                except Exception as e:
+                    yield e
+
+
+def _do_index() -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: List[Exception] = []
+    def it():
+        for v in iter_all_visits():
+            if isinstance(v, Exception):
+                errors.append(v)
+            yield v
 
-    def iter_all_visits() -> Iterator[Res[DbVisit]]:
-        for idx in indexers:
-            if isinstance(idx, Exception):
-                errors.append(idx)
-                yield idx
-                continue
-            # todo use this context? not sure where to attach...
-            einfo = f'{getattr(idx.ff, "__module__", None)}:{getattr(idx.ff, "__name__", None)} {idx.args} {idx.kwargs}'
-            for v in extract_visits(idx, src=idx.name):
-                if isinstance(v, Exception):
-                    errors.append(v)
-                yield v
-
-    dump_errors = visits_to_sqlite(iter_all_visits())
+    dump_errors = visits_to_sqlite(it())
     for e in dump_errors:
         logger.exception(e)
         errors.append(e)
@@ -55,7 +63,6 @@ def _do_index() -> Iterable[Exception]:
 
 
 def do_index(config_file: Path) -> None:
-    logger = get_logger()
     config.load_from(config_file) # meh.. should be cleaner
     try:
         errors = list(_do_index())
@@ -94,7 +101,6 @@ def demo_sources():
 
 
 def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name='demo'):
-    logger = get_logger()
     from pprint import pprint
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
@@ -155,7 +161,6 @@ def read_example_config() -> str:
 
 
 def config_create(args) -> None:
-    logger = get_logger()
     cfg = user_config_file()
     cfgdir = cfg.parent
     if cfgdir.exists():
@@ -169,7 +174,6 @@ def config_create(args) -> None:
 
 
 def config_check(args) -> None:
-    logger = get_logger()
     cfg = args.config
     errors = list(_config_check(cfg))
     if len(errors) == 0:
@@ -180,7 +184,6 @@ def config_check(args) -> None:
 
 
 def _config_check(cfg: Path) -> Iterable[Exception]:
-    logger = get_logger()
     from subprocess import run
 
     logger.info('config: %s', cfg)
