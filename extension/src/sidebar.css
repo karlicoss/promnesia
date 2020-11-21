@@ -1,27 +1,30 @@
-/* sup */
-body {
+.promnesia body {
     font-size: 15px;
     color: black;
 }
 
-.error {
+.promnesia .error {
     font-size: 16px;
     color: red;
     font-weight: bold;
     white-space: pre-wrap;
 }
 
-a {
+.promnesia a {
     text-decoration: none;
 }
 
-
-.src {
+/* todo would be nice to properly reuse it and share with the 'mark visited' */
+.promnesia .src {
     /* color: orange; /\* TODO monospace font or smth? *\/ */
     color: #b26628;
 
     margin-right: 0.2em;
     white-space: nowrap;
+}
+
+a.promnesia-visited {
+    outline: 0.5em solid;
 }
 
 .src-filter .src {

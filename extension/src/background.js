@@ -119,7 +119,8 @@ async function updateState (tab: chrome$Tab) {
     // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
     // not sure, but using deferred promises just in case
           .then(() => achrome.tabs.insertCSS(tabId, {file: 'sidebar-outer.css'}))
-          .then(() => achrome.tabs.insertCSS(tabId, {code: opts.position_css}))
+          .then(() => achrome.tabs.insertCSS(tabId, {file: 'sidebar.css'      }))
+          .then(() => achrome.tabs.insertCSS(tabId, {code: opts.position_css  }))
 
 
     // NOTE: if the page is unreachable, we can't inject stuff in it

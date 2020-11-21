@@ -42,8 +42,6 @@ function appendText(e, text) {
     e.appendChild(document.createTextNode(text))
 }
 
-// TODO make sure it's easy to toggle 'show visited' for a specific page
-
 // maybe use something else instead of eye? so it's not spammy
 function formatVisit(v) {
     // TODO disable link decoration?
@@ -61,7 +59,7 @@ function formatVisit(v) {
         original_url: original,
         normalised_url: normalised,
         dt_local    : dt,
-        tags        : tags,
+        tags        : sources,
         context     : context,
         locator     : locator,
     } = v
@@ -69,9 +67,18 @@ function formatVisit(v) {
     const l = createLink(original, original)
     l.title = `normalised: ${normalised}`
     e.appendChild(l) // meh
-    appendText(e, '\n' + l.title) // TODO do not commit
+    // appendText(e, '\n' + l.title) // for debug
     appendText(e, `\ndt      : ${new Date(dt).toLocaleString()}`) // meh
-    appendText(e, `\ntags    : ${tags.join(' ')}`)
+    appendText(e, '\nsources : ')
+    const e_srcs = document.createElement('span')
+    for (const src of sources) {
+        const e_src = document.createElement('span')
+        e_src.classList.add('src')
+        e_src.classList.add(src) // todo sanitize?
+        e_src.textContent = src
+        e_srcs.appendChild(e_src)
+    }
+    e.appendChild(e_srcs)
     if (context != null) {
         appendText(e, '\n' + context)
     }
@@ -135,9 +142,14 @@ function moveToTop(el) {
 }
 
 /* NOTE: deliberately not used const because script is injected several times.. */
+// NOTE: ideally these class names should be kept as intact as possible to keep backwards compatibility with user CSS
 var Cls = {
-    VISITED: 'promnesia-visited-link'   ,
-    WRAPPER: 'promnesia-visited-wrapper',
+    PROMNESIA: 'promnesia',
+    VISITED  : 'promnesia-visited'        ,
+    WRAPPER  : 'promnesia-visited-wrapper',
+    TOGGLER  : 'promnesia-visited-toggler',
+    POPUP    : 'promnesia-visited-popup'  ,
+    EYE      : 'promnesia-visited-eye'    ,
 }
 
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
@@ -173,29 +185,29 @@ function showMark(element) {
 
     element.classList.add(Cls.VISITED)
 
-    let eyecolor = '#550000' // 'boring'
-
     const eye = document.createElement('span')
     // for debugging
     eye.dataset.promnesia_original   = v.original_url
     eye.dataset.promnesia_normalised = v.normalised_url
     //
-    eye.classList.add('promnesia-visited-eye')
+    eye.classList.add(Cls.EYE)
     eye.classList.add('nonselectable')
     eye.textContent = '👁' // TODO control with css
-    // TODO should rely on tag color?
-    eye.style.color = eyecolor
 
-    // todo 'interesting' visits would have either context or locator? dunno
-    eyecolor = v.context == null ? '#6666ff' : '#00ff00' // copy-pasted from 'generate' script..
-    eye.style.color = eyecolor
+    /* 'boring' link -- mere visit, e.g. from the browser history
+     * 'interesting' -- have contexts or something like that
+     */
+    // todo also determine locator? dunno
+    const boring = v.context == null
+
+    let baseColor = boring ? '#6666ff' : '#00ff00' // copy-pasted from 'generate' script..
+    let baseColorTr = baseColor + '22' // meh
 
     // outer decorates link along with its associated stuff added by promnesia
     const outer = document.createElement('span')
     outer.classList.add(Cls.WRAPPER)
+    outer.classList.add(Cls.PROMNESIA)
     // ugh. putting it on the outer wrapper is glitchy, e.g. outline stretches when the popup appears and stays when disappears
-    element.orig_outline = element.style.outline // keep to restore later
-    element.style.outline = '0.5em solid '
 
     const estyle = element.currentStyle || window.getComputedStyle(element, "")
     const old_display = estyle.display || ''
@@ -226,7 +238,7 @@ function showMark(element) {
      * maybe.. have some 'force' button or something?
      */
     const toggler = document.createElement('span')
-    toggler.classList.add('promnesia-visited-toggler')
+    toggler.classList.add(Cls.TOGGLER)
     toggler.classList.add('nonselectable')
     toggler.style.whiteSpace = 'pre' // otherwsie not displayed (since empty)
     /* the 25% of the element width will cause the popup to show
@@ -255,7 +267,8 @@ function showMark(element) {
     // i.e. when we select over parent, it also selects all highligh stuff
     // not sure what to do.. maybe make nonselectable and only allow selection on the click on the popup?
     const popup = document.createElement('span')
-    popup.classList.add('promnesia-visited-popup')
+    popup.classList.add(Cls.PROMNESIA) // might get detached from the parent, so worth a separate class
+    popup.classList.add(Cls.POPUP)
     // popup.style.padding = '1px'
     popup.style.width = 'max-content' // otherwise too narrow
     popup.style.maxWidth = '120ch'
@@ -271,6 +284,24 @@ function showMark(element) {
     for (const e of ev) {
         popup.appendChild(e)
     }
+    //
+    // eh, could use perhaps? css can match against it..
+    // element.setAttribute('data-promnesia-src', src)
+
+    // TODO get first src from visit and assign the outline color??
+    const first = popup.querySelector('.src') // meh
+    if (first != null) {
+        const extras = Array.from(first.classList).filter(e => e != 'src')
+        for (const src of extras) {
+            const c = getComputedStyle(document.documentElement).getPropertyValue(`--promnesia-src-${src}-color`)
+            if (c != '') {
+                baseColor   = c
+                baseColorTr = c // TODO not sure what's the right thing to do about this
+                break // only use first
+            }
+        }
+    }
+    eye.style.color = baseColor
 
     // need a wrapper to make sure showing popup doesn't impact the link DOM
     const popup_w = create0SpaceElement(popup)
@@ -292,8 +323,8 @@ function showMark(element) {
         popup  .style.display = 'block'
         // ugh. why does this work?? inline seems necessary so it doesn't disturb the content...
         popup_w.style.display = 'inline-grid'
-        toggler.style.background   = '#ff000099' // meh not sure if I need it?
-        element.style.outlineColor = eyecolor
+        toggler.style.background   = '#ff000099' //  todo not sure if should make it red..
+        element.style.outlineColor = baseColor
 
         // make sure it's on the very top...
         // otherwise on some naughty sites like youtube it's impossible to click without clicking on the video
@@ -315,8 +346,8 @@ function showMark(element) {
     const out = () => {
         popup  .style.display = 'none'
         popup_w.style.display = 'none'
-        toggler.style.background   = eyecolor + '22' // transparency
-        element.style.outlineColor = eyecolor + '22'
+        toggler.style.background   = baseColorTr
+        element.style.outlineColor = baseColorTr
 
         if (undoMove != null) {
             undoMove()
@@ -439,7 +470,6 @@ function hideMark(element) {
         outer.replaceWith(element)
         // do we need anything else?? presumably it would be orphaned in DOM?
     }
-    element.style.outline = element.orig_outline
 }
 
 function _doMarks(show /* boolean */) {
