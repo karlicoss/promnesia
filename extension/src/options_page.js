@@ -1,6 +1,6 @@
 /* @flow */
 import {unwrap} from './common'
-import {getOptions, setOptions, resetOptions} from './options'
+import {getStoredOptions, setOptions, resetOptions} from './options'
 import {defensifyAlert, alertError} from './notifications'
 
 // re: codemirror imports
@@ -58,6 +58,25 @@ class Toggle extends Option<boolean> {
     }
 }
 
+// none means 'rely on the default set by developer'
+class IToggle extends Option<?boolean> {
+    set value(x: ?boolean): void {
+        if (x == null) {
+            this.element.indeterminate = true
+        } else {
+            this.element.checked = x
+        }
+    }
+
+    get value(): ?boolean {
+        if (this.element.indeterminate) {
+            return null
+        } else {
+            return this.element.checked
+        }
+    }
+}
+
 class Editor extends Option<string> {
     mode: ?string
     constructor(id: string, {mode}) {
@@ -96,9 +115,9 @@ const o_browserhistory_max_results = new ONumber('browserhistory_max_results_id'
 const o_verbose_errors = new Toggle('verbose_errors_id'     )
 const o_contexts_popup = new Toggle('contexts_popup_id'     )
 const o_sidebar_detect_urls = new Toggle('sidebar_detect_urls_id')
-const o_sidebar_always_show = new Toggle('sidebar_always_show_id')
+const o_sidebar_always_show = new IToggle('sidebar_always_show_id')
 const o_highlights_on  = new Toggle('highlight_id'          )
-const o_mark_visited_always = new Toggle('mark_visited_always_id')
+const o_mark_visited_always = new IToggle('mark_visited_always_id')
 
 const o_mark_visited_excludelist = new Editor('mark_visited_excludelist_id', {mode: null        })
 const o_global_excludelist       = new Editor('global_excludelist_id'      , {mode: null        })
@@ -137,7 +156,7 @@ async function importCM() {
 }
 
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
-    const opts = await getOptions()
+    const opts = await getStoredOptions()
     o_host          .value = opts.host
     o_token         .value = opts.token
     o_use_bookmarks .value = opts.use_bookmarks
@@ -181,7 +200,7 @@ unwrap(document.getElementById(
     'export_settings_id'
 )).addEventListener('click', defensifyAlert(async () => {
     // NOTE: gets all keys, including the old onces, just what we need
-    const opts = await getOptions()
+    const opts = await getStoredOptions()
     download(JSON.stringify(opts), 'promnesia_settings.json', 'text/json')
 }))
 

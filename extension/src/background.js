@@ -3,7 +3,7 @@
 import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
 import type {Options} from './options'
-import {Toggles, getOptions, setOptions, setOption, THIS_BROWSER_TAG} from './options'
+import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
 
 import {achrome} from './async_chrome'
 import {defensify, notifications, Notify} from './notifications'
@@ -701,16 +701,17 @@ async function handleAddToGlobalExcludelist() {
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
     console.debug('excluding %o', added)
 
-    const opts = await getOptions();
-    opts.blacklist += (opts.blacklist.endsWith('\n') ? '' : '\n') + added.join('\n')
+    const opts = await getOptions()
+    let blacklist = opts.blacklist
+    blacklist += (blacklist.endsWith('\n') ? '' : '\n') + added.join('\n')
     /*
     TODO ''.split('\n') gives an emptly line, which would block local files
     will fix later if necessary, it's not a big issue I guess
     */
-    const ll = opts.blacklist.split(/\n/).length;
+    const ll = blacklist.split(/\n/).length;
     // TODO could open sidebar here and display blacklist??
     await Notify.notify(tabId, `Added ${String(added)} to blacklist (${ll} items now)`, {color: 'blue'})
-    await setOptions(opts)
+    await setOption({blacklist: blacklist})
 }
 
 type TabUrl = {|
