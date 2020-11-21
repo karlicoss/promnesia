@@ -1,6 +1,6 @@
 import pytest
 from more_itertools import ilen
-from typing import Union
+from typing import Union, Iterable, List
 
 from promnesia import Source
 
@@ -243,7 +243,7 @@ def with_config(cfg: Union[str, Config]):
         C.reset()
 
 
-def index(cfg: Config, check=True):
+def index(cfg: Union[str, Config], check=True) -> List[Exception]:
     from promnesia.__main__ import _do_index
     with with_config(cfg):
         errors = list(_do_index())

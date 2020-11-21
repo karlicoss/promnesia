@@ -265,6 +265,51 @@ def test_custom() -> None:
     assert len(visits) == 5
 
 
+def test_hook() -> None:
+    import promnesia.sources.shellcmd as custom_gen
+    from promnesia.__main__ import iter_all_visits
+    with with_config('''
+from promnesia import Source
+from promnesia.sources import demo
+
+SOURCES = [
+    Source(demo.index, count=7, name='somename'),
+]
+
+from typing import Iterable
+from promnesia import DbVisit, Loc, Res
+
+def HOOK(visit: Res[DbVisit]) -> Iterable[Res[DbVisit]]:
+    # NOTE: might be a good idea to check that the visit is an exception first and yield it intact?
+    nurl = visit.norm_url
+    if 'page1' in nurl:
+        yield visit._replace(norm_url='patched.com')
+    elif 'page2' in nurl:
+        None.boom # deliberately crash
+    elif 'page3' in nurl:
+        # just don't yield anything! it will be omitted
+        pass
+    elif 'page4' in nurl:
+         # can emit multiple!
+        yield visit
+        yield visit
+    elif 'page6' in nurl:
+        # patch locator
+        yield visit._replace(locator=Loc.make(title='some custom timte', href='/can/replace/original/path'))
+    else:
+        yield visit
+'''):
+        # TODO hmm might be nice to allow in-pace modifications...
+        [p0, p1, e2, p41, p42, p5, p6] = list(iter_all_visits())
+        assert isinstance(p0, DbVisit)
+        assert p0.norm_url == 'demo.com/page0.html'
+        assert isinstance(p1, DbVisit)
+        assert p1.norm_url == 'patched.com'
+        assert isinstance(e2, Exception)
+        assert p41 == p42
+        assert isinstance(p6, DbVisit)
+        assert p6.locator is not None
+
 
 TESTDATA_CHROME_HISTORY = "/L/data/promnesia/testdata/chrome-history"
 
