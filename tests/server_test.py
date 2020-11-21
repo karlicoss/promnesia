@@ -200,7 +200,7 @@ def test_visits_hier(tdir):
 def test_status(tdir):
     with wserver(db='/does/not/exist') as helper:
         response = post(f'http://localhost:{helper.port}/status')
-        assert response['db'] == None # defensive, it doesn't exist
+        assert 'ERROR' in response['db'] # defensive, it doesn't exist
         version = response['version']
         assert version is not None
         assert len(version.split('.')) >= 2 # random check..
