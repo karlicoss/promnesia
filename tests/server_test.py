@@ -128,6 +128,25 @@ def test_visited(tmp_path):
         assert post(endp, f'''urls:=[]''') == []
 
 
+import pytest
+@pytest.mark.parametrize('count',
+    [1, 5, 10, 12, 25, 50, 100, 200, 400, 800, 1600]
+)
+def test_visited_benchmark(count: int, tmp_path) -> None:
+    pytest.skip("Only works on @karlicoss computer for now")
+    # TODO skip on ci
+    import promnesia.server as S
+    # TODO reset after?
+    S.EnvConfig.set(S.ServerConfig(
+        # TODO populate with test db and benchmark properly...
+        db=Path('/todo'),
+        timezone=pytz.utc,
+    ))
+    links = [f'https://reddit.com/whatever{i}.html' for i in range(count)]
+    res = S.visited(links)
+    assert len(res) == len(links)
+
+
 def index_extra(tdir: Path) -> None:
     # todo move to common...
     # TODO use 'update' mode
