@@ -14,7 +14,22 @@ type Opt1 = {|
     mark_visited_excludelist: string;
 |}
 
-export type Options = {|
+type Opt2 = {|
+    // this is kept as string to preserve formatting and comments
+    blacklist: string;
+|}
+
+type IndeterminateMixin = {|
+    sidebar_always_show: ?boolean,
+    mark_visited_always: ?boolean,
+|}
+
+type Mixin = {|
+    sidebar_always_show: boolean,
+    mark_visited_always: boolean,
+|}
+
+type BaseOptions = {|
     host: string;
     token: string;
 
@@ -25,18 +40,15 @@ export type Options = {|
 
     verbose_errors_on: boolean;
     contexts_popup_on: boolean;
-    sidebar_always_show: boolean,
     sidebar_detect_urls: boolean;
 
     highlight_on: boolean;
 
 
-    mark_visited_always    : boolean;
     ...Opt1,
+    ...Opt2,
 
 
-    // this is kept as string to preserve formatting and comments
-    blacklist: string;
     // kept as string to preserve formatting
     global_excludelists_ext: string;
 
@@ -51,6 +63,18 @@ export type Options = {|
     extra_css: string;
 
 |}
+
+
+export type StoredOptions = {|
+    ...BaseOptions,
+    ...IndeterminateMixin,
+|}
+
+
+export type Options = {
+    ...BaseOptions,
+    ...Mixin,
+}
 
 /*
  * If true , keep ghe original timezone (stored in the database)
@@ -70,7 +94,7 @@ export const THIS_BROWSER_TAG = getBrowser()
 
 // TODO allow to export settings
 // https://github.com/fregante/webext-options-sync/issues/23
-function defaultOptions(): Options {
+function defaultOptions(): StoredOptions {
     return {
         host: 'http://localhost:13131',
         token: '',
@@ -85,11 +109,11 @@ function defaultOptions(): Options {
         verbose_errors_on: false,
         contexts_popup_on: false,
         sidebar_detect_urls: true,
-        sidebar_always_show: false,
+        sidebar_always_show: null,
 
         highlight_on: true,
 
-        mark_visited_always     : false,
+        mark_visited_always     : null,
         mark_visited_excludelist: '',
 
         blacklist: '',
@@ -185,7 +209,8 @@ function optSync() {
     return _options;
 }
 
-export async function getOptions(): Promise<Options> {
+// gets the actual raw values that user set, just for the options page
+export async function getStoredOptions(): Promise<StoredOptions> {
     const r = await optSync().getAll()
     let smap = r.src_map
     if (typeof smap !== 'string') {
@@ -196,13 +221,26 @@ export async function getOptions(): Promise<Options> {
     return r
 }
 
+
+// gets overlay move suitable for use in the business logic
+export async function getOptions(): Promise<Options> {
+    const stored = await getStoredOptions()
+    // extension dependent defaults
+    const devDefaults: Mixin = {
+        sidebar_always_show: stored.sidebar_always_show == null ? false : stored.sidebar_always_show,
+        mark_visited_always: stored.mark_visited_always == null ? false : stored.mark_visited_always,
+    }
+    return {...stored, ...devDefaults}
+}
+
+
 // TODO would be nice to accept a substructure of Options??
-export async function setOptions(opts: Options) {
+export async function setOptions(opts: StoredOptions) {
     const os = optSync()
     await os.set(opts)
 }
 
-export async function setOption(opt: Opt1) {
+export async function setOption(opt: Opt1 | Opt2) {
     const os = optSync()
     await os.set(opt)
 }
@@ -212,9 +250,9 @@ export async function resetOptions() {
     await os.setAll({})
 }
 
-function toggleOption(toggle: (Options) => void): () => Promise<void> {
+function toggleOption(toggle: (StoredOptions) => void): () => Promise<void> {
     return async () => {
-        const opts = await getOptions()
+        const opts = await getStoredOptions()
         toggle(opts)
         await setOptions(opts)
     }
