@@ -1,4 +1,25 @@
-General helpful notes:
+* TOC
+:PROPERTIES:
+:TOC:      :include all :depth 3
+:END:
+
+:CONTENTS:
+- [[#toc][TOC]]
+  - [[#general-notes][General notes]]
+- [[#known-bugsissues][Known bugs/issues]]
+  - [[#issues-with-url-normalisation][issues with url normalisation]]
+  - [[#highlights-too-much-is-highlighted-or-highlight-isnt-detected][highlights: too much is highlighted or highlight isn't detected]]
+  - [[#sidebar-might-be-glitchy-when-the-search-tab-is-open][sidebar: might be glitchy when the search tab is open]]
+  - [[#sidebar-looks-weirdtruncated-on-some-sites][sidebar: looks weird/truncated on some sites]]
+  - [[#mark-visited-general-glitches][mark visited: general glitches]]
+  - [[#extension-too-slow-on-certain-pages][extension: too slow on certain pages]]
+  - [[#markdown-no-line-numbers-in-the-link-locators][markdown: no line numbers in the link locators]]
+- [[#misc][Misc]]
+  - [[#i-expect-to-see-a-specific-visit-but-it-doesnt-appear-in-the-extension][I expect to see a specific visit, but it doesn't appear in the extension?]]
+  - [[#nothing-happens-when-i-click-on-the-file-link-editor-in-the-sidebar][Nothing happens when I click on the file link (editor://) in the sidebar]]
+:END:
+
+** General notes
 
 - your browsing history may contain *sensitive data*. If you're posting or sending me error logs *make sure you strip away all private information* (ideally only attach the relevant bits of the log, containing errors)
 
@@ -18,20 +39,23 @@ General helpful notes:
 - if you're posting an issue with the extension UI, post the page you're having problem with and ideally attach a screenshot (if you think it might help)
 
 * Known bugs/issues
-** TODO issue with url normalisation
-Might happen if the site uses weird way of addressing content, e.g. in the query parameters or fragment (TODO example)
-if you want to fix it for yourself, check out cannon.py (and tests)
-*** TODO hmm need to display normalised url somewhere in the interface?
+** issues with url normalisation
 
-** extension is too slow
-I've made efforts to make sure everything is responsive and asynchronous, but it is possible in theory that extension slows the page down. Usually that happens if there are too many visits corresponding to the page, e.g. main pages like ~twitter.com~ or ~reddit.com~.
-The easiest fix is to add the exact page (e.g. ~https://twitter.com/home~) to the excludelist. (FIXME link)
-** highlights: the highlight matching algorithm is very simple, so it's possible that it highlights too much or can't detect a hihghight
-See [[https://github.com/karlicoss/promnesia/issues/30][issues/30]]
-** sidebar: might be glitchy when the search tab is open: [[https://github.com/karlicoss/promnesia/issues/109][issues/109]]
-** sidebar: looks weird/truncated on some sites, see [[https://github.com/karlicoss/promnesia/issues/102][issues/102]]
+Many websites use [[https://beepb00p.xyz/promnesia.html#urls_broken][weird]] ways of addressing content, e.g. in the query parameters or fragments.
+This makes it tricky to figure out the canonical URL.
+
+# TODO promnesia doctor database browse
+To double check if you're having a normalisation issue, you can open the promnesia database with =sqlitebrowser= and compare =orig_url= and =norm_url= columns.
+
+If you want to try to fix it at least for yourself, check out [[https://github.com/karlicoss/promnesia/blob/feef7c35f60fed67e8148a565fb267afdb944c39/src/promnesia/cannon.py][cannon.py]] and [[https://github.com/karlicoss/promnesia/blob/feef7c35f60fed67e8148a565fb267afdb944c39/tests/cannon.py][tests/cannon.py]].
+
+** highlights: too much is highlighted or highlight isn't detected
+The highlight matching algorithm is very simple, so some issues are possible. See [[https://github.com/karlicoss/promnesia/issues/30][issues/30]]
+** sidebar: might be glitchy when the search tab is open
+See [[https://github.com/karlicoss/promnesia/issues/109][issues/109]]
+** sidebar: looks weird/truncated on some sites
+See [[https://github.com/karlicoss/promnesia/issues/102][issues/102]]
 ** mark visited: general glitches
-
 Usually, the more popular the website is, the more dynamic bullshit is on it (e.g. youtube/twitter), which might make things more glitchy and slow.
 
 If the page is too dynamic, it might load more content after the page body (DOM) is loaded (e.g. infinite scroll features).
@@ -39,9 +63,29 @@ It's trickier to detect such changes (see [[https://github.com/karlicoss/promnes
 
 In the meantime the easiest is just to toggle 'mark/unmark visited' twice to redraw the marks.
 
-That said, I've spend effort into making sure the marks aren't moving the page elements: the marks can display an outline/border, but it should never disturb and shift the existing page elements, since it's very annoying.
+That said, I've spent effort into making sure the marks aren't moving the page elements: the marks can display an outline/border, but they should never disturb and shift the original page elements, since the flickering is very annoying. So if you notice a misbehaving page, please report it: [[https://github.com/karlicoss/promnesia/issues/168][issues/168]]
+** mark visited: links I haven't visited are marked
 
+Most likely, it's the issue with URL normalisation (see above).
+
+You can check it by opening the popup, and hovering the mouse above the URL, it will show 'normalised:<normalised url>'.
+# TODO dunno is there much point even in showing orig URL there? maybe reverse and show it on hover instead
+
+** extension: too slow on certain pages
+I've tried to to make sure everything is responsive and asynchronous, but it is still possible in theory for the  extension to slow the page down. Usually that happens if there are too many visits corresponding to the page, e.g. main pages like ~twitter.com~ or ~reddit.com~.
+The easiest workaround is to add the exact page (e.g. ~https://www.reddit.com~ or ~https://twitter.com/home~) to the [[file:GUIDE.org::#excludelist][excludelist]].
+
+In addition, some pages like ~twitter.com~ cause =onUpdated= events all the time which might cause issues when scrolling (see [[https://github.com/karlicoss/promnesia/issues/177][issues/177]]).
 ** markdown: no line numbers in the link locators
-FIXME uninstall mistletoe, it will be indexed as
-** TODO indexed too much
-filterlist/hook
+This is because the library I'm using to process markdown (=mistletoe=) doesn't support it.
+The easiest workaround is probably to uninstall =mistletoe=, this will make the indexer use =grep= to extract links (which supports line numbers). The downside then is that the contexts won't be as good.
+
+* Misc
+** I expect to see a specific visit, but it doesn't appear in the extension?
+You can check the database (e.g. with =sqlitebrowser=), and make sure it's there.
+
+If it's not however, that means the issue is with the indexing.
+If it is, and the promnesia server works as expected otherwise, perhaps it's a bug.
+** Nothing happens when I click on the file link (=editor://=) in the sidebar
+
+You probably need to install [[https://github.com/karlicoss/open-in-editor][open-in-editor]].
