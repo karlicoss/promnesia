@@ -1,33 +1,33 @@
-**TLDR**: Promnesia isn't collecting any data and isn't transmitting your data to any external site. Not telemetry is collected or sent either.
+*TLDR* : Promnesia isn't collecting any data and isn't transmitting your data to any external site. Not telemetry is collected or sent either.
 
 * How Promnesia works
-See [[file:../README.org::#how-does-it-work]["How does it work"]] for the longer explaination, but in summary:
+See [[file:../README.org::#how-does-it-work]["How does it work"]] for the longer explanation, but in summary:
 
 - promnesia indexer runs against the files on your computer, and stores the results in the intermediate database (also on your computer)
 - promnesia server runs on your computer and exposes a local port (=13131= by default), so it can communicate with the browser extension
 - promnesia extension runs in your browser and requests various data from the promnesia server
 
-**By default this all happens only within your system**. The extension works in local-first/offline mode, which is one of the main goals.
+*By default this all happens only within your system*. The extension works in local-first/offline mode, which is one of the main goals.
 (However, if you want, you can set it up on an external domain, with the reverse proxy or something like that).
 
 * What data is requested from the promnesia server
 
-There are just a few requests to the Promnesia server the extesion is doing at the moment.
+There are just a few requests to the Promnesia server the extension is doing at the moment.
 
 - ~search/search_around~: sends whatever you typed in the search box
 - ~visits~: sends the current tab URL to the server (unless it's excluded)
 - ~visited~: sends all URLs on the current page to the server (except the excluded ones)
 
-None of the information above is kept by the server, it **only reads the data from the database**.
+None of the information above is kept by the server, it *only reads the data from the database*.
 It is however possible that some of it is retained in the console logs, that would depend on how exactly you're running the server and the log retention policy of your system.
 
-# FIXME mention excludelist
+For the maximum privacy you can use the [[file:GUIDE.org::#excludelist][excludelist]] feature, this will prevent Promnesia from processing the page/domain.
+
 # TODO if you want to backup your browser history and feed in promnesia (e.g. to overcome the 90 days limit etc)
 
-* Other external requests
+** External requests
 
-# TODO link to the excludelist feature
-- if you have external excludelists URLs in the extension settings, they will be updated now and then.
+- if you have [[file:GUIDE.org::#excludelist][external excludelists URLs]] in the extension settings, they will be updated now and then
 
 
 * Extension permissions

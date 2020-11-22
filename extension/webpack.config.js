@@ -36,14 +36,14 @@ const modifier = target === T.CHROME ? 'Shift' : 'Alt';
 // ugh. declarative formats are shit.
 const commandsExtra = {
     "_execute_browser_action": {
-        "description": "Activate extension",
+        "description": "Activate sidebar",
         "suggested_key": {
             "default": `Ctrl+${modifier}+E`,
             "mac":  `Command+${modifier}+E`
         }
     },
     "mark_visited": {
-        "description": "Mark/Unmark visited links on the current page",
+        "description": "Mark/unmark visited links on the current page",
         "suggested_key": {
             "default": `Ctrl+${modifier}+V`,
             "mac":  `Command+${modifier}+V`

@@ -113,7 +113,7 @@ CACHE_DIR = '/tmp/promnesia_cache/'
 
 '''
 Optional setting.
-Yu can specify the URLs you don't want to be indexed.
+You can specify the URLs you don't want to be indexed.
 You might want it because there are too many of them, or for security/privacy reasons.
 '''
 FILTERS = [
@@ -126,5 +126,14 @@ FILTERS = [
     'redditmedia.com.*.(jpg|png|gif)',
 ]
 
-
-# TODO add HOOK?
+'''
+Optional setting.
+Can be useful to hack (e.g. rewrite/filter/etc) the visits before inserting in the database.
+'''
+def HOOK(v):
+    # filter out 'boring' github visits without contexts
+    if 'github.com' in v.norm_url:
+        if v.context is None:
+            return
+    # otherwise keep intact
+    yield v
