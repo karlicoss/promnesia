@@ -1,0 +1,58 @@
+**TLDR**: Promnesia isn't collecting any data and isn't transmitting your data to any external site. Not telemetry is collected or sent either.
+
+* How Promnesia works
+See [[file:../README.org::#how-does-it-work]["How does it work"]] for the longer explaination, but in summary:
+
+- promnesia indexer runs against the files on your computer, and stores the results in the intermediate database (also on your computer)
+- promnesia server runs on your computer and exposes a local port (=13131= by default), so it can communicate with the browser extension
+- promnesia extension runs in your browser and requests various data from the promnesia server
+
+**By default this all happens only within your system**. The extension works in local-first/offline mode, which is one of the main goals.
+(However, if you want, you can set it up on an external domain, with the reverse proxy or something like that).
+
+* What data is requested from the promnesia server
+
+There are just a few requests to the Promnesia server the extesion is doing at the moment.
+
+- ~search/search_around~: sends whatever you typed in the search box
+- ~visits~: sends the current tab URL to the server (unless it's excluded)
+- ~visited~: sends all URLs on the current page to the server (except the excluded ones)
+
+None of the information above is kept by the server, it **only reads the data from the database**.
+It is however possible that some of it is retained in the console logs, that would depend on how exactly you're running the server and the log retention policy of your system.
+
+# FIXME mention excludelist
+# TODO if you want to backup your browser history and feed in promnesia (e.g. to overcome the 90 days limit etc)
+
+* Other external requests
+
+# TODO link to the excludelist feature
+- if you have external excludelists URLs in the extension settings, they will be updated now and then.
+
+
+* Extension permissions
+- =activeTab=: getting current tab info and adding the sidebar
+- =webNavigation=: watching page state changes (to trigger the extension on page load)
+- =storage=: for settings
+- =contextMenus=: context menu
+- =notifications=: showing notifications
+
+There permissions are required at the moment, but there is an [[https://github.com/karlicoss/promnesia/issues/97][issue]] for work on possibly making them optional.
+
+- =tabs=: making the extension work without an explicit user action (the extension is meant to be a passive assistant)
+
+  The extension is still useful even with explicit action only, so worth making opt-in.
+- =history=: to use local browsing history
+
+  Local history isn't strictly required, so we could omit this if people prefer.
+- =bookmarks=: used as one of the sources
+
+  It can already be toggled in the settings, so the permission could be dynamic too
+- =file/http/https=: the extension is meant to work on any page, hence such a broad scope.
+
+  Might be optional in the future, and requested on demand if people feel it's worth it
+
+* Security
+While I have some reasonable understanding of security, I'm no expert, so would be very grateful if you flag potential issues or [[https://github.com/karlicoss/promnesia/issues/14][go through the code]] (especially extension).
+
+There is some ongoing work on Dockerizing: [[promnesia][issues/55]].

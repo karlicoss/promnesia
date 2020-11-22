@@ -1,0 +1,23 @@
+# TODO fill with guide on features etc?
+
+# TODO mention hook?
+
+* FAQ
+** TODO sources
+** how is my data used?
+See [[file:PRIVACY.org][privacy/security policy]]
+** is Windows supported?
+Sort of, some people have successfully run Promnesia under Windows, but I don't have a Windows computer around so it's hard for me to ensure it works.
+See [[https://github.com/karlicoss/promnesia/issues/91][issues/91]].
+
+not displaying https://github.com/karlicoss/promnesia/issues/171
+trigger the hotkey
+
+# TODO disable debug logs..
+# TODO mark visited (like in ublock), suggest element zapper (maybe just point at FEATURES?)
+** I expect to see a specific visit, but it doesn't appear
+You can check the
+
+indexing is periodic at the moment and only runs regularly. Real-time indexing is harder to implement, there is an outstanding issue [[https://github.com/karlicoss/promnesia/issues/20][here]]
+
+** TODO customize style

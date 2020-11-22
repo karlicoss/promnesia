@@ -1,7 +1,4 @@
-I'm in the process of putting up better developer's documentation, but you should be able to figure it out from the CI pipelines:
-
-- [[file:../.github/workflows/main.yml][Github Actions]]
-- [[file:../.circleci/config.yml][CircleCI]].
+I'm in the process of putting up better developer's documentation, but you should be able to figure it out from the [[file:../.github/workflows/main.yml][Github Actions pipeline]].
 
 * Run backend
    During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
@@ -17,16 +14,19 @@ I'm in the process of putting up better developer's documentation, but you shoul
    :         --publish # [optional], release to the Chrome Web Store/Mozilla addons
 
    You'll find the result in =dist/=. After that, you can load it in your browser and develop.
-   For firefox, note that mozilla intentionally complicates this in several ways. On android, only firefox nightly will let you install arbitrary extensions. On desktop, you have a choice between running nightly, re-installing your unpacked extension after every firefox restart, or setting up signing through web-ext. For a quick start into the extension development, on desktop, chrome is therefore recommended (and is the author's primary browser, i believe?). On mobile, firefox nightly is your only option (?).
+
+   - on Firefox, the temporary loaded extensions only persist until the browser restart. Chrome doesn't have that issue.
+   - on Firefox for Android, web extensions on Android are mostly broken at the moment, see [[https://discourse.mozilla.org/t/add-on-support-in-new-firefox-for-android/53488][here]] (unless you're using [[https://blog.mozilla.org/addons/2020/09/29/expanded-extension-support-in-firefox-for-android-nightly][Firefox Nightly]])
 
 * Run end-to-end tests
 
-   You need:
+End-to-end test go throught the full cycle from indexing & backend to automated extension tests, and are very helpful to make sure you don't break things.
 
-   - firefox dev edition (standard wouldn't let you install unsigned extensions) and =geckodriver=
-   - TODO chromedriver?
-   - =pip3 install pyautogui= for keyboard automation
+You need:
 
-   Example of running a test:
+- firefox + =geckodriver=, or chrome + =chromedriver=
+- =pip3 install pyautogui= for keyboard automation
 
-   : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
+Example of running a test:
+
+: PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
