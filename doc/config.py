@@ -125,3 +125,6 @@ FILTERS = [
     # you can use regexes too!
     'redditmedia.com.*.(jpg|png|gif)',
 ]
+
+
+# TODO add HOOK?

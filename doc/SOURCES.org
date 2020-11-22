@@ -7,12 +7,13 @@ Some sources require additional dependencies, which you can install if needed.
 print('\n') # fix github org-mode issue with drawers
 
 import setup
-for (name, description), _ in setup.DEPS_SOURCES.items():
+for (name, description), vals in setup.DEPS_SOURCES.items():
     # fuck org-ruby. promnesia[name] should be in quotes, but then it doesn't render as code. ugh.
     # https://github.com/wallyqs/org-ruby/issues/45
     print(f"- ~pip3 install --user promnesia[{name}]~")
     print(f'   ')
-    print(f'   {description}')
+    vals = [v.split('>')[0] for v in vals]
+    print(f'   {description}: {", ".join(vals)}')
 #+end_src
 
 #+RESULTS:
@@ -21,22 +22,22 @@ for (name, description), _ in setup.DEPS_SOURCES.items():
 
 - ~pip3 install --user promnesia[optional]~
 
-   dependencies that bring some bells & whistles
+   dependencies that bring some bells & whistles: logzero, python-magic
 - ~pip3 install --user promnesia[HPI]~
 
-   dependencies for [[https://github.com/karlicoss/HPI][HPI]]
+   dependencies for [[https://github.com/karlicoss/HPI][HPI]]: HPI
 - ~pip3 install --user promnesia[html]~
 
-   dependencies for sources.html
+   dependencies for sources.html: beautifulsoup4, lxml
 - ~pip3 install --user promnesia[markdown]~
 
-   dependencies for sources.markdown
+   dependencies for sources.markdown: mistletoe
 - ~pip3 install --user promnesia[org]~
 
-   dependencies for sources.org
+   dependencies for sources.org: orgparse
 - ~pip3 install --user promnesia[telegram]~
 
-   dependencies for sources.telegram
+   dependencies for sources.telegram: dataset
 :end:
 
 Alternatively, you can just install all of them in bulk: ~pip3 install --user promnesia[all]~.

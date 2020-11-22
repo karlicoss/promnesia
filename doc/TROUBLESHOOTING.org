@@ -1,8 +1,7 @@
-Here I'm going to keep some sort of FAQ updated as people encounter common issues.
-
-In the meantime:
+General helpful notes:
 
 - your browsing history may contain *sensitive data*. If you're posting or sending me error logs *make sure you strip away all private information* (ideally only attach the relevant bits of the log, containing errors)
+
 - make sure you [[file:../README.org::#install][installed promnesia]] properly, and [[file:SOURCES.org][extra dependencies]], if necessary
 - make sure [[file:../README.org::#try-it-out][demo]] works as expected
 
@@ -14,3 +13,35 @@ In the meantime:
 - run =promnesia index= in your terminal, and pay attention to the error messages and warnings
 - run =promnesia serve= in your terminal (on a different port if necessary). Similarly, pay attention to the errors.
 - in your browser: try [[https://developer.chrome.com/extensions/tut_debugging][opening the debugger]] and checking for the errors in the extension logs
+
+- check [[https://github.com/karlicoss/promnesia/issues][issues]] in case someone else had the same issue too
+- if you're posting an issue with the extension UI, post the page you're having problem with and ideally attach a screenshot (if you think it might help)
+
+* Known bugs/issues
+** TODO issue with url normalisation
+Might happen if the site uses weird way of addressing content, e.g. in the query parameters or fragment (TODO example)
+if you want to fix it for yourself, check out cannon.py (and tests)
+*** TODO hmm need to display normalised url somewhere in the interface?
+
+** extension is too slow
+I've made efforts to make sure everything is responsive and asynchronous, but it is possible in theory that extension slows the page down. Usually that happens if there are too many visits corresponding to the page, e.g. main pages like ~twitter.com~ or ~reddit.com~.
+The easiest fix is to add the exact page (e.g. ~https://twitter.com/home~) to the excludelist. (FIXME link)
+** highlights: the highlight matching algorithm is very simple, so it's possible that it highlights too much or can't detect a hihghight
+See [[https://github.com/karlicoss/promnesia/issues/30][issues/30]]
+** sidebar: might be glitchy when the search tab is open: [[https://github.com/karlicoss/promnesia/issues/109][issues/109]]
+** sidebar: looks weird/truncated on some sites, see [[https://github.com/karlicoss/promnesia/issues/102][issues/102]]
+** mark visited: general glitches
+
+Usually, the more popular the website is, the more dynamic bullshit is on it (e.g. youtube/twitter), which might make things more glitchy and slow.
+
+If the page is too dynamic, it might load more content after the page body (DOM) is loaded (e.g. infinite scroll features).
+It's trickier to detect such changes (see [[https://github.com/karlicoss/promnesia/issues/171][issues/171]]).
+
+In the meantime the easiest is just to toggle 'mark/unmark visited' twice to redraw the marks.
+
+That said, I've spend effort into making sure the marks aren't moving the page elements: the marks can display an outline/border, but it should never disturb and shift the existing page elements, since it's very annoying.
+
+** markdown: no line numbers in the link locators
+FIXME uninstall mistletoe, it will be indexed as
+** TODO indexed too much
+filterlist/hook
