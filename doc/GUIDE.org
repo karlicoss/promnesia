@@ -28,11 +28,10 @@
 
 
 * Extension features
-The extension offers the following features:
+The extension offers the following features.
+You can find some sceenshot and videos demonstrating the features [[file:../README.org#questions][here]] and [[file:../README.org#demos][here]].
 
 ** sidebar
-
-# TODO screens
 Sidebar displays a summary of page visits, including direct (exact page) visits and relative (subpage) visits.
 You can toggle the sidebar with:
 
@@ -52,14 +51,11 @@ You can add/remove pages to the excludelist via
   In addition, you can add links to "External exclude lists", if you want to use someone else's excludelist (e.g. from ublock).
 
 ** highlights
-# TODO screens
 Promnesia tries to match the [[file:../README.org#glossary][contexts]] against the page body and highlight the matching bits.
 
 - you can disable highlights in the extension settings
 
 ** search
-# TODO screens
-
 Searches in visits and their contexts. You can toggle search via:
 
 - hotkey: =Ctrl+Shift+H/Ctrl+Alt+H= (Firefox/Chrome correspondingly)
@@ -67,15 +63,11 @@ Searches in visits and their contexts. You can toggle search via:
 - sidebar button
 
 ** 'search around'
-# TODO screens
-
 Shows you browsing history 'around' another visit, useful to remember how/why did you get on the page.
 
 - to trigger 'search around', click on any visit timestamp in the sidebar
 
 ** 'mark visited'
-# TODO youtube video
-# TODO screens
 Reveals which links on the current page you've already visited before and the popups with some metadata.
 
 You can toggle it via:
