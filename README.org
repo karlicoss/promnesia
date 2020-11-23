@@ -1,6 +1,6 @@
 #+OPTIONS: num:nil
 
-Quick links: [[#motivation][Motivation]] | [[file:doc/GUIDE.org::#extension-features][Feature guide]] | [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[#faq][FAQ]] | [[#support][Support]]
+Quick links: [[#motivation][Motivation]] | [[file:doc/GUIDE.org#extension-features][Feature guide]] | [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[#faq][FAQ]] | [[#support][Support]]
 
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
@@ -21,7 +21,7 @@ It allows you to answer different questions about the current web page:
 - how much time have I spent on it? [[https://user-images.githubusercontent.com/291333/82124084-ba040100-9794-11ea-9af9-ee250ebbb473.png][screenshot]]
 - and it also works on your phone! [[https://karlicoss.github.io/promnesia-demos/mobile/panel-jbor.png][screenshot]]
 
-See [[file:doc/GUIDE.org::#extension-features][feature guide]] for more information.
+See [[file:doc/GUIDE.org#extension-features][feature guide]] for more information.
 
 You can jump straight to the [[#demos][Demos]] and [[#install][Install]] sections if you're already overexcited.
 
@@ -181,7 +181,7 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
 
     This is mainly useful for tinkering with the code and writing new modules.
 
-  You might also need some extra dependencies. See [[file:doc/SOURCES.org::#extra-dependencies]["Extra dependencies"]] for more info.
+  You might also need some extra dependencies. See [[file:doc/SOURCES.org#extra-dependencies]["Extra dependencies"]] for more info.
 
   As for supported operating systems:
 
@@ -373,7 +373,7 @@ Now let's consider some *concrete* examples of different kinds of Visits:
 
 
 * FAQ
-See [[file:doc/GUIDE.org::#FAQ]]
+See [[file:doc/GUIDE.org#FAQ]]
 
 * Support
 The best support for me would be if you contribute to this or my other projects. Code, ideas of feedback -- everything is appreciated.

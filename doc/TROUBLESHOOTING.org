@@ -23,8 +23,8 @@
 
 - your browsing history may contain *sensitive data*. If you're posting or sending me error logs *make sure you strip away all private information* (ideally only attach the relevant bits of the log, containing errors)
 
-- make sure you [[file:../README.org::#install][installed promnesia]] properly, and [[file:SOURCES.org][extra dependencies]], if necessary
-- make sure [[file:../README.org::#try-it-out][demo]] works as expected
+- make sure you [[file:../README.org#install][installed promnesia]] properly, and [[file:SOURCES.org][extra dependencies]], if necessary
+- make sure [[file:../README.org#try-it-out][demo]] works as expected
 
   It doesn't require any extra setup and dependencies, so if this doesn't work it's a good sign something is broken.
   If necessary, run it on a different port (e.g. =--port 15555=) and choose the same port in the extension settings in your browser.
@@ -73,7 +73,7 @@ You can check it by opening the popup, and hovering the mouse above the URL, it 
 
 ** extension: too slow on certain pages
 I've tried to to make sure everything is responsive and asynchronous, but it is still possible in theory for the  extension to slow the page down. Usually that happens if there are too many visits corresponding to the page, e.g. main pages like ~twitter.com~ or ~reddit.com~.
-The easiest workaround is to add the exact page (e.g. ~https://www.reddit.com~ or ~https://twitter.com/home~) to the [[file:GUIDE.org::#excludelist][excludelist]].
+The easiest workaround is to add the exact page (e.g. ~https://www.reddit.com~ or ~https://twitter.com/home~) to the [[file:GUIDE.org#excludelist][excludelist]].
 
 In addition, some pages like ~twitter.com~ cause =onUpdated= events all the time which might cause issues when scrolling (see [[https://github.com/karlicoss/promnesia/issues/177][issues/177]]).
 ** markdown: no line numbers in the link locators
