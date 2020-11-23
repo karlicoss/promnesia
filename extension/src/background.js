@@ -139,7 +139,7 @@ async function updateState (tab: chrome$Tab) {
     } else {
         // ok to query
         if (opts.mark_visited_always) {
-            setTimeout(() => doToggleMarkVisited(tabId)) // run it in parallel
+            setTimeout(() => doToggleMarkVisited(tabId, {show: true})) // run it in parallel
         }
         visits = await allsources.visits(url)
     }
@@ -272,23 +272,37 @@ async function filter_urls(urls: Array<?Url>) {
 }
 
 
-// todo ugh. this can be tested on some static page... I guess?
-async function doToggleMarkVisited(tabId: number) {
-    // first check if we need to disable
-    const _shows = await achrome.tabs.executeScript(tabId, {
+async function doToggleMarkVisited(tabId: number, {show}: {show: ?boolean} = {show: null}) {
+    // first check if we need to disable TODO
+    const _should_show = await achrome.tabs.executeScript(tabId, {
         code: `
 {
+    let res // ?boolean
+    let show = ${show == null ? 'null' : String(show)}
     const shown = window.promnesiaShowsVisits || false
-    if (shown) {
+    if (show == null) {
+        // we want the opposite
+        show = !shown
+    }
+    if (show === shown) {
+        res = null // no change
+    } else if (show) {
+        res = true // should show
+        window.promnesiaShowsVisits = true // ugh. set early to avoid race conditions...
+    } else {//
+        res = false // should hide
         setTimeout(() => hideMarks()) // async to return straightaway
         window.promnesiaShowsVisits = false
     }
-    shown
+    res
 }
 `})
-    const shown: boolean = unwrap(_shows)[0]
-    if (shown) {
-        console.debug('marks were already shown; hiding them')
+    const should_show: ?boolean = unwrap(_should_show)[0]
+    if (should_show == null) {
+        console.debug('requested state %s: no change needed', show)
+        return
+    } else if (should_show === false) {
+        console.debug('marks were hidden')
         return
     }
 
