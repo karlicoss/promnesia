@@ -23,6 +23,9 @@ const SIDEBAR_ACTIVE = 'promnesia';
 
 const doc = document;
 
+var promnesia_highlight_data = [];
+var promnesia_dom_change_observer_timer = undefined;
+
 // TODO think about 'show dots' and 'search' icons -- maybe only show them for android?
 class Sidebar {
     body: HTMLBodyElement;
@@ -432,7 +435,8 @@ async function* _bindSidebarData(response: Visits) {
         if (!relative && opts.highlight_on) {
             // todo this might compete for execution with the sidebar rendering...
             // later maybe integrate it in the yield mechanism..
-            setTimeout(() => tryHighlight(ctx, idx1, v))
+            setTimeout(() => tryHighlight(ctx, idx1, v));
+            promnesia_highlight_data.push({'ctx':ctx, 'idx1':idx1, 'v':v})
         }
 
         // TODO maybe shouldn't attach immediately? not sure
@@ -507,6 +511,7 @@ async function* _bindSidebarData(response: Visits) {
             relative: false,
         });
     }
+    initializeDomChangeObserver();
 }
 
 async function bindSidebarData(response: Visits) {
@@ -559,3 +564,39 @@ chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) =>
 
 // TODO hmm maybe I don't need any of this iframe crap??
 // https://stackoverflow.com/questions/5132488/how-to-insert-script-into-html-head-dynamically-using-javascript
+
+
+
+
+function handleDomChangeEvents()
+{
+    console.log(promnesia_highlight_data.length);
+    promnesia_highlight_data.forEach(({ctx, idx1, v}) =>
+    {
+        console.log('tryHighlight..');
+        tryHighlight(ctx, idx1, v);
+    });
+
+}
+
+function initializeDomChangeObserver()
+{
+    /* as per https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver */
+
+    const config = {childList: true, subtree: true, attributeFilter: ['href']};
+
+    const callback = function (mutationsList, observer)
+    {
+        //console.log(mutationsList);
+        /* todo we should filter out promnesia's elements */
+        //todo if (mutationsList.any((mutation) => (notPromnesiaElementMutation(mutation)){..., todo only pass the list of modified/new elements, to the highlighter
+        console.log('promnesia: DOM changed.');
+        if (promnesia_dom_change_observer_timer !== undefined)
+            clearTimeout(promnesia_dom_change_observer_timer);
+        promnesia_dom_change_observer_timer = setTimeout(handleDomChangeEvents, 100);
+    };
+
+    const observer = new MutationObserver(callback);
+
+    observer.observe(document, config);
+}

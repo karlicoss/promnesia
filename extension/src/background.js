@@ -213,7 +213,7 @@ async function updateState (tab: chrome$Tab) {
         visits = new Visits(url, url, [visits])
     }
     console.assert(visits instanceof Visits)
-  
+
     // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
     // TODO and show system wide notification instead of tab notification?
     // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
@@ -307,6 +307,7 @@ async function doToggleMarkVisited(tabId: number) {
  `
 })
     // not sure why it's returning array..
+    // because: Return value- A Promise that will resolve to an array of objects. The array's values represent the result of the script in every injected frame.
     const results: Array<?Url> = unwrap(mresults)[0]
     const page_urls = Array.from(await filter_urls(results))
     const resp = await allsources.visited(page_urls)
