@@ -14,7 +14,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, logger, get_tmpdir, DbVisit, Res
-from .common import Source, appdirs, python3, get_system_tz
+from .common import Source, python3, get_system_tz, user_config_file, default_config_path
 from .dump import visits_to_sqlite
 from .extract import extract_visits, make_filter
 
@@ -122,7 +122,7 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
         for e in errors:
             logger.error(e)
 
-        dbp = config.get().output_dir / 'promnesia.sqlite'
+        dbp = config.get().db
         if port is None:
             logger.warning(f"Port isn't specified, not serving!\nYou can inspect the database in the meantime, e.g. 'sqlitebrowser {dbp}'")
         else:
@@ -138,20 +138,6 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
 
         if sys.stdin.isatty():
             input("Press any key when ready")
-
-
-def user_config_file() -> Path:
-    return Path(appdirs().user_config_dir) / 'config.py'
-
-
-def default_config_path() -> Path:
-    cfg = Path('config.py')
-    if cfg.exists():
-        # eh. not sure if it's a good idea, but whatever, it was the old behaviour
-        return cfg.absolute()
-    else:
-        return user_config_file()
-    # TODO need to test this..
 
 
 def read_example_config() -> str:
@@ -221,6 +207,31 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
     yield from check([python3(), cfg])
 
 
+def cli_doctor_db(args) -> None:
+    # todo could fallback to 'sqlite3 <db> .dump'?
+    config.load_from(args.config) # TODO meh
+    db = config.get().db
+    if not db.exists():
+        logger.error("Database {db} doesn't exist!")
+        sys.exit(1)
+    else:
+        logger.info(f'OK, database exists: {db}')
+
+    cmd = ['sqlite3', str(db), 'select src, COUNT(*) from visits GROUP BY src']
+    logger.info(f'Querying database summary: {cmd}')
+    check_call(cmd)
+
+    bro = 'sqlitebrowser'
+    import shutil
+    if not shutil.which(bro):
+        logger.error(f'Install {bro} to inspect the database!')
+        sys.exit(1)
+    cmd = [bro, str(db)]
+    logger.debug(f'Running {cmd}')
+    from subprocess import Popen
+    Popen(cmd)
+
+
 def main() -> None:
     # TODO longer, literate description?
 
@@ -264,6 +275,13 @@ def main() -> None:
     icp = scp.add_parser('create', help='Create user config')
     icp.set_defaults(func=config_create)
 
+    dp = subp.add_parser('doctor', help='Troubleshooting assistant')
+    dp.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
+    dp.set_defaults(func=lambda *args: dp.print_help())
+    sdp = dp.add_subparsers()
+    sdp.add_parser('config'  , help='Check config'    ).set_defaults(func=config_check )
+    sdp.add_parser('database', help='Inspect database').set_defaults(func=cli_doctor_db)
+
     args = p.parse_args()
 
     # TODO is there a way to print full help? i.e. for all subparsers
@@ -288,6 +306,8 @@ def main() -> None:
         elif args.mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
         elif args.mode == 'config':
+            args.func(args)
+        elif args.mode == 'doctor':
             args.func(args)
         else:
             raise AssertionError(f'unexpected mode {args.mode}')
