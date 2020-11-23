@@ -147,6 +147,15 @@ def get_stuff(db_path=None): # TODO better name
     return _get_stuff(PathWithMtime.make(db_path))
 
 
+def db_stats(*args, **kwargs) -> Dict[str, Any]:
+    engine, binder, table = get_stuff(*args, **kwargs)
+    query = table.select().count()
+    with engine.connect() as conn:
+        total = list(conn.execute(query))[0][0]
+    return {
+        'total_visits': total,
+    }
+
 
 def search_common(url: str, where):
     logger = get_logger()
@@ -207,14 +216,22 @@ def status():
     Ideally, status will always respond, regardless the internal state of the backend?
     '''
     # TODO hug stats?
+    logger = get_logger()
 
     db = get_db_path(check=False)
     try:
         assert db.exists(), db
         db_path = str(db)
-        # TODO use 'db_stats' instead? add count or something else
     except Exception as e:
+        logger.exception(e)
         db_path = f'ERROR: db not found/unreadable (expected path {db}). You probably forgot to run indexer first. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org'
+
+    stats: Dict[str, Any]
+    try:
+        stats = db_stats(db)
+    except Exception as e:
+        logger.exception(e)
+        stats = {'ERROR': str(e)}
 
     version: Optional[str]
     try:
@@ -223,8 +240,9 @@ def status():
         version = None
 
     return {
-        'db'     : db_path,
         'version': version,
+        'db'     : db_path,
+        'stats'  : stats,
     }
 
 
