@@ -53,7 +53,7 @@ You can add/remove pages to the excludelist via
 
 ** highlights
 # TODO screens
-Promnesia tries to match the [[file:../README.org::#glossary][contexts]] against the page body and highlight the matching bits.
+Promnesia tries to match the [[file:../README.org#glossary][contexts]] against the page body and highlight the matching bits.
 
 - you can disable highlights in the extension settings
 
