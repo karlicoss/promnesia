@@ -45,7 +45,7 @@ function appendText(e, text) {
 // maybe use something else instead of eye? so it's not spammy
 function formatVisit(v) {
     // TODO disable link decoration?
-    const e = document.createElement('code')
+    const e = document.createElement('span')
     e.style.whiteSpace = 'pre-wrap' // keep whitespace intact
     e.style.display = 'block'
     // meh .. otherwise disturbs parent elements
@@ -65,12 +65,13 @@ function formatVisit(v) {
     } = v
     appendText(e, 'canonical: ') // todo I guess original would be the same as element link?
     const l = createLink(normalised, normalised)
+    l.classList.add(Cls.POPUP_LINK)
     l.title = `original URL: ${original}`
     e.appendChild(l) // meh
     // appendText(e, '\n' + l.title) // for debug
-    appendText(e, `\ndt      : ${new Date(dt).toLocaleString()}`) // meh
-    appendText(e, '\nsources : ')
     const e_srcs = document.createElement('span')
+    e_srcs.style.display = 'block'
+    e_srcs.textContent = 'sources : '
     for (const src of sources) {
         const e_src = document.createElement('span')
         e_src.classList.add('src')
@@ -80,14 +81,22 @@ function formatVisit(v) {
     }
     e.appendChild(e_srcs)
     if (context != null) {
-        appendText(e, '\n' + context)
+        const e_ctx = document.createElement('span')
+        e_ctx.classList.add('context')
+        e_ctx.textContent = context
+        e.appendChild(e_ctx)
     }
-    const els = [e]
     const {href: href, title: title} = locator || {}
     if (href != null) {
-        els.push(createLink(href, title))
+        const llink = createLink(href, title)
+        llink.classList.add(Cls.POPUP_LINK)
+        e.appendChild(llink)
     }
-    return els
+    const e_at = document.createElement('span')
+    e_at.classList.add('datetime')
+    e_at.textContent = `${new Date(dt).toLocaleString()}`
+    e.appendChild(e_at)
+    return [e]
 }
 
 function create0SpaceElement(el) {
@@ -148,10 +157,11 @@ var Cls = {
     VISITED  : 'promnesia-visited'        ,
     WRAPPER  : 'promnesia-visited-wrapper',
     TOGGLER  : 'promnesia-visited-toggler',
+    EYE      : 'promnesia-visited-eye'    ,
     POPUP    : 'promnesia-visited-popup'  ,
     CLOSE    : 'promnesia-visited-popup-close',
     HELP     : 'promnesia-visited-popup-help',
-    EYE      : 'promnesia-visited-eye'    ,
+    POPUP_LINK:'promnesia-visited-popup-link',
 }
 
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
