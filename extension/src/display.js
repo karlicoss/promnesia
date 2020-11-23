@@ -110,7 +110,7 @@ export class Binder {
         const dt_c = child(header, 'span', ['datetime']);
         const time_c = child(dt_c, 'span', ['time']);
         const date_c = child(dt_c, 'span', ['date']);
-        item.setAttribute('sources', tags.join(' '));
+        item.setAttribute('data-sources', tags.join(' '));
 
         const child_link = child(relative_c, 'a');
         // ugh. not sure why opening in new tab doesn't work :(

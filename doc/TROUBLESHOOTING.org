@@ -7,11 +7,13 @@
 - [[#toc][TOC]]
   - [[#general-notes][General notes]]
 - [[#known-bugsissues][Known bugs/issues]]
-  - [[#issues-with-url-normalisation][issues with url normalisation]]
+  - [[#extension-some-irrelevant-visits-are-displayed-in-the-sidebar][extension: some irrelevant visits are displayed in the sidebar]]
+  - [[#extension-the-eye-iconpopup-doesnt-appear-immediately-when-the-page-is-opened][extension: the eye icon/popup doesn't appear immediately when the page is opened]]
   - [[#highlights-too-much-is-highlighted-or-highlight-isnt-detected][highlights: too much is highlighted or highlight isn't detected]]
   - [[#sidebar-might-be-glitchy-when-the-search-tab-is-open][sidebar: might be glitchy when the search tab is open]]
   - [[#sidebar-looks-weirdtruncated-on-some-sites][sidebar: looks weird/truncated on some sites]]
   - [[#mark-visited-general-glitches][mark visited: general glitches]]
+  - [[#mark-visited-links-i-havent-visited-are-marked][mark visited: links I haven't visited are marked]]
   - [[#extension-too-slow-on-certain-pages][extension: too slow on certain pages]]
   - [[#markdown-no-line-numbers-in-the-link-locators][markdown: no line numbers in the link locators]]
 - [[#misc][Misc]]
@@ -40,14 +42,23 @@
 - if you're posting an issue with the extension UI, post the page you're having problem with and ideally attach a screenshot (if you think it might help)
 
 * Known bugs/issues
-** issues with url normalisation
-
+** extension: some irrelevant visits are displayed in the sidebar
+Most likely the issue is with canonical/normalised URLs.
 Many websites use [[https://beepb00p.xyz/promnesia.html#urls_broken][weird]] ways of addressing content, e.g. in the query parameters or fragments.
 This makes it tricky to figure out the canonical URL.
 
-To double check if you're having a normalisation issue, you can open the promnesia database with =sqlitebrowser= and compare =orig_url= and =norm_url= columns. You can quickly call it with =promnesia doctor database=.
+You can see the canonical URL for current page if you hover the mouse over the extension eye icon.
+To double check whether you're having a normalisation issue, you can open the promnesia database with =sqlitebrowser= and compare =orig_url= and =norm_url= columns. You can quickly call it with =promnesia doctor database=.
 
 If you want to try to fix it at least for yourself, check out [[https://github.com/karlicoss/promnesia/blob/feef7c35f60fed67e8148a565fb267afdb944c39/src/promnesia/cannon.py][cannon.py]] and [[https://github.com/karlicoss/promnesia/blob/feef7c35f60fed67e8148a565fb267afdb944c39/tests/cannon.py][tests/cannon.py]].
+
+** extension: the eye icon/popup doesn't appear immediately when the page is opened
+
+The reason is that Promnesia waits until the page is fully loaded (more specifically, until  [[https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/onUpdated][onUpdated]] status is =complete=),
+otherwise Promnesia might request too much unnecessary data from the backend, and spend time processing unneeded data.
+It's possible to fix in the future by some careful caching or listening on some more specific event.s
+
+Possibly related: [[https://github.com/karlicoss/promnesia/issues/177][issues/177]]
 
 ** highlights: too much is highlighted or highlight isn't detected
 The highlight matching algorithm is very simple, so some issues are possible. See [[https://github.com/karlicoss/promnesia/issues/30][issues/30]]
@@ -66,10 +77,9 @@ In the meantime the easiest is just to toggle 'mark/unmark visited' twice to red
 That said, I've spent effort into making sure the marks aren't moving the page elements: the marks can display an outline/border, but they should never disturb and shift the original page elements, since the flickering is very annoying. So if you notice a misbehaving page, please report it: [[https://github.com/karlicoss/promnesia/issues/168][issues/168]]
 ** mark visited: links I haven't visited are marked
 
-Most likely, it's the issue with URL normalisation (see above).
+Most likely, it's the issue with canonical URLs (see above).
 
 You can check it by opening the popup, and hovering the mouse above the URL, it will show 'normalised:<normalised url>'.
-# TODO dunno is there much point even in showing orig URL there? maybe reverse and show it on hover instead
 
 ** extension: too slow on certain pages
 I've tried to to make sure everything is responsive and asynchronous, but it is still possible in theory for the  extension to slow the page down. Usually that happens if there are too many visits corresponding to the page, e.g. main pages like ~twitter.com~ or ~reddit.com~.
