@@ -22,6 +22,27 @@
 .promnesia-visited-popup {
     outline: solid 1px;
     background: lightyellow;
+    margin: 1px;
+}
+
+.promnesia-visited-popup .promnesia-visited-popup-link {
+    display: inline-block;
+    text-decoration: none;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.promnesia-visited-popup .context {
+    display: block;
+    color: black;
+    background: white;
+    margin: 2px;
+}
+
+.promnesia-visited-popup .datetime {
+    display: inline-block;
+    float: right;
+    padding-left: 0.5em;
 }
 
 /* close buton within the popup */
