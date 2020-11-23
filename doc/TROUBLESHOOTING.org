@@ -23,18 +23,19 @@
 
 - your browsing history may contain *sensitive data*. If you're posting or sending me error logs *make sure you strip away all private information* (ideally only attach the relevant bits of the log, containing errors)
 
+- check your config: =promnesia doctor config=
+- check the database: =promnesia doctor database=
+- check the server: =promnesia doctor server=
 - make sure you [[file:../README.org#install][installed promnesia]] properly, and [[file:SOURCES.org][extra dependencies]], if necessary
 - make sure [[file:../README.org#try-it-out][demo]] works as expected
 
   It doesn't require any extra setup and dependencies, so if this doesn't work it's a good sign something is broken.
   If necessary, run it on a different port (e.g. =--port 15555=) and choose the same port in the extension settings in your browser.
 
-- check your config: =promnesia doctor config=
 - if you have issues with HPI (=my.= modules, etc), follow [[https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org#troubleshooting][HPI: troubleshooting]] guide
 - run =promnesia index= in your terminal, and pay attention to the error messages and warnings
 - run =promnesia serve= in your terminal (on a different port if necessary). Similarly, pay attention to the errors.
 - in your browser: try [[https://developer.chrome.com/extensions/tut_debugging][opening the debugger]] and checking for the errors in the extension logs
-- check the database: =promnesia doctor database=
 - check [[https://github.com/karlicoss/promnesia/issues][issues]] in case someone else had the same issue too
 - if you're posting an issue with the extension UI, post the page you're having problem with and ideally attach a screenshot (if you think it might help)
 

@@ -232,6 +232,16 @@ def cli_doctor_db(args) -> None:
     Popen(cmd)
 
 
+def cli_doctor_server(args) -> None:
+    port = args.port
+    endpoint = f'http://localhost:{port}/status'
+    cmd = ['curl', endpoint]
+    logger.info(f'Running {cmd}')
+    check_call(cmd)
+    print() # curl doesn't add newline
+    logger.info('You should see the database path and version above!')
+
+
 def main() -> None:
     # TODO longer, literate description?
 
@@ -250,8 +260,10 @@ def main() -> None:
     # TODO use docstring or something?
     #
 
+    add_port_arg = lambda p: p.add_argument('--port', type=str, default='13131'              , help='Port to serve on')
+
     ap.add_argument('--name', type=str, default='demo'               , help='Set custom source name')
-    ap.add_argument('--port', type=str, default='13131'              , help='Port to serve on')
+    add_port_arg(ap)
     ap.add_argument('--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server')
     ap.add_argument('--config', type=Path, required=False            , help='Config to run against. If omitted, will use empty base config')
     ap.add_argument(
@@ -281,6 +293,9 @@ def main() -> None:
     sdp = dp.add_subparsers()
     sdp.add_parser('config'  , help='Check config'    ).set_defaults(func=config_check )
     sdp.add_parser('database', help='Inspect database').set_defaults(func=cli_doctor_db)
+    sdps = sdp.add_parser('server'  , help='Check server'    )
+    sdps.set_defaults(func=cli_doctor_server)
+    add_port_arg(sdps)
 
     args = p.parse_args()
 

@@ -289,6 +289,8 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
 
     Alternatively, you can just create a manual autostart entry in your desktop environment.
 
+  - [optional] check that the server is responding =promnesia doctor server=
+
 - [optional] setup MIME handler to jump to files straight from the extension
 
   See a short [[https://karlicoss.github.io/promnesia-demos/jump_to_editor.webm][20s demo]], and if this is something you'd like,
