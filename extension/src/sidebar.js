@@ -369,6 +369,7 @@ async function* _bindSidebarData(response: Visits) {
     items.id = Ids.VISITS
 
     const [visits, errors] = response.partition()
+    const normalised = response.normalised_url
 
     for (const err of errors) {
         await binder.renderError(items, err)
@@ -377,8 +378,8 @@ async function* _bindSidebarData(response: Visits) {
     visits.sort((f, s) => {
         // keep 'relatives' in the bottom
         // TODO: this might slightly break local visits sorting, becuase they don't necessarily have proper normalisation
-        const fr = f.normalised_url === response.normalised_url;
-        const sr = s.normalised_url === response.normalised_url;
+        const fr = f.normalised_url === normalised
+        const sr = s.normalised_url === normalised
         if (fr != sr) {
             return (sr ? 1 : 0) - (fr ? 1 : 0);
         }
@@ -426,7 +427,7 @@ async function* _bindSidebarData(response: Visits) {
         // TODO checkbox??
         tag_c.addEventListener('click', () => {
             for (const x of items.children) {
-                const sources = unwrap(x.getAttribute('sources')).split(' ');
+                const sources = unwrap(x.dataset['sources']).split(' ');
                 const found = sources.some(predicate);
                 x.style.display = found ? 'block' : 'none';
             }
@@ -448,7 +449,7 @@ async function* _bindSidebarData(response: Visits) {
         const ctx = unwrap(v.context);
 
         // TODO hmm. hopefully chrome visits wouldn't get highlighted here?
-        const relative = v.normalised_url != response.normalised_url;
+        const relative = v.normalised_url != normalised
 
         if (!relative && opts.highlight_on) {
             // todo this might compete for execution with the sidebar rendering...

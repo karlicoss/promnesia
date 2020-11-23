@@ -44,6 +44,7 @@ a.promnesia-visited {
 
 
 #visits .context {
+    white-space: pre-wrap; /* need to keep linebreaks  */
     padding-left: 1em;
 }
 

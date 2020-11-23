@@ -26,8 +26,21 @@
 
 /* close buton within the popup */
 .promnesia-visited-popup-close {
-    color: red;
+    display: inline-block;
+    min-width: 1.5em;
+    min-height: 1.5em;
+    text-align: center;
     font-weight: bold;
+    float: right;
+    color: red;
     cursor: pointer;
+}
+
+.promnesia-visited-popup-help {
+    display: inline-block;
+    min-width: 1.5em;
+    min-height: 1.5em;
+    text-align: center;
+    font-weight: bold;
     float: right;
 }

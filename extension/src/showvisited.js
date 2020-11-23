@@ -63,9 +63,9 @@ function formatVisit(v) {
         context     : context,
         locator     : locator,
     } = v
-    appendText(e, 'url     : ') // todo I guess original would be the same as element link?
-    const l = createLink(original, original)
-    l.title = `normalised: ${normalised}`
+    appendText(e, 'canonical: ') // todo I guess original would be the same as element link?
+    const l = createLink(normalised, normalised)
+    l.title = `original URL: ${original}`
     e.appendChild(l) // meh
     // appendText(e, '\n' + l.title) // for debug
     appendText(e, `\ndt      : ${new Date(dt).toLocaleString()}`) // meh
@@ -149,6 +149,8 @@ var Cls = {
     WRAPPER  : 'promnesia-visited-wrapper',
     TOGGLER  : 'promnesia-visited-toggler',
     POPUP    : 'promnesia-visited-popup'  ,
+    CLOSE    : 'promnesia-visited-popup-close',
+    HELP     : 'promnesia-visited-popup-help',
     EYE      : 'promnesia-visited-eye'    ,
 }
 
@@ -276,10 +278,22 @@ function showMark(element) {
     popup.style.top = `${erect.height}px` // TODO add test for this (need a multiline header, like on youtube)
     // TODO would be cool to reuse the same style used by the sidebar...
     const close = document.createElement('span')
-    close.classList.add('promnesia-visited-popup-close')
+    close.classList.add(Cls.CLOSE)
     close.classList.add('nonselectable')
-    close.textContent = "×"
+    close.textContent = '×'
+    const help = document.createElement('span')
+    help.classList.add(Cls.HELP)
+    help.classList.add('nonselectable')
+    help.textContent = '?'
+    help.title = `
+- single click to move popup up,
+- double click to force popup on top of other elements
+    double click mode may cause glitches, however it's necessary on some sites
+    please report such sites here https://github.com/karlicoss/promnesia/issues/168
+`.trim()
+    // NOTE: appended in reverse order, because of float: right
     popup.appendChild(close)
+    popup.appendChild(help)
     let ev = formatVisit(v)
     for (const e of ev) {
         popup.appendChild(e)
@@ -431,18 +445,6 @@ function showMark(element) {
     ))
     close  .addEventListener('click', (_e) => PopupPin.toggle(false))
     close.title = 'close popup'
-    toggler.title = `
-- single click to pin/unpin popup
-- double click to force popup to display on top of other elements
-    double click mode may cause glitches, however it's necessary on some sites
-    please report such sites here https://github.com/karlicoss/promnesia/issues/168
-`.trim()
-    popup.title = `
-- single click to move popup up,
-- double click to force popup on top of other elements
-    double click mode may cause glitches, however it's necessary on some sites
-    please report such sites here https://github.com/karlicoss/promnesia/issues/168
-`.trim()
     // TODO also use combined click helper
     popup  .addEventListener('click', bumpZindex)
     popup  .addEventListener('dblclick', () => PopupOnTop.toggle())
