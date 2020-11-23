@@ -464,3 +464,18 @@ def file_mtime(path: PathIsh) -> datetime:
 
 def now_tz() -> datetime:
     return datetime.now(tz=get_system_tz())
+
+
+def user_config_file() -> Path:
+    return Path(appdirs().user_config_dir) / 'config.py'
+
+
+def default_config_path() -> Path:
+    cfg = Path('config.py')
+    if cfg.exists():
+        # todo ugh. might be nice to warn, but then it will always spam in cli...
+        # eh. not sure if it's a good idea, but whatever, it was the old behaviour
+        return cfg.absolute()
+    else:
+        return user_config_file()
+    # TODO need to test this..

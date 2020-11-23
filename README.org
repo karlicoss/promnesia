@@ -252,7 +252,7 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
 
   - [optional] check the config
 
-    First, you can run =promnesia config check=, it can be used to quickly troubleshoot typos and similar errors. Note that you may need to install [mypy](https://github.com/python/mypy) for some config checks.
+    First, you can run =promnesia doctor config=, it can be used to quickly troubleshoot typos and similar errors. Note that you may need to install [mypy](https://github.com/python/mypy) for some config checks.
 
     Next, you can use the demo mode: =promnesia demo --config /path/to/config.py=.
 
@@ -266,6 +266,10 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
   : 0 * * * *      promnesia index    >/tmp/promnesia-index.log 2>/tmp/promnesisa-index.err
 
   Note: you can also pass =--config /path/to/config.py=  explicitly if you prefer or want to experiment.
+
+  - [optional] check the database
+
+    Run =promnesia doctor database= to quickly inspect the database and check that stuff that you wanted got indexed. You might need to install =sqlitebrowser= first.
 
 - run the server: =promnesia serve=
 

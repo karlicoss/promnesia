@@ -5,7 +5,7 @@ import importlib
 import importlib.util
 import warnings
 
-from .common import PathIsh, get_tmpdir, appdirs, default_output_dir, default_cache_dir
+from .common import PathIsh, get_tmpdir, appdirs, default_output_dir, default_cache_dir, user_config_file
 from .common import Res, Source, DbVisit
 
 
@@ -79,6 +79,10 @@ class Config(NamedTuple):
             return default_output_dir()
 
     @property
+    def db(self) -> Path:
+        return self.output_dir / 'promnesia.sqlite'
+
+    @property
     def hook(self) -> Optional[HookT]:
         return self.HOOK
 
@@ -89,7 +93,7 @@ def has() -> bool:
     return instance is not None
 
 def get() -> Config:
-    assert instance is not None
+    assert instance is not None, "Expected config to be set, but it's not"
     return instance
 
 

@@ -32,8 +32,7 @@ _CHUNK_BY = 10
 # returns critical warnings
 def visits_to_sqlite(vit: Iterable[Res[DbVisit]]) -> List[Exception]:
     logger = get_logger()
-    output_dir = Path(config.get().output_dir)
-    db_path = output_dir / 'promnesia.sqlite'
+    db_path = config.get().db
 
     now = now_tz()
     ok = 0
