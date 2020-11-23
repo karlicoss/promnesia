@@ -11,6 +11,7 @@ This is unlike most modern browsers, where you can only see when you visited the
 
 It allows you to answer different questions about the current web page:
 
+#+html: <span id="questions"><span>
 - have I been here before? When? [[https://karlicoss.github.io/promnesia-demos/child-visits.webm][demo (30 s)]] [[https://karlicoss.github.io/promnesia-demos/child-visits-2.webm][demo (40s)]]
 - how did I get on it? Which page has led to it? [[https://karlicoss.github.io/promnesia-demos/how_did_i_get_here.webm][demo (40s)]]
 - why have I bookmarked it? who sent me this link? Can I just jump to the message? [[https://karlicoss.github.io/promnesia-demos/watch_later.webm][demo (30s)]]
@@ -43,6 +44,9 @@ Then this tool is for you.
   :PROPERTIES:
   :CUSTOM_ID: demos
   :END:
+
+See [[file:doc/GUIDE.org#extension-features][feature guide]] if you're wondering how something specific here works.
+
 - [[https://karlicoss.github.io/promnesia-demos/screens/promnesia andy Screenshot at 2020-06-05 23-33-07.png]]
 
   - a green eye means that the link was visited before and has some [[#glossary][contexts]], associated with it. When you click on it, the sidebar opens with more information about the visits.
@@ -68,7 +72,17 @@ Then this tool is for you.
 
   - I also have this link annotated via [[https://hypothes.is][Hypothesis]] (#4, #12, #13)
 
+- Annotated demo of sidebar with direct & child visits, and 'visited' marks  (click to zoom)
+#+html: <img src="https://karlicoss.github.io/promnesia-demos/screens/visits_childvisits_locator_popups_boring_interesting.png"></img>
+
+- Annotated demo of highlight and locator features (click to zoom)
+#+html: <img src="https://karlicoss.github.io/promnesia-demos/screens/highlights_filelinks_locator.png"></img>
+
 - More:
+  - A [[https://www.youtube.com/watch?v=9PsOeYheIY4][video]], demonstrating
+    - [[file:doc/GUIDE.org#mark-visited]['mark visited']] feature
+    - highlights
+    - jumping to the originating tweet; jumping straight to the org-mode hading where links occured
 
   - You can find more short screencasts, demonstrating various features [[https://github.com/karlicoss/promnesia-demos][here]]
   - There are more screenshots [[https://github.com/karlicoss/promnesia/issues/5#issuecomment-619365708][here]]
