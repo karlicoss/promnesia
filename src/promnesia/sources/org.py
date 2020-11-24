@@ -12,6 +12,18 @@ from orgparse.date import gene_timestamp_regex, OrgDate
 from orgparse.node import OrgNode
 
 
+UPDATE_ORGPARSE_WARNING = 'WARNING: please update orgparse version to a more recent (pip3 install -U orgparse)'
+
+_warned = False
+def warn_old_orgparse_once() -> Iterable[Exception]:
+    global _warned
+    if _warned:
+        return []
+    _warned = True
+    # NOTE: can't use pkg_resources because the module might be available even without being properly installed..
+    return [RuntimeError(UPDATE_ORGPARSE_WARNING)]
+
+
 CREATED_RGX = re.compile(gene_timestamp_regex(brtype='inactive'), re.VERBOSE)
 
 
@@ -74,6 +86,20 @@ def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Res[Tuple[Parsed, OrgN
         yield from walk_node(node=c, dt=dt)
 
 
+def get_body_compat(node: OrgNode) -> str:
+    try:
+        return node.get_body(format='raw')
+    except Exception as e:
+        if node.is_root():
+            # get_body was only added to root in 0.2.0
+            for x in warn_old_orgparse_once():
+                # ugh. really crap, but it will at least only warn once... (becaue it caches)
+                raise x
+            return UPDATE_ORGPARSE_WARNING
+        else:
+            raise e
+
+
 def iter_org_urls(n: OrgNode) -> Iterator[Res[Url]]:
     logger = get_logger()
     # todo not sure if it can fail? but for now, paranoid just in case
@@ -86,7 +112,7 @@ def iter_org_urls(n: OrgNode) -> Iterator[Res[Url]]:
         yield from iter_urls(heading, syntax='org')
 
     try:
-        content = n.get_body(format='raw')
+        content = get_body_compat(n)
     except Exception as e:
         logger.exception(e)
         yield e
@@ -99,7 +125,7 @@ def extract_from_file(fname: PathIsh) -> Results:
     Note that org-mode doesn't keep timezone, so we don't really have choice but make it tz-agnostic
     """
     path = Path(fname)
-    o = orgparse.load(path)
+    o = orgparse.load(str(path))
     root = o.root
 
     fallback_dt = file_mtime(path)
@@ -120,7 +146,7 @@ def extract_from_file(fname: PathIsh) -> Results:
                 # maybe use a similar technique as in exercise parser? e.g. descent until we mee a candidate that worth a separate context?
                 tagss = '' if len(node.tags) == 0 else f'   :{":".join(sorted(node.tags))}:'
                 # TODO not sure... perhaps keep the whole heading intact? unclear how to handle file tags though
-                ctx = parsed.heading + tagss + '\n' + node.get_body(format='raw')
+                ctx = parsed.heading + tagss + '\n' + get_body_compat(node)
             except Exception as e:
                 yield echain(ex, e)
                 ctx = 'ERROR' # TODO more context?
@@ -129,7 +155,10 @@ def extract_from_file(fname: PathIsh) -> Results:
                 yield Visit(
                     url=r,
                     dt=dt,
-                    locator=Loc.file(fname, line=node.linenumber),
+                    locator=Loc.file(
+                        fname,
+                        line=getattr(node, 'linenumber', None), # make it defensive so it works against older orgparse (pre 0.2)
+                    ),
                     context=ctx,
                 )
             else: # error
