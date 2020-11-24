@@ -21,8 +21,11 @@
 /* actual popup with the metadata */
 .promnesia-visited-popup {
     outline: solid 1px;
-    background: lightyellow;
-    margin: 1px;
+    background: #e6e6e6fa; /* same color as in sidebar */
+    padding: 2px;
+    /* not sure about initial?? */
+    font-weight: initial;
+    font-size: initial;
 }
 
 .promnesia-visited-popup .promnesia-visited-popup-link {
@@ -34,8 +37,8 @@
 
 .promnesia-visited-popup .context {
     display: block;
-    color: black;
-    background: white;
+    /* color: black; */
+    background: lightyellow;
     margin: 2px;
 }
 

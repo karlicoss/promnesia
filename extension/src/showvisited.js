@@ -38,10 +38,6 @@ function createLink(href, title) {
     return a
 }
 
-function appendText(e, text) {
-    e.appendChild(document.createTextNode(text))
-}
-
 // maybe use something else instead of eye? so it's not spammy
 function formatVisit(v) {
     // TODO disable link decoration?
@@ -53,8 +49,6 @@ function formatVisit(v) {
     e.style.padding = '0px'
     e.style.border  = '0px'
 
-    // TODO max-width/color should def be css
-    e.style.backgroundColor = 'lightyellow' // ugh.. might inherit page css otherwise?
     const {
         original_url: original,
         normalised_url: normalised,
@@ -63,11 +57,15 @@ function formatVisit(v) {
         context     : context,
         locator     : locator,
     } = v
-    appendText(e, 'canonical: ') // todo I guess original would be the same as element link?
-    const l = createLink(normalised, normalised)
+    const l_el = document.createElement('span')
+    l_el.style.display = 'block'
+    l_el.textContent = 'canonical: '
+    e.appendChild(l_el)
+
+    const l = createLink(original, normalised)
     l.classList.add(Cls.POPUP_LINK)
     l.title = `original URL: ${original}`
-    e.appendChild(l) // meh
+    l_el.appendChild(l) // meh
     // appendText(e, '\n' + l.title) // for debug
     const e_srcs = document.createElement('span')
     e_srcs.style.display = 'block'
@@ -96,7 +94,7 @@ function formatVisit(v) {
     e_at.classList.add('datetime')
     e_at.textContent = `${new Date(dt).toLocaleString()}`
     e.appendChild(e_at)
-    return [e]
+    return e
 }
 
 function create0SpaceElement(el) {
@@ -301,13 +299,16 @@ function showMark(element) {
     double click mode may cause glitches, however it's necessary on some sites
     please report such sites here https://github.com/karlicoss/promnesia/issues/168
 `.trim()
-    // NOTE: appended in reverse order, because of float: right
-    popup.appendChild(close)
-    popup.appendChild(help)
     let ev = formatVisit(v)
-    for (const e of ev) {
-        popup.appendChild(e)
+
+    // ugh. messy..
+    {
+        let e1 = ev.children[0]
+        e1.appendChild(close) // reverse order because of float
+        e1.appendChild(help)
     }
+
+    popup.appendChild(ev)
     //
     // eh, could use perhaps? css can match against it..
     // element.setAttribute('data-promnesia-src', src)
