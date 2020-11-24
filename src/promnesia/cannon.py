@@ -93,6 +93,9 @@ default_qkeep = {
     # ok, various BBS have it, hackernews has it etc?
     # hopefully it's a reasonable one to keep..
     'id',
+
+    # common to some sites..
+    'p',
 }
 
 # TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?

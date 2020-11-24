@@ -211,7 +211,13 @@ def test_reddit(url, expected):
     ),
 
     ( 'https://ubuntuforums.org/showthread.php?t=1403470&s=0dd67bdb12559c22e73a220752db50c7&p=8806195#post8806195'
-    , 'ubuntuforums.org/showthread.php?t=1403470',
+    , 'ubuntuforums.org/showthread.php?p=8806195&t=1403470',
+    ),
+
+    ( 'https://arstechnica.com/?p=1371299',
+      'arstechnica.com/?p=1371299',
+      # eh. it's a redirect to https://arstechnica.com/information-technology/2018/09/dozens-of-ios-apps-surreptitiously-share-user-location-data-with-tracking-firms/
+      # however in the page body there is <link rel="shorturl" href="https://arstechnica.com/?p=1371299"> ...
     ),
 
     # ( "gwern.net/DNB+FAQ"
