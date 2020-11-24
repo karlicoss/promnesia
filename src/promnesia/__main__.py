@@ -14,7 +14,7 @@ from . import config
 from . import server
 from .misc import install_server
 from .common import PathIsh, logger, get_tmpdir, DbVisit, Res
-from .common import Source, python3, get_system_tz, user_config_file, default_config_path
+from .common import Source, get_system_tz, user_config_file, default_config_path
 from .dump import visits_to_sqlite
 from .extract import extract_visits, make_filter
 
@@ -180,9 +180,8 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
         if res.returncode > 0:
             yield Exception()
 
-    # TODO add this to HPI
     logger.info('Checking syntax...')
-    cmd = [python3(), '-m', 'compileall', cfg]
+    cmd = [sys.executable, '-m', 'compileall', cfg]
     yield from check(cmd)
 
     # todo not sure if should be more defensive than check_call here
@@ -193,7 +192,7 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
         logger.warning("mypy not found, can't use it to check config!")
     else:
         yield from check([
-            python3(), '-m', 'mypy',
+            sys.executable, '-m', 'mypy',
             '--namespace-packages',
             '--color-output', # not sure if works??
             '--pretty',
@@ -204,7 +203,7 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
         ])
 
     logger.info('Checking runtime errors...')
-    yield from check([python3(), cfg])
+    yield from check([sys.executable, cfg])
 
 
 def cli_doctor_db(args) -> None:

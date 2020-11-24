@@ -9,7 +9,7 @@ on:
   workflow_dispatch: # needed to trigger workflows manually
 
 env:
-  # not sure if tests should detect GITHUB_WORKFLOW instead??
+  # useful for scripts & sometimes tests to know
   CI: true
 
 jobs:
