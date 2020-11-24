@@ -159,6 +159,7 @@ export class Binder {
 
             if (this.options.sidebar_detect_urls) {
                 let anchorme = null
+                // NOTE: import might fail on some pages, e.g. twitter.com. so needs to be defensive
                 try {
                     // note: performance is OK
                     // 339 iterations passed, took  200  ms -- and it's counting other DOM operations as well
@@ -170,7 +171,7 @@ export class Binder {
                     anchorme = anchorme_ // ugh. scope works odd..
                 } catch (err) {
                     console.error(err)
-                    console.warn("Couldn't import anchorme. Fallback on plaintext")
+                    console.warn("promnesia: couldn't import anchorme. Fallback on plaintext")
                 }
                 if (anchorme != null) {
                     handle_plain = (text: string) => {
