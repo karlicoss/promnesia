@@ -23,7 +23,7 @@ from sqlalchemy import Column, Table, func, types # type: ignore
 from sqlalchemy.sql import text # type: ignore
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, python3, get_system_tz
+from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, get_system_tz
 from .cannon import canonify
 
 
