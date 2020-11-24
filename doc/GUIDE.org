@@ -39,6 +39,9 @@ You can toggle the sidebar with:
 - click on the eye icon
 - automatically on page load (see the extension settings)
 
+Here's an annotated screenshot, demonstrating the sidebar (click to zoom):
+#+html: <img width="600" src="https://karlicoss.github.io/promnesia-demos/screens/visits_childvisits_locator_popups_boring_interesting.png"></img>
+
 ** excludelist
 Allows you to prevent links/domains from being processed by Promnesia.
 This might be useful for extra privacy (so the URL isn't even sent to the local backend), or to work around certain slow pages.
@@ -54,6 +57,9 @@ You can add/remove pages to the excludelist via
 Promnesia tries to match the [[file:../README.org#glossary][contexts]] against the page body and highlight the matching bits.
 
 - you can disable highlights in the extension settings
+
+Here's an annotated screenshot, demonstrating highlights (click to zoom):
+#+html: <img width="600" src="https://karlicoss.github.io/promnesia-demos/screens/highlights_filelinks_locator.png"></img>
 
 ** search
 Searches in visits and their contexts. You can toggle search via:
@@ -85,6 +91,11 @@ It's quite useful to prevent marks from showing on site menus/headers. You can e
 You can also exclude multiple links with an 'element zapper' via "Promnesia context menu -> exclude multiple links", e.g.
 it's useful to exclude the whole site menu in bulk, or if you can't right-click (some naughty web apps like Discord hijack it).
 Note that at the moment it will exclude the actual URLs, not the corresponding page elements (like, for example, uBlock would).
+
+Here's a screenshot explaining this feature (zoomable on click):
+
+#+html: <img width="600" alt="image" src="https://karlicoss.github.io/promnesia-demos/screens/promnesia-showvisited-help.png"></img>
+
 
 * Indexer features
 
@@ -122,3 +133,20 @@ See [[https://github.com/karlicoss/promnesia/issues/91][issues/91]].
 ** how to customize extension style?
 There are 'Style settings' in the extension settings, which get injected both in the sidebar and the main page.
 It's a bit undocumented at the moment, but there are some comments there and you can generally experiment in the browser devtools.
+
+Note that at the moment it's still stabilizing, and while I'm trying to keep this backwards compatible, it's still possible that some styles might break with updates.
+
+Some of my personal customizations:
+
+#+begin_src css
+/* set sidebar font to monospace visits indexed from the 'code' */
+.promnesia *[data-sources*=code] .context {
+  font-family: monospace;
+}
+
+/* tweak 'visited' marks for certain data sources */
+:root {
+  --promnesia-src-twitter-color: #00acee77;
+  --promnesia-src-notes-color: #00ff0077;
+}
+#+end_src
