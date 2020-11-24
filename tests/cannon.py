@@ -28,9 +28,10 @@ def check(url, expected):
 # then could align URLs etc?
 
 @param('url,expected', [(
-    'https://www.youtube.com/watch?v=1NHbPN9pNPM&index=63&list=WL&t=491s',
-    # TODO not so sure about &t, it's sort of useful
-    'youtube.com/watch?list=WL&v=1NHbPN9pNPM'
+    'https://www.youtube.com/watch?t=491s&v=1NHbPN9pNPM&index=63&list=WL',
+    # NOTE: t= reordered, makes it more hierarchical
+    # list as well, I guess makes the most sense to keep it at the very end.. since lists are more like tags
+    'youtube.com/watch?v=1NHbPN9pNPM&t=491s&list=WL'
 ), (
     'youtube.com/watch?v=wHrCkyoe72U&feature=share&time_continue=6',
     'youtube.com/watch?v=wHrCkyoe72U'
@@ -39,8 +40,7 @@ def check(url, expected):
     'youtube.com/watch?v=nyc6RJEEe0U'
 ), (
     'https://youtu.be/iCvmsMzlF7o?list=WL',
-    # TODO hmm. ordering?
-    'youtube.com/watch?list=WL&v=iCvmsMzlF7o'
+    'youtube.com/watch?v=iCvmsMzlF7o&list=WL'
 ),
     # TODO can even be like that or contain timestamp (&t=)
     # TODO warn if param already present? shouldn't happen..
@@ -196,10 +196,10 @@ def test_reddit(url, expected):
 
     # should sort query params
     ( 'https://www.youtube.com/watch?v=hvoQiF0kBI8&list=WL&index=2'
-    , 'youtube.com/watch?list=WL&v=hvoQiF0kBI8',
+    , 'youtube.com/watch?v=hvoQiF0kBI8&list=WL',
     ),
     ( 'https://www.youtube.com/watch?list=WL&v=hvoQiF0kBI8&index=2'
-    , 'youtube.com/watch?list=WL&v=hvoQiF0kBI8',
+    , 'youtube.com/watch?v=hvoQiF0kBI8&list=WL',
     ),
 
     # TODO def need to allow the _user_ to define the rules.
@@ -211,7 +211,7 @@ def test_reddit(url, expected):
     ),
 
     ( 'https://ubuntuforums.org/showthread.php?t=1403470&s=0dd67bdb12559c22e73a220752db50c7&p=8806195#post8806195'
-    , 'ubuntuforums.org/showthread.php?p=8806195&t=1403470',
+    , 'ubuntuforums.org/showthread.php?t=1403470&p=8806195',
     ),
 
     ( 'https://arstechnica.com/?p=1371299',
