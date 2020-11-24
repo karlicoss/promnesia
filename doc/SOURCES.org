@@ -95,6 +95,7 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   - discovers files recursively
   - guesses the format (orgmode/markdown/json/etc) by the extension/MIME type
+  - can index most of plaintext files, including source code!
 
 - [[file:../src/promnesia/sources/fbmessenger.py][promnesia.sources.fbmessenger]]
 
