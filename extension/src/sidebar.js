@@ -242,9 +242,13 @@ function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> 
 function _highlight(text: string, idx: number, v: Visit) {
     const lines = new Set()
     for (const line of text.split('\n')) {
-        const sline = _sanitize(line)
+        let sline = line.trim()
+        if (sline.length == 0) {
+            continue // no need to log
+        }
+        sline = _sanitize(line)
         if (sline.length <= 3) {
-            console.debug("line '%s' was completely sanitized/too short.. skipping", line)
+            console.debug("promnesia: line '%s' was completely sanitized/too short.. skipping", line)
             continue
         }
         lines.add(sline)
@@ -277,7 +281,7 @@ function _highlight(text: string, idx: number, v: Visit) {
         // target.name === 'body'
         if (target === doc.body) {
             // meh, but otherwise too spammy
-            console.debug('body matched for highlight; skipping it')
+            console.debug('promnesia: body matched for highlight; skipping it')
             continue;
         }
         const d = unwrap(document.documentElement)
@@ -285,10 +289,10 @@ function _highlight(text: string, idx: number, v: Visit) {
         const ratio = (rect.width * rect.height) / (d.scrollWidth * d.scrollHeight)
         const RATIO = 0.5 // kinda arbitrary
         if (ratio > RATIO) {
-            console.warn('matched element %o is too big (ratio %f > %f). skipping it', target, ratio, RATIO)
+            console.warn('promnesia: matched element %o is too big (ratio %f > %f). skipping it', target, ratio, RATIO)
             continue
         }
-        console.info("'%s': matched %o", line, target)
+        console.debug("promnesia: '%s': matched %o", line, target)
 
         // defer changing DOM to avoid reflow? not sure if actually an issue but just in case..
         // https://gist.github.com/paulirish/5d52fb081b3570c81e3a
@@ -323,7 +327,7 @@ function tryHighlight(text: string, idx: number, v: Visit) {
     try {
         _highlight(text, idx, v)
     } catch (error) {
-        console.error('Error while highlighting %s %o: %o', text, v, error)
+        console.error('promnesia: while highlighting %s %o: %o', text, v, error)
     }
 }
 
@@ -355,7 +359,7 @@ async function* _bindSidebarData(response: Visits) {
             return false
         }
         // todo eh, would be nice to log something more useful here..
-        console.debug('bindSidebarData: %d iterations passed, took %o ms', iterations_since, took)
+        console.debug('promnesia: bindSidebarData: %d iterations passed, took %o ms', iterations_since, took)
         last_yield = cur
         iterations_since = 0
         return true
@@ -569,8 +573,6 @@ chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) =>
         sidebar().then(s => s.show())
     } else if (method == Methods.SIDEBAR_TOGGLE) {
         sidebar().then(s => s.toggle())
-    } else {
-        console.debug('unexpected message: %o', msg)
     }
     // todo do I need to return anything?
 })
