@@ -11,9 +11,10 @@ Also some experiments to establish 'URL hierarchy'.
 """
 # TODO eh?? they fixed mobile.twitter.com?
 
+from itertools import chain
 import re
 import typing
-from typing import Iterable, NamedTuple, Set, Optional, List, Sequence, Union, Tuple, Dict, Any
+from typing import Iterable, NamedTuple, Set, Optional, List, Sequence, Union, Tuple, Dict, Any, Collection
 
 import urllib.parse
 from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
@@ -89,44 +90,42 @@ default_qremove = {
     'utf8',
 }
 
-default_qkeep = {
+default_qkeep = [
     # ok, various BBS have it, hackernews has it etc?
     # hopefully it's a reasonable one to keep..
     'id',
 
-    # common to some sites..
+    # common to forums, usually means 'thread'
+    't',
+
+    # common to some sites.., usually 'post'
     'p',
-}
+]
 
 # TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?
 class Spec(NamedTuple):
-    qkeep  : Optional[Set[str]] = None
+    qkeep  : Optional[Collection[str]] = None
     qremove: Optional[Set[str]] = None
     fkeep  : bool = False
 
-    def keep_query(self, q: str) -> bool:
-        qkeep   = default_qkeep  .union(self.qkeep or {})
+    def keep_query(self, q: str) -> Optional[int]: # returns order
+        qkeep = {
+            q: i for i, q in enumerate(chain(default_qkeep, self.qkeep or []))
+        }
         qremove = default_qremove.union(self.qremove or {})
         # I suppose 'remove' is only useful for logging. we remove by default anyway
 
         keep = False
         remove = False
-        if qkeep is not None and q in qkeep:
-            keep = True
-        # pylint: disable=unsupported-membership-test
+        qk = qkeep.get(q)
+        if qk is not None:
+            return qk
+        # todo later, check if spec tells both to keep and remove?
         if q in qremove:
-            remove = True
-        if keep and remove:
-            # keep wins?
-            return True # TODO need a warning
-        if keep:
-            return True
-        if remove:
-            return False
-
+            return None
         # by default drop all
         # it's a better default, since if it's *too* unified, the user would notice it. but not vice versa!
-        return False
+        return None
 
     @classmethod
     def make(cls, **kwargs):
@@ -138,14 +137,13 @@ S = Spec.make
 specs = {
     'youtube.com': S(
         # TODO search_query?
-        qkeep={
-            'list', # TODO hmm. list is kinda important for playlist urls...
+        qkeep=[ # note: experimental.. order matters here
             'v',
-        }, # TODO frozenset?
+            't',
+            'list',
+        ],
+        # todo frozenset?
         qremove={
-            't', # TODO not so sure about it
-
-
             'time_continue', 'index', 'feature', 'lc', 'app', 'start_radio', 'pbjreload', 'annotation_id',
             'flow', 'sort', 'view',
             'enablejsapi', 'wmode', 'html5', 'autoplay', 'ar',
@@ -181,10 +179,9 @@ specs = {
     'wikipedia.org': S(fkeep=True),
     'scottaaronson.com'  : S(qkeep={'p'}, fkeep=True),
     'urbandictionary.com': S(qkeep={'term'}),
-    'ycombinator.com'    : S(qkeep={'id'}),
+    'ycombinator.com'    : S(qkeep={'id'}), # todo just keep id by default?
     'play.google.com'    : S(qkeep={'id'}),
     'answers.yahoo.com'  : S(qkeep={'qid'}),
-    'ubuntuforums.org'   : S(qkeep={'t'}),
 }
 
 _def_spec = S()
@@ -410,8 +407,12 @@ def canonify(url: str) -> str:
     # frag = parts.fragment if spec.fkeep else ''
     frag = ''
 
-    qq = [(k, v) for k, v in qq if spec.keep_query(k)]
-    qq = list(sorted(qq)) # order matters in theory, but definitely not by default
+    iqq = []
+    for k, v in qq:
+        order = spec.keep_query(k)
+        if order is not None:
+            iqq.append((order, k, v))
+    qq = [(k, v) for i, k, v in sorted(iqq)]
     # TODO still not sure what we should do..
     # quote_plus replaces %20 with +, not sure if we want it...
     query = urlencode(qq, quote_via=quote_via) # type: ignore[type-var]
