@@ -4,7 +4,7 @@ from typing import Iterable, List, Set, Optional, Iterator, Tuple, NamedTuple, c
 from pathlib import Path
 
 
-from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, echain, iter_urls, PathIsh, Res, file_mtime
+from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, iter_urls, PathIsh, Res, file_mtime
 
 
 import orgparse
@@ -130,11 +130,9 @@ def extract_from_file(fname: PathIsh) -> Results:
 
     fallback_dt = file_mtime(path)
 
-    ex = RuntimeError(f'while extracting from {fname}')
-
     for wr in walk_node(node=root, dt=fallback_dt):
         if isinstance(wr, Exception):
-            yield echain(ex, wr)
+            yield wr
             continue
 
         (parsed, node) = wr
@@ -148,7 +146,7 @@ def extract_from_file(fname: PathIsh) -> Results:
                 # TODO not sure... perhaps keep the whole heading intact? unclear how to handle file tags though
                 ctx = parsed.heading + tagss + '\n' + get_body_compat(node)
             except Exception as e:
-                yield echain(ex, e)
+                yield e
                 ctx = 'ERROR' # TODO more context?
 
             if isinstance(r, Url):
@@ -162,4 +160,4 @@ def extract_from_file(fname: PathIsh) -> Results:
                     context=ctx,
                 )
             else: # error
-                yield echain(ex, r)
+                yield r

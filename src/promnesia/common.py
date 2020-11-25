@@ -301,9 +301,16 @@ def last(path: PathIsh, *parts: str) -> Path:
 
 from .logging import setup_logger
 
+from copy import copy
 def echain(ex: Exception, cause: Exception) -> Exception:
-    ex.__cause__ = cause
-    return ex
+    e = copy(ex)
+    e.__cause__ = cause
+    # right.. even if we attach cause it doesn't help much because when we return/yield exception, we lose the stacktrace
+    # so only 'ex' gets logged, cause is completely lost
+    # hopefully this is safe? at least on runtimeerrors
+    # might also do something smarter and collapes if both are strings or something..
+    e.args += cause.args
+    return e
 
 
 def slugify(x: str) -> str:
