@@ -110,11 +110,16 @@ function create0SpaceElement(el) {
 
 
 function getExtContainer() {
-    const id = 'promnesia-marks-container-id'
+    const id = 'promnesia-marks-container'
     let cont = document.getElementById(id)
     if (cont == null) {
-        cont = document.createElement('div') // todo class?
+        cont = document.createElement('span') // todo class?
         cont.id = id
+        /* make sure it's invisible */
+        cont.style.width  = '0px'
+        cont.style.height = '0px'
+        cont.style.margin  = '0px'
+        cont.style.padding = '0px'
         document.body.appendChild(cont)
     }
     return cont

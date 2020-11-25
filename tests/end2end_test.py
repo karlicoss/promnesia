@@ -96,7 +96,7 @@ def get_hotkey(driver, cmd: str) -> str:
         # TODO remove hardcoding somehow...
         # perhaps should be extracted somewhere..
         cmd_map = {
-            Command.SHOW_DOTS        : 'Ctrl+Alt+v',
+            Command.MARK_VISITED     : 'Ctrl+Alt+v',
             '_execute_browser_action': 'Ctrl+Alt+e',
             'search'                 : 'Ctrl+Alt+h',
         }
@@ -209,7 +209,7 @@ def configure(
         set_position(driver, position)
 
     if blacklist is not None:
-        bl = driver.find_element_by_id('blacklist_id') # .find_element_by_tag_name('textarea')
+        bl = driver.find_element_by_id('global_excludelist_id') # .find_element_by_tag_name('textarea')
         bl.click()
         # ugh, that's hacky. presumably due to using Codemirror?
         bla = driver.switch_to_active_element()
@@ -294,7 +294,7 @@ class TestHelper(NamedTuple):
         self.command(Command.ACTIVATE)
 
     def mark_visited(self):
-        self.command(Command.SHOW_DOTS)
+        self.command(Command.MARK_VISITED)
 
     def wid(self) -> str:
         return get_window_id(self.driver)
@@ -350,7 +350,7 @@ def _test_helper(tmp_path, indexer, test_url: Optional[str], browser: Browser=FF
         yield TestHelper(driver=driver)
 
 class Command:
-    SHOW_DOTS = 'mark_visited'
+    MARK_VISITED = 'mark_visited'
     ACTIVATE  = '_execute_browser_action'
     SEARCH    = 'search'
 # TODO assert this against manifest?
@@ -534,7 +534,7 @@ def test_chrome_visits(tmp_path, browser):
 
 
 @browsers(FF, CH)
-def test_show_dots(tmp_path, browser):
+def test_show_visited_marks(tmp_path, browser):
     visited = {
         'https://en.wikipedia.org/wiki/Special_linear_group': None,
         'http://en.wikipedia.org/wiki/Unitary_group'        : None,
@@ -542,8 +542,8 @@ def test_show_dots(tmp_path, browser):
     }
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
     with _test_helper(tmp_path, index_urls(visited), test_url, show_dots=True, browser=browser) as helper:
-        trigger_command(helper.driver, Command.SHOW_DOTS)
-        confirm("You should see dots near special linear group, Unitary group, Transpose")
+        trigger_command(helper.driver, Command.MARK_VISITED)
+        confirm("You should see visited marks near special linear group, Unitary group, Transpose")
 
 
 @browsers(FF, CH)
@@ -671,7 +671,7 @@ def trigger_sidebar_search(driver):
 @browsers(FF, CH)
 def test_duplicate_background_pages(tmp_path, browser):
     url = PYTHON_DOC_URL
-    with _test_helper(tmp_path, index_urls({}), url, browser=browser) as helper:
+    with _test_helper(tmp_path, index_urls({'whatever.coom': '123'}), url, browser=browser) as helper:
         driver = helper.driver
 
         trigger_command(driver, Command.ACTIVATE)
