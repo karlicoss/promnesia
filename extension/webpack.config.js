@@ -38,6 +38,9 @@ const commandsExtra = {
     "_execute_browser_action": {
         "description": "Activate sidebar",
         "suggested_key": {
+          /* fucking hell, ubuntu is hijacking Ctrl-Shift-E... not sure what to do :(
+           * https://superuser.com/questions/358749/how-to-disable-ctrlshiftu-in-ubuntu-linux/1392682
+           * */
             "default": `Ctrl+${modifier}+E`,
             "mac":  `Command+${modifier}+E`
         }
