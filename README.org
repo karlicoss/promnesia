@@ -189,6 +189,9 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
 
 - backend
 
+  Note that Promnesia can work without the backend, so technically this step is optional.
+  But then it will only be able to use browser visits and browser bookmarks, so the benefits of the extension will be limited.
+
   - simplest: install from [[https://pypi.org/project/promnesia][PyPi]]: =pip3 install --user promnesia=
     - install optional dependencies with: =pip3 install --user bs4 lxml mistletoe logzero=
   - alternatively: you can clone this repository and run it as ~scripts/promnesia~
@@ -207,19 +210,21 @@ Also check out my [[https://beepb00p.xyz/myinfra.html#promnesia][infrastructure 
   - Android: [[https://github.com/karlicoss/promnesia/issues/114#issuecomment-642757602][allegedly]], possible to run with Termux! But I haven't got to try personally.
 
 * Try it out
-The easies is to try out Promnesia is a demo mode, it can give you a sense of what Promnesia is doing with almost no configuration.
+You can try out Promnesia with the extension only, it uses browser history and bookmarks as data sources.
+However, Promnesia's main power is using data from external sources, and for that you'll need to run the indexer and backend (more on it in the next section).
 
-# TODO use smth different
-1. [[#install][Install]] the extension and the server in case you haven't already
+The easiest way to try this mode is to run =promnesia demo= command, it can give you a sense of what Promnesia is doing with zero configuration.
+
+1. [[#install][Install]] the extension and the server (PIP package), in case you haven't already
 2. Run ~promnesia demo https://github.com/karlicoss/exobrain~
 
    This clones the repository, ([[https://github.com/karlicoss/exobrain][my personal wiki]] in this case), extracts the URLs, and runs on the port =13131= (default, can be specified via =--port=)
 
-   You can also use a path on your local filesystem, or a website URL.
+   You can also use a path on your local filesystem (e.g. directory with text files), or a website URL.
 
-3. After that, visit https://www.gwern.net
+3. After that, visit https://www.reddit.com
 
-   If you press the extension icon, you will see the pages from my blog where I link to articles on Gwern's site.
+   If you press the extension icon, you will see the pages from my blog where I link to posts on Reddit.
   
 * Setup
 # TODO mention where they get the database
