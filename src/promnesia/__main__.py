@@ -46,7 +46,7 @@ def iter_all_visits() -> Iterator[Res[DbVisit]]:
                     yield e
 
 
-def _do_index() -> Iterable[Exception]:
+def _do_index(dry: bool=False) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: List[Exception] = []
     def it():
@@ -55,17 +55,23 @@ def _do_index() -> Iterable[Exception]:
                 errors.append(v)
             yield v
 
-    dump_errors = visits_to_sqlite(it())
-    for e in dump_errors:
-        logger.exception(e)
-        errors.append(e)
+    if dry:
+        res = list(it())
+        logger.warning("DRY MODE: won't modify the database. Printing the results out")
+        for v in res:
+            print(v)
+    else:
+        dump_errors = visits_to_sqlite(it())
+        for e in dump_errors:
+            logger.exception(e)
+            errors.append(e)
     return errors
 
 
-def do_index(config_file: Path) -> None:
+def do_index(config_file: Path, dry: bool=False) -> None:
     config.load_from(config_file) # meh.. should be cleaner
     try:
-        errors = list(_do_index())
+        errors = list(_do_index(dry=dry))
     finally:
         config.reset()
     if len(errors) > 0:
@@ -249,6 +255,7 @@ def main() -> None:
     subp = p.add_subparsers(dest='mode', )
     ep = subp.add_parser('index', help='Create/update the link database', formatter_class=F)
     ep.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
+    ep.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False, help="Used for development, you don't need it")
 
@@ -310,7 +317,7 @@ def main() -> None:
 
     with get_tmpdir() as tdir: # TODO??
         if args.mode == 'index':
-             do_index(config_file=args.config)
+             do_index(config_file=args.config, dry=args.dry)
         elif args.mode == 'serve':
             server.run(args)
         elif args.mode == 'demo':
