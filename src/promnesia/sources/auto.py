@@ -17,7 +17,7 @@ import warnings
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, mime, traverse, file_mtime
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, mime, traverse, file_mtime, echain, logger
 from ..config import use_cores
 from ..py37 import nullcontext
 
@@ -91,12 +91,10 @@ def fallback(ex):
                 # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
                 yield from it
             except ModuleNotFoundError as me:
-                # TODO ugh. need to figure out how to attach cause/traceback
                 logger = get_logger()
                 logger.exception(me)
-                logger.warn('while indexing "%s": %s not found, falling back to grep! "pip3 install --user %s" for better support!', path, me.name, me.name)
+                logger.warn('%s: %s not found, falling back to grep! "pip3 install --user %s" for better support!', path, me.name, me.name)
                 yield me
-
                 fallback_active[ex] = True
                 do_fallback = True
         if do_fallback:
@@ -276,26 +274,35 @@ def _index_file(pp: Path, opts: Options) -> Results:
         yield from _index(path=uncomp, opts=opts)
         return
 
+    ex = RuntimeError(f'While indexing {pp}')
+
     ip, pm = by_path(pp)
     if ip is None:
         # TOOD use warning (with mime/ext as key?)
         # TODO only log once? # hmm..
         msg = f'No extractor for suffix {suf}, mime {pm}'
         warnings.warn(msg)
-        yield RuntimeError(msg + f', path {pp}')
+        yield echain(ex, RuntimeError(msg))
         return
 
     logger.debug('indexing via %s: %s', ip.__name__, pp)
-    indexer: Union[Urls, Results] = ip(pp) # type: ignore
-    # TODO careful, filter out obviously not plaintext? maybe mime could help here??
+
+    def indexer() -> Union[Urls, Results]:
+        # eh, annoying.. need to make more generic..
+        idx = ip(pp) # type: ignore
+        try:
+            yield from idx
+        except Exception as e:
+            yield e
 
     root = opts.root
     fallback_dt = file_mtime(pp)
     fallback_loc = Loc.file(pp)
     replacer = opts.replacer
-    for r in indexer:
+    for r in indexer():
         if isinstance(r, Exception):
-            yield r
+            # indexers can rely on this method setting the error context
+            yield echain(ex, r)
             continue
         if isinstance(r, EUrl):
             v = Visit(

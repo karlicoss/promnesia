@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterator, NamedTuple, Optional
 
-from ..common import get_logger, Extraction, Url, PathIsh, Res, Visit, echain, Loc, file_mtime
+from ..common import get_logger, Extraction, Url, PathIsh, Res, Visit, Loc, file_mtime, logger
 
 
 import mistletoe # type: ignore
@@ -72,7 +72,7 @@ class Parser:
         try:
             yield from self._extract(cur, last_block)
         except Exception as e:
-            # TODO log context??
+            logger.exception(e)
             yield e
 
         children = getattr(cur, 'children', [])
@@ -88,12 +88,10 @@ def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
     path = Path(fname)
     fallback_dt = file_mtime(path)
 
-    ex = RuntimeError(f'while extracting from {path}')
-
     p = Parser(path)
     for r in p.walk():
         if isinstance(r, Exception):
-            yield echain(ex, r)
+            yield r
         else:
             yield Visit(
                 url=r.url,
