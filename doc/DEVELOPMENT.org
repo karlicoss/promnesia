@@ -30,3 +30,25 @@ You need:
 Example of running a test:
 
 : PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
+
+* Releasing
+** AMO (addons.mozilla.org)
+
+: cd extension
+: ./build --firefox --lint --release --publish
+
+Note that this will only upload the extension (see [[https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#channel][web-ext sign command reference]] and [[https://github.com/fregante/web-ext-submit#readme][web-ext-submit]] for more info).
+You need go to https://addons.mozilla.org/en-GB/developers/addon/promnesia/versions, there you should see your extension as 'pending approval'. Usually it's approved within minutes.
+
+Sometimes it may be flagged for a review, so you'll need to upload source code.
+You can use =git archive master --output=promnesia-source.zip= if you're asked for it.
+
+** CWS (chrome web store)
+: cd extension
+: ./build --chrome  --lint --release --publish
+
+This command should work in theory and upload automatically... however getting the api keys is super annoying (see [[https://github.com/DrewML/chrome-webstore-upload/blob/master/How%20to%20generate%20Google%20API%20keys.md][this]]).
+
+Also it might still fail anyway, and require you to justify permissions etc..
+If you only release the extension once in a while maybe simpler to [[https://chrome.google.com/webstore/developer/dashboard][upload the zip manually]] :shrug:
+Usually review in CWS takes a couple of days.
