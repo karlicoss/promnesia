@@ -92,21 +92,19 @@ def demo_sources():
             return getattr(module, 'index')
         return inner
 
-    return {
-        # TODO ugh, this runs against merged db
-        # 'chrome' : browser.chrome,
-        # 'firefox': browser.firefox,
-        'auto'    : lazy('auto'),
-        # TODO org mode
-
-        'takeout' : lazy('takeout'),
-        'telegram': lazy('telegram'),
-        'guess'   : lazy('guess')
-    }
-
+    res = {}
+    import ast
+    import promnesia.sources
+    for p in promnesia.sources.__path__: # type: ignore[attr-defined] # should be present
+        for x in sorted(Path(p).glob('*.py')):
+            a = ast.parse(x.read_text())
+            candidates = [c for c in a.body if getattr(c, 'name', None) == 'index']
+            if len(candidates) > 0:
+                res[x.stem] = lazy(x.stem)
+    return res
 
 
-def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name='demo'):
+def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name='demo') -> None:
     from pprint import pprint
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
@@ -276,7 +274,7 @@ def main() -> None:
         '--as',
         choices=list(sorted(demo_sources().keys())),
         default='guess',
-        help='Index the path as',
+        help='Promnesia source to index as (see https://github.com/karlicoss/promnesia/tree/master/src/promnesia/sources for the full list)',
     )
     ap.add_argument('params', nargs='*', help='Optional extra params for the indexer')
 
