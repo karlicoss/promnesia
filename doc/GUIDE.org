@@ -35,7 +35,7 @@ You can find some sceenshot and videos demonstrating the features [[file:../READ
 Sidebar displays a summary of page visits, including direct (exact page) visits and relative (subpage) visits.
 You can toggle the sidebar with:
 
-- hotkey: =Ctrl+Shift+E/Ctrl+Alt+E= (Firefox/Chrome correspondingly)
+- hotkey: =Ctrl+Shift+E/Ctrl+Alt+E= (Chrome/Firefox correspondingly)
 - click on the eye icon
 - automatically on page load (see the extension settings)
 
@@ -64,7 +64,7 @@ Here's an annotated screenshot, demonstrating highlights (click to zoom):
 ** search
 Searches in visits and their contexts. You can toggle search via:
 
-- hotkey: =Ctrl+Shift+H/Ctrl+Alt+H= (Firefox/Chrome correspondingly)
+- hotkey: =Ctrl+Shift+H/Ctrl+Alt+H= (Chrome/Firefox correspondingly)
 - Promnesia context menu
 - sidebar button
 
@@ -78,7 +78,7 @@ Reveals which links on the current page you've already visited before and the po
 
 You can toggle it via:
 
-- hotkey: =Ctrl+Shift+V/Ctrl+Alt+V= (Firefox/Chrome correspondingly)
+- hotkey: =Ctrl+Shift+V/Ctrl+Alt+V= (Chrome/Firefox correspondingly)
 - Promnesia context menu
 - sidebar button
 
