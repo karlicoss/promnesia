@@ -46,6 +46,7 @@ dom_subst = [
 
     ('mobile.twitter.', 'twitter.'),
     ('m.twitter.'     , 'twitter.'),
+    ('nitter.net'     , 'twitter.com'),
 
     ('m.reddit.'      , 'reddit.'),
     ('old.reddit.'    , 'reddit.'),
