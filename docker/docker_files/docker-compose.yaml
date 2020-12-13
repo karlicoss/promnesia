@@ -10,7 +10,7 @@ services:
     volumes:
       - ../user_data:/user_data
     ports:
-      - "13131:13131"
+      - "127.0.0.1:13131:13131"
     restart: always
   indexer:
     depends_on:
