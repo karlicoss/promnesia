@@ -63,6 +63,7 @@ CODE = {
     'text/troff',
     'text/x-asm',
     'text/x-objective-c',
+    'text/x-lisp',
 
     # these didn't have a mime type, or were mistyped?
     'css',
