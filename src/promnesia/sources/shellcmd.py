@@ -1,29 +1,28 @@
 from datetime import datetime
+import re
 from subprocess import check_call, check_output
 from typing import Optional
 from urllib.parse import unquote
 
-from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz
+from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows
 
 
 def index(command: str) -> Results:
     tz = get_system_tz()
 
     def handle_line(line: str) -> Results:
-        #
         # grep dumps this as
         # /path/to/file:lineno:rest
-        fname: Optional[str]
-        lineno: Optional[int]
-        parts = line.split(':', maxsplit=2)
-        url: str
-        if len(parts) == 3:
-            fname   = parts[0]
-            lineno  = int(parts[1])
-            line    = parts[2]
-        else:
+        # note: on Windows, path contains :...
+        m = re.search(r'(.*):(\d+):(.*)', line)
+        if m is None:
+            # todo warn maybe?
             fname = None
             lineno = None
+        else:
+            fname  = m.group(1)
+            lineno = int(m.group(2))
+            line   = m.group(3)
 
         urls = extract_urls(line)
         if len(urls) == 0:
@@ -47,6 +46,7 @@ def index(command: str) -> Results:
                 context=context,
             )
 
+    # FIXME remove shell=True...
     output = check_output(command, shell=True)
     lines = [line.decode('utf-8') for line in output.splitlines()]
     for line in lines:
