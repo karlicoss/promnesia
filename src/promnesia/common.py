@@ -14,6 +14,8 @@ import warnings
 from .cannon import canonify
 
 
+_is_windows = os.name == 'nt'
+
 T = TypeVar('T')
 Res = Union[T, Exception]
 
@@ -400,8 +402,15 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
         yield root
         return
 
-    from subprocess import Popen, PIPE
+    # todo does windows even have symlinks??
+    if _is_windows:
+        # on windows could use 'forfiles'... but probably easier not to bother for now
+        # todo coild use followlinks=True? walk could end up in infinite loop?    
+        for r, _, files in os.walk(root):
+            yield from (Path(r) / f for f in files)
+        return
 
+    from subprocess import Popen, PIPE
     cmd = ['find', *find_args(root, follow=follow)]
     # try to use fd.. it cooperates well with gitignore etc, also faster than find
     for x in ('fd', 'fd-find', 'fdfind'): # has different names on different dists..

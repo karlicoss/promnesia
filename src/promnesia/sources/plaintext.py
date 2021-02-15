@@ -9,6 +9,7 @@ _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@
 
 # -n to output line numbers so we could restore context
 # -I to ignore binaries
+# TODO on findows use 'find'?
 _GREP_CMD = r"""grep --color=never -E -I {grep_args} --exclude-dir=".git" '{regex}' {path} || true"""
 
 
