@@ -1,4 +1,4 @@
-from ..common import get_logger, get_tmpdir, PathIsh
+from ..common import get_logger, get_tmpdir, PathIsh, _is_windows
 
 from pathlib import Path
 
@@ -10,10 +10,14 @@ _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@
 # -n to output line numbers so we could restore context
 # -I to ignore binaries
 # TODO on findows use 'find'?
+# FIXME path should be escaped..
 _GREP_CMD = r"""grep --color=never -E -I {grep_args} --exclude-dir=".git" '{regex}' {path} || true"""
 
 
 def _extract_from_dir(path: str) -> str:
+    if _is_windows:
+        return fr'''findstr /S /P /N "https*://" "{path}\*"'''
+
     return _GREP_CMD.format(
         grep_args="-r -n",
         regex=_URL_REGEX,
@@ -21,6 +25,12 @@ def _extract_from_dir(path: str) -> str:
     )
 
 def _extract_from_file(path: str) -> str:
+    if _is_windows:
+        # /P to skip non-printable
+        # /N to print line number
+        # /S to print filename
+        return f'''findstr /S /P /N "https*://" "{path}"'''
+
     return _GREP_CMD.format(
         grep_args="-n",
         regex=_URL_REGEX,
