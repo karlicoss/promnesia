@@ -110,7 +110,7 @@ Promnesia consists of three parts:
   It's called 'server', but really it's just a regular program with the only purpose to serve the data to the browser.
   It runs locally and you don't have to expose it to the outside.
 
-- indexer: =promensia index= command
+- indexer: =promnesia index= command
 
   Indexer goes through the sources (specified in the config), processes raw data and extracts URLs along with other useful information.
 
@@ -234,7 +234,7 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
 
 - create the config: =promnesia config create=
 
-  The command will put a stub promensia config in your user config directory, e.g. =~/.config/promnesia/config.py= on Linux. (it's possibly different on OSX and Windows, see [[https://github.com/ActiveState/appdirs/blob/3fe6a83776843a46f20c2e5587afcffe05e03b39/appdirs.py#L187-L190][this]] if you're not sure).
+  The command will put a stub promnesia config in your user config directory, e.g. =~/.config/promnesia/config.py= on Linux. (it's possibly different on OSX and Windows, see [[https://github.com/ActiveState/appdirs/blob/3fe6a83776843a46f20c2e5587afcffe05e03b39/appdirs.py#L187-L190][this]] if you're not sure).
 
 - edit the config and add some sources
 
