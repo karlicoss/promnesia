@@ -46,8 +46,7 @@ TakeoutPath = Path
 
 
 def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
-    # TODO replace with my.core.kompress after hpi update (or even use some my. function directly?)
-    from my.kython.kompress import kexists
+    from my.core.kompress import kexists
     # TODO glob
     # TODO not sure about windows path separators??
     spath = 'Takeout/My Activity/' + kind
@@ -89,8 +88,7 @@ def read_search_activity(takeout: TakeoutPath) -> Iterable[Visit]:
 # TODO add this to tests?
 @cachew(cache_path=_cpath('browser_activity'), logger=logger)
 def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
-    # TODO replace with my.core.kompress after hpi update (or even use some my. function directly?)
-    from my.kython.kompress import kexists, kopen
+    from my.core.kompress import kexists, kopen
     # not sure if this deserves moving to HPI? it's pretty trivial for now
     spath = 'Takeout/Chrome/BrowserHistory.json'
 
