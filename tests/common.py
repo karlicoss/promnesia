@@ -1,6 +1,9 @@
 import os
+import sys
 from functools import wraps
 from pathlib import Path
+
+from promnesia.common import _is_windows
 
 import pytest # type: ignore
 
@@ -57,7 +60,9 @@ def tmp_popen(*args, **kwargs):
 # meh
 def promnesia_bin(*args):
     # not sure it's a good idea to diverge, but not sure if there's a better way either?
-    if under_ci():
+    # ugh. on windows there is no bash so can't use the script
+    # whatever...
+    if under_ci() or _is_windows:
         # should be able to use the installed version
         return ['promnesia', *args]
     else:

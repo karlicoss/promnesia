@@ -18,7 +18,7 @@ from pytest import mark # type: ignore
 from common import skip_if_ci, tdata
 from config_tests import with_config
 
-from promnesia.common import Visit, Indexer, Loc, Res, DbVisit
+from promnesia.common import Visit, Indexer, Loc, Res, DbVisit, _is_windows
 
 # TODO need to expire dbcache in tests..
 
@@ -254,6 +254,7 @@ FILTERS = [
         assert len(visits) == 4
 
 
+@pytest.mark.skipif(_is_windows, reason="no grep on windows")
 def test_custom() -> None:
     import promnesia.sources.shellcmd as custom_gen
 

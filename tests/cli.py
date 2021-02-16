@@ -8,7 +8,7 @@ import time
 def ox_hugo_data() -> Path:
     p = Path('tests/testdata/ox-hugo/test/site')
     if not p.exists():
-        raise RuntimeError(f"'{p}' not found! You propably need to run 'git submodules update --init'")
+        raise RuntimeError(f"'{p}' not found! You propably need to run 'git submodule update --init --recursive'")
     assert p.exists(), p
     return p
 
