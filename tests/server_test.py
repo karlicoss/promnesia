@@ -73,8 +73,8 @@ def _test_helper(tmp_path):
     config = tdir / 'test_config.py'
     with config.open('a') as fo:
         fo.write(f"""
-OUTPUT_DIR = '{tdir}'
-CACHE_DIR  = '{cache_dir}'
+OUTPUT_DIR = r'{tdir}'
+CACHE_DIR  = r'{cache_dir}'
 """)
 
     check_call(promnesia_bin('index', '--config', config))
@@ -152,7 +152,7 @@ def index_extra(tdir: Path) -> None:
     # TODO use 'update' mode
     cfg = tdir / 'test_config_extra.py'
     cfg.write_text(f'''
-OUTPUT_DIR = '{tdir}'
+OUTPUT_DIR = r'{tdir}'
 
 # todo would be nice if it wass possible without importing anything at all
 def make_visits():

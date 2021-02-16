@@ -67,7 +67,7 @@ def index_urls(urls: Urls):
     def idx(tdir: Path):
         cfg = tdir / 'test_config.py'
         cfg.write_text(f"""
-OUTPUT_DIR = '{tdir}'
+OUTPUT_DIR = r'{tdir}'
 
 from promnesia.common import Source, Visit, Loc
 from datetime import datetime, timedelta
@@ -95,19 +95,19 @@ def index_hypothesis(tdir: Path) -> None:
     cfg = tdir / 'test_config.py'
     # TODO ok, need to simplify this...
     cfg.write_text(f"""
-OUTPUT_DIR = '{tdir}'
+OUTPUT_DIR = r'{tdir}'
 
 from promnesia.common import Source
 
 def hyp_extractor():
     import my.config
     class user_config:
-        export_path = '{str(hypothesis_data)}/netrights-dashboard-mockup/data/*.json'
+        export_path = r'{str(hypothesis_data)}/netrights-dashboard-mockup/data/*.json'
     my.config.hypothesis = user_config
 
     # todo ideally would use virtualenv?
     import sys
-    sys.path.insert(0, "{str(hypexport_path / 'src')}")
+    sys.path.insert(0, r"{str(hypexport_path / 'src')}")
 
     import promnesia.sources.hypothesis as hypothesis
     yield from hypothesis.index()
@@ -130,7 +130,7 @@ def index_local_chrome(tdir: Path):
 
     cfg = tdir / 'test_config.py'
     cfg.write_text(f"""
-OUTPUT_DIR = '{tdir}'
+OUTPUT_DIR = r'{tdir}'
 
 from promnesia.common import Indexer as I
 # TODO FIXME -- fix back
@@ -214,7 +214,7 @@ def index():
         )
 
 SOURCES = [Source(index)]
-OUTPUT_DIR = '{tdir}'
+OUTPUT_DIR = r'{tdir}'
     """)
     index(cfg)
     visits = query_db_visits(tdir)
@@ -235,7 +235,7 @@ SOURCES = [
     bad_index,
     Source(demo, count=3),
 ]
-OUTPUT_DIR = '{tdir}'
+OUTPUT_DIR = r'{tdir}'
 ''')
     with pytest.raises(SystemExit):
         index(cfg)
