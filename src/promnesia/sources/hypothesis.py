@@ -13,11 +13,14 @@ def index() -> Results:
             continue
         hl = h.highlight
         ann = h.annotation
+        tags = h.tags
         cparts = []
         if hl is not None:
             cparts.append(hl)
         if ann is not None:
             cparts.extend(['comment: ' + ann])
+        if tags:
+            cparts.append(" ".join(f"#{t}" for t in tags))
         yield Visit(
             url=h.url,
             dt=h.created,
