@@ -1,4 +1,4 @@
-from common import tmp_popen
+from common import tmp_popen, promnesia_bin
 
 from pathlib import Path
 from subprocess import Popen
@@ -15,7 +15,7 @@ def ox_hugo_data() -> Path:
 
 def test_demo() -> None:
     import requests
-    with tmp_popen(f'promnesia demo --port 16789 {ox_hugo_data()}'.split()):
+    with tmp_popen(promnesia_bin('demo', '--port', '16789', ox_hugo_data())):
         # FIXME why does it want post??
         time.sleep(2) # meh.. need a generic helper to wait till ready...
         res = {}

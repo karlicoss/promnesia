@@ -318,7 +318,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
         if loc is not None and root is not None:
             # meh. but it works
             # todo potentially, just use dataclasses instead...
-            loc = loc._replace(title=loc.title.replace(str(root) + '/', ''))
+            loc = loc._replace(title=loc.title.replace(str(root) + os.sep, ''))
             v = v._replace(locator=loc)
 
         if replacer is not None:
