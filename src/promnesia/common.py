@@ -348,12 +348,21 @@ def _magic():
     logger = get_logger()
     try:
         import magic # type: ignore
-    except ModuleNotFoundError as me:
-        logger.exception(me)
-        msg = "python-magic is not detected. It's recommended for better file type detection (pip3 install --user python-magic). See https://github.com/ahupp/python-magic#installation"
-        logger.warning(msg)
-        warnings.warn(msg)
-        return lambda path: None # stub
+    except Exception as e:
+        logger.exception(e)
+        defensive_msg: Optional[str] = None
+        if isinstance(e, ModuleNotFoundError) and e.name == 'magic':
+            defensive_msg = "python-magic is not detected. It's recommended for better file type detection (pip3 install --user python-magic). See https://github.com/ahupp/python-magic#installation"
+        elif isinstance(e, ImportError):
+            emsg = getattr(e, 'msg', '') # make mypy happy
+            if 'failed to find libmagic' in emsg: # probably the actual library is missing?...
+                defensive_msg = "couldn't import magic. See https://github.com/ahupp/python-magic#installation"
+        if defensive_msg is not None:
+            logger.warning(defensive_msg)
+            warnings.warn(defensive_msg)
+            return lambda path: None # stub
+        else:
+            raise e
     else:
         mm = magic.Magic(mime=True)
         return mm.from_file
