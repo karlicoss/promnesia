@@ -42,7 +42,7 @@ python.org/one.html ?? https://python.org/two.html some extra text
     }
 
 
-from promnesia.common import PathIsh
+from promnesia.common import PathIsh, _is_windows as windows
 from promnesia.sources.auto import by_path
 
 
@@ -54,7 +54,7 @@ def handled(p: PathIsh) -> bool:
 
 def test_filetypes() -> None:
     # test media
-    for ext in 'avi mp4 mp3 webm mkv'.split():
+    for ext in 'avi mp4 mp3 webm'.split() + ([] if windows else 'mkv'.split()):
         assert handled('file.' + ext)
 
     # images
@@ -63,20 +63,22 @@ def test_filetypes() -> None:
 
     # TODO more granual checks that these are ignored?
     # binaries
-    for ext in 'o class jar sqlite'.split():
+    for ext in 'o sqlite'.split() + ([] if windows else 'class jar'.split()):
         assert handled('file.' + ext)
 
     # these might have potentially some links
     for ext in [
             'svg',
-            'pdf', 'epub', 'djvu', 'ps',
-            'doc', 'docx', 'ppt', 'pptx', 'xsl', 'xslx',
-            'ods', 'odt', 'rtf',
-    ]:
+            'pdf', 'epub', 'ps',
+            'doc', 'ppt', 'xsl',
+            # seriously, windows doesn't know about docx???
+            *([] if windows else 'docx pptx xlsx'.split()),
+            *([] if windows else 'ods odt rtf'.split()),
+    ] + ([] if windows else 'djvu'.split()): 
         assert handled('file.' + ext)
 
     # source code
-    for ext in 'java rs tex el js sh hs pl h py cpp hpp c go css'.split():
+    for ext in 'rs tex el js sh hs pl h py hpp c go css'.split() + ([] if windows else 'java cpp'.split()):
         assert handled('file.' + ext)
 
     assert handled('x.html')

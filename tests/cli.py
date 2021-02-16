@@ -1,6 +1,7 @@
 from common import tmp_popen, promnesia_bin
 
 from pathlib import Path
+import os
 from subprocess import Popen
 import time
 
@@ -33,7 +34,7 @@ def test_demo() -> None:
             raise RuntimeError("Couldn't connect to the server")
         vis = res['visits']
         assert len(vis) > 50, vis
-        mds  = [x for x in vis if x['locator']['title'] == 'content/posts/citations-example-toml.md']
-        orgs = [x for x in vis if x['locator']['title'].startswith('content-org/single-posts/empty_tag.org')]
+        mds  = [x for x in vis if x['locator']['title'] == 'content/posts/citations-example-toml.md'.replace('/', os.sep)]
+        orgs = [x for x in vis if x['locator']['title'].startswith('content-org/single-posts/empty_tag.org'.replace('/', os.sep))]
         assert len(mds ) == 1
         assert len(orgs) == 1
