@@ -1,44 +1,57 @@
 from ..common import get_logger, get_tmpdir, PathIsh, _is_windows
 
 from pathlib import Path
-
-from shlex import quote
+from typing import List
 
 # https://linux-and-mac-hacks.blogspot.co.uk/2013/04/use-grep-and-regular-expressions-to.html
 _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'
 
-# -n to output line numbers so we could restore context
-# -I to ignore binaries
-# TODO on findows use 'find'?
-# FIXME path should be escaped..
-_GREP_CMD = r"""grep --color=never -E -I {grep_args} --exclude-dir=".git" '{regex}' {path} || true"""
+
+# TODO hmm.. this might result in errors because grep exits with 1 if no matches were found... sigh
+def _grep(*, paths: List[str], recursive: bool) -> List[str]:
+    return [
+        'grep',
+        '--color=never',
+        *(['-r'] if recursive else []),
+        '-n', # print line numbers (to restore context)
+        '-I', # ignore binaries
+        '--exclude-dir=".git"',
+        '-E', # 'extended' syntax
+        _URL_REGEX,
+        *paths,
+    ]
+
+def _findstr(*, path: str, recursive: bool) -> List[str]:
+    return [
+        'findstr',
+        '/S',
+        '/P',
+        '/N',
+        'https*://',
+        path + (r'\*' if recursive else ''),
+    ]
 
 
-def _extract_from_dir(path: str) -> str:
+def _extract_from_dir(path: str) -> List[str]:
     if _is_windows:
-        return fr'''findstr /S /P /N "https*://" "{path}\*"'''
+        return _findstr(path=path, recursive=True)
 
-    return _GREP_CMD.format(
-        grep_args="-r -n",
-        regex=_URL_REGEX,
-        path=path, # TODO quote here too?
+    return _grep(
+        paths=[path],
+        recursive=True,
     )
 
-def _extract_from_file(path: str) -> str:
+def _extract_from_file(path: str) -> List[str]:
     if _is_windows:
-        # /P to skip non-printable
-        # /N to print line number
-        # /S to print filename
-        return f'''findstr /S /P /N "https*://" "{path}"'''
+        return _findstr(path=path, recursive=False)
 
-    return _GREP_CMD.format(
-        grep_args="-n",
-        regex=_URL_REGEX,
-        path=f"{quote(path)} /dev/null", # dev null to trick into displaying filename
+    return _grep(
+        paths=[path, '/dev/null'], # dev/null to trick into displaying filename
+        recursive=False,
     )
 
-# TODO eh, misleading..
-def extract_from_path(path: PathIsh) -> str:
+
+def extract_from_path(path: PathIsh) -> List[str]:
     pp = Path(path)
 
     tdir = get_tmpdir()
