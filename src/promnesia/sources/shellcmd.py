@@ -1,6 +1,6 @@
 from datetime import datetime
 import re
-from subprocess import check_call, check_output
+from ..compat import check_call, check_output
 from typing import Optional
 from urllib.parse import unquote
 

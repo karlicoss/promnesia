@@ -72,7 +72,7 @@ class Loc(NamedTuple):
 @lru_cache(1)
 def _detect_mime_handler() -> str:
     def exists(what: str) -> bool:
-        from subprocess import run, PIPE
+        from .compat import run, PIPE
         try:
             r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE)
         except FileNotFoundError:
@@ -419,7 +419,7 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
             yield from (Path(r) / f for f in files)
         return
 
-    from subprocess import Popen, PIPE
+    from .compat import Popen, PIPE
     cmd = ['find', *find_args(root, follow=follow)]
     # try to use fd.. it cooperates well with gitignore etc, also faster than find
     for x in ('fd', 'fd-find', 'fdfind'): # has different names on different dists..
