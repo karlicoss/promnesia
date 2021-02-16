@@ -1,6 +1,6 @@
 from datetime import datetime
 import re
-from ..compat import check_output, Paths
+from ..compat import run, PIPE, Paths
 from typing import Optional, Union
 import warnings
 
@@ -56,7 +56,12 @@ def index(command: Union[str, Paths]) -> Results:
                 context=context,
             )
 
-    output = check_output(cmd)
+    r = run(cmd, stdout=PIPE)
+    if r.returncode > 0:
+        if not (cmd[0] == 'grep' and r.returncode == 1): # ugh. grep returns 1 on no matches...
+            r.check_returncode()
+    output = r.stdout
+    assert output is not None
     lines = [line.decode('utf-8') for line in output.splitlines()]
     for line in lines:
         try:

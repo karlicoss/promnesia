@@ -7,7 +7,8 @@ from typing import List
 _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'
 
 
-# TODO hmm.. this might result in errors because grep exits with 1 if no matches were found... sigh
+# NOTE: grep exist with code 1 on no matches...
+# we hack around it in shellcmd module (search 'grep')
 def _grep(*, paths: List[str], recursive: bool) -> List[str]:
     return [
         'grep',
