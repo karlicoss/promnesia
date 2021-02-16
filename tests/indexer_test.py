@@ -260,7 +260,8 @@ def test_custom() -> None:
 
     visits = as_visits(W(
         custom_gen.index,
-        """grep -Eo -r --no-filename '(http|https)://\S+' """ + tdata('custom'),
+        # meh. maybe should deprecate plain string here...
+        """grep -Eo -r --no-filename (http|https)://\S+ """ + tdata('custom'),
     ))
     # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
     assert len(visits) == 5

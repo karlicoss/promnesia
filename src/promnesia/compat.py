@@ -8,6 +8,7 @@ Paths = Sequence[PathIsh]
 
 # TLDR: py37 on windows has an annoying bug.. https://github.com/karlicoss/promnesia/issues/91#issuecomment-701051074
 def _fix(args: Paths) -> List[str]:
+    assert not isinstance(args, str), args # just to prevent shell=True calls...
     return list(map(str, args))
 
 import subprocess
