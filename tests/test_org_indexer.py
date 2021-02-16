@@ -1,7 +1,16 @@
+from typing import Optional
+
 from promnesia.common import Visit
 from promnesia.sources.org import extract_from_file
 
 from common import tdata, throw
+
+def declrf(s: Optional[str]) -> Optional[str]:
+    if s is None:
+        return None
+    # meh.. not sure how ot handle this properly, ideally should be via pytest?
+    # not sure if should just do it in the indexer? e.g. extension might not like it
+    return s.replace('\r', '')
 
 
 def test_org_indexer() -> None:
@@ -9,12 +18,13 @@ def test_org_indexer() -> None:
 
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
     # TODO not sure about filetags?
-    assert cpp.context == '''
+    exp = '''
 xxx /r/cpp   :cpp:programming:
  I've enjoyed [Chandler Carruth's _There Are No Zero-cost Abstractions_](
  https://www.youtube.com/watch?v=rHIkrotSwcc) very much.
 
 '''.lstrip()
+    assert declrf(cpp.context) == exp
 
     assert cozy.url == 'https://twitter.com/Mappletons/status/1255221220263563269'
 
