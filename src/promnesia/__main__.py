@@ -6,7 +6,7 @@ import sys
 from typing import List, Tuple, Optional, Dict, Sequence, Iterable, Iterator
 from pathlib import Path
 from datetime import datetime
-from subprocess import check_call
+from .compat import check_call
 from tempfile import TemporaryDirectory
 
 
@@ -174,7 +174,7 @@ def config_check(args) -> None:
 
 
 def _config_check(cfg: Path) -> Iterable[Exception]:
-    from subprocess import run
+    from .compat import run
 
     logger.info('config: %s', cfg)
 
@@ -231,7 +231,7 @@ def cli_doctor_db(args) -> None:
         sys.exit(1)
     cmd = [bro, str(db)]
     logger.debug(f'Running {cmd}')
-    from subprocess import Popen
+    from .compat import Popen
     Popen(cmd)
 
 
