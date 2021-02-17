@@ -162,8 +162,10 @@ def search_common(url: str, where):
     config = EnvConfig.get()
 
     logger.info('url: %s', url)
-    original_url = url
-    url = canonify(url)
+    original_url = url and url.strip()
+    url = canonify(original_url)
+    if not url:  # Don't eliminate a "#tag" query.
+        url = original_url
     logger.info('normalised url: %s', url)
 
     visits0: List[Any] = []
