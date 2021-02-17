@@ -67,6 +67,7 @@ Searches in visits and their contexts. You can toggle search via:
 - hotkey: =Ctrl+Shift+H/Ctrl+Alt+H= (Chrome/Firefox correspondingly)
 - Promnesia context menu
 - sidebar button
+- search just for a =#tag=
 
 ** 'search around'
 Shows you browsing history 'around' another visit, useful to remember how/why did you get on the page.
