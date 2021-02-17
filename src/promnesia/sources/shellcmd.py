@@ -24,7 +24,7 @@ def index(command: Union[str, Paths]) -> Results:
         # grep dumps this as
         # /path/to/file:lineno:rest
         # note: on Windows, path contains : after the disk name..
-        m = re.search(r'(.*):(\d+):(.*)', line)
+        m = re.search(r'(.*?):(\d+?):(.*)', line)
         if m is None:
             # todo warn maybe?
             fname = None
