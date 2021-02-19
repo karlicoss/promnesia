@@ -3,7 +3,7 @@ from itertools import chain
 
 from setuptools import setup, find_namespace_packages # type: ignore
 
-def main():
+def main() -> None:
     pkgs = find_namespace_packages('src')
     pkg = min(pkgs)
     setup(

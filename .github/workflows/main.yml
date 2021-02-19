@@ -41,8 +41,12 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: .coverage.mypy_${{ matrix.platform }}_${{ matrix.python-version }}
-        path: .coverage.mypy/
+        name: .coverage.mypy-core_${{ matrix.platform }}_${{ matrix.python-version }}
+        path: .coverage.mypy-core/
+    - uses: actions/upload-artifact@v2
+      with:
+        name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
+        path: .coverage.mypy-misc/
 
   end2end_tests:
     needs: [build] # just so it doesn't uses less resources
