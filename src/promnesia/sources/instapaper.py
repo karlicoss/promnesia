@@ -12,14 +12,9 @@ def index() -> Results:
         bm = p.bookmark
         hls = p.highlights
 
-        def visit(**kwargs) -> Visit:
-            return Visit(
-                url=bm.url,
-                **kwargs,
-            )
-
         if len(hls) == 0:
-            yield visit(
+            yield Visit(
+                url=bm.url,
                 dt=bm.dt,
                 context=None,
                 locator=Loc.make(title='instapaper', href=bm.instapaper_link),
@@ -29,7 +24,8 @@ def index() -> Results:
                 cparts = [hl.text]
                 if hl.note is not None:
                     cparts.append('comment: ' + hl.note)
-                yield visit(
+                yield Visit(
+                    url=bm.url,
                     dt=hl.dt,
                     context='\n'.join(cparts),
                     locator=Loc.make(title='instapaper', href=hl.instapaper_link),

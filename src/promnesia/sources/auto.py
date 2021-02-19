@@ -17,7 +17,7 @@ import warnings
 
 import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Results, mime, traverse, file_mtime, echain, logger
+from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Result, Results, mime, traverse, file_mtime, echain, logger
 from ..config import use_cores
 from ..py37 import nullcontext
 
@@ -25,7 +25,7 @@ from ..py37 import nullcontext
 from .filetypes import EUrl
 
 
-def _collect(thing, path: List[str], result: List[EUrl]):
+def _collect(thing, path: List[str], result: List[EUrl]) -> None:
     if isinstance(thing, str):
         ctx: Ctx = tuple(path) # type: ignore
         result.extend([EUrl(url=u, ctx=ctx) for u in extract_urls(thing)])
@@ -162,7 +162,7 @@ Replacer = Optional[Callable[[str], str]]
 def index(
         *paths: Union[PathIsh],
         ignored: Union[Sequence[str], str]=(),
-        follow=True,
+        follow: bool=True,
         replacer: Replacer=None,
 ) -> Results:
     '''
@@ -193,7 +193,7 @@ class Options(NamedTuple):
     root: Optional[Path]=None
 
 
-def _index_file_aux(path: Path, opts: Options):
+def _index_file_aux(path: Path, opts: Options) -> Union[Exception, List[Result]]:
     # just a helper for the concurrent version (the generator isn't picklable)
     try:
         return list(_index_file(path, opts=opts))
@@ -244,7 +244,9 @@ def _index(path: Path, opts: Options) -> Results:
                 yield from r
 
 
-def by_path(pp: Path):
+Mime = str
+from .filetypes import Ex # meh
+def by_path(pp: Path) -> Tuple[Optional[Ex], Optional[Mime]]:
     suf = pp.suffix.lower()
     # firt check suffixes, it's faster
     s = type2idx(suf)

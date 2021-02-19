@@ -5,19 +5,16 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
 from ..common import logger, Results, Visit, Loc, extract_urls
 
 
-def get(o, k):
-    if isinstance(o, dict):
-        return o[k]
-    else:
-        return getattr(o, k)
-
-
 def index() -> Results:
     from . import hpi
     import my.twitter.all as tw
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0
-    for t in tw.tweets():
+
+    from typing import Iterable
+    from my.twitter.archive import Tweet # todo extract to common or something?
+    tweets: Iterable[Tweet] = tw.tweets()
+    for t in tweets:
         processed += 1
         try:
             urls = t.urls
