@@ -4,7 +4,7 @@ import traceback
 from typing import Set, Iterable, Sequence, Union
 
 from .cannon import CanonifyException
-from .common import Res, SourceName, DbVisit, Visit, get_logger, Indexer, Filter, Url
+from .common import Res, SourceName, DbVisit, Visit, get_logger, Indexer, Filter, Url, Results
 
 
 logger = get_logger()
@@ -49,7 +49,7 @@ def extract_visits(extractor, *, src: SourceName) -> Iterable[Res[DbVisit]]:
     logger.info('extracting via %s ...', log_info)
 
     try:
-        vit = extr()
+        vit: Results = extr()
     except Exception as e:
         # todo critical error?
         logger.exception(e)

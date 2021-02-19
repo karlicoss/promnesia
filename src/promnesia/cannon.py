@@ -27,13 +27,13 @@ from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, S
 
 # TODO perhaps archive.org contributes to both?
 
-def try_cutl(prefix, s):
+def try_cutl(prefix: str, s: str) -> str:
     if s.startswith(prefix):
         return s[len(prefix):]
     else:
         return s
 
-def try_cutr(suffix, s):
+def try_cutr(suffix: str, s: str) -> str:
     if s.endswith(suffix):
         return s[:-len(suffix)]
     else:
@@ -57,7 +57,7 @@ dom_subst = [
     ('m.facebook.'    , 'facebook.'),
 ]
 
-def canonify_domain(dom: str):
+def canonify_domain(dom: str) -> str:
     # TODO perhaps not necessary now that I'm checking suffixes??
     for st in ('www.', 'amp.'):
         dom = try_cutl(st, dom)
@@ -129,13 +129,13 @@ class Spec(NamedTuple):
         return None
 
     @classmethod
-    def make(cls, **kwargs):
+    def make(cls, **kwargs) -> 'Spec':
         return cls(**kwargs)
 
-S = Spec.make
+S = Spec
 
 # TODO perhaps these can be machine learnt from large set of urls?
-specs = {
+specs: Dict[str, Spec] = {
     'youtube.com': S(
         # TODO search_query?
         qkeep=[ # note: experimental.. order matters here
@@ -215,7 +215,7 @@ Frag = Any
 Parts = Sequence[Tuple[str, str]]
 
 
-def _yc(domain, path, qq: Parts, frag: Frag) -> Tuple[Any, Any, Parts, Frag]:
+def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> Tuple[Any, Any, Parts, Frag]:
     if path[:5] == '/from':
         site = dict(qq).get('site')
         if site is not None:
@@ -738,7 +738,7 @@ def groups(it, args): # pragma: no cover
 
 
 
-def display(it, args): # pragma: no cover
+def display(it, args) -> None: # pragma: no cover
     # TODO better name?
     import difflib
     # pylint: disable=import-error
@@ -796,7 +796,7 @@ def display(it, args): # pragma: no cover
             stdout.write(f'{org_}\n{can_}\n---\n')
 
 
-def main(): # pragma: no cover
+def main() -> None: # pragma: no cover
     import argparse
     p = argparse.ArgumentParser(epilog='''
 - sqlite3 promnesia.sqlite 'select distinct orig_url from visits' | cannon.py --domains

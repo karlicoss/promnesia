@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 __package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
 
+import argparse
 import os
 import sys
 import json
@@ -13,7 +14,7 @@ from typing import Collection, List, NamedTuple, Dict, Optional, Any, Tuple
 from cachew import NTBinder
 
 import pytz
-from pytz.tzinfo import BaseTzInfo # type: ignore
+from pytz import BaseTzInfo
 
 import hug # type: ignore
 import hug.types as T # type: ignore
@@ -25,6 +26,9 @@ from sqlalchemy.sql import text # type: ignore
 
 from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, get_system_tz
 from .cannon import canonify
+
+
+Json = Dict[str, Any]
 
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
@@ -85,7 +89,7 @@ class EnvConfig:
 
 # todo how to return exception in error?
 
-def as_json(v: DbVisit) -> Dict:
+def as_json(v: DbVisit) -> Json:
     # yep, this is NOT %Y-%m-%d as is seems to be the only format with timezone that Date.parse in JS accepts. Just forget it.
     dts = v.dt.strftime('%d %b %Y %H:%M:%S %z')
     loc = v.locator
@@ -140,14 +144,14 @@ def _get_stuff(db_path: PathWithMtime):
     return engine, binder, table
 
 
-def get_stuff(db_path=None): # TODO better name
+def get_stuff(db_path: Optional[Path]=None): # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
     if db_path is None:
         db_path = get_db_path()
     return _get_stuff(PathWithMtime.make(db_path))
 
 
-def db_stats(*args, **kwargs) -> Dict[str, Any]:
+def db_stats(*args, **kwargs) -> Json:
     engine, binder, table = get_stuff(*args, **kwargs)
     query = table.select().count()
     with engine.connect() as conn:
@@ -157,7 +161,7 @@ def db_stats(*args, **kwargs) -> Dict[str, Any]:
     }
 
 
-def search_common(url: str, where):
+def search_common(url: str, where) -> Json:
     logger = get_logger()
     config = EnvConfig.get()
 
@@ -184,7 +188,7 @@ def search_common(url: str, where):
     with engine.connect() as conn:
         try:
             # TODO make more defensive here
-            visits = [binder.from_row(row) for row in conn.execute(query)]
+            visits: List[DbVisit] = [binder.from_row(row) for row in conn.execute(query)]
         except exc.OperationalError as e:
             if getattr(e, 'msg', None) == 'no such table: visits':
                 logger.warn('you may have to run indexer first!')
@@ -228,7 +232,7 @@ def status():
         logger.exception(e)
         db_path = f'ERROR: db not found/unreadable (expected path {db}). You probably forgot to run indexer first. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org'
 
-    stats: Dict[str, Any]
+    stats: Json
     try:
         stats = db_stats(db)
     except Exception as e:
@@ -248,6 +252,8 @@ def status():
     }
 
 
+# TODO ugh. hug doesn't like return Json type??
+# fails with "TypeError: Type Dict cannot be instantiated; use dict() instead"
 @hug.local()
 @hug.post('/visits')
 def visits(
@@ -405,7 +411,7 @@ def _run(*, port: str, quiet: bool, config: ServerConfig) -> None:
     )
 
 
-def run(args) -> None:
+def run(args: argparse.Namespace) -> None:
     _run(
         port=args.port,
         quiet=args.quiet,
@@ -420,7 +426,7 @@ def default_db_path() -> Path:
     return default_output_dir() / 'promnesia.sqlite'
 
 
-def setup_parser(p) -> None:
+def setup_parser(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         '--port',
         type=str,

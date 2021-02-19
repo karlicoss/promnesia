@@ -49,7 +49,7 @@ def iter_all_visits() -> Iterator[Res[DbVisit]]:
 def _do_index(dry: bool=False) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: List[Exception] = []
-    def it():
+    def it() -> Iterable[Res[DbVisit]]:
         for v in iter_all_visits():
             if isinstance(v, Exception):
                 errors.append(v)
@@ -104,7 +104,7 @@ def demo_sources():
     return res
 
 
-def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name='demo') -> None:
+def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name: str='demo') -> None:
     from pprint import pprint
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
@@ -150,7 +150,7 @@ def read_example_config() -> str:
     return inspect.getsource(config_example)
 
 
-def config_create(args) -> None:
+def config_create(args: argparse.Namespace) -> None:
     cfg = user_config_file()
     cfgdir = cfg.parent
     if cfgdir.exists():
@@ -163,8 +163,8 @@ def config_create(args) -> None:
         logger.info("Created a stub config in '%s'. Edit it to tune to your liking. (see https://github.com/karlicoss/promnesia#setup for more info)", cfg)
 
 
-def config_check(args) -> None:
-    cfg = args.config
+def config_check(args: argparse.Namespace) -> None:
+    cfg: Path = args.config
     errors = list(_config_check(cfg))
     if len(errors) == 0:
         logger.info('OK')
@@ -178,7 +178,7 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
 
     logger.info('config: %s', cfg)
 
-    def check(cmd):
+    def check(cmd) -> Iterable[Exception]:
         logger.debug(' '.join(map(str, cmd)))
         res = run(cmd)
         if res.returncode > 0:
@@ -210,7 +210,7 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
     yield from check([sys.executable, cfg])
 
 
-def cli_doctor_db(args) -> None:
+def cli_doctor_db(args: argparse.Namespace) -> None:
     # todo could fallback to 'sqlite3 <db> .dump'?
     config.load_from(args.config) # TODO meh
     db = config.get().db
@@ -235,7 +235,7 @@ def cli_doctor_db(args) -> None:
     Popen(cmd)
 
 
-def cli_doctor_server(args) -> None:
+def cli_doctor_server(args: argparse.Namespace) -> None:
     port = args.port
     endpoint = f'http://localhost:{port}/status'
     cmd = ['curl', endpoint]

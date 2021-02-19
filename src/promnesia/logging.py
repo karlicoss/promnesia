@@ -6,7 +6,8 @@ Default logger is a bit, see 'test'/run this file for a demo
 def test() -> None:
     import logging
     import sys
-    M = lambda s: print(s, file=sys.stderr)
+    from typing import Callable
+    M: Callable[[str], None]  = lambda s: print(s, file=sys.stderr)
 
     M("   Logging module's deafults are not great...'")
     l = logging.getLogger('test_logger')
@@ -27,7 +28,7 @@ def test() -> None:
 
 
 import logging
-from typing import Union, Optional
+from typing import Union, Optional, cast
 import os
 import warnings
 
@@ -85,11 +86,11 @@ def setup_logger(logger: logging.Logger, level: LevelIsh) -> None:
 
 
 class LazyLogger(logging.Logger):
-    def __new__(cls, name, level: LevelIsh = 'INFO'):
+    def __new__(cls, name: str, level: LevelIsh = 'INFO') -> 'LazyLogger':
         logger = logging.getLogger(name)
 
         # this is called prior to all _log calls so makes sense to do it here?
-        def isEnabledFor_lazyinit(*args, logger=logger, orig=logger.isEnabledFor, **kwargs):
+        def isEnabledFor_lazyinit(*args, logger=logger, orig=logger.isEnabledFor, **kwargs) -> bool:
             if not getattr(logger, _init_done, False):
                 setup_logger(logger, level=level)
                 setattr(logger, _init_done, True)
@@ -100,7 +101,7 @@ class LazyLogger(logging.Logger):
         if not hasattr(logger, _init_done):
             setattr(logger, _init_done, False) # will setup on the first call
             logger.isEnabledFor = isEnabledFor_lazyinit  # type: ignore[assignment]
-        return logger
+        return cast(LazyLogger, logger)
 
 
 # todo also save full log in a file?
@@ -111,7 +112,7 @@ class CollapseDebugHandler(logging.StreamHandler):
     '''
     last = False
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             msg = self.format(record)
             cur = record.levelno == logging.DEBUG and '\n' not in msg
