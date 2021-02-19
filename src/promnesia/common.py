@@ -1,7 +1,7 @@
 from collections.abc import Sized
 from datetime import datetime, date
 import os
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar
+from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar, TYPE_CHECKING
 from pathlib import Path
 from glob import glob
 import itertools
@@ -37,7 +37,7 @@ class Loc(NamedTuple):
         return cls(title=title, href=href)
 
     @classmethod
-    def file(cls, path: PathIsh, line: Optional[int]=None, relative_to: Optional[Path]=None):
+    def file(cls, path: PathIsh, line: Optional[int]=None, relative_to: Optional[Path]=None) -> 'Loc':
         lstr = '' if line is None else f':{line}'
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
@@ -142,6 +142,7 @@ class DbVisit(NamedTuple):
     @staticmethod
     def make(p: Visit, src: SourceName) -> Res['DbVisit']:
         try:
+            # hmm, mypy gets a bit confused here.. presumably because datetime is always datetime (but date is not datetime)
             if isinstance(p.dt, datetime):
                 dt = p.dt
             elif isinstance(p.dt, date):
@@ -180,10 +181,11 @@ def get_logger() -> logging.Logger:
 
 
 
+import tempfile
 # kinda singleton
 @lru_cache(1)
-def get_tmpdir():
-    import tempfile
+def get_tmpdir() -> tempfile.TemporaryDirectory:
+    # todo use appdirs?
     tdir = tempfile.TemporaryDirectory(suffix="promnesia")
     return tdir
 
@@ -237,7 +239,7 @@ class PathWithMtime(NamedTuple):
     mtime: float
 
     @classmethod
-    def make(cls, p: Path):
+    def make(cls, p: Path) -> 'PathWithMtime':
         return cls(
             path=p,
             mtime=p.stat().st_mtime,
@@ -245,7 +247,7 @@ class PathWithMtime(NamedTuple):
 
 
 # todo not sure about this...
-def _guess_name(thing) -> str:
+def _guess_name(thing: Any) -> str:
     from types import ModuleType
     guess = ''
     if isinstance(thing, ModuleType):
@@ -260,7 +262,7 @@ def _guess_name(thing) -> str:
     return guess
 
 
-def _get_index_function(thing):
+def _get_index_function(thing: Any):
     # see config_tests
     # not sure about this
     if hasattr(thing, 'index'):
@@ -344,7 +346,7 @@ def default_cache_dir() -> Path:
 # make it lazy, otherwise it might crash on module import (e.g. on Windows)
 # ideally would be nice to fix it properly https://github.com/ahupp/python-magic#windows
 @lru_cache(1)
-def _magic():
+def _magic() -> Callable[[PathIsh], Optional[str]]:
     logger = get_logger()
     try:
         import magic # type: ignore
@@ -368,6 +370,7 @@ def _magic():
         return mm.from_file
 
 
+# todo annoying... can't return module in mypy
 @lru_cache(1)
 def _mimetypes():
     import mimetypes
@@ -452,7 +455,7 @@ def get_system_zone() -> str:
 
 
 @lru_cache(1)
-def get_system_tz():
+def get_system_tz() -> pytz.BaseTzInfo:
     zone = get_system_zone()
     try:
         return pytz.timezone(zone)

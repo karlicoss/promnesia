@@ -97,7 +97,8 @@ def _parse_isoformat_time(tstr):
 
     return time_comps
 
-def fromisoformat(date_string, cls=datetime):
+from typing import Type
+def fromisoformat(date_string: str, cls: Type[datetime]=datetime) -> datetime:
     """Construct a datetime from the output of datetime.isoformat()."""
     if not isinstance(date_string, str):
         raise TypeError('fromisoformat: argument must be str')
@@ -122,7 +123,8 @@ def fromisoformat(date_string, cls=datetime):
     return cls(*(date_components + time_components))
 
 
+from typing import Iterator
 from contextlib import contextmanager
 @contextmanager
-def nullcontext():
+def nullcontext() -> Iterator[None]:
     yield
