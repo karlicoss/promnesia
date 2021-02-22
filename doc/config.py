@@ -23,7 +23,17 @@ from promnesia.sources import guess
 
 # this is an incomplete list, just the (perhaps) most interesting ones
 from promnesia.sources import telegram
-from promnesia.sources import takeout, instapaper, pocket, fbmessenger, twitter, roamresearch, hypothesis, rss
+from promnesia.sources import (
+    fbmessenger,
+    hypothesis,
+    instapaper,
+    pocket,
+    roamresearch,
+    rss,
+    takeout,
+    twitter,
+    viber_desktop,
+)
 
 
 # NOTE: at the moment try to avoid using complex sources names
@@ -67,6 +77,12 @@ SOURCES = [
     Source(
         telegram.index,
         '/data/telegram/database.sqlite',
+    ),
+
+    # Uses the local SQLite file of Viber Desktop:
+    Source(
+        viber_desktop.index, 
+        "~/.ViberPC/your-tel-number/viber.db",
     ),
 
     # NOTE: to configure the following modules you need to set up HPI package (https://github.com/karlicoss/HPI#whats-inside)

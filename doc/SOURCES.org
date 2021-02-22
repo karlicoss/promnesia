@@ -136,6 +136,11 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
 
+- [[file:../src/promnesia/sources/viber_desktop.py][promnesia.sources.viber_desktop]]
+
+  Uses the local Viber Desktop SQLite databse in your home directory, 
+  usually in =~/.ViberPC/your-tel-number/viber.db=.
+
 - [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
