@@ -42,7 +42,9 @@ def dataset_readonly(db: Path):
 def index(database: PathIsh) -> Results:
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
-    path = Path(database)
+    # TODO for displaying maybe better not to expand/absolute, 
+    # but it's safer for debugging resolved.
+    path = Path(database).expanduser().resolve().absolute()
     assert path.is_file(), path
 
     # TODO context manager?
