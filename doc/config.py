@@ -32,7 +32,7 @@ from promnesia.sources import (
     rss,
     takeout,
     twitter,
-    viber_desktop,
+    viber,
 )
 
 
@@ -81,7 +81,7 @@ SOURCES = [
 
     # Uses the local SQLite file of Viber Desktop:
     Source(
-        viber_desktop.index, 
+        viber.index, 
         "~/.ViberPC/your-tel-number/viber.db",
     ),
 

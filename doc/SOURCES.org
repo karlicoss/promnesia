@@ -136,7 +136,7 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
 
-- [[file:../src/promnesia/sources/viber_desktop.py][promnesia.sources.viber_desktop]]
+- [[file:../src/promnesia/sources/viber.py][promnesia.sources.viber]]
 
   Uses the local Viber Desktop SQLite databse in your home directory, 
   usually in =~/.ViberPC/your-tel-number/viber.db=.
