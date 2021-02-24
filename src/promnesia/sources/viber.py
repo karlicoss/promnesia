@@ -146,19 +146,18 @@ def index(database: PathIsh) -> Results:
     database = Path(database).expanduser().resolve().absolute()
     assert database.is_file(), database
 
-    # TODO context manager?
-    db = dataset_readonly(database)  # TODO could check is_file inside
     query_str = messages_query()
-
-    for row in db.query(query_str):
-        try:
-            yield from _handle_row(row)
-        except Exception as ex:
-            # TODO: also insert errors in db
-            logger.warning(
-                "Cannot extract row: %s, due to: %s(%s)",
-                row,
-                type(ex).__name__,
-                ex,
-                exc_info=is_debug,
-            )
+    
+    with dataset_readonly(database) as db:
+        for row in db.query(query_str):
+            try:
+                yield from _handle_row(row)
+            except Exception as ex:
+                # TODO: also insert errors in db
+                logger.warning(
+                    "Cannot extract row: %s, due to: %s(%s)",
+                    row,
+                    type(ex).__name__,
+                    ex,
+                    exc_info=is_debug,
+                )
