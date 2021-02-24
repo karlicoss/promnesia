@@ -4,24 +4,11 @@ Adapted from `telegram.py` to read from `~/.ViberPC/XYZ123/viber.db`
 
 import json
 import logging
-from os import PathLike
 import textwrap
+from os import PathLike
 from pathlib import Path
-from typing import Optional, TypeVar, Union
 
-from ..common import (
-    Loc,
-    PathIsh,
-    Results,
-    Visit,
-    extract_urls,
-    from_epoch,
-)
-
-# TODO potentially, belongs to my. package
-
-# TODO kython?
-T = TypeVar("T")
+from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
 
 logger = logging.getLogger(__name__)
 
