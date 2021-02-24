@@ -75,13 +75,13 @@ SOURCES = [
     # Uses the output of telegram_backup tool: https://github.com/fabianonline/telegram_backup#usage
     # name will be set to 'telegram' by default
     Source(
-        telegram.index,
+        telegram,
         '/data/telegram/database.sqlite',
     ),
 
     # Uses the local SQLite file of Viber Desktop:
     Source(
-        viber.index, 
+        viber, 
         "~/.ViberPC/your-tel-number/viber.db",
     ),
 
