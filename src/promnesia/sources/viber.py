@@ -7,6 +7,7 @@ import logging
 import textwrap
 from os import PathLike
 from pathlib import Path
+from typing import Iterable
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
 
@@ -158,19 +159,27 @@ def _handle_row(row: dict, sqlite_path: PathLike) -> Results:
         )
 
 
-def index(database: PathIsh) -> Results:
+def _get_files(path: PathIsh) -> Iterable[Path]:
+    """
+    Expand homedir(`~`) and return glob paths matched.
+
+    Expansion code copied from https://stackoverflow.com/a/51108375/548792
+    """
+    path = Path(path).expanduser()
+    parts = path.parts[1:] if path.is_absolute() else path.parts
+    return Path(path.root).glob(str(Path("").joinpath(*parts)))
+
+
+def _harvest_db(db_path: PathIsh, msgs_query: str):
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
     # Note: for displaying maybe better not to expand/absolute,
     # but it's safer for debugging resolved.
-    database = Path(database).expanduser().resolve().absolute()
-    assert database.is_file(), database
+    db_path = db_path.resolve()
+    sqlite_path: Path = _ensure_sqlite_hardlink(db_path)
 
-    sqlite_path: Path = _ensure_sqlite_hardlink(database)
-    query_str = messages_query()
-
-    with _dataset_readonly(database) as db:
-        for row in db.query(query_str):
+    with _dataset_readonly(db_path) as db:
+        for row in db.query(msgs_query):
             try:
                 yield from _handle_row(row, sqlite_path)
             except Exception as ex:
@@ -182,3 +191,16 @@ def index(database: PathIsh) -> Results:
                     ex,
                     exc_info=is_debug,
                 )
+
+
+def index(db_path: PathIsh = "~/.ViberPC/*/viber.db") -> Results:
+    logger.debug("Expanding path(s): %s", db_path)
+    glob_paths = list(_get_files(db_path))
+    logger.debug("Expanding path(s): %s", glob_paths)
+    assert glob_paths, f"No Viber-desktop sqlite found: {db_path}"
+
+    msgs_query = messages_query()
+
+    for db_path in _get_files(db_path):
+        assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file: {db_path}"
+        yield from _harvest_db(db_path, msgs_query)

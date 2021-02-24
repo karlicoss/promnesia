@@ -79,11 +79,12 @@ SOURCES = [
         '/data/telegram/database.sqlite',
     ),
 
-    # Uses the local SQLite file of Viber Desktop:
-    Source(
-        viber, 
-        "~/.ViberPC/your-tel-number/viber.db",
-    ),
+    # Uses all local SQLite files found in your Viber Desktop configurations
+    # (one directory for each telephone number):
+    #     ~/.ViberPC/**/viber.db
+    #
+    # You may modify that by providing a 2nd ``Source()`` argument.
+    viber, 
 
     # NOTE: to configure the following modules you need to set up HPI package (https://github.com/karlicoss/HPI#whats-inside)
     # see HPI setup guide    : https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org

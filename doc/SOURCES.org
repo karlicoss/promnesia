@@ -138,8 +138,8 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
 - [[file:../src/promnesia/sources/viber.py][promnesia.sources.viber]]
 
-  Uses the local Viber Desktop SQLite databse in your home directory, 
-  usually in =~/.ViberPC/your-tel-number/viber.db=.
+  Uses all local SQLite files found in your Viber Desktop configurations:
+  usually in =~/.ViberPC/**/viber.db= (one directory for each telephone number).
 
 - [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
 
