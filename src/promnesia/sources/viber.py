@@ -41,11 +41,11 @@ def index(database: PathIsh) -> Results:
 
     # Note: for displaying maybe better not to expand/absolute,
     # but it's safer for debugging resolved.
-    path = Path(database).expanduser().resolve().absolute()
-    assert path.is_file(), path
+    database = Path(database).expanduser().resolve().absolute()
+    assert database.is_file(), database
 
     # TODO context manager?
-    db = dataset_readonly(path)  # TODO could check is_file inside
+    db = dataset_readonly(database)  # TODO could check is_file inside
 
     query_str = textwrap.dedent(
         f"""
