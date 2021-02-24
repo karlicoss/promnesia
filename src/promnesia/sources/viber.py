@@ -7,11 +7,18 @@ import logging
 import textwrap
 from pathlib import Path
 from typing import Optional, TypeVar, Union
-from urllib.parse import \
-    unquote  # TODO mm, make it easier to rememember to use...
+from urllib.parse import unquote  # TODO mm, make it easier to rememember to use...
 
-from ..common import (Loc, PathIsh, Results, Visit, echain, extract_urls,
-                      from_epoch, get_logger)
+from ..common import (
+    Loc,
+    PathIsh,
+    Results,
+    Visit,
+    echain,
+    extract_urls,
+    from_epoch,
+    get_logger,
+)
 
 # TODO potentially, belongs to my. package
 
@@ -42,7 +49,7 @@ def dataset_readonly(db: Path):
 def index(database: PathIsh) -> Results:
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
-    # Note: for displaying maybe better not to expand/absolute, 
+    # Note: for displaying maybe better not to expand/absolute,
     # but it's safer for debugging resolved.
     path = Path(database).expanduser().resolve().absolute()
     assert path.is_file(), path
