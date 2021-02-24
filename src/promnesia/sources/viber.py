@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO move to common?
-def dataset_readonly(db: Path):
+def _dataset_readonly(db: Path):
     # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
     import sqlite3
 
@@ -38,6 +38,11 @@ def dataset_readonly(db: Path):
 
 
 def messages_query() -> str:
+    """
+    An SQL-query returning 1 row for each message
+
+    A non-private method, to facilitate experimentation.
+    """
     return textwrap.dedent(
         f"""
         /*
@@ -174,7 +179,7 @@ def index(database: PathIsh) -> Results:
     sqlite_path: Path = _ensure_sqlite_hardlink(database)
     query_str = messages_query()
 
-    with dataset_readonly(database) as db:
+    with _dataset_readonly(database) as db:
         for row in db.query(query_str):
             try:
                 yield from _handle_row(row, sqlite_path)
