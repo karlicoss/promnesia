@@ -7,17 +7,14 @@ import logging
 import textwrap
 from pathlib import Path
 from typing import Optional, TypeVar, Union
-from urllib.parse import unquote  # TODO mm, make it easier to rememember to use...
 
 from ..common import (
     Loc,
     PathIsh,
     Results,
     Visit,
-    echain,
     extract_urls,
     from_epoch,
-    get_logger,
 )
 
 # TODO potentially, belongs to my. package
@@ -146,7 +143,7 @@ def index(database: PathIsh) -> Results:
 
         for u in urls:
             yield Visit(
-                url=unquote(u),
+                url=u,  # URLs in Viber's SQLite are not quoted
                 dt=dt,
                 context=text,
                 locator=Loc.make(
