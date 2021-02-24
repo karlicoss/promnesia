@@ -4,6 +4,7 @@ Adapted from `telegram.py` to read from `~/.ViberPC/XYZ123/viber.db`
 
 import json
 import logging
+from os import PathLike
 import textwrap
 from pathlib import Path
 from typing import Optional, TypeVar, Union
@@ -123,45 +124,46 @@ def _parse_json_title(js) -> str:
             return js.get("Title")
 
 
+def _handle_row(row: dict, sqlite_path: PathLike) -> Results:
+    text = row["text"]
+    urls = extract_urls(text)
+    if not urls:
+        return
+
+    dt = from_epoch(row["time"] // 1000)  # timestamps are stored x100 this db
+    mid: str = row["mid"]
+    # TODO perhaps we could be defensive with null sender/chat etc and still emit the Visit
+    sender: str = row["sender"]
+    chatname: str = row["chatname"]
+    sender: str = row["sender"]
+    tags: str = row["tags"]
+    infojson: str = row["infojson"]
+
+    assert (
+        text and mid and sender and chatname
+    ), f"sql-query should eliminate messages without 'http' or missing ids: {row}"
+
+    if tags and tags.strip():
+        tags = "".join(f"#{t}" for t in tags.split())
+        text = f"{text}\n\n{tags}"
+
+    url_title = _parse_json_title(infojson)
+    if url_title:
+        text = f"title: {url_title}\n\n{text}"
+
+    for u in urls:
+        yield Visit(
+            url=u,  # URLs in Viber's SQLite are not quoted
+            dt=dt,
+            context=text,
+            locator=Loc.make(
+                title=f"chat({mid}) from {sender}@{chatname}",
+                href=f"file://{sqlite_path}#!Messages.EventId={mid}",
+            ),
+        )
+
+
 def index(database: PathIsh) -> Results:
-    def _handle_row(row) -> Results:
-        text = row["text"]
-        urls = extract_urls(text)
-        if not urls:
-            return
-
-        dt = from_epoch(row["time"] // 1000)  # timestamps are stored x100 this db
-        mid: str = row["mid"]
-        # TODO perhaps we could be defensive with null sender/chat etc and still emit the Visit
-        sender: str = row["sender"]
-        chatname: str = row["chatname"]
-        sender: str = row["sender"]
-        tags: str = row["tags"]
-        infojson: str = row["infojson"]
-
-        assert (
-            text and mid and sender and chatname
-        ), f"sql-query should eliminate messages without 'http' or missing ids: {row}"
-
-        if tags and tags.strip():
-            tags = "".join(f"#{t}" for t in tags.split())
-            text = f"{text}\n\n{tags}"
-
-        url_title = _parse_json_title(infojson)
-        if url_title:
-            text = f"title: {url_title}\n\n{text}"
-
-        for u in urls:
-            yield Visit(
-                url=u,  # URLs in Viber's SQLite are not quoted
-                dt=dt,
-                context=text,
-                locator=Loc.make(
-                    title=f"chat({mid}) from {sender}@{chatname}",
-                    href=f"file://{sqlite_path}#!Messages.EventId={mid}",
-                ),
-            )
-
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
     # Note: for displaying maybe better not to expand/absolute,
@@ -175,7 +177,7 @@ def index(database: PathIsh) -> Results:
     with dataset_readonly(database) as db:
         for row in db.query(query_str):
             try:
-                yield from _handle_row(row)
+                yield from _handle_row(row, sqlite_path)
             except Exception as ex:
                 # TODO: also insert errors in db
                 logger.warning(
