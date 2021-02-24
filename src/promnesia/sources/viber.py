@@ -116,6 +116,9 @@ def _ensure_sqlite_hardlink(db_path: Path) -> Path:
         sqlite_path = db_path.with_suffix(new_suffix)
         try:
             db_path.link_to(sqlite_path)
+            logger.info(
+                "Hard-link db-file (for locator-hrefs): %s --> %s", db_path, new_suffix
+            )
         except FileExistsError:
             logger.debug("Ok, link already existed: %s --> %s", db_path, new_suffix)
         return sqlite_path
