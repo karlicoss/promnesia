@@ -116,13 +116,14 @@ def _ensure_sqlite_hardlink(db_path: Path) -> Path:
     return db_path
 
 
-def index(database: PathIsh) -> Results:
-    def _parse_json_title(js) -> str:
-        if js and js.strip():
-            js = json.loads(js)
-            if isinstance(js, dict):
-                return js.get("Title")
+def _parse_json_title(js) -> str:
+    if js and js.strip():
+        js = json.loads(js)
+        if isinstance(js, dict):
+            return js.get("Title")
 
+
+def index(database: PathIsh) -> Results:
     def _handle_row(row) -> Results:
         text = row["text"]
         urls = extract_urls(text)
