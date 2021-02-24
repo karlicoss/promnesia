@@ -25,13 +25,6 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
-def unwrap(res: Union[T, Exception]) -> T:
-    if isinstance(res, Exception):
-        raise res
-    else:
-        return res
-
-
 # TODO move to common?
 def dataset_readonly(db: Path):
     # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
@@ -118,20 +111,22 @@ def index(database: PathIsh) -> Results:
 
     def _handle_row(row) -> Results:
         text = row["text"]
-        assert (
-            text
-        ), f"sql-query should have eliminated messages not containing 'http': {text}"
         urls = extract_urls(text)
         if not urls:
             return
+
         dt = from_epoch(row["time"] // 1000)  # timestamps are stored x100 this db
-        mid: str = unwrap(row["mid"])
+        mid: str = row["mid"]
         # TODO perhaps we could be defensive with null sender/chat etc and still emit the Visit
-        sender: str = unwrap(row["sender"])
-        chatname: str = unwrap(row["chatname"])
-        sender: str = unwrap(row["sender"])
-        tags: str = unwrap(row["tags"])
-        infojson: str = unwrap(row["infojson"])
+        sender: str = row["sender"]
+        chatname: str = row["chatname"]
+        sender: str = row["sender"]
+        tags: str = row["tags"]
+        infojson: str = row["infojson"]
+
+        assert (
+            text and mid and sender and chatname
+        ), f"sql-query should eliminate messages without 'http' or missing ids: {row}"
 
         if tags and tags.strip():
             tags = "".join(f"#{t}" for t in tags.split())
