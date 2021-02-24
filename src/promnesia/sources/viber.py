@@ -42,7 +42,7 @@ def dataset_readonly(db: Path):
 def index(database: PathIsh) -> Results:
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
-    # TODO for displaying maybe better not to expand/absolute, 
+    # Note: for displaying maybe better not to expand/absolute, 
     # but it's safer for debugging resolved.
     path = Path(database).expanduser().resolve().absolute()
     assert path.is_file(), path
@@ -57,7 +57,7 @@ def index(database: PathIsh) -> Results:
         - groups explicitely named,
         - multi-groups having a group-leader (PGRole=2), with
         - all the rest groups that (must) have just 2 members,
-        me(ContactId=1) & "other" contact, so use this as group-name.
+          me(ContactId=1) & "other+" contacts, so use "other"" as group-name.
         */
         WITH G0 AS (
             SELECT
@@ -138,8 +138,6 @@ def index(database: PathIsh) -> Results:
             text = f"title: {url_title}\n\n{text}"
 
         for u in urls:
-            # https://www.reddit.com/r/Telegram/comments/6ufwi3/link_to_a_specific_message_in_a_channel_possible/
-            # hmm, only seems to work on mobile app, but better than nothing...
             yield Visit(
                 url=unquote(u),
                 dt=dt,
