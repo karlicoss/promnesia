@@ -36,18 +36,8 @@ def dataset_readonly(db: Path):
     return dataset.connect("sqlite:///", engine_kwargs={"creator": creator})
 
 
-def index(database: PathIsh) -> Results:
-    is_debug = logger.isEnabledFor(logging.DEBUG)
-
-    # Note: for displaying maybe better not to expand/absolute,
-    # but it's safer for debugging resolved.
-    database = Path(database).expanduser().resolve().absolute()
-    assert database.is_file(), database
-
-    # TODO context manager?
-    db = dataset_readonly(database)  # TODO could check is_file inside
-
-    query_str = textwrap.dedent(
+def messages_query() -> str:
+    return textwrap.dedent(
         f"""
         /*
         Establish group-names by concatenating:
@@ -103,6 +93,8 @@ def index(database: PathIsh) -> Results:
         """
     )
 
+
+def index(database: PathIsh) -> Results:
     def _parse_json_title(js) -> str:
         if js and js.strip():
             js = json.loads(js)
@@ -147,11 +139,22 @@ def index(database: PathIsh) -> Results:
                 ),
             )
 
-    # TODO yield error if chatname or chat or smth else is null?
+    is_debug = logger.isEnabledFor(logging.DEBUG)
+
+    # Note: for displaying maybe better not to expand/absolute,
+    # but it's safer for debugging resolved.
+    database = Path(database).expanduser().resolve().absolute()
+    assert database.is_file(), database
+
+    # TODO context manager?
+    db = dataset_readonly(database)  # TODO could check is_file inside
+    query_str = messages_query()
+
     for row in db.query(query_str):
         try:
             yield from _handle_row(row)
         except Exception as ex:
+            # TODO: also insert errors in db
             logger.warning(
                 "Cannot extract row: %s, due to: %s(%s)",
                 row,
