@@ -94,6 +94,28 @@ def messages_query() -> str:
     )
 
 
+def _ensure_sqlite_hardlink(db_path: Path) -> Path:
+    """
+    Hard-link user's db to an ``.sqlite`` path, so locator `file://` urls work
+
+    ... at least in Gnome, where mime-type assumed from the suffix.
+
+    :returns:
+        the hard-link's path, or the original `db_path` if not a ``.db`` file.
+    :raises:
+        any non ``FileExistsError`` exception while hard-linking.
+    """
+    if db_path.suffix.lower() == ".db":
+        new_suffix = ".sqlite"
+        sqlite_path = db_path.with_suffix(new_suffix)
+        try:
+            db_path.link_to(sqlite_path)
+        except FileExistsError:
+            logger.debug("Ok, link already existed: %s --> %s", db_path, new_suffix)
+        return sqlite_path
+    return db_path
+
+
 def index(database: PathIsh) -> Results:
     def _parse_json_title(js) -> str:
         if js and js.strip():
@@ -135,7 +157,7 @@ def index(database: PathIsh) -> Results:
                 context=text,
                 locator=Loc.make(
                     title=f"chat({mid}) from {sender}@{chatname}",
-                    href=f"sqlite://{database}?immutable=1#!Messages.EventId={mid}",
+                    href=f"file://{sqlite_path}#!Messages.EventId={mid}",
                 ),
             )
 
@@ -146,8 +168,9 @@ def index(database: PathIsh) -> Results:
     database = Path(database).expanduser().resolve().absolute()
     assert database.is_file(), database
 
+    sqlite_path: Path = _ensure_sqlite_hardlink(database)
     query_str = messages_query()
-    
+
     with dataset_readonly(database) as db:
         for row in db.query(query_str):
             try:
