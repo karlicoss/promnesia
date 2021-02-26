@@ -83,7 +83,7 @@ def _index_db(db: Path, emitted: Set):
     loc = Loc.file(db) # todo possibly needs to be optimized -- moving from within the loop considerably speeds everything up
     with sqlite3.connect(f'file:{db}?immutable=1', uri=True) as c:
         browser = None
-        for b in [Chrome, Firefox, FirefoxPhone]:
+        for b in [Chrome, Firefox, FirefoxPhone, Safari]:
             try:
                 c.execute(f'SELECT * FROM {b.detector}')
             except sqlite3.OperationalError: # not sure if the right kind?
@@ -207,6 +207,42 @@ def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
         locator=loc,
     )
 
+# https://web.archive.org/web/20201026130310/http://fileformats.archiveteam.org/wiki/History.db
+class Safari(Extr):
+    detector='history_tombstones'
+    schema_check=(
+        'history_visits', [
+            'history_visits', "id, history_item, visit_time",
+            'history_items', "id, url"
+        ]
+    )
+    schema=Schema(cols=[
+        ('U.url'                                  , 'TEXT'   ),
+
+        # while these two are not very useful, might be good to have just in case for some debugging
+        ('U.id AS urlid'                          , 'INTEGER'),
+        ('V.id AS vid'                            , 'INTEGER'),
+
+        ('V.visit_time'                           , 'INTEGER NOT NULL'),
+        # ('V.from_visit'                           , 'INTEGER'         ),
+        # ('V.transition'                           , 'INTEGER NOT NULL'),
+        # V.segment_id looks useless
+        # ('V.visit_duration'                       , 'INTEGER NOT NULL'),
+        # V.omnibox thing looks useless
+    ], key=('url', 'visit_time', 'vid', 'urlid'))
+    query='FROM chunk.history_visits as V, chunk.history_items as U WHERE V.history_item = U.id'
+
+    @staticmethod
+    def row2visit(row: sqlite3.Row, loc: Loc) -> Visit:
+        url  = row['url']
+        ts   = row['visit_time'] + 978307200 # https://stackoverflow.com/a/34546556/16645
+        dt = datetime.fromtimestamp(ts, pytz.utc)
+
+        return Visit(
+            url=url,
+            dt=dt,
+            locator=loc,
+        )
 
 # https://web.archive.org/web/20190730231715/https://www.forensicswiki.org/wiki/Mozilla_Firefox_3_History_File_Format#moz_historyvisits
 class Firefox(Extr):
