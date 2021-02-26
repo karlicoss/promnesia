@@ -70,7 +70,7 @@ def messages_query() -> str:
                 S.ClientName,
                 '(' || S.Number || ')'          /* contacts have one xor the other, but failsafe */
             )                   AS sender,
-            coalesce(M.Subject, M.Body)         /* didn't see any msg with both */    
+            coalesce(M.Subject, M.Body)         /* didn't see any msg with both */
                                 AS text,
             M.info              AS infojson,    /* to harvested titles from embedded urls */
             G.PGTags            AS tags
@@ -88,31 +88,6 @@ def messages_query() -> str:
     )
 
 
-def _ensure_sqlite_hardlink(db_path: Path) -> Path:
-    """
-    Hard-link user's db to an ``.sqlite`` path, so locator `file://` urls work
-
-    ... at least in Gnome, where mime-type assumed from the suffix.
-
-    :returns:
-        the hard-link's path, or the original `db_path` if not a ``.db`` file.
-    :raises:
-        any non ``FileExistsError`` exception while hard-linking.
-    """
-    if db_path.suffix.lower() == ".db":
-        new_suffix = ".sqlite"
-        sqlite_path = db_path.with_suffix(new_suffix)
-        try:
-            db_path.link_to(sqlite_path)
-            logger.info(
-                "Hard-link db-file (for locator-hrefs): %s --> %s", db_path, new_suffix
-            )
-        except FileExistsError:
-            logger.debug("Ok, link already existed: %s --> %s", db_path, new_suffix)
-        return sqlite_path
-    return db_path
-
-
 def _parse_json_title(js) -> str:
     if js and js.strip():
         js = json.loads(js)
@@ -120,7 +95,7 @@ def _parse_json_title(js) -> str:
             return js.get("Title")
 
 
-def _handle_row(row: dict, sqlite_path: PathLike) -> Results:
+def _handle_row(row: dict, db_path: PathLike) -> Results:
     text = row["text"]
     urls = extract_urls(text)
     if not urls:
@@ -154,7 +129,7 @@ def _handle_row(row: dict, sqlite_path: PathLike) -> Results:
             context=text,
             locator=Loc.make(
                 title=f"chat({mid}) from {sender}@{chatname}",
-                href=f"file://{sqlite_path}#!Messages.EventId={mid}",
+                href=f"file://{db_path}#!Messages.EventId={mid}",
             ),
         )
 
@@ -176,12 +151,11 @@ def _harvest_db(db_path: PathIsh, msgs_query: str):
     # Note: for displaying maybe better not to expand/absolute,
     # but it's safer for debugging resolved.
     db_path = db_path.resolve()
-    sqlite_path: Path = _ensure_sqlite_hardlink(db_path)
 
     with _dataset_readonly(db_path) as db:
         for row in db.query(msgs_query):
             try:
-                yield from _handle_row(row, sqlite_path)
+                yield from _handle_row(row, db_path)
             except Exception as ex:
                 # TODO: also insert errors in db
                 logger.warning(
@@ -194,13 +168,12 @@ def _harvest_db(db_path: PathIsh, msgs_query: str):
 
 
 def index(db_path: PathIsh = "~/.ViberPC/*/viber.db") -> Results:
-    logger.debug("Expanding path(s): %s", db_path)
     glob_paths = list(_get_files(db_path))
-    logger.debug("Expanding path(s): %s", glob_paths)
+    logger.debug("Expanded path(s): %s", glob_paths)
     assert glob_paths, f"No Viber-desktop sqlite found: {db_path}"
 
     msgs_query = messages_query()
 
     for db_path in _get_files(db_path):
-        assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file: {db_path}"
+        assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file? {db_path}"
         yield from _harvest_db(db_path, msgs_query)
