@@ -82,6 +82,7 @@ def messages_query() -> str:
         LEFT JOIN Groups AS G
             ON E.ChatId = G.ChatId
         WHERE
+            M.ClientFlag != 64  AND             /* edited messages */
             text LIKE '%http%'
         ORDER BY time;
         """
