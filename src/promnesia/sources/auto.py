@@ -216,7 +216,7 @@ def _index(path: Path, opts: Options) -> Results:
 
     # iterate over resolved paths, to avoid duplicates
     def rit() -> Iterable[Path]:
-        it = traverse(path, follow=opts.follow)
+        it = traverse(path, follow=opts.follow, ignore=IGNORE)
         for p in it:
             if any(fnmatch(str(p), o) for o in opts.ignored):
                 # TODO not sure if should log here... might end up with quite a bit of logs
