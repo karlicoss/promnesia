@@ -14,20 +14,20 @@ def test_traverse_ignore_find(patched):
     traverse() with `find` but ignore some stuff
     '''
     # act
-    paths = list(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
+    paths = set(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
 
     # assert
-    assert paths == [testDataPath / 'imhere2/real.txt', testDataPath / 'imhere.txt']
+    assert paths == {testDataPath / 'imhere2/real.txt', testDataPath / 'imhere.txt'}
 
 def test_traverse_ignore_fdfind():
     '''
     traverse() with `fdfind` but ignore some stuff
     '''
     # act
-    paths = list(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
+    paths = set(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
 
     # assert
-    assert paths == [testDataPath / 'imhere.txt', testDataPath / 'imhere2/real.txt']
+    assert paths == {testDataPath / 'imhere.txt', testDataPath / 'imhere2/real.txt'}
 
 # TODO: It would be nice to test the implementation directly without having to do this
 # weird patching in the future
@@ -37,7 +37,7 @@ def test_traverse_ignore_windows(patched):
     traverse() with python when _is_windows is true but ignore some stuff
     '''
     # act
-    paths = list(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
+    paths = set(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
 
     # assert
-    assert paths == [testDataPath / 'imhere.txt', testDataPath / 'imhere2/real.txt']
+    assert paths == {testDataPath / 'imhere.txt', testDataPath / 'imhere2/real.txt'}
