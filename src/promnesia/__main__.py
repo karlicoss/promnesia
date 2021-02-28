@@ -3,7 +3,7 @@ import os
 import logging
 import inspect
 import sys
-from typing import List, Tuple, Optional, Dict, Sequence, Iterable, Iterator
+from typing import List, Tuple, Optional, Dict, Sequence, Iterable, Iterator, Union
 from pathlib import Path
 from datetime import datetime
 from .compat import check_call
@@ -19,7 +19,7 @@ from .dump import visits_to_sqlite
 from .extract import extract_visits, make_filter
 
 
-def iter_all_visits() -> Iterator[Res[DbVisit]]:
+def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Res[DbVisit]]:
     cfg = config.get()
     output_dir = cfg.output_dir
     # not sure if belongs here??
@@ -29,8 +29,22 @@ def iter_all_visits() -> Iterator[Res[DbVisit]]:
 
     hook = cfg.hook
 
-    indexers = cfg.sources
-    for idx in indexers:
+    indexers = list(cfg.sources)
+
+    is_subset_sources = bool(sources_subset)
+    if is_subset_sources:
+        sources_subset = set(sources_subset)
+
+    for i, idx in enumerate(indexers):
+        name = getattr(idx, "name", None)
+        if name and is_subset_sources:
+            matched = name in sources_subset or i in sources_subset
+            if matched:
+                sources_subset -= {i, name}  # type: ignore
+            else:
+                logger.debug("skipping '%s' not in --sources.", name)
+                continue
+
         if isinstance(idx, Exception):
             yield idx
             continue
@@ -45,12 +59,15 @@ def iter_all_visits() -> Iterator[Res[DbVisit]]:
                 except Exception as e:
                     yield e
 
+    if sources_subset:
+        logger.warning("unknown --sources: %s", ", ".join(repr(i) for i in sources_subset))
 
-def _do_index(dry: bool=False) -> Iterable[Exception]:
+
+def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=()) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: List[Exception] = []
     def it() -> Iterable[Res[DbVisit]]:
-        for v in iter_all_visits():
+        for v in iter_all_visits(sources_subset):
             if isinstance(v, Exception):
                 errors.append(v)
             yield v
@@ -68,10 +85,14 @@ def _do_index(dry: bool=False) -> Iterable[Exception]:
     return errors
 
 
-def do_index(config_file: Path, dry: bool=False) -> None:
+def do_index(
+        config_file: Path,
+        dry: bool=False,
+        sources_subset: Iterable[Union[str, int]]=(),
+    ) -> None:
     config.load_from(config_file) # meh.. should be cleaner
     try:
-        errors = list(_do_index(dry=dry))
+        errors = list(_do_index(dry=dry, sources_subset=sources_subset))
     finally:
         config.reset()
     if len(errors) > 0:
@@ -104,7 +125,15 @@ def demo_sources():
     return res
 
 
-def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config_file: Optional[Path], name: str='demo') -> None:
+def do_demo(
+        *,
+        index_as: str,
+        params: Sequence[str],
+        port: Optional[str],
+        config_file: Optional[Path],
+        name: str='demo',
+        sources_subset: Iterable[Union[str, int]]=(),
+    ) -> None:
     from pprint import pprint
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
@@ -120,7 +149,7 @@ def do_demo(*, index_as: str, params: Sequence[str], port: Optional[str], config
             )
             config.instance = cfg
 
-        errors = list(_do_index())
+        errors = list(_do_index(sources_subset=sources_subset))
         if len(errors) > 0:
             logger.error('%d errors during indexing (see logs above for backtraces)', len(errors))
         for e in errors:
@@ -245,6 +274,14 @@ def cli_doctor_server(args: argparse.Namespace) -> None:
     logger.info('You should see the database path and version above!')
 
 
+def _ordinal_or_name(s: str) -> Union[str, int]:
+    try:
+        s = int(s)  # type: ignore
+    except ValueError:
+        pass
+    return s
+
+
 def main() -> None:
     # TODO longer, literate description?
 
@@ -256,6 +293,16 @@ def main() -> None:
     ep.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False, help="Used for development, you don't need it")
+    ep.add_argument(
+        '--sources',
+        required=False,
+        action="extend",
+        nargs="+",
+        type=_ordinal_or_name,
+        metavar="SOURCE",
+        help="Source names (or their 0-indexed position) to index."
+        "  If missing, db is recreated empty and all sources are indexed.",
+    )
 
     sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F) # type: ignore
     server.setup_parser(sp)
@@ -276,6 +323,8 @@ def main() -> None:
         default='guess',
         help='Promnesia source to index as (see https://github.com/karlicoss/promnesia/tree/master/src/promnesia/sources for the full list)',
     )
+    ap.add_argument('--sources', required=False, action="extend", nargs="+", type=_ordinal_or_name,
+                    help="Subset of source(s) to run (name or 0-indexed position);  use `promnisia --dry` to view sources")
     ap.add_argument('params', nargs='*', help='Optional extra params for the indexer')
 
     isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
@@ -315,13 +364,20 @@ def main() -> None:
 
     with get_tmpdir() as tdir: # TODO??
         if args.mode == 'index':
-             do_index(config_file=args.config, dry=args.dry)
+             do_index(config_file=args.config, dry=args.dry, sources_subset=args.sources)
         elif args.mode == 'serve':
             server.run(args)
         elif args.mode == 'demo':
             # TODO not sure if 'as' is that useful
             # something like Telegram/Takeout is too hard to setup to justify adhoc mode like this?
-            do_demo(index_as=getattr(args, 'as'), params=args.params, port=args.port, config_file=args.config, name=args.name)
+            do_demo(
+                index_as=getattr(args, 'as'),
+                params=args.params,
+                port=args.port,
+                config_file=args.config,
+                name=args.name,
+                sources_subset=args.sources,
+                )
         elif args.mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
         elif args.mode == 'config':
