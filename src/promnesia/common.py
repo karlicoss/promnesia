@@ -398,12 +398,12 @@ def find_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
         # -name {name} for all the file/directories in ignore
         ignore_names = [['-name', n] for n in ignore]
         # OR (-o) all the names together and flatten
-        ignore_names = list(itertools.chain(*intersperse(['-o'], ignore_names)))
+        ignore_names_l = list(itertools.chain(*intersperse(['-o'], ignore_names)))
         # Prune all of those directories, and make the entire clause evaluate to false
         # (so that it doesn't match anything and make find print)
-        prune_dir_args = ['-type', 'd', '-a', '(', *ignore_names, ')', '-prune', '-false', '-o']
+        prune_dir_args = ['-type', 'd', '-a', '(', *ignore_names_l, ')', '-prune', '-false', '-o']
         # Also ignore any files with the names as well
-        ignore_file_args = ['-a', '-not', '(', *ignore_names, ')']
+        ignore_file_args = ['-a', '-not', '(', *ignore_names_l, ')']
 
     return [
         *(['-L'] if follow else []),
@@ -422,11 +422,11 @@ def fdfind_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
         # Add a statment that excludes the folder
         ignore_args = [['--exclude', f'{n}'] for n in ignore]
         # Flatten the list of lists
-        ignore_args = list(itertools.chain(*ignore_args))
+        ignore_args_l = list(itertools.chain(*ignore_args))
 
     return [
         *extra_fd_args(),
-        *ignore_args,
+        *ignore_args_l,
         *(['--follow'] if follow else []),
         '--type', 'f',
         '.',
