@@ -5,6 +5,7 @@ from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Opt
 from pathlib import Path
 from glob import glob
 import itertools
+from more_itertools import intersperse
 import logging
 from functools import lru_cache
 import shutil
@@ -390,18 +391,42 @@ def mime(path: PathIsh) -> Optional[str]:
     return magic(ps)
 
 
-def find_args(root: Path, follow: bool) -> List[str]:
+def find_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
+    prune_dir_args = []
+    ignore_file_args = []
+    if ignore:
+        # -name {name} for all the file/directories in ignore
+        ignore_names = [['-name', n] for n in ignore]
+        # OR (-o) all the names together and flatten
+        ignore_names_l = list(itertools.chain(*intersperse(['-o'], ignore_names)))
+        # Prune all of those directories, and make the entire clause evaluate to false
+        # (so that it doesn't match anything and make find print)
+        prune_dir_args = ['-type', 'd', '-a', '(', *ignore_names_l, ')', '-prune', '-false', '-o']
+        # Also ignore any files with the names as well
+        ignore_file_args = ['-a', '-not', '(', *ignore_names_l, ')']
+
     return [
         *(['-L'] if follow else []),
         str(root),
+        *prune_dir_args,
         '-type', 'f',
+        *ignore_file_args
     ]
 
 
-def fdfind_args(root: Path, follow: bool) -> List[str]:
+def fdfind_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
     from .config import extra_fd_args
+
+    ignore_args = []
+    if ignore:
+        # Add a statment that excludes the folder
+        ignore_args = [['--exclude', f'{n}'] for n in ignore]
+        # Flatten the list of lists
+        ignore_args_l = list(itertools.chain(*ignore_args))
+
     return [
         *extra_fd_args(),
+        *ignore_args_l,
         *(['--follow'] if follow else []),
         '--type', 'f',
         '.',
@@ -409,7 +434,7 @@ def fdfind_args(root: Path, follow: bool) -> List[str]:
     ]
 
 
-def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
+def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable[Path]:
     if not root.is_dir():
         yield root
         return
@@ -418,16 +443,20 @@ def traverse(root: Path, *, follow: bool=True) -> Iterable[Path]:
     if _is_windows:
         # on windows could use 'forfiles'... but probably easier not to bother for now
         # todo coild use followlinks=True? walk could end up in infinite loop?    
-        for r, _, files in os.walk(root):
-            yield from (Path(r) / f for f in files)
+        for r, dirs, files in os.walk(root):
+            # Remove dirs specified in ignore (clone dirs() as we have to remove in place)
+            for i, d in enumerate(list(dirs)):
+                if d in ignore:
+                    del dirs[i]
+            yield from (Path(r) / f for f in files if f not in ignore)
         return
 
     from .compat import Popen, PIPE
-    cmd = ['find', *find_args(root, follow=follow)]
+    cmd = ['find', *find_args(root, follow=follow, ignore=ignore)]
     # try to use fd.. it cooperates well with gitignore etc, also faster than find
     for x in ('fd', 'fd-find', 'fdfind'): # has different names on different dists..
         if shutil.which(x):
-            cmd = [x, *fdfind_args(root, follow=follow)]
+            cmd = [x, *fdfind_args(root, follow=follow, ignore=ignore)]
             break
     else:
         warnings.warn("'fdfind' is recommended for the best indexing performance. See https://github.com/sharkdp/fd#installation. Falling back to 'find'")
