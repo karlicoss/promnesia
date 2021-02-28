@@ -443,8 +443,12 @@ def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable
     if _is_windows:
         # on windows could use 'forfiles'... but probably easier not to bother for now
         # todo coild use followlinks=True? walk could end up in infinite loop?    
-        for r, _, files in os.walk(root):
-            yield from (Path(r) / f for f in files)
+        for r, dirs, files in os.walk(root):
+            # Remove dirs specified in ignore (clone dirs() as we have to remove in place)
+            for i, d in enumerate(list(dirs)):
+                if d in ignore:
+                    del dirs[i]
+            yield from (Path(r) / f for f in files if f not in ignore)
         return
 
     from .compat import Popen, PIPE

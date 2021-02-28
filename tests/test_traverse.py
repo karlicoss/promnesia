@@ -28,3 +28,16 @@ def test_traverse_ignore_fdfind():
 
     # assert
     assert paths == [testDataPath / 'imhere.txt', testDataPath / 'imhere2/real.txt']
+
+# TODO: It would be nice to test the implementation directly without having to do this
+# weird patching in the future
+@patch('promnesia.common._is_windows', new_callable=lambda: True)
+def test_traverse_ignore_windows(patched):
+    '''
+    traverse() with python when _is_windows is true but ignore some stuff
+    '''
+    # act
+    paths = list(traverse(testDataPath, ignore=['ignoreme.txt', 'ignoreme2']))
+
+    # assert
+    assert paths == [testDataPath / 'imhere.txt', testDataPath / 'imhere2/real.txt']
