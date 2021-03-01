@@ -13,15 +13,7 @@ system = platform.system()
 
 def run_index(cfg: Path, *, update=False) -> None:
     from promnesia.__main__ import do_index
-    if update:
-        ev = 'PROMNESIA_INDEX_POLICY'
-        os.environ[ev] = 'update'
-        try:
-            do_index(cfg)
-        finally:
-            del os.environ[ev]
-    else:
-        do_index(cfg)
+    do_index(cfg, overwrite_db=not update)
 
 
 index = run_index # legacy name

@@ -110,7 +110,9 @@ Also see [[https://github.com/karlicoss/promnesia/issues/172][issues/172]].
 
 ** partial update
 
-(experimental) Set env variable =PROMNESIA_INDEX_POLICY=update=.
+Only index sources given in =promnesia index --sources SOURCE [SOURCE] ...=
+(or all sources, if no =--sources= given), unless =--overwrite= is given,
+in which case all existing visits are removed from db prior to indexing.
 
 ** exclude files from =auto= indexer
 
