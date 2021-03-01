@@ -1,5 +1,4 @@
 import argparse
-import os
 import logging
 import inspect
 import sys
@@ -63,7 +62,7 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
         logger.warning("unknown --sources: %s", ", ".join(repr(i) for i in sources_subset))
 
 
-def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=()) -> Iterable[Exception]:
+def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), overwrite_db=False) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: List[Exception] = []
     def it() -> Iterable[Res[DbVisit]]:
@@ -78,7 +77,7 @@ def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=()) -> 
         for v in res:
             print(v)
     else:
-        dump_errors = visits_to_sqlite(it())
+        dump_errors = visits_to_sqlite(it(), overwrite_db=overwrite_db)
         for e in dump_errors:
             logger.exception(e)
             errors.append(e)
@@ -89,10 +88,11 @@ def do_index(
         config_file: Path,
         dry: bool=False,
         sources_subset: Iterable[Union[str, int]]=(),
+        overwrite_db: bool=False,
     ) -> None:
     config.load_from(config_file) # meh.. should be cleaner
     try:
-        errors = list(_do_index(dry=dry, sources_subset=sources_subset))
+        errors = list(_do_index(dry=dry, sources_subset=sources_subset, overwrite_db=overwrite_db))
     finally:
         config.reset()
     if len(errors) > 0:
@@ -133,6 +133,7 @@ def do_demo(
         config_file: Optional[Path],
         name: str='demo',
         sources_subset: Iterable[Union[str, int]]=(),
+        overwrite_db: bool=False,
     ) -> None:
     from pprint import pprint
     with TemporaryDirectory() as tdir:
@@ -149,7 +150,7 @@ def do_demo(
             )
             config.instance = cfg
 
-        errors = list(_do_index(sources_subset=sources_subset))
+        errors = list(_do_index(sources_subset=sources_subset, overwrite_db=overwrite_db))
         if len(errors) > 0:
             logger.error('%d errors during indexing (see logs above for backtraces)', len(errors))
         for e in errors:
@@ -300,8 +301,14 @@ def main() -> None:
         nargs="+",
         type=_ordinal_or_name,
         metavar="SOURCE",
-        help="Source names (or their 0-indexed position) to index."
-        "  If missing, db is recreated empty and all sources are indexed.",
+        help="Source names (or their 0-indexed position) to index.",
+    )
+    ep.add_argument(
+        '--overwrite',
+        required=False,
+        action="store_true",
+        help="Empty db before populating it with newly indexed visits."
+        "  If interrupted, db is left untouched."
     )
 
     sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F) # type: ignore
@@ -323,8 +330,22 @@ def main() -> None:
         default='guess',
         help='Promnesia source to index as (see https://github.com/karlicoss/promnesia/tree/master/src/promnesia/sources for the full list)',
     )
-    ap.add_argument('--sources', required=False, action="extend", nargs="+", type=_ordinal_or_name,
-                    help="Subset of source(s) to run (name or 0-indexed position);  use `promnisia --dry` to view sources")
+    ap.add_argument(
+        '--sources',
+        required=False,
+        action="extend",
+        nargs="+",
+        type=_ordinal_or_name,
+        metavar="SOURCE",
+        help="Source names (or their 0-indexed position) to index.",
+    )
+    ap.add_argument(
+        '--overwrite',
+        required=False,
+        action="store_true",
+        help="Empty db before populating it with newly indexed visits."
+        "  If interrupted, db is left untouched."
+    )
     ap.add_argument('params', nargs='*', help='Optional extra params for the indexer')
 
     isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
@@ -358,13 +379,20 @@ def main() -> None:
         p.print_help(sys.stderr)
         sys.exit(1)
 
+    logger.info("CLI args: %s", args)
+
     # TODO maybe, it's better for server to compute intermediate represetnation?
     # the only downside is storage. dunno.
     # worst case -- could use database?
 
     with get_tmpdir() as tdir: # TODO??
         if args.mode == 'index':
-             do_index(config_file=args.config, dry=args.dry, sources_subset=args.sources)
+            do_index(
+                config_file=args.config,
+                dry=args.dry,
+                sources_subset=args.sources,
+                overwrite_db=args.overwrite,
+            )
         elif args.mode == 'serve':
             server.run(args)
         elif args.mode == 'demo':
@@ -377,6 +405,7 @@ def main() -> None:
                 config_file=args.config,
                 name=args.name,
                 sources_subset=args.sources,
+                overwrite_db=args.overwrite,
                 )
         elif args.mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
