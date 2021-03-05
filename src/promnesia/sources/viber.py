@@ -7,7 +7,7 @@ import logging
 import textwrap
 from os import PathLike
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
 
@@ -89,11 +89,12 @@ def messages_query() -> str:
     )
 
 
-def _parse_json_title(js) -> str:
+def _parse_json_title(js) -> Optional[str]:
     if js and js.strip():
         js = json.loads(js)
         if isinstance(js, dict):
             return js.get("Title")
+    return None
 
 
 def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
@@ -107,7 +108,6 @@ def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
     # TODO perhaps we could be defensive with null sender/chat etc and still emit the Visit
     sender: str = row["sender"]
     chatname: str = row["chatname"]
-    sender: str = row["sender"]
     tags: str = row["tags"]
     infojson: str = row["infojson"]
 
@@ -151,7 +151,7 @@ def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str):
 
     # Note: for displaying maybe better not to expand/absolute,
     # but it's safer for debugging resolved.
-    db_path = db_path.resolve()
+    db_path = Path(db_path).resolve()
 
     with _dataset_readonly(db_path) as db:
         for row in db.query(msgs_query):
