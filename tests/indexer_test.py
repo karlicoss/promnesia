@@ -15,7 +15,7 @@ import pytest # type: ignore
 from pytest import mark # type: ignore
 
 
-from common import skip_if_ci, tdata
+from common import tdata
 from config_tests import with_config
 
 from promnesia.common import Visit, Indexer, Loc, Res, DbVisit, _is_windows
@@ -155,7 +155,7 @@ def test_takeout_new_zip(adhoc_config) -> None:
     assert_got_tzinfo(visits)
 
 
-@skip_if_ci("TODO try triggering firefox on CI? not sure if that's possible...")
+@skip("TODO not sure how to trigger firefox on CI...")
 def test_backup_firefox(tmp_path):
     tdir = Path(tmp_path)
     path = backup_db.backup_history('firefox', to=tdir, profile='*release*')
@@ -396,7 +396,5 @@ def test_merge_all_from(tmp_path):
 
 if __name__ == '__main__':
     pytest.main([__file__])
-
-# TODO mark tests with @skip_if_ci
 
 # TODO once I integrate test for db population, test chrome/firefox extractors

@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from datetime import datetime
 from tempfile import TemporaryDirectory
+import os
 from subprocess import check_call, check_output
 from time import sleep
 from typing import NamedTuple, Optional, Iterator
@@ -20,7 +21,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
 
-from common import under_ci, skip_if_ci, uses_x, has_x
+from common import under_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from firefox_helper import open_extension_page
@@ -356,6 +357,14 @@ class Command:
 # TODO assert this against manifest?
 
 
+WITH_BROWSER_TESTS = 'WITH_BROWSER_TESTS'
+
+with_browser_tests = pytest.mark.skipif(
+    WITH_BROWSER_TESTS not in os.environ,
+    reason=f'set env var {WITH_BROWSER_TESTS}=true if you want to run this test',
+)
+
+
 def browsers(*br: Browser):
     if len(br) == 0:
         br = (FF, FFH, CH)
@@ -365,11 +374,11 @@ def browsers(*br: Browser):
     from functools import wraps
     def dec(f):
         if len(br) == 0:
-            dd = pytest.mark.skip('Filtered out all browsers (because of no GUI/non-interactive mode)')
+            dec_ = pytest.mark.skip('Filtered out all browsers (because of no GUI/non-interactive mode)')
         else:
-            dd = pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
-        @pytest.mark.with_browser
-        @dd
+            dec_ = pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
+        @with_browser_tests
+        @dec_
         @wraps(f)
         def ff(*args, **kwargs):
             return f(*args, **kwargs)
