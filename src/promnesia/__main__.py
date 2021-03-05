@@ -131,6 +131,7 @@ def do_demo(
         params: Sequence[str],
         port: Optional[str],
         config_file: Optional[Path],
+        dry: bool=False,
         name: str='demo',
         sources_subset: Iterable[Union[str, int]]=(),
         overwrite_db: bool=False,
@@ -150,7 +151,7 @@ def do_demo(
             )
             config.instance = cfg
 
-        errors = list(_do_index(sources_subset=sources_subset, overwrite_db=overwrite_db))
+        errors = list(_do_index(dry=dry, sources_subset=sources_subset, overwrite_db=overwrite_db))
         if len(errors) > 0:
             logger.error('%d errors during indexing (see logs above for backtraces)', len(errors))
         for e in errors:
@@ -286,30 +287,37 @@ def _ordinal_or_name(s: str) -> Union[str, int]:
 def main() -> None:
     # TODO longer, literate description?
 
+    def add_index_args(parser: argparse.ArgumentParser, default_config_path: PathIsh=None) -> None:
+        """
+        :param default_config_path:
+            if not given, all :func:`demo_sources()` are run
+        """
+        parser.add_argument('--config', type=Path, default=default_config_path, help='Config path')
+        parser.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
+        parser.add_argument(
+            '--sources',
+            required=False,
+            action="extend",
+            nargs="+",
+            type=_ordinal_or_name,
+            metavar="SOURCE",
+            help="Source names (or their 0-indexed position) to index.",
+        )
+        parser.add_argument(
+            '--overwrite',
+            required=False,
+            action="store_true",
+            help="Empty db before populating it with newly indexed visits."
+            "  If interrupted, db is left untouched."
+        )
+
     F = lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=120)
     p = argparse.ArgumentParser(formatter_class=F) # type: ignore
     subp = p.add_subparsers(dest='mode', )
     ep = subp.add_parser('index', help='Create/update the link database', formatter_class=F)
-    ep.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
-    ep.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
+    add_index_args(ep, default_config_path())
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False, help="Used for development, you don't need it")
-    ep.add_argument(
-        '--sources',
-        required=False,
-        action="extend",
-        nargs="+",
-        type=_ordinal_or_name,
-        metavar="SOURCE",
-        help="Source names (or their 0-indexed position) to index.",
-    )
-    ep.add_argument(
-        '--overwrite',
-        required=False,
-        action="store_true",
-        help="Empty db before populating it with newly indexed visits."
-        "  If interrupted, db is left untouched."
-    )
 
     sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F) # type: ignore
     server.setup_parser(sp)
@@ -323,29 +331,13 @@ def main() -> None:
     ap.add_argument('--name', type=str, default='demo'               , help='Set custom source name')
     add_port_arg(ap)
     ap.add_argument('--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server')
-    ap.add_argument('--config', type=Path, required=False            , help='Config to run against. If omitted, will use empty base config')
     ap.add_argument(
         '--as',
         choices=list(sorted(demo_sources().keys())),
         default='guess',
         help='Promnesia source to index as (see https://github.com/karlicoss/promnesia/tree/master/src/promnesia/sources for the full list)',
     )
-    ap.add_argument(
-        '--sources',
-        required=False,
-        action="extend",
-        nargs="+",
-        type=_ordinal_or_name,
-        metavar="SOURCE",
-        help="Source names (or their 0-indexed position) to index.",
-    )
-    ap.add_argument(
-        '--overwrite',
-        required=False,
-        action="store_true",
-        help="Empty db before populating it with newly indexed visits."
-        "  If interrupted, db is left untouched."
-    )
+    add_index_args(ap)
     ap.add_argument('params', nargs='*', help='Optional extra params for the indexer')
 
     isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
@@ -403,6 +395,7 @@ def main() -> None:
                 params=args.params,
                 port=args.port,
                 config_file=args.config,
+                dry=args.dry,
                 name=args.name,
                 sources_subset=args.sources,
                 overwrite_db=args.overwrite,
