@@ -73,10 +73,9 @@ class Config(NamedTuple):
     @property
     def output_dir(self) -> Path:
         odir = self.OUTPUT_DIR
-        if odir is not None:
-            return Path(odir)
-        else:
-            return default_output_dir()
+        opath = default_output_dir() if odir is None else Path(odir)
+        opath.mkdir(exist_ok=True, parents=True)
+        return opath
 
     @property
     def db(self) -> Path:
