@@ -5,7 +5,7 @@ import sys
 from typing import List, Tuple, Optional, Dict, Sequence, Iterable, Iterator, Union
 from pathlib import Path
 from datetime import datetime
-from .compat import check_call
+from .compat import check_call, register_argparse_extend_action_in_pre_py38
 from tempfile import TemporaryDirectory
 
 
@@ -292,6 +292,7 @@ def main() -> None:
         :param default_config_path:
             if not given, all :func:`demo_sources()` are run
         """
+        register_argparse_extend_action_in_pre_py38(parser)
         parser.add_argument('--config', type=Path, default=default_config_path, help='Config path')
         parser.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
         parser.add_argument(
