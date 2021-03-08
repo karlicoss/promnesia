@@ -1,32 +1,19 @@
+# mainly this pipeline exists to test systemd integration
+# otherwise there is no way to do it on github actions (e.g. Docker doesn't support it)
 version: 2
 
 jobs:
-  # TODO need to get rid of it... but not sure how, there is just no way to test systemd anywhere else??
-  # maybe it shouldn't really matter. ugh.
   install_and_run_test:
-    # right, docker doesn't seem to be systemd friendly
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202010-01
     steps:
       - checkout
+      - run: python3 -m pip install --user --upgrade pip
+      - run: python3 -m pip install --user .
 
-      - run:
-          name: 'setup python'
-          command: |
-            pyenv global 3.7.0
-            pip3 install --upgrade pip setuptools
+      # ugh. Circle uses pyenv instead of default interpreter? and then systemd doesn't know of it :(
+      - run: sudo ln -sf /opt/circleci/.pyenv/versions/3.*/bin/python3 /usr/bin/python3
 
-      # - run: curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3 # right, this container is quite old and doesn't have python3-pip package..
-
-      # - run: sudo apt install python3.5-dev # pyjq depenency; not sure if should be specified in dependencies...
-      # WARNING: The script hug is installed in '/home/circleci/.local/bin' which is not on PATH.
-      # Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
-      
-      # right, since we're using pyenv now, we should be doing global install apaprently, otherwise hug is shadowed
-      - run: python3 -m pip install . # TODO meh
-       #
-       # ugh. otherwise systemd doesn't know of pyenv :((
-      - run: sudo ln -sf /opt/circleci/.pyenv/versions/3.7.0/bin/python3 /usr/bin/python3
       - run: tests/install_and_run
 
 
