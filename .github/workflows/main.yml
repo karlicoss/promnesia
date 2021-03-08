@@ -5,7 +5,7 @@ on:
   push:
     branches: '*'
     tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
-  # TODO not sure if need 'pull_request'??
+  pull_request: # needed to trigger on others' PRs
   workflow_dispatch: # needed to trigger workflows manually
 
 env:
@@ -94,7 +94,7 @@ jobs:
 
     - name: 'release to test pypi'
       # always deploy merged master to test pypi
-      if: github.event.ref == 'refs/heads/master'
+      if: github.event_name != 'pull_request' && github.event.ref == 'refs/heads/master'
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
       run: pip3 install --user wheel twine && scripts/release --test
@@ -103,7 +103,7 @@ jobs:
     - name: 'release to pypi'
       # always deploy tags to release pypi
       # NOTE: release tags are guarded by on: push: tags on the top
-      if: startsWith(github.event.ref, 'refs/tags')
+      if: github.event_name != 'pull_request' && startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: pip3 install --user wheel twine && scripts/release
