@@ -1,9 +1,49 @@
-I'm in the process of putting up better developer's documentation, but you should be able to figure it out from the [[file:../.github/workflows/main.yml][Github Actions pipeline]].
+* Use Github actions
+The main source of truth is the [[file:../.github/workflows/main.yml][Github Actions CI pipeline]]. There is also a [[file:../.circleci/config.yml][CircleCI]] pipeline, but it only tests systemd integration.
 
-* Run backend
-   During development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
+If you fork the repository, *go to "Actions" tab on your fork and click "I understand my workflows, go ahead and enable them"* (like on this [[https://raw.githubusercontent.com/tahseenkhan31/technical-portfolio/master/assets/enableactions.png][screen]]).
+This will run CI for your commits/branches even before you open the PR.
 
-   # TODO reuse doc from pymplate?
+If you have any issues, looking at what github actions do might be the quickest way to investigate them.
+In particular, you can try [[https://github.com/karlicoss/promnesia/blob/0703ffad16a56e002113ef5404775d83d61d9e98/.github/workflows/main.yml#L37][uncommenting]] the tmate SSH helper and pushing this change (as a separate commit).
+This will allow you to SSH directly onto the CI server and run any commands to investigate/reproduce tests.
+See [[https://github.com/marketplace/actions/debugging-with-tmate#getting-started][tmate]] docs for more info.
+
+If you open a PR and some checks fail, please try to fix them if possible, but if it's unclear to you why a partucular check failing, don't hesitate to ask!
+
+* Working on backend (promnesia indexer/server)
+** use editable install
+- during development, the easiest way to run =promnesia= as =scripts/promnesia=. Alternatively, you can use =pip install -e .=.
+- similarly, if you're working on a module which uses HPI, it's much easier to install it in editable mode
+  Also see [[https://github.com/karlicoss/HPI/blob/master/doc/DEVELOPMENT.org][HPI development docs]].
+
+** running tests & mypy checks
+First, check out all submodules: ~git submodule update --init --recursive~. This will fetch some input data only used by tests.
+
+To actually run checks there are several options. Some examples:
+- ~tox~: would just run all of them (takes a while)
+  (tox is a tool to run tests in isolated Python environments, google it for moe info if you're curious)
+- ~tox -e mypy-core~: will run only ~mypy-core~ checks
+- ~tox -e tests -- -k test_search~: only run tests that contain ~test_search~ substring (everything after ~--~ passed down to pytest)
+- ~pytest -s tests/config_tests.py~: run just one file via pytest
+- ~mypy -p promnesia.sources.hypothesis~: only checks this module via mypy
+
+You might want to consult [[file:../tox.ini][tox.ini]], [[file:pytest.ini][pytest.ini]] and [[file:../mypy.ini][mypy.ini]].
+
+When you run tests, some tests will be marked as yellow and as =SKIPPED=.
+There is no need to worry about it -- by default some tests aren't running because they are using GUI (so only run manually), or work in progress, or something else. As long as github actions are happy it generally should be fine.
+
+** structure of tests
+- =tests/indexer_test.py= -- usually tests sources and how they extract visits (without creating the database)
+- =tests/integration_test.py= -- usually tests indexing, and does checks against actual database
+- =tests/server_test.py= -- usually tests server responses
+- =tests/cli.py= -- tests everything, starting from CLI interation
+- =tests/end2end_test.py= -- tests everything, including the extension! These don't run by default because they are using GUI and the setup is quite elaborate..
+- =tests/demos.py= -- extra end-to-end tests, also used for recording Promnesia feature demo videos.
+
+I say 'usually' because it's a little messy and the separation is not 100% clear at times.
+For example, most tests in =server_test= also run indexing and extraction, so they aren't very 'unit' tests.
+I'm not against it, but with limited time resources full-scale tests give better coverage (at the expense of more confusion when they fail).
 
 * Build extension
 

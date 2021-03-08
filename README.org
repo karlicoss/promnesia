@@ -1,6 +1,6 @@
 #+OPTIONS: num:nil
 
-Quick links: [[#motivation][Motivation]] | [[file:doc/GUIDE.org#extension-features][Feature guide]] | [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[#faq][FAQ]] | [[#support][Support]]
+Quick links: [[#motivation][Motivation]] | [[file:doc/GUIDE.org#extension-features][Feature guide]] | [[#demos][*Demos*]] | [[#how-does-it-work][How does it work?]] | [[#install][*Install*]] | [[#try-it-out][Try it out & Setup]] | [[#glossary][Glossary]] | [[file:doc/GUIDE.org#FAQ][FAQ]] | [[#support][Support]] | [[file:doc/TROUBLESHOOTING.org][Troubleshooting guide]] | [[file:doc/DEVELOPMENT.org][Developer's guide]]
 
 
 Promnesia is a browser extension for [[https://chrome.google.com/webstore/detail/promnesia/kdmegllpofldcpaclldkopnnjjljoiio][Chrome]]/[[https://addons.mozilla.org/en-US/firefox/addon/promnesia][Firefox]]
@@ -229,8 +229,8 @@ The easiest way to try this mode is to run =promnesia demo= command, it can give
 * Setup
 # TODO mention where they get the database
 To get the most benefit from Promnesia, it's best to properly setup your own config, describing the sources you want it to use.
-If something is unclear, please feel free to open issues or reach me, I'm working on improving the documentation.
-Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]].
+*If something is unclear, please feel free to open issues or reach me*, I'm working on improving the documentation.
+Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]] or [[https://github.com/karlicoss/promnesia/labels/documentation][open discussions on documentation]].
 
 - create the config: =promnesia config create=
 
@@ -411,7 +411,7 @@ I don't need money, but I understand it's often easier to give away than time, s
 - [[https://github.com/hlissner/doom-emacs#contribute][Doom Emacs]]
 
 * More links
+- [[file:doc/TROUBLESHOOTING.org][Troubleshooting guide]]
 - [[file:doc/SOURCES.org][Documentation on the sources]]
 - [[file:doc/DEVELOPMENT.org][Developer's guide]]
-- [[file:doc/TROUBLESHOOTING.org][Troubleshooting guide]]
 - [[file:doc/PRIVACY.org][Privacy policy]]
