@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
@@ -14,8 +14,9 @@ import pytz
 import requests
 
 from promnesia.common import PathIsh
+from promnesia.py37 import fromisoformat
 
-from integration_test import index_hypothesis, index_urls, run_index
+from integration_test import index_hypothesis, index_urls, index_some_demo_visits
 from common import tdir, under_ci, tdata, tmp_popen, promnesia_bin
 
 
@@ -147,56 +148,16 @@ def test_visited_benchmark(count: int, tmp_path) -> None:
     assert len(res) == len(links)
 
 
-def index_extra(tdir: Path) -> None:
-    # todo move to common...
-    # TODO use 'update' mode
-    cfg = tdir / 'test_config_extra.py'
-    cfg.write_text(f'''
-OUTPUT_DIR = r'{tdir}'
-
-# todo would be nice if it wass possible without importing anything at all
-def make_visits():
-    from datetime import timedelta, datetime
-    from promnesia.sources import demo
-    import pytz
-
+def test_search_around(tmp_path: Path) -> None:
     # EDT, should be UTC-4
-    dt = pytz.timezone('America/New_York').localize(
-        datetime.strptime("2018-06-01T10:00:00.00000", '%Y-%m-%dT%H:%M:%S.%f')
-    )
-
-    yield from demo.index(
-        count=1000,
-        base_dt=dt,
-        delta=-timedelta(minutes=1),
-    )
-
-SOURCES = [
-    make_visits,
-]
-''')
-    run_index(cfg, update=True)
-
-
-def test_search_around(tmp_path) -> None:
-    tdir = Path(tmp_path)
-    index_hypothesis(tdir)
-    index_extra(tdir)
-
-    dt = pytz.utc.localize(datetime.strptime("2017-05-22T10:58:14.082375", '%Y-%m-%dT%H:%M:%S.%f'))
-
-    dt2 = pytz.timezone('America/New_York').localize(
-        datetime.strptime("2018-06-01T10:00:00.00000", '%Y-%m-%dT%H:%M:%S.%f')
-    )
+    dt_extra = pytz.timezone('America/New_York').localize(fromisoformat('2018-06-01T10:00:00.000000'))
+    # NOTE: negative timedelta to test that it captures some past context
+    # at the moment it's hardcoded by delta_back/delta_front -- would be nice to make it configurable later...
+    index_some_demo_visits(tmp_path, count=1000, base_dt=dt_extra, delta=-timedelta(minutes=1), update=False)
 
     # TODO hmm. perhaps it makes more sense to run query in different process and server in main process for testing??
-    with wserver(db=tdir / 'promnesia.sqlite') as helper:
-        response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={int(dt.timestamp())}')
-        # TODO highlight original url in extension??
-        # should be exact??
-        assert 5 < len(response['visits']) < 20, response
-
-        response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={int(dt2.timestamp())}')
+    with wserver(db=tmp_path / 'promnesia.sqlite') as helper:
+        response = post(f'http://localhost:{helper.port}/search_around', f'timestamp={int(dt_extra.timestamp())}')
         assert len(response['visits']) > 10, response
 
 
