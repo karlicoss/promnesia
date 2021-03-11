@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Set, Iterable
 
 from more_itertools import chunked
 
-from sqlalchemy import create_engine, MetaData # type: ignore
+from sqlalchemy import create_engine, MetaData, event # type: ignore
 from sqlalchemy import Column, Table # type: ignore
 
 from cachew import NTBinder
@@ -53,6 +53,12 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List
         engine = create_engine(f'sqlite:///{tpath}')
     else:
         engine = create_engine(f'sqlite:///{db_path}')
+
+    # using WAL keeps database readable while we're writing in it
+    # this is tested by test_query_while_indexing
+    def enable_wal(dbapi_con, con_record):
+        dbapi_con.execute('PRAGMA journal_mode = WAL')
+    event.listen(engine, 'connect', enable_wal)
 
     binder = NTBinder.make(DbVisit)
     meta = MetaData(engine)
