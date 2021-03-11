@@ -7,6 +7,7 @@ from shutil import copy
 import signal
 import sys
 from subprocess import check_output, check_call, PIPE
+from textwrap import dedent
 import time
 from typing import NamedTuple, ContextManager, Optional
 
@@ -186,13 +187,49 @@ def test_status(tdir):
         assert len(version.split('.')) >= 2 # random check..
 
 
-# test default path (user data dir)
-def test_basic(tmp_path: Path):
-    cfg = tmp_path / 'config.py' # TODO put in user home dir? annoying in test...
-    cfg.write_text('''
-SOURCES = ['promnesia.sources.demo']
-''')
+def test_basic(tmp_path: Path) -> None:
+    cfg = tmp_path / 'config.py'
+    cfg.write_text("SOURCES = ['promnesia.sources.demo']")
     check_call(promnesia_bin('index', '--config', cfg))
     with wserver() as helper:
         response = post(f'http://localhost:{helper.port}/visits', 'url=whatever')
         assert response['visits'] == []
+
+
+def test_query_while_indexing(tmp_path: Path) -> None:
+    cfg = tmp_path / 'config.py'
+    indexing_cmd = promnesia_bin('index', '--config', cfg)
+
+    # just trigger the database
+    cfg.write_text(dedent(f'''
+    OUTPUT_DIR = r'{tmp_path}'
+    SOURCES = ['promnesia.sources.demo']
+    '''))
+    check_call(indexing_cmd)
+
+    cfg.write_text(dedent(f'''
+    OUTPUT_DIR = r'{tmp_path}'
+
+    from promnesia import Source
+    from promnesia.sources import demo
+    # index stupid amount of visits to increase time spent in database serialization
+    SOURCES = [Source(demo.index, count=100000)]
+    '''))
+    with wserver(db=tmp_path / 'promnesia.sqlite') as helper:
+        status = lambda: post(f'http://localhost:{helper.port}/status')
+        # precondition -- db should be healthy
+        r = status()
+        assert 0 < r['stats']['total_visits'] < 100000, r
+
+        # now run the indexing (asynchronously)
+        #
+        from subprocess import Popen
+        with Popen(indexing_cmd):
+            # and hammer the backend to increase likelihood of race condition
+            # not ideal -- doesn't really 'guarantee' to catch races, but good enough
+            for _ in range(100):
+                r = status()
+                assert r['stats'].get('total_visits', 0) > 0, r
+        # after indexing finished, new visits should be in the db
+        r = status()
+        assert r['stats']['total_visits'] >= 100000, r
