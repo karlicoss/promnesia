@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import os
 from pathlib import Path
-from subprocess import check_call, run
+from subprocess import check_call, run, Popen
 from textwrap import dedent
 from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping, List
 
@@ -9,7 +9,7 @@ from promnesia.py37 import fromisoformat
 
 import pytest
 
-from common import tdir, under_ci, DATA, GIT_ROOT
+from common import tdir, under_ci, DATA, GIT_ROOT, promnesia_bin
 
 
 def run_index(cfg: Path, *, update=False) -> None:
@@ -289,3 +289,31 @@ def test_indexing_update(tmp_path: Path) -> None:
     counter = Counter(v.src for v in visits)
     assert counter['demo'] == 1000, counter
     assert counter['hyp'] > 50, counter  # should keep the original visits too!
+
+
+@pytest.mark.parametrize('execution_number', range(1))  # adjust this parameter to increase 'coverage
+def test_concurrent_indexing(tmp_path: Path, execution_number) -> None:
+    cfg_slow = tmp_path / 'config_slow.py'
+    cfg_fast = tmp_path / 'config_fast.py'
+    cfg = dedent(f'''
+    OUTPUT_DIR = r'{tmp_path}'
+    from promnesia import Source
+    from promnesia.sources import demo
+    SOURCES = [Source(demo.index, count=COUNT)]
+    ''')
+    cfg_slow.write_text(cfg.replace('COUNT', '100000'))
+    cfg_fast.write_text(cfg.replace('COUNT', '100'   ))
+    # init it first, to create the database
+    # TODO ideally this shouldn't be necessary but it's reasonable that people would already have the index
+    # otherwise it would fail at db creation point.. which is kinda annoying to work around
+    # todo in principle can work around same way as in cachew, by having a loop around PRAGMA WAL command?
+    check_call(promnesia_bin('index', '--config', cfg_fast))
+
+    # run in the background
+    with Popen(promnesia_bin('index', '--config', cfg_slow)) as slow:
+        while slow.poll() is None:
+            # create a bunch of 'smaller' indexers running in parallel
+            fasts = [Popen(promnesia_bin('index', '--config', cfg_fast)) for _ in range(10)]
+            for fast in fasts:
+                assert fast.wait() == 0, fast  # should succeed
+        assert slow.poll() == 0, slow
