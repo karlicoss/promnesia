@@ -19,6 +19,8 @@ from . import config
 # see test_index_many
 _CHUNK_BY = 10
 
+# I guess 1 hour is definitely enough
+_CONNECTION_TIMEOUT_SECONDS = 3600
 
 # returns critical warnings
 def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List[Exception]:
@@ -50,9 +52,13 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List
 
     tpath = Path(get_tmpdir().name) / 'promnesia.tmp.sqlite'
     if overwrite_db:
+        # here we don't need timeout, since it's a brand new DB
         engine = create_engine(f'sqlite:///{tpath}')
     else:
-        engine = create_engine(f'sqlite:///{db_path}')
+        # here we need a timeout, othewise concurrent indexing might not work
+        # (note that this also needs WAL mode)
+        # see test_concurrent_indexing
+        engine = create_engine(f'sqlite:///{db_path}', connect_args={'timeout': _CONNECTION_TIMEOUT_SECONDS})
 
     # using WAL keeps database readable while we're writing in it
     # this is tested by test_query_while_indexing
