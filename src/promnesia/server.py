@@ -19,7 +19,7 @@ from pytz import BaseTzInfo
 import hug # type: ignore
 import hug.types as T # type: ignore
 
-from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc, select  # type: ignore
 from sqlalchemy import Column, Table, func, types # type: ignore
 from sqlalchemy.sql import text # type: ignore
 
@@ -153,7 +153,7 @@ def get_stuff(db_path: Optional[Path]=None): # TODO better name
 
 def db_stats(*args, **kwargs) -> Json:
     engine, binder, table = get_stuff(*args, **kwargs)
-    query = table.select().count()
+    query = select([func.count()]).select_from(table)
     with engine.connect() as conn:
         total = list(conn.execute(query))[0][0]
     return {
