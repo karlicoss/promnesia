@@ -72,7 +72,7 @@ def messages_query() -> str:
             )                   AS sender,
             coalesce(M.Subject, M.Body)         /* didn't see any msg with both */
                                 AS text,
-            M.info              AS infojson,    /* to harvested titles from embedded urls */
+            json_extract(M.info, '$.Title') as url_title,    /* harvested titles from embedded urls */
             G.PGTags            AS tags
         FROM messages AS M
         LEFT JOIN Events AS E
@@ -89,14 +89,6 @@ def messages_query() -> str:
     )
 
 
-def _parse_json_title(js) -> Optional[str]:
-    if js and js.strip():
-        js = json.loads(js)
-        if isinstance(js, dict):
-            return js.get("Title")
-    return None
-
-
 def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
     text = row["text"]
     urls = extract_urls(text)
@@ -109,7 +101,7 @@ def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
     sender: str = row["sender"]
     chatname: str = row["chatname"]
     tags: str = row["tags"]
-    infojson: str = row["infojson"]
+    url_title: str = row["url_title"]
 
     assert (
         text and mid and sender and chatname
@@ -119,7 +111,6 @@ def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
         tags = "".join(f"#{t}" for t in tags.split())
         text = f"{text}\n\n{tags}"
 
-    url_title = _parse_json_title(infojson)
     if url_title:
         text = f"title: {url_title}\n\n{text}"
 
@@ -156,7 +147,7 @@ def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str):
     with _dataset_readonly(db_path) as db:
         for row in db.query(msgs_query):
             try:
-                yield from _handle_row(row, db_path,locator_schema)
+                yield from _handle_row(row, db_path, locator_schema)
             except Exception as ex:
                 # TODO: also insert errors in db
                 logger.warning(
@@ -168,7 +159,9 @@ def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str):
                 )
 
 
-def index(db_path: PathIsh = "~/.ViberPC/*/viber.db", locator_schema="editor") -> Results:
+def index(
+    db_path: PathIsh = "~/.ViberPC/*/viber.db", locator_schema="editor"
+) -> Results:
     glob_paths = list(_get_files(db_path))
     logger.debug("Expanded path(s): %s", glob_paths)
     assert glob_paths, f"No Viber-desktop sqlite found: {db_path}"
