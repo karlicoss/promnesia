@@ -57,8 +57,8 @@ LEFT JOIN entities AS src    ON M.source_id = src.id AND src.type = (CASE M.sour
 LEFT JOIN entities AS snd    ON M.sender_id = snd.id AND snd.type = 'dialog'
 WHERE
     M.message_type NOT IN ('service_message', 'empty_message')
-/* used to do this, but doesn't really give much of a speedup */
-/* AND (M.has_media == 1 OR (text LIKE '%http%')) */
+    /* used to do this, but doesn't really give much of a speedup */
+    AND (M.has_media == 1 OR (text LIKE '%http%'))
 ORDER BY time;
     """.strip()
 
