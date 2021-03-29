@@ -3,6 +3,7 @@ Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]]
 '''
 
 from pathlib import Path
+from textwrap import dedent
 from typing import Optional, Union, TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
@@ -38,29 +39,30 @@ def index(database: PathIsh) -> Results:
     db = dataset_readonly(path) # TODO could check is_file inside
 
     def make_query(text_query: str):
-        return f"""
-WITH entities AS (
-   SELECT 'dialog' as type, id, coalesce(username, id) as handle, coalesce(first_name || " " || last_name, username, id) as display_name FROM users
-   UNION
-   SELECT 'group' as type, id, id as handle                    , coalesce(name, id) as display_name FROM chats
-)
-SELECT src.display_name AS chatname
-     , src.handle       AS chat
-     , snd.display_name AS sender
-     , M.time           AS time
-     , {text_query}     AS text
-     , M.id             AS mid
-FROM messages AS M
-                                                                    /* chat types are 'dialog' (1-1), 'group' and 'supergroup' */
-                                                                    /* this is abit hacky way to handle all groups in one go */
-LEFT JOIN entities AS src    ON M.source_id = src.id AND src.type = (CASE M.source_type WHEN 'supergroup' THEN 'group' ELSE M.source_type END)
-LEFT JOIN entities AS snd    ON M.sender_id = snd.id AND snd.type = 'dialog'
-WHERE
-    M.message_type NOT IN ('service_message', 'empty_message')
-    /* used to do this, but doesn't really give much of a speedup */
-    AND (M.has_media == 1 OR (text LIKE '%http%'))
-ORDER BY time;
-    """.strip()
+        return dedent(
+            f"""
+            WITH entities AS (
+            SELECT 'dialog' as type, id, coalesce(username, id) as handle, coalesce(first_name || " " || last_name, username, id) as display_name FROM users
+            UNION
+            SELECT 'group' as type, id, id as handle                    , coalesce(name, id) as display_name FROM chats
+            )
+            SELECT src.display_name AS chatname
+                , src.handle       AS chat
+                , snd.display_name AS sender
+                , M.time           AS time
+                , {text_query}     AS text
+                , M.id             AS mid
+            FROM messages AS M
+                                                                                /* chat types are 'dialog' (1-1), 'group' and 'supergroup' */
+                                                                                /* this is abit hacky way to handle all groups in one go */
+            LEFT JOIN entities AS src    ON M.source_id = src.id AND src.type = (CASE M.source_type WHEN 'supergroup' THEN 'group' ELSE M.source_type END)
+            LEFT JOIN entities AS snd    ON M.sender_id = snd.id AND snd.type = 'dialog'
+            WHERE
+                M.message_type NOT IN ('service_message', 'empty_message')
+                /* used to do this, but doesn't really give much of a speedup */
+                AND (M.has_media == 1 OR (text LIKE '%http%'))
+            ORDER BY time;
+            """)
 
     # TODO yield error if chatname or chat or smth else is null?
     for row in db.query(make_query('M.text')):
