@@ -18,7 +18,7 @@ def index() -> Results:
         if hl is not None:
             cparts.append(hl)
         if ann is not None:
-            cparts.extend(['comment: ' + ann])
+            cparts.append(f"comment: {ann}")
         if tags:
             cparts.append(" ".join(f"#{t}" for t in tags))
         yield Visit(
