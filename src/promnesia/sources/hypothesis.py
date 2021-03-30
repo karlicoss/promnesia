@@ -1,7 +1,14 @@
-'''
+"""
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypothesis][hypothesis]] module
-'''
-from ..common import Visit, Results, logger, Loc
+"""
+from ..common import Loc, Results, Visit, extract_urls
+
+
+def _harvest_text(text, visit_base) -> Results:
+    if text and text.strip():
+        urls = extract_urls(text)
+        for url in urls:
+            yield visit_base._replace(url=url)
 
 
 def index() -> Results:
@@ -21,12 +28,17 @@ def index() -> Results:
             cparts.append(f"comment: {ann}")
         if tags:
             cparts.append(" ".join(f"#{t}" for t in tags))
-        yield Visit(
+        visit = Visit(
             url=h.url,
             dt=h.created,
-            context='\n\n'.join(cparts),
+            context="\n\n".join(cparts),
             locator=Loc.make(
-                title='hypothesis',
+                title="hypothesis",
                 href=h.hyp_link,
-            )
+            ),
         )
+
+        yield visit
+
+        for text in (hl, ann):
+            yield from _harvest_text(text, visit)
