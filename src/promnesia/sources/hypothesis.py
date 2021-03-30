@@ -4,16 +4,20 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypoth
 from ..common import Loc, Results, Visit, extract_urls
 
 
-def _harvest_text(text, visit_base) -> Results:
+def _harvest_text(text, part_name, visit_base) -> Results:
     if text and text.strip():
         urls = extract_urls(text)
         for url in urls:
-            yield visit_base._replace(url=url)
+            yield visit_base._replace(
+                url=url,
+                locator=visit_base.locator._replace(title=f"hypothesis-{part_name}"),
+            )
 
 
 def index() -> Results:
     from . import hpi
     import my.hypothesis as hyp
+
     for h in hyp.get_highlights():
         if isinstance(h, Exception):
             yield h
@@ -40,5 +44,8 @@ def index() -> Results:
 
         yield visit
 
-        for text in (hl, ann):
-            yield from _harvest_text(text, visit)
+        for text, part_name in (
+            (hl, "highlighted"),
+            (ann, "comment"),
+        ):
+            yield from _harvest_text(text, part_name, visit)
