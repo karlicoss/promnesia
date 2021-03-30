@@ -108,7 +108,7 @@ def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
     ), f"sql-query should eliminate messages without 'http' or missing ids: {row}"
 
     if tags and tags.strip():
-        tags = "".join(f"#{t}" for t in tags.split())
+        tags = " ".join(f"#{t}" for t in tags.split())
         text = f"{text}\n\n{tags}"
 
     if url_title:
