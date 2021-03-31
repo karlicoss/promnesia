@@ -1,17 +1,7 @@
 """
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myhypothesis][hypothesis]] module
 """
-from ..common import Loc, Results, Visit, extract_urls
-
-
-def _harvest_text(text, part_name, visit_base) -> Results:
-    if text and text.strip():
-        urls = extract_urls(text)
-        for url in urls:
-            yield visit_base._replace(
-                url=url,
-                locator=visit_base.locator._replace(title=f"hypothesis-{part_name}"),
-            )
+from ..common import Loc, Results, Visit, extract_urls, join_tags
 
 
 def index() -> Results:
@@ -31,7 +21,7 @@ def index() -> Results:
         if ann is not None:
             cparts.append(f"comment: {ann}")
         if tags:
-            cparts.append(" ".join(f"#{t}" for t in tags))
+            cparts.append(join_tags(tags))
         visit = Visit(
             url=h.url,
             dt=h.created,
@@ -44,8 +34,15 @@ def index() -> Results:
 
         yield visit
 
-        for text, part_name in (
+        in_text_visits = (
             (hl, "highlighted"),
             (ann, "comment"),
-        ):
-            yield from _harvest_text(text, part_name, visit)
+        )
+        for text, part_name in in_text_visits:
+            if text and text.strip():
+                urls = extract_urls(text)
+                for url in urls:
+                    yield visit._replace(
+                        url=url,
+                        locator=visit.locator._replace(title=f"hypothesis-{part_name}"),
+                    )

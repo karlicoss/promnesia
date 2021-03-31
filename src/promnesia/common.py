@@ -235,6 +235,18 @@ def from_epoch(ts: int) -> datetime:
     return datetime.fromtimestamp(ts, tz=pytz.utc)
 
 
+def join_tags(tags: Iterable[str]) -> str:
+    """
+    Append `#` in fron of each tag and joins them with a space in between
+
+    >>> join_tags(["foo", "bar"])
+    '#foo #bar'
+    >>> join_tags(["", " ", None])
+    ''
+    """
+    return " ".join(f"#{t}" for t in tags if t and t.strip())
+
+
 class PathWithMtime(NamedTuple):
     path: Path
     mtime: float
@@ -442,7 +454,7 @@ def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable
     # todo does windows even have symlinks??
     if _is_windows:
         # on windows could use 'forfiles'... but probably easier not to bother for now
-        # todo coild use followlinks=True? walk could end up in infinite loop?    
+        # todo coild use followlinks=True? walk could end up in infinite loop?
         for r, dirs, files in os.walk(root):
             # Remove dirs specified in ignore (clone dirs() as we have to remove in place)
             for i, d in enumerate(list(dirs)):
