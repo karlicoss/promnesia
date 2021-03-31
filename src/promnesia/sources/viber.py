@@ -9,7 +9,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Iterable, Optional
 
-from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
+from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, join_tags
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
     ), f"sql-query should eliminate messages without 'http' or missing ids: {row}"
 
     if tags and tags.strip():
-        tags = " ".join(f"#{t}" for t in tags.split())
+        tags = join_tags(tags.split())
         text = f"{text}\n\n{tags}"
 
     if url_title:
