@@ -17,7 +17,7 @@ logger = get_logger()
 
 def index(p: PathIsh) -> Results:
     pp = Path(p)
-    assert pp.exists() # just in case of broken symlinks
+    assert pp.exists(), pp # just in case of broken symlinks
 
     # is_file check because it also returns dirs
     is_db = lambda x: x.is_file() and mime(x) in ['application/x-sqlite3']
@@ -247,7 +247,7 @@ class Safari(Extr):
 # https://web.archive.org/web/20190730231715/https://www.forensicswiki.org/wiki/Mozilla_Firefox_3_History_File_Format#moz_historyvisits
 class Firefox(Extr):
     detector='moz_meta'
-    schema_check=('moz_historyvisits', "id, from_visit, place_id, visit_date, visit_type, session")
+    schema_check=('moz_historyvisits', "id, from_visit, place_id, visit_date, visit_type")
     schema=Schema(cols=[
         ('P.url'       , 'TEXT'),
 
@@ -257,8 +257,11 @@ class Firefox(Extr):
         ('V.from_visit', 'INTEGER'),
         ('V.visit_date', 'INTEGER'),
         ('V.visit_type', 'INTEGER'),
+
         # not sure what session is form but could be useful?..
-        ('V.session'   , 'INTEGER'),
+        # NOTE(20210410): for now, commented it out since some older databases from phone have this column commented?
+        # needs to be defensive
+        # ('V.session'   , 'INTEGER'),
     ], key=('url', 'visit_date', 'vid', 'pid'))
     query='FROM chunk.moz_historyvisits as V, chunk.moz_places as P WHERE V.place_id = P.id'
 
