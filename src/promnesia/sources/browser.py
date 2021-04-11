@@ -196,10 +196,21 @@ def chrome_time_to_utc(chrome_time: int) -> datetime:
 
 def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
     url = row['url']
-    ts  = row['visit_date']
+    ts  = float(row['visit_date'])
     # ok, looks like it's unix epoch
     # https://stackoverflow.com/a/19430099/706389
-    dt = datetime.fromtimestamp(int(ts) / 1_000_000, pytz.utc)
+
+    # NOTE: ugh. on Fenix (experimental Android version) it uses milliseconds, not nanos...
+    # about year 2001... if someone has browser history exports before that -- please let me know, I'm impressed
+    threshold = 1000000000
+    if ts > threshold * 1_000_000:
+        # presumably it's in microseconds
+        ts /= 1_000_000
+    else:
+        # milliseconds
+        ts /= 1_000
+    print(ts)
+    dt = datetime.fromtimestamp(ts, pytz.utc)
     url = unquote(url) # firefox urls are all quoted
     return Visit(
         url=url,
