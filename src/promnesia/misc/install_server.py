@@ -12,8 +12,8 @@ SYSTEM = platform.system()
 UNSUPPORTED_SYSTEM = RuntimeError(f'Platform {SYSTEM} is not supported yet!')
 NO_SYSTEMD = RuntimeError('systemd not detected, find your own way to start promnesia automatically')
 
-from .. import root
-from .. import server
+from ..common import root
+from ..server import setup_parser as server_setup_parser
 
 SYSTEMD_TEMPLATE = '''
 [Unit]
@@ -149,4 +149,4 @@ def setup_parser(p: argparse.ArgumentParser) -> None:
 
     p.add_argument('--name', type=str, default=dflt, help='Systemd/launchd service name')
     p.add_argument('--unit-name', type=str, dest='name', help='DEPRECATED, same as --name')
-    server.setup_parser(p)
+    server_setup_parser(p)

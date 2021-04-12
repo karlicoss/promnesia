@@ -1,4 +1,4 @@
-from promnesia import Source
+from promnesia.common import Source
 from promnesia.sources import auto
 
 '''

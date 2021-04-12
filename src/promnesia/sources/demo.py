@@ -3,7 +3,7 @@ A dummy source, used for testing
 Generates a sequence of fake evenly separated visits
 '''
 
-from .. import Results, Visit, Loc
+from ..common import Results, Visit, Loc
 from datetime import datetime, timedelta
 
 
