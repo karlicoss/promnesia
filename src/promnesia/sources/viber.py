@@ -14,6 +14,20 @@ from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, joi
 logger = logging.getLogger(__name__)
 
 
+def index(
+    db_path: PathIsh = "~/.ViberPC/*/viber.db", locator_schema="editor"
+) -> Results:
+    glob_paths = list(_get_files(db_path))
+    logger.debug("Expanded path(s): %s", glob_paths)
+    assert glob_paths, f"No Viber-desktop sqlite found: {db_path}"
+
+    msgs_query = messages_query()
+
+    for db_path in _get_files(db_path):
+        assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file? {db_path}"
+        yield from _harvest_db(db_path, msgs_query, locator_schema)
+
+
 # TODO move to common?
 def _dataset_readonly(db: Path):
     # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
@@ -157,17 +171,3 @@ def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str):
                     ex,
                     exc_info=is_debug,
                 )
-
-
-def index(
-    db_path: PathIsh = "~/.ViberPC/*/viber.db", locator_schema="editor"
-) -> Results:
-    glob_paths = list(_get_files(db_path))
-    logger.debug("Expanded path(s): %s", glob_paths)
-    assert glob_paths, f"No Viber-desktop sqlite found: {db_path}"
-
-    msgs_query = messages_query()
-
-    for db_path in _get_files(db_path):
-        assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file? {db_path}"
-        yield from _harvest_db(db_path, msgs_query, locator_schema)
