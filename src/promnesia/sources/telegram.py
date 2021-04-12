@@ -33,10 +33,7 @@ def index(database: PathIsh) -> Results:
     logger = get_logger()
 
     path = Path(database)
-    assert path.is_file(), path
-
-    # TODO context manager?
-    db = dataset_readonly(path) # TODO could check is_file inside
+    assert path.is_file(), path # TODO could check is_file inside `dataset_readonly()`
 
     def make_query(text_query: str):
         return dedent(
@@ -64,22 +61,25 @@ def index(database: PathIsh) -> Results:
             ORDER BY time;
             """)
 
-    # TODO yield error if chatname or chat or smth else is null?
-    for row in db.query(make_query('M.text')):
-        try:
-            yield from _handle_row(row)
-        except Exception as ex:
-            yield echain(RuntimeError(f'While handling {row}'), ex)
-            # , None, sys.exc_info()[2]
-            # TODO hmm. traceback isn't preserved; wonder if that's because it's too heavy to attach to every single exception object..
+    # TODO context manager?
+    with dataset_readonly(path) as db:
 
-    # old (also 'stable') version doesn't have 'json' column yet...
-    if 'json' in db['messages'].columns:
-        for row in db.query(make_query("json_extract(json, '$.media.webpage.description')")):
+        # TODO yield error if chatname or chat or smth else is null?
+        for row in db.query(make_query('M.text')):
             try:
                 yield from _handle_row(row)
             except Exception as ex:
                 yield echain(RuntimeError(f'While handling {row}'), ex)
+                # , None, sys.exc_info()[2]
+                # TODO hmm. traceback isn't preserved; wonder if that's because it's too heavy to attach to every single exception object..
+
+        # old (also 'stable') version doesn't have 'json' column yet...
+        if 'json' in db['messages'].columns:
+            for row in db.query(make_query("json_extract(json, '$.media.webpage.description')")):
+                try:
+                    yield from _handle_row(row)
+                except Exception as ex:
+                    yield echain(RuntimeError(f'While handling {row}'), ex)
 
 
 def _handle_row(row) -> Results:
