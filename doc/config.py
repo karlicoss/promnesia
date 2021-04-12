@@ -77,8 +77,7 @@ SOURCES = [
     Source(
         telegram,
         '/data/telegram/database.sqlite',
-        ## when true, filter out any IP-addresses & domain-names without schema
-        #http_only=None
+        #http_only=None  # harvest alsoIP-addresses & plain domain-names
     ),
 
     # Uses all local SQLite files found in your Viber Desktop configurations
@@ -86,7 +85,11 @@ SOURCES = [
     #     ~/.ViberPC/**/viber.db
     #
     # You may modify that by providing a 2nd ``Source()`` argument.
-    viber,
+    Source(
+        viber,
+        #"path/to/viber-sql",
+        #http_only=None  # harvest alsoIP-addresses & plain domain-names
+    ),
 
     # NOTE: to configure the following modules you need to set up HPI package (https://github.com/karlicoss/HPI#whats-inside)
     # see HPI setup guide    : https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org
