@@ -15,13 +15,22 @@ logger = logging.getLogger(__name__)
 
 
 def index(
-    db_path: PathIsh = "~/.ViberPC/*/viber.db", locator_schema="editor"
+    db_path: PathIsh = "~/.ViberPC/*/viber.db",
+    locator_schema="editor",
+    *,
+    http_only: bool = None,
 ) -> Results:
+    """
+    :param db_path:
+        the path of the sqlite maintained by the VibdePC desktop app
+    :param http_only:
+        when true, do not collect IP-addresses and `python.py` strings
+    """
     glob_paths = list(_get_files(db_path))
     logger.debug("Expanded path(s): %s", glob_paths)
     assert glob_paths, f"No Viber-desktop sqlite found: {db_path}"
 
-    msgs_query = messages_query()
+    msgs_query = messages_query(http_only)
 
     for db_path in _get_files(db_path):
         assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file? {db_path}"
@@ -39,12 +48,13 @@ def _dataset_readonly(db: Path):
     return dataset.connect("sqlite:///", engine_kwargs={"creator": creator})
 
 
-def messages_query() -> str:
+def messages_query(http_only: Optional[bool]) -> str:
     """
     An SQL-query returning 1 row for each message
 
     A non-private method, to facilitate experimentation.
     """
+    extra_criteria = "AND text LIKE '%http%'" if http_only else ""
     return textwrap.dedent(
         f"""
         /*
@@ -86,7 +96,11 @@ def messages_query() -> str:
             )                   AS sender,
             coalesce(M.Subject, M.Body)         /* didn't see any msg with both */
                                 AS text,
-            json_extract(M.info, '$.Title') as url_title,    /* harvested titles from embedded urls */
+            IIF(
+                json_valid(M.info),
+                json_extract(M.info, '$.Title'),
+                ''
+            ) as url_title,                     /* harvested titles from embedded urls */
             G.PGTags            AS tags
         FROM messages AS M
         LEFT JOIN Events AS E
@@ -96,8 +110,9 @@ def messages_query() -> str:
         LEFT JOIN Groups AS G
             ON E.ChatId = G.ChatId
         WHERE
-            M.ClientFlag != 64  AND             /* edited messages */
-            text LIKE '%http%'
+            M.ClientFlag != 64                  /* edited messages */
+            AND text IS NOT NULL
+            {extra_criteria}
         ORDER BY time;
         """
     )
