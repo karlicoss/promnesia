@@ -271,7 +271,7 @@ def test_hook() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.__main__ import iter_all_visits
     with with_config('''
-from promnesia import Source
+from promnesia.common import Source
 from promnesia.sources import demo
 
 SOURCES = [
@@ -279,7 +279,7 @@ SOURCES = [
 ]
 
 from typing import Iterable
-from promnesia import DbVisit, Loc, Res
+from promnesia.common import DbVisit, Loc, Res
 
 def HOOK(visit: Res[DbVisit]) -> Iterable[Res[DbVisit]]:
     # NOTE: might be a good idea to check that the visit is an exception first and yield it intact?
