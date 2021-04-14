@@ -2,7 +2,7 @@
 A more sophisticated example of config for Promnesia
 '''
 
-from promnesia import Source
+from promnesia.common import Source
 
 
 # now, let's import some indexers

@@ -137,7 +137,7 @@ def index_some_demo_visits(
             delta=timedelta(seconds={delta.total_seconds()}),
         )
 
-    from promnesia import Source
+    from promnesia.common import Source
     SOURCES = [
         Source(make_visits, name='demo'),
     ]
@@ -230,7 +230,7 @@ def test_index_many(tdir: Path) -> None:
     cfg = tdir / 'test_config.py'
     cfg.write_text(f"""
 from datetime import datetime, timedelta
-from promnesia import Source, Visit, Loc
+from promnesia.common import Source, Visit, Loc
 # TODO def need to allow taking in index function without having to wrap in source?
 def index():
     for i in range(100000):
@@ -255,7 +255,7 @@ def test_indexing_error(tdir: Path) -> None:
 def bad_index():
     import bad_import
     yield from [] # dummy
-from promnesia import Source
+from promnesia.common import Source
 from promnesia.sources import demo
 
 SOURCES = [
@@ -297,7 +297,7 @@ def test_concurrent_indexing(tmp_path: Path, execution_number) -> None:
     cfg_fast = tmp_path / 'config_fast.py'
     cfg = dedent(f'''
     OUTPUT_DIR = r'{tmp_path}'
-    from promnesia import Source
+    from promnesia.common import Source
     from promnesia.sources import demo
     SOURCES = [Source(demo.index, count=COUNT)]
     ''')

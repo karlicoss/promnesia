@@ -505,6 +505,12 @@ def get_system_tz() -> pytz.BaseTzInfo:
         logger.error(f"Unknown time zone %s. Falling back to UTC. Please report this as a bug!", zone)
         return pytz.utc
 
+# used in misc/install_server.py
+def root() -> Path:
+    r = Path(__file__).absolute().parent.parent.parent
+    assert (r / 'src').exists()
+    return r
+
 
 def file_mtime(path: PathIsh) -> datetime:
     tz = get_system_tz()

@@ -2,7 +2,7 @@ import pytest
 from more_itertools import ilen
 from typing import Union, Iterable, List
 
-from promnesia import Source
+from promnesia.common import Source
 
 from common import throw
 
@@ -11,6 +11,7 @@ def test_minimal() -> None:
     '''
     Example of a smallest possible config, using a 'demo' source
     '''
+    # import directly from promnesia, not promnesia.common
     cfg = make('''
 from promnesia import Source
 from promnesia.sources import demo
@@ -30,7 +31,7 @@ def test_sources_style() -> None:
     Testing 'styles' of specifying sources
     '''
     cfg = make('''
-from promnesia import Source
+from promnesia.common import Source
 from promnesia.sources import demo
 
 SOURCES = [
@@ -79,7 +80,7 @@ def test_sources_style_more():
     '''
     cfg = make('''
 from typing import Iterable
-from promnesia import Visit, Source, Loc
+from promnesia.common import Visit, Source, Loc
 
 def my_indexer() -> Iterable[Visit]:
     from datetime import datetime
@@ -126,7 +127,7 @@ def test_sources_lazy():
     '''
 
     cfg = make('''
-from promnesia import Source
+from promnesia.common import Source
 
 def lazy():
     from promnesia.sources import demo
@@ -200,7 +201,7 @@ SOURCES = []
 
 def test_legacy():
     cfg = make('''
-from promnesia import Source
+from promnesia.common import Source
 from promnesia.sources import demo
 INDEXERS = [
     Source(demo.index, src='legacy name'),

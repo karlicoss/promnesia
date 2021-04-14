@@ -210,7 +210,7 @@ def test_query_while_indexing(tmp_path: Path) -> None:
     cfg.write_text(dedent(f'''
     OUTPUT_DIR = r'{tmp_path}'
 
-    from promnesia import Source
+    from promnesia.common import Source
     from promnesia.sources import demo
     # index stupid amount of visits to increase time spent in database serialization
     SOURCES = [Source(demo.index, count=100000)]
