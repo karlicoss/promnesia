@@ -1,0 +1,38 @@
+* =v1.0.20210415=
+
+Thanks @ankostis, @seanbreckenridge, @gms8994, @Cobertos and others for changes!
+
+** general
+- *deprecate*: if you have =import promnesia= in the config you should switch it to =import promnesia.common=
+   
+    see https://github.com/karlicoss/promnesia/pull/225
+    This brings us closer towards making promnesia a namespaced package to allow for better extensibility.
+- better Windows support https://github.com/karlicoss/promnesia/pull/197
+
+** indexer
+- *new*: 'update' style indexing is now the default https://github.com/karlicoss/promnesia/pull/211
+
+  It means that database won't be emptied before reindexing, so if you only index a single datasource, the data for other datasources will be untouched.
+  If you want the previous behaviour, you can use =--overwrite=
+- fixes for race conditions during 'update' style indexing https://github.com/karlicoss/promnesia/pull/220
+- minor cannon enhancements
+
+** server
+- fix deprecation in sqlalchemy API https://github.com/karlicoss/promnesia/pull/221
+
+** sources
+
+- *new*: viber data source (local desktop database)
+  - https://github.com/karlicoss/promnesia/pull/204
+  - https://github.com/karlicoss/promnesia/pull/208
+  - https://github.com/karlicoss/promnesia/pull/224
+- *new*: safari browser data https://github.com/karlicoss/promnesia/pull/207
+- *new*: stackexchange source https://github.com/karlicoss/promnesia/pull/189
+- auto indexer: better directory pruning https://github.com/karlicoss/promnesia/pull/209
+- telegram: enhancements to opt out of non-http link extraction
+- firefox: handle Fenix databases properly https://github.com/karlicoss/promnesia/pull/227
+- hypothesis: 
+  - extract tags https://github.com/karlicoss/promnesia/pull/199
+  - extract URLs from annotation text https://github.com/karlicoss/promnesia/pull/222
+
+* for older versions, see https://github.com/karlicoss/promnesia/releases
