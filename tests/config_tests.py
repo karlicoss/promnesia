@@ -11,8 +11,9 @@ def test_minimal() -> None:
     '''
     Example of a smallest possible config, using a 'demo' source
     '''
+    # import directly from promnesia, not promnesia.common
     cfg = make('''
-from promnesia.common import Source
+from promnesia import Source
 from promnesia.sources import demo
 
 SOURCES = [
