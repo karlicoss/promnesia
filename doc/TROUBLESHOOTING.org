@@ -101,5 +101,5 @@ If it is, and the promnesia server works as expected otherwise, perhaps it's a b
 
 You probably need to install [[https://github.com/karlicoss/open-in-editor][open-in-editor]].
 ** Activate extension hotkey for Chrome (=Ctrl-Shift-E=) doesn't work in Ubuntu
-Likely, it conflicts with 'emoji input', which Ubuntu agressively hijacking.
+Likely, it conflicts with 'emoji input', which Ubuntu aggressively hijacking.
 Either [[https://askubuntu.com/a/1159087/427470][rebind emoji input hotkey]] ([[https://superuser.com/questions/1587172/how-to-disable-ctrlshiftu-in-ubuntu-20-04][it might not work though]]), or set a different hotkey in Chrome extension settings.

@@ -841,7 +841,7 @@ if __name__ == '__main__':
 
 # siblings are items that share a parent (could also return which one is shared)
 
-# youtube end domain normalising: very few occurences, so I won't care about them for now
+# youtube end domain normalising: very few occurrences, so I won't care about them for now
 
 
 # TODO for debugging, have special mode that only uses query param trimming one by one

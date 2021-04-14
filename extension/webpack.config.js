@@ -90,7 +90,7 @@ const manifestExtra = {
     permissions: permissionsExtra,
     options_ui: {},
     web_accessible_resources: [
-        // wtf?? it says that content scritps don't need to be listed... but doesn't work otherwise..
+        // wtf?? it says that content scripts don't need to be listed... but doesn't work otherwise..
         // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/web_accessible_resources#Description
         "vendors_anchorme.js",
         // TODO however, seems that web_accessible_resources works without sidebar.js and sidebar.css?? odd

@@ -1,7 +1,7 @@
 import {_fmt} from '../src/display.js'
 
 test('formats visit date/time', () => {
-    // NOTE: under Node env there might not be necesary locales (e.g. if you're running in Docker)
+    // NOTE: under Node env there might not be necessary locales (e.g. if you're running in Docker)
     // can check with: Intl.DateTimeFormat('en-GB').resolvedOptions().locale
     // e.g. it might resolve to incmplete locale like 'en'
     const dd = new Date('05 Jun 2020 05:58:00') // deliberately no timezone, it's pointless without the backend anyway

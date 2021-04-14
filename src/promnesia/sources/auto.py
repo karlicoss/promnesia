@@ -44,7 +44,7 @@ def _collect(thing, path: List[str], result: List[EUrl]) -> None:
         pass
 
 
-# TOOD mm. okay, I suppose could use kython consuming thingy?..
+# TODO mm. okay, I suppose could use kython consuming thingy?..
 def collect_from(thing) -> List[EUrl]:
     uuu: List[EUrl] = []
     path: List[str] = []
@@ -88,7 +88,7 @@ def fallback(ex):
         if not do_fallback:
             try:
                 it = ex(path)
-                # ugh. keeping yeild in the try section is not ideal, but need this because of lazy yield semantics
+                # ugh. keeping yield in the try section is not ideal, but need this because of lazy yield semantics
                 yield from it
             except ModuleNotFoundError as me:
                 logger = get_logger()
@@ -280,7 +280,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
 
     ip, pm = by_path(pp)
     if ip is None:
-        # TOOD use warning (with mime/ext as key?)
+        # TODO use warning (with mime/ext as key?)
         # TODO only log once? # hmm..
         msg = f'No extractor for suffix {suf}, mime {pm}'
         warnings.warn(msg)

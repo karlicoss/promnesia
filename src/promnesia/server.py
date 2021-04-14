@@ -299,7 +299,7 @@ def search_around(
     # TODO meh. use count/pagination instead?
     delta_back  = timedelta(hours=3  ).total_seconds()
     delta_front = timedelta(minutes=2).total_seconds()
-    # TODO not sure about delta_front.. but it also serves as quick hack to accomodate for all the truncations etc
+    # TODO not sure about delta_front.. but it also serves as quick hack to accommodate for all the truncations etc
 
     return search_common(
         url='http://dummy.org', # NOTE: not used in the where query (below).. perhaps need to get rid of this

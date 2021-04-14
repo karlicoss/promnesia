@@ -344,7 +344,7 @@ function showMark(element) {
     const bumpZindex = () => {
         // jeez. but kind of works.. (needs to be shared across all visits..)
         let lastz = window.lastz || 9999
-        // TODO careful.. eyes seep throught? although maybe it's good
+        // TODO careful.. eyes seep through? although maybe it's good
         popup_w.style.zIndex = lastz
         window.lastz = lastz + 1
     }

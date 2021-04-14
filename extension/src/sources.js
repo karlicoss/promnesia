@@ -25,7 +25,7 @@ import {achrome} from './async_chrome'
 
 /* todo add to settings? */
 function getDelayMs(/*url*/) {
-    /* this is useful so we don't treat the page we visited for the first tiem as visited */
+    /* this is useful so we don't treat the page we visited for the first time as visited */
     return 10 * 1000;
 }
 
@@ -379,7 +379,7 @@ export class MultiSource implements VisitsSource {
             } else {
                 for (let i = 0; i < urls.length; i++) {
                     if (res[i] == null) {
-                        // first visit 'wins' (generaly it's from the backend, so the 'best' one)
+                        // first visit 'wins' (generally it's from the backend, so the 'best' one)
                         res[i] = r[i]
                     }
                 }
@@ -458,7 +458,7 @@ export async function isAndroid(): Promise<boolean> {
         return platform.os === 'android'
     } catch (error) {
         // defensive just in case since isAndroid is kinda crucial for extension functioning
-        console.error('error while determining platfrom; assuming not android: %o', error)
+        console.error('error while determining platform; assuming not android: %o', error)
         return false
     }
 }

@@ -9,7 +9,7 @@ def test() -> None:
     from typing import Callable
     M: Callable[[str], None]  = lambda s: print(s, file=sys.stderr)
 
-    M("   Logging module's deafults are not great...'")
+    M("   Logging module's defaults are not great...'")
     l = logging.getLogger('test_logger')
     l.error("For example, this should be logged as error. But it's not even formatted properly, doesn't have logger name or level")
 

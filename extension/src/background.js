@@ -112,7 +112,7 @@ async function updateState (tab: chrome$Tab) {
     const opts = await getOptions()
 
     // TODO right... so if sidebar isn't injected, the messages will not be delivered.. well, hopefully it's quick enough..
-    // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages recieved multiple times)
+    // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages received multiple times)
 
     // TODO only inject after blacklist check? just in case?
     const inject = () => achrome.tabs.executeScript(tabId, {file: 'sidebar.js'})
