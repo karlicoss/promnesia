@@ -1,4 +1,4 @@
-This file is an overview of availabe sources along with descriptions and some guidance.
+This file is an overview of available sources along with descriptions and some guidance.
 
 * Extra dependencies
 Some sources require additional dependencies, which you can install if needed.

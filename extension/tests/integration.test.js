@@ -80,7 +80,7 @@ test('search_defensive', async() => {
     global.chrome.history.search    = (q, res) => res(null)
     global.chrome.bookmarks.getTree = (res)    => res(null)
 
-    // TODO wtf?? for some reason deafult order (backend, browser, bookmarks) causes
+    // TODO wtf?? for some reason default order (backend, browser, bookmarks) causes
     // 'Promise rejection was handled asynchronously'
     // I wonder if it's some issue with node fetch implementation... or just node version??
     // for some reason different order works :shrug:

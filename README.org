@@ -15,7 +15,7 @@ It allows you to answer different questions about the current web page:
 - have I been here before? When? [[https://karlicoss.github.io/promnesia-demos/child-visits.webm][demo (30 s)]] [[https://karlicoss.github.io/promnesia-demos/child-visits-2.webm][demo (40s)]]
 - how did I get on it? Which page has led to it? [[https://karlicoss.github.io/promnesia-demos/how_did_i_get_here.webm][demo (40s)]]
 - why have I bookmarked it? who sent me this link? Can I just jump to the message? [[https://karlicoss.github.io/promnesia-demos/watch_later.webm][demo (30s)]]
-- or, can I jump straight into the file where the link occured? [[https://karlicoss.github.io/promnesia-demos/jump_to_editor.webm][demo (20s)]]
+- or, can I jump straight into the file where the link occurred? [[https://karlicoss.github.io/promnesia-demos/jump_to_editor.webm][demo (20s)]]
 - which links on this page have I already explored? [[https://karlicoss.github.io/promnesia-demos/mark-visited.webm][demo (30s)]],
 - which posts from this blog page have I already read? [[https://karlicoss.github.io/promnesia-demos/mark-visited-2.webm][demo (20s)]]
 - have I annotated it? [[https://karlicoss.github.io/promnesia-demos/highlights.webm][demo (1m)]]
@@ -82,7 +82,7 @@ See [[file:doc/GUIDE.org#extension-features][feature guide]] if you're wondering
   - A [[https://www.youtube.com/watch?v=9PsOeYheIY4][video]], demonstrating
     - [[file:doc/GUIDE.org#mark-visited]['mark visited']] feature
     - highlights
-    - jumping to the originating tweet; jumping straight to the org-mode hading where links occured
+    - jumping to the originating tweet; jumping straight to the org-mode heading where links occurred
 
   - You can find more short screencasts, demonstrating various features [[https://github.com/karlicoss/promnesia-demos][here]]
   - There are more screenshots [[https://github.com/karlicoss/promnesia/issues/5#issuecomment-619365708][here]]
@@ -334,12 +334,12 @@ Visits have the following fields:
   Required, but in the future might be optional. (TODO also rename to 'origin'??)
   # TODO renaming gonna be annoying because of the communication protocol..
 
-- *context*: what was the context, in which the visit occured?
+- *context*: what was the context, in which the visit occurred?
 
   For example:
 
   - context for Telegram visits is the message body along with its sender
-  - context for a link from org-mode file is the whole paragraph (outline), in which it occured
+  - context for a link from org-mode file is the whole paragraph (outline), in which it occurred
 
   I usually call a visit without a context 'boring' -- it doesn't contain much information except for the mere fact of visiting the page before.
   However they are still useful to have, since they fill in the gaps and provide means of *tracing* through your history.

@@ -238,7 +238,7 @@ function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> 
     }
 }
 
-// TODO potentially not very effecient; replace with something existing (Hypothesis??)
+// TODO potentially not very efficient; replace with something existing (Hypothesis??)
 function _highlight(text: string, idx: number, v: Visit) {
     const lines = new Set()
     for (const line of text.split('\n')) {
@@ -381,7 +381,7 @@ async function* _bindSidebarData(response: Visits) {
 
     visits.sort((f, s) => {
         // keep 'relatives' in the bottom
-        // TODO: this might slightly break local visits sorting, becuase they don't necessarily have proper normalisation
+        // TODO: this might slightly break local visits sorting, because they don't necessarily have proper normalisation
         const fr = f.normalised_url === normalised
         const sr = s.normalised_url === normalised
         if (fr != sr) {

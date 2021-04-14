@@ -45,7 +45,7 @@ class Loc(NamedTuple):
 
         # todo: handler has to be overridable by config. This is needed for docker, but also for a "as a service" install, where the sources would be available on some remote webserver
         # maybe it should be treated as a format string, so that {line} may be a part of the result or not.
-        # for local usage, editor:///file:line works, but if the txt file is only avaiable through http, it breaks.
+        # for local usage, editor:///file:line works, but if the txt file is only available through http, it breaks.
         #if get_config().MIME_HANDLER:
         #   handler = get_config().MIME_HANDLER
         #if True:
@@ -222,7 +222,7 @@ def _sanitize(url: str) -> str:
 
 def iter_urls(s: str, *, syntax: Syntax='') -> Iterable[Url]:
     extractor = _get_extractor(syntax=syntax)
-    # note: it also has get_indices, might be usefull
+    # note: it also has get_indices, might be useful
     for u in extractor.gen_urls(s):
         yield _sanitize(u)
 
@@ -325,7 +325,7 @@ def echain(ex: Exception, cause: Exception) -> Exception:
     # right.. even if we attach cause it doesn't help much because when we return/yield exception, we lose the stacktrace
     # so only 'ex' gets logged, cause is completely lost
     # hopefully this is safe? at least on runtimeerrors
-    # might also do something smarter and collapes if both are strings or something..
+    # might also do something smarter and collapse if both are strings or something..
     e.args += cause.args
     return e
 
@@ -431,7 +431,7 @@ def fdfind_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
 
     ignore_args = []
     if ignore:
-        # Add a statment that excludes the folder
+        # Add a statement that excludes the folder
         ignore_args = [['--exclude', f'{n}'] for n in ignore]
         # Flatten the list of lists
         ignore_args_l = list(itertools.chain(*ignore_args))

@@ -59,7 +59,7 @@ def messages_query(http_only: Optional[bool]) -> str:
         f"""
         /*
         Establish group-names by concatenating:
-        - groups explicitely named,
+        - groups explicitly named,
         - multi-groups having a group-leader (PGRole=2), with
         - all the rest groups that (must) have just 2 members,
           me(ContactId=1) & "other+" contacts, so use "other"" as group-name.

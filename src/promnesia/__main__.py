@@ -374,7 +374,7 @@ def main() -> None:
 
     logger.info("CLI args: %s", args)
 
-    # TODO maybe, it's better for server to compute intermediate represetnation?
+    # TODO maybe, it's better for server to compute intermediate representations?
     # the only downside is storage. dunno.
     # worst case -- could use database?
 
