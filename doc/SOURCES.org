@@ -101,6 +101,10 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
 
+- [[file:../src/promnesia/sources/github.py][promnesia.sources.github]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] github module
+
 - [[file:../src/promnesia/sources/guess.py][promnesia.sources.guess]]
 - [[file:../src/promnesia/sources/html.py][promnesia.sources.html]]
 
