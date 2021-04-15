@@ -2,8 +2,6 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] github module
 '''
 
-from itertools import chain
-
 from ..common import Results, Visit, Loc, iter_urls
 
 
@@ -29,6 +27,14 @@ def index() -> Results:
             locator=loc,
         )
 
+        for url in iter_urls(e.summary):
+            yield Visit(
+                url=url,
+                dt=e.dt,
+                context=e.body,
+                locator=loc,
+            )
+
         if e.body is None:
             continue
 
@@ -37,8 +43,8 @@ def index() -> Results:
         # prefixed with http/www/find some way to ignore
         # filenames (ends with .py? .js? .html?)
         #
-        # extract any links found in the summary / body
-        for url in chain(iter_urls(e.summary), iter_urls(e.body)):
+        # extract any links found in the body
+        for url in iter_urls(e.body):
             yield Visit(
                 url=url,
                 dt=e.dt,
