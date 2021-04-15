@@ -522,7 +522,10 @@ def now_tz() -> datetime:
 
 
 def user_config_file() -> Path:
-    return Path(appdirs().user_config_dir) / 'config.py'
+    if "PROMNESIA_CONFIG" in os.environ:
+        return Path(os.environ["PROMNESIA_CONFIG"])
+    else:
+        return Path(appdirs().user_config_dir) / 'config.py'
 
 
 def default_config_path() -> Path:
