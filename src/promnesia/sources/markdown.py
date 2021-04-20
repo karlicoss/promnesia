@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Iterator, NamedTuple, Optional
 
@@ -6,7 +5,6 @@ from ..common import get_logger, Extraction, Url, PathIsh, Res, Visit, Loc, file
 
 
 import mistletoe # type: ignore
-from mistletoe import Document # type: ignore
 from mistletoe.span_token import AutoLink, Link # type: ignore
 import mistletoe.block_token as BT # type: ignore
 from mistletoe.html_renderer import HTMLRenderer # type: ignore
@@ -99,3 +97,39 @@ def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
                 locator=Loc.file(fname), # TODO line number
                 context=r.context,
             )
+
+
+class TextParser(Parser):
+    '''
+    Used to extract links/render markdown from text, e.g. reddit/github comments
+    Instead of chunking blocks like for files, this returns the entire
+    message rendered as the context
+    '''
+    def __init__(self, text: str):
+        self.doc = mistletoe.Document(text)
+
+
+    def _doc_ashtml(self):
+        '''
+        cached html representation of the entire html message/document
+        '''
+        if not hasattr(self, '_html'):
+            self._html = HTML_MARKER + _ashtml(self.doc)
+        return self._html
+
+
+    def _extract(self, cur, last_block = None) -> Iterator[Parsed]:
+        if not isinstance(cur, (AutoLink, Link)):
+            return
+
+        yield Parsed(url=cur.target, context=self._doc_ashtml())
+
+
+def extract_from_text(text: str) -> Iterator[Result]:
+    '''
+    assume this is rendering something like a github/reddit markdown message
+    use the entire contents of the comment/body as the context
+    '''
+    # note: returns Result (link/context), not Visit
+    # the callee function has to insert dt/duration etc.
+    yield from TextParser(text).walk()
