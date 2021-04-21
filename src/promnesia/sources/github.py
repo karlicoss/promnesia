@@ -2,6 +2,8 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] github module
 '''
 
+# Note: requires the 'mistletoe' module if you enable render_markdown
+
 from typing import Optional, Set
 
 from ..common import Results, Visit, Loc, iter_urls, logger
