@@ -123,7 +123,7 @@ def index(*, render_markdown: bool = False, renderer = RedditRenderer) -> Result
     from . import hpi
     from my.reddit import submissions, comments, saved, upvoted
 
-    r = RedditRenderer(render_markdown=render_markdown)
+    r = renderer(render_markdown=render_markdown)
 
     logger.info('processing saves')
     for s in saved():
