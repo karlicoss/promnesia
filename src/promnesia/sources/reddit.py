@@ -3,9 +3,48 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit
 '''
 
 from itertools import chain
-from typing import Set
+from typing import Set, Optional
 
 from ..common import Visit, Loc, extract_urls, Results, logger
+
+
+def index(*, render_markdown: bool = False, renderer: Optional['RedditRenderer'] = None) -> Results:
+    from . import hpi
+    from my.reddit import submissions, comments, saved, upvoted
+
+    if renderer is not None:
+        assert callable(renderer), f"{renderer} is not a callable (should be a subclass of RedditRenderer)"
+        r = renderer(render_markdown=render_markdown)
+    else:
+        r = RedditRenderer(render_markdown=render_markdown)
+
+    logger.info('processing saves')
+    for s in saved():
+        try:
+            yield from r._from_save(s)
+        except Exception as e:
+            yield e
+
+    logger.info('processing comments')
+    for c in comments():
+        try:
+            yield from r._from_comment(c)
+        except Exception as e:
+            yield e
+
+    logger.info('processing submissions')
+    for sub in submissions():
+        try:
+            yield from r._from_submission(sub)
+        except Exception as e:
+            yield e
+
+    logger.info('processing upvotes')
+    for u in upvoted():
+        try:
+            yield from r._from_upvote(u)
+        except Exception as e:
+            yield e
 
 
 # mostly here so we can keep track of how the user
@@ -14,6 +53,8 @@ class RedditRenderer:
 
     def __init__(self, render_markdown: bool = False):
 
+        self._link_extractor = None
+        self._parser_cls = None
         try:
             from .markdown import TextParser, extract_from_text
             self._link_extractor = extract_from_text
@@ -64,7 +105,7 @@ class RedditRenderer:
 
     # to allow for possible subclassing by the user?
     def _render_body(self, text: str) -> str:
-        if self.render_markdown:
+        if self.render_markdown and self._parser_cls is not None:
             return self._parser_cls(text)._doc_ashtml()
         else:
             return text
@@ -103,7 +144,7 @@ class RedditRenderer:
         # the render_markdown flag, as it may catch extra links that URLExtract didnt
         # would still require mistletoe to be installed, but
         # the user may already have it installed for the auto/markdown modules
-        if hasattr(self, '_link_extractor'):
+        if self._link_extractor is not None:
             for res in self._link_extractor(i.text):
                 if isinstance(res, Exception):
                     yield res
@@ -117,41 +158,6 @@ class RedditRenderer:
                     locator=locator,
                 )
                 emitted.add(res.url)
-
-
-def index(*, render_markdown: bool = False, renderer = RedditRenderer) -> Results:
-    from . import hpi
-    from my.reddit import submissions, comments, saved, upvoted
-
-    r = renderer(render_markdown=render_markdown)
-
-    logger.info('processing saves')
-    for s in saved():
-        try:
-            yield from r._from_save(s)
-        except Exception as e:
-            yield e
-
-    logger.info('processing comments')
-    for c in comments():
-        try:
-            yield from r._from_comment(c)
-        except Exception as e:
-            yield e
-
-    logger.info('processing submissions')
-    for sub in submissions():
-        try:
-            yield from r._from_submission(sub)
-        except Exception as e:
-            yield e
-
-    logger.info('processing upvotes')
-    for u in upvoted():
-        try:
-            yield from r._from_upvote(u)
-        except Exception as e:
-            yield e
 
 
 # support lazy imports..
