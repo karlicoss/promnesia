@@ -132,6 +132,11 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
 - [[file:../src/promnesia/sources/rss.py][promnesia.sources.rss]]
 - [[file:../src/promnesia/sources/shellcmd.py][promnesia.sources.shellcmd]]
+
+- [[file:../src/promnesia/sources/smscalls.py][promnesia.sources.smscalls]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] smscalls module
+
 - [[file:../src/promnesia/sources/takeout.py][promnesia.sources.takeout]]
 
   Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
