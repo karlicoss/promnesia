@@ -150,6 +150,11 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
   Uses all local SQLite files found in your Viber Desktop configurations:
   usually in =~/.ViberPC/**/viber.db= (one directory for each telephone number).
 
+- [[file:../src/promnesia/sources/signal.py][promnesia.sources.signal]]
+
+  When path(s) given, uses the SQLite inside Signal-Desktop's configuration directory
+  (see the sources for more parameters & location of the db-file for each platform)
+
 - [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.

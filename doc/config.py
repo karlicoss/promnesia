@@ -33,6 +33,7 @@ from promnesia.sources import (
     takeout,
     twitter,
     viber,
+    signal,
 )
 
 
@@ -90,6 +91,10 @@ SOURCES = [
         #"path/to/viber-sql",
         #http_only=None  # harvest alsoIP-addresses & plain domain-names
     ),
+
+    # When path(s) given, uses the SQLite inside Signal-Desktop's configuration directory
+    # (see the sources for more parameters & location of the db-file for each platform)
+    signal,
 
     # NOTE: to configure the following modules you need to set up HPI package (https://github.com/karlicoss/HPI#whats-inside)
     # see HPI setup guide    : https://github.com/karlicoss/HPI/blob/master/doc/SETUP.org
