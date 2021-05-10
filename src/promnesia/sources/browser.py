@@ -209,7 +209,6 @@ def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
     else:
         # milliseconds
         ts /= 1_000
-    print(ts)
     dt = datetime.fromtimestamp(ts, pytz.utc)
     url = unquote(url) # firefox urls are all quoted
     return Visit(
