@@ -36,6 +36,7 @@ def main() -> None:
             'sqlalchemy', # DB api
             'cachew>=0.8.0', # caching with type hints
 
+            'idna<3',  # temporary, can remove after https://github.com/psf/requests/issues/5710 is resolved
             *DEPS_INDEXER,
             *DEPS_SERVER,
         ],
