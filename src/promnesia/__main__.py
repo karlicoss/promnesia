@@ -352,6 +352,9 @@ def main() -> None:
     ccp.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
 
     icp = scp.add_parser('create', help='Create user config')
+    icp.add_argument(
+        "--config", type=Path, default=default_config_path(), help="Config path"
+    )
     icp.set_defaults(func=config_create)
 
     dp = subp.add_parser('doctor', help='Troubleshooting assistant')
