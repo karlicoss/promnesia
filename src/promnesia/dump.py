@@ -72,17 +72,21 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List
     meta.create_all()
 
     cleared: Set[str] = set()
+    ncleared = 0
     with engine.begin() as conn:
         for chunk in chunked(vit_ok(), n=_CHUNK_BY):
             srcs = set(v.src or '' for v in chunk)
             new = srcs.difference(cleared)
+
             for src in new:
-                conn.execute(table.delete().where(table.c.src == src))
+                cur = conn.execute(table.delete().where(table.c.src == src))
+                ncleared += conn.execute("SELECT changes()").fetchone()[0]
                 cleared.add(src)
 
             bound = [binder.to_row(x) for x in chunk]
             # pylint: disable=no-value-for-parameter
             conn.execute(table.insert().values(bound))
+    logger.info("Cleared %s old visits from: %s", ncleared, cleared)
 
     if overwrite_db:
         shutil.move(str(tpath), str(db_path))
@@ -90,7 +94,9 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List
     errs = '' if errors == 0 else f', {errors} ERRORS'
     total = ok + errors
     what = 'overwritten' if overwrite_db else 'updated'
-    logger.info('%s database "%s". %d total (%d OK%s)', what, db_path, total, ok, errs)
+    logger.info(
+        '%s database "%s". %d total (%d OK%s, %d cleared, +%d more)',
+        what, db_path, total, ok, errs, ncleared, ok - ncleared)
     res: List[Exception] = []
     if total == 0:
         res.append(RuntimeError('No visits were indexed, something is probably wrong!'))
