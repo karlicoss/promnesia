@@ -61,14 +61,14 @@ def index(
     resolved_db_paths = collect_db_paths(*db_paths, append=append_platform_path)
     logger.debug("Paths to harvest: %s", db_paths)
     if not http_only:
-        messages_query += "\nWHERE body LIKE '%http%'"
+        sql_query = f"{messages_query}\nWHERE body LIKE '%http%'"
 
     for db_path in resolved_db_paths:
         logger.info("Ciphered db to harvest %s", db_path)
         assert db_path.is_file(), f"Is it a (Signal-desktop sqlite) file? {db_path}"
         yield from _harvest_db(
             db_path,
-            messages_query,
+            sql_query,
             override_key=override_key,
             locator_schema=locator_schema,
         )
