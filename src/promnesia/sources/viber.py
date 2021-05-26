@@ -2,7 +2,6 @@
 Adapted from `telegram.py` to read from `~/.ViberPC/XYZ123/viber.db`
 """
 
-import json
 import logging
 import textwrap
 from os import PathLike
