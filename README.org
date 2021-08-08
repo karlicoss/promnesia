@@ -114,7 +114,7 @@ Promnesia consists of three parts:
 
   Indexer goes through the sources (specified in the config), processes raw data and extracts URLs along with other useful information.
 
-  Another important thing it's doing is *normalising* URLs to establish equivalence and stip off garbage.
+  Another important thing it's doing is *normalising* URLs to establish equivalence and strip off garbage.
   I write about the motivation for it in [[https://beepb00p.xyz/promnesia.html#urls_broken]["URLs are broken"]].
 
 You might also want to skim through the [[https://github.com/karlicoss/promnesia#glossary][glossary]] if you want to understand deeper what information Promnesia is extracting.
