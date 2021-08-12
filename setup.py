@@ -30,7 +30,7 @@ def main() -> None:
         python_requires='>=3.6',
         install_requires=[
             'appdirs', # for portable user directories detection
-            'tzlocal',
+            'tzlocal>=2.1',
             'more_itertools',
             'pytz',
             'sqlalchemy', # DB api
