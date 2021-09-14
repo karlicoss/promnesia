@@ -110,11 +110,12 @@ def reset() -> None:
 def import_config(config_file: PathIsh) -> Config:
     p = Path(config_file)
 
-    # TODO just exec??
+    # todo just exec??
     name = p.stem
-    spec = importlib.util.spec_from_file_location(name, p) # type: ignore
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod) # type: ignore
+    spec = importlib.util.spec_from_file_location(name, p); assert spec is not None
+    mod = importlib.util.module_from_spec(spec); assert mod is not None
+    loader = spec.loader; assert loader is not None
+    loader.exec_module(mod) # type: ignore[attr-defined]
 
     d = {}
     for f in Config._fields:

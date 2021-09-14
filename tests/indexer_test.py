@@ -61,7 +61,7 @@ def import_file(p: Union[str, Path], name=None):
     if name is None:
         name = p.stem
     import importlib.util
-    spec = importlib.util.spec_from_file_location(name, p) # type: ignore
+    spec = importlib.util.spec_from_file_location(name, p); assert spec is not None
     foo = importlib.util.module_from_spec(spec)
     with extra_path(p.parent):
         spec.loader.exec_module(foo) # type: ignore
