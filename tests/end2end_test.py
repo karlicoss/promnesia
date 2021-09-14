@@ -575,7 +575,8 @@ def test_new_background_tab(tmp_path, browser) -> None:
             notify_contexts=True,
     ) as helper:
         manual.confirm('you should see notification about contexts')
-        helper.driver.find_element(By.XPATH, '//div[@class="logo"]/a').send_keys(Keys.CONTROL + Keys.ENTER)
+        page_logo = helper.driver.find_element(By.XPATH, '//a[@class="page-logo"]')
+        page_logo.send_keys(Keys.CONTROL + Keys.ENTER) # ctrl+click -- opens the link in new background tab
         manual.confirm('you should not see any new notifications')
         # TODO switch to new tab?
         # TODO https://www.e-flux.com/journal/53/
