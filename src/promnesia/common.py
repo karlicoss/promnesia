@@ -487,8 +487,8 @@ def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable
 @lru_cache(1)
 def get_system_zone() -> str:
     try:
-        import tzlocal # type: ignore
-        return tzlocal.get_localzone().zone
+        import tzlocal
+        return tzlocal.get_localzone().key # type: ignore[attr-defined] # mypy stubs aren't aware of api change yet (see https://github.com/python/typeshed/issues/6038)
     except Exception as e:
         logger.exception(e)
         logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
