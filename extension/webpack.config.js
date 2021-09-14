@@ -209,6 +209,8 @@ const options = {
                       {code: /RSVP.Promise/g, newCode: 'Promise'},
                       {code: 'RSVP.all', newCode: 'Promise.all'},
                       {code: 'window.basket = {', newCode: 'var basket = window.basket= {'},
+                      // ugh. sometimes it patches it twice somehow??? wtf???
+                      {code: 'var basket = var basket = window.basket= {', newCode: 'var basket = window.basket= {'},
                   ],
               }
           },
