@@ -488,7 +488,13 @@ def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable
 def get_system_zone() -> str:
     try:
         import tzlocal
-        return tzlocal.get_localzone().key # type: ignore[attr-defined] # mypy stubs aren't aware of api change yet (see https://github.com/python/typeshed/issues/6038)
+        # note: tzlocal mypy stubs aren't aware of api change yet (see https://github.com/python/typeshed/issues/6038)
+        try:
+            # 4.0 way
+            return tzlocal.get_localzone_name() # type: ignore[attr-defined]
+        except AttributeError as e:
+            # 2.0 way
+            return tzlocal.get_localzone().zone # type: ignore[attr-defined]
     except Exception as e:
         logger.exception(e)
         logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
