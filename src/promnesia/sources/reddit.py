@@ -10,7 +10,12 @@ from ..common import Visit, Loc, extract_urls, Results, logger
 
 def index(*, render_markdown: bool = False, renderer: Optional['RedditRenderer'] = None) -> Results:
     from . import hpi
-    from my.reddit import submissions, comments, saved, upvoted
+    try:
+        from my.reddit.all import submissions, comments, saved, upvoted
+    except ImportError:
+        import warnings
+        warnings.warn("DEPRECATED/reddit: Using an old version of HPI, please update")
+        from my.reddit import submissions, comments, saved, upvoted  # type: ignore[no-redef]
 
     if renderer is not None:
         assert callable(renderer), f"{renderer} is not a callable (should be a subclass of RedditRenderer)"
@@ -160,24 +165,7 @@ class RedditRenderer:
                 emitted.add(res.url)
 
 
-# support lazy imports..
-# todo hmm, could do similar stuff in HPI?
 import typing
 if typing.TYPE_CHECKING:
-    from my.reddit import Submission, Comment, Save, Upvote
+    from my.reddit.common import Submission, Comment, Save, Upvote, RedditThing
 
-
-from datetime import datetime
-if typing.TYPE_CHECKING:
-    # TODO define in rexport?
-    from typing_extensions import Protocol
-    from typing import Dict, Any
-    class RedditThing(Protocol):
-        @property
-        def raw(self) -> Dict[str, Any]: ...
-        @property
-        def url(self) -> str: ...
-        @property
-        def created(self) -> datetime: ...
-        @property
-        def text(self) -> str: ...
