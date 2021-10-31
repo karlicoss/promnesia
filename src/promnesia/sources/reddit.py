@@ -119,7 +119,7 @@ class RedditRenderer:
             return text
 
 
-    def _from_common(self, i: 'RedditThing', locator: Loc) -> Results:
+    def _from_common(self, i: 'RedditBase', locator: Loc) -> Results:
         urls = [i.url]
         # TODO this should belong to HPI.. fix permalink handling I guess
         # ok, it's not present for all of them..
@@ -170,5 +170,5 @@ class RedditRenderer:
 
 import typing
 if typing.TYPE_CHECKING:
-    from my.reddit.common import Submission, Comment, Save, Upvote, RedditThing
+    from my.reddit.common import Submission, Comment, Save, Upvote, RedditBase
 
