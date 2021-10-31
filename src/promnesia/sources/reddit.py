@@ -12,10 +12,13 @@ def index(*, render_markdown: bool = False, renderer: Optional['RedditRenderer']
     from . import hpi
     try:
         from my.reddit.all import submissions, comments, saved, upvoted
-    except ImportError:
-        import warnings
-        warnings.warn("DEPRECATED/reddit: Using an old version of HPI, please update")
-        from my.reddit import submissions, comments, saved, upvoted  # type: ignore[no-redef]
+    except ModuleNotFoundError as e:
+        if "No module named 'my.reddit.all'" in str(e):
+            import warnings
+            warnings.warn("DEPRECATED/reddit: Using an old version of HPI, please update")
+            from my.reddit import submissions, comments, saved, upvoted  # type: ignore[no-redef]
+        else:
+            raise e
 
     if renderer is not None:
         assert callable(renderer), f"{renderer} is not a callable (should be a subclass of RedditRenderer)"
