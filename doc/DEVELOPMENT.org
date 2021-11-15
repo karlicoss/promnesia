@@ -48,6 +48,7 @@ I'm not against it, but with limited time resources full-scale tests give better
 * Build extension
 
    : cd extension
+   : npm install # (if necessary)
    : ./build --firefox # you can also use --chrome
    :         --lint    # [optional], run webext linter
    :         --release # [optional], build in the release mode (with optimizations)
@@ -75,6 +76,7 @@ Example of running a test:
 ** AMO (addons.mozilla.org)
 
 : cd extension
+: npm install # (if necessary)
 : ./build --firefox --lint --release --publish
 
 Note that this will only upload the extension (see [[https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#channel][web-ext sign command reference]] and [[https://github.com/fregante/web-ext-submit#readme][web-ext-submit]] for more info).
@@ -85,6 +87,7 @@ You can use =git archive master --output=promnesia-source.zip= if you're asked f
 
 ** CWS (chrome web store)
 : cd extension
+: npm install # (if necessary)
 : ./build --chrome  --lint --release --publish
 
 This command should work in theory and upload automatically... however getting the api keys is super annoying (see [[https://github.com/DrewML/chrome-webstore-upload/blob/master/How%20to%20generate%20Google%20API%20keys.md][this]]).
