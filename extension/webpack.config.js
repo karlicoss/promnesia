@@ -169,6 +169,7 @@ const options = {
     background_injector     : path.join(__dirname, './src/background_injector'),
   },
   output: {
+    publicPath: '', // https://stackoverflow.com/a/64715069
     path: buildPath,
     filename: '[name].js',
     // chunkFilename: '[name].bundle.js',
