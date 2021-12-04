@@ -12,7 +12,7 @@
     },
     "content_scripts": [{
         "matches": ["<all_urls>"],
-        "js": ["background_injector.js", "vendors_anchorme.js"]
+        "js": ["background_injector.js", "anchorme.js"]
     }],
     "options_ui": {
         "page": "options_page.html"

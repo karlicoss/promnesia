@@ -92,7 +92,7 @@ const manifestExtra = {
     web_accessible_resources: [
         // wtf?? it says that content scripts don't need to be listed... but doesn't work otherwise..
         // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/web_accessible_resources#Description
-        "vendors_anchorme.js",
+        "anchorme.js",
         // TODO however, seems that web_accessible_resources works without sidebar.js and sidebar.css?? odd
     ],
 };
@@ -232,20 +232,22 @@ const options = {
     ]
   },
   plugins: [
-   new CleanWebpackPlugin(), // ok, respects symlinks
-   new CopyWebpackPlugin([
-      { from: 'images/*' },
-      { from: 'src/*.html'     , flatten: true},
-      { from: 'src/*.css'      , flatten: true},
-      { from: 'src/toastify.js', flatten: true}, // TODO my version is tweaked, right?
-      { from: 'src/showvisited.js', flatten: true},
-      // { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'},
-    ]),
+    new CleanWebpackPlugin(), // ok, respects symlinks
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'images/*'          },
+        { from: 'src/**/*.html', to: '[name][ext]'},
+        { from: 'src/**/*.css' , to: '[name][ext]'},
+        { from: 'src/toastify.js'   }, // TODO my version is tweaked, right?
+        { from: 'src/showvisited.js'},
+        // { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'},
+       ]
+    }),
     new WebpackExtensionManifestPlugin({
-        config: {
-            base: baseManifest,
-            extend: manifestExtra,
-        }
+      config: {
+        base: baseManifest,
+        extend: manifestExtra,
+      }
     }),
   ]
 };

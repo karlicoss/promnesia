@@ -6,8 +6,8 @@
   "main": "dist/background.js",
   "scripts": {
     "test": "jest",
-    "build": "webpack --progress --profile --colors",
-    "watch": "webpack --watch --progress --colors",
+    "build": "webpack --progress --profile",
+    "watch": "webpack --watch --progress",
     "dev": "npm run watch",
     "eslint": "eslint src",
     "flow": "flow",
@@ -41,9 +41,9 @@
     "@babel/preset-env": "^7.12.1",
     "@babel/preset-flow": "^7.12.1",
     "babel-loader": "^8.0.6",
-    "chrome-webstore-upload-cli": "^1.2.0",
-    "clean-webpack-plugin": "^3.0.0",
-    "copy-webpack-plugin": "^5.1.1",
+    "chrome-webstore-upload-cli": "^2.0.1",
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^10.0.0",
     "css-loader": "^3.4.2",
     "eslint": "^8.3.0",
     "eslint-plugin-flowtype": "^8.0.3",
@@ -53,12 +53,12 @@
     "jest-fetch-mock": "^3.0.3",
     "node-fetch": "^2.6.1",
     "style-loader": "^1.1.3",
-    "web-ext": "^5.4.0",
-    "web-ext-submit": "^5.4.0",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.10.3",
-    "webpack-extension-manifest-plugin": "^0.5.0"
+    "web-ext": "^6.6.0",
+    "web-ext-submit": "^6.6.0",
+    "webpack": "^5.64.4",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.6.0",
+    "webpack-extension-manifest-plugin": "^0.8.0"
   },
   "private": "true"
 }
