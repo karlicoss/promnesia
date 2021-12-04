@@ -11,7 +11,7 @@ RUN apt-get update        \
     curl git \
     firefox-geckodriver   \
  # https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions
- && (curl -sL https://deb.nodesource.com/setup_14.x | bash - ) \
+ && (curl -sL https://deb.nodesource.com/setup_16.x | bash - ) \
  && apt-get install --yes nodejs \
  && apt-get clean
 
