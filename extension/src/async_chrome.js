@@ -43,7 +43,6 @@ class Awrap2<A1, A2> {
 function helper<R, TArgs: *>(fn): ((...args: TArgs) => Promise<R>) {
     return (...args: Array<any>) => {
         return new Promise((resolve, reject) => {
-            // $FlowFixMe
             const ondone = (r: R) => {
                 const err = chrome.runtime.lastError
                 if (err) {
@@ -52,6 +51,7 @@ function helper<R, TArgs: *>(fn): ((...args: TArgs) => Promise<R>) {
                     resolve(r)
                 }
             }
+            // $FlowFixMe
             fn(...args, ondone)
         })
     }

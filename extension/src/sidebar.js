@@ -406,6 +406,7 @@ async function* _bindSidebarData(response: Visits) {
     const all_tags = new Map();
     for (const v of with_ctx) {
         for (const t of v.tags) {
+            // $FlowFixMe
             const pv = (all_tags.has(t) ? all_tags.get(t) : 0) + 1;
             all_tags.set(t, pv);
         }
@@ -514,6 +515,7 @@ async function* _bindSidebarData(response: Visits) {
                 if (total_dur === null) {
                     total_dur = 0;
                 }
+                // $FlowFixMe
                 total_dur += v.duration;
             }
             for (const tag of v.tags) {

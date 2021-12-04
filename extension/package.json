@@ -47,7 +47,7 @@
     "css-loader": "^6.5.1",
     "eslint": "^8.3.0",
     "eslint-plugin-flowtype": "^8.0.3",
-    "flow-bin": "^0.118.0",
+    "flow-bin": "^0.133.0",
     "flow-interfaces-chrome": "^0.6.0",
     "jest": "^24.8.0",
     "jest-fetch-mock": "^3.0.3",
