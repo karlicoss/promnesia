@@ -107,15 +107,12 @@ def get_hotkey(driver, cmd: str) -> str:
 def _get_webdriver(tdir: Path, browser: Browser, extension=True):
     addon = get_addon_path(kind=browser.dist)
     if browser.name == 'firefox':
-        profile = webdriver.FirefoxProfile(str(tdir))
         options = webdriver.FirefoxOptions()
+        options.set_preference('profile', str(tdir))
         options.headless = browser.headless
         # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
-        driver = webdriver.Firefox(profile, options=options)
-
-        # driver = webdriver.Firefox(profile, firefox_binary='/L/soft/firefox-dev/firefox/firefox', options=options)
-        # TODO how to pass it here properly?
-
+        driver = webdriver.Firefox(options=options)
+        # todo pass firefox-dev binary?
         if extension:
             driver.install_addon(str(addon), temporary=True)
     elif browser.name == 'chrome':
@@ -147,13 +144,13 @@ def get_webdriver(browser: Browser, extension=True):
 
 
 def set_host(*, driver, host: str, port: str):
-    ep = driver.find_element_by_id('host_id') # TODO rename to 'backend'?
+    ep = driver.find_element(By.ID, 'host_id') # TODO rename to 'backend'?
     ep.clear()
     ep.send_keys(f'{host}:{port}')
 
 
 def save_settings(driver):
-    se = driver.find_element_by_id('save_id')
+    se = driver.find_element(By.ID, 'save_id')
     se.click()
 
     driver.switch_to.alert.accept()
@@ -175,7 +172,7 @@ def configure(
         verbose_errors: bool=True,
 ) -> None:
     def set_checkbox(cid: str, value: bool):
-        cb = driver.find_element_by_id(cid)
+        cb = driver.find_element(By.ID, cid)
         selected = cb.is_selected()
         if selected != value:
             cb.click()
@@ -192,7 +189,7 @@ def configure(
         assert port is not None
         set_host(driver=driver, host=host, port=port)
 
-    # dots = driver.find_element_by_id('dots_id')
+    # dots = driver.find_element(By.ID, 'dots_id')
     # if dots.is_selected() != show_dots:
     #     dots.click()
     # assert dots.is_selected() == show_dots
@@ -210,10 +207,10 @@ def configure(
         set_position(driver, position)
 
     if blacklist is not None:
-        bl = driver.find_element_by_id('global_excludelist_id') # .find_element_by_tag_name('textarea')
+        bl = driver.find_element(By.ID, 'global_excludelist_id') # .find_element_by_tag_name('textarea')
         bl.click()
         # ugh, that's hacky. presumably due to using Codemirror?
-        bla = driver.switch_to_active_element()
+        bla = driver.switch_to.active_element
         bla.send_keys('\n'.join(blacklist))
 
     save_settings(driver)
@@ -403,7 +400,7 @@ def test_settings(tmp_path, browser):
         configure_extension(driver, port='12345', show_dots=False)
         driver.get('about:blank')
         open_extension_page(driver, page='options_page.html')
-        hh = driver.find_element_by_id('host_id')
+        hh = driver.find_element(By.ID, 'host_id')
         assert hh.get_attribute('value') == 'http://localhost:12345'
 
 
@@ -413,7 +410,7 @@ def test_backend_status(tmp_path, browser):
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
         set_host(driver=driver, host='https://nosuchhost.com', port='1234')
-        driver.find_element_by_id('backend_status_id').click()
+        driver.find_element(By.ID, 'backend_status_id').click()
         sleep(1 + 0.5) # needs enough time for timeout to trigger...
 
         alert = driver.switch_to.alert
@@ -490,7 +487,7 @@ def test_add_to_blacklist(tmp_path, browser):
         configure_extension(driver, port='12345')
         driver.get('https://example.com')
         chain = webdriver.ActionChains(driver)
-        chain.move_to_element(driver.find_element_by_tag_name('h1')).context_click().perform()
+        chain.move_to_element(driver.find_element(By.TAG_NAME, 'h1')).context_click().perform()
 
         # looks like selenium can't interact with browser context menu...
         import pyautogui # type: ignore
@@ -654,7 +651,7 @@ def test_fuzz(tmp_path, browser):
         driver = helper.driver
         tabs = 30
         for _ in range(tabs):
-            driver.find_element_by_tag_name('a').send_keys(Keys.CONTROL + Keys.RETURN)
+            driver.find_element(By.TAG_NAME, 'a').send_keys(Keys.CONTROL + Keys.RETURN)
 
         sleep(5)
         for _ in range(tabs - 2):

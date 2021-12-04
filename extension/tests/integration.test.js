@@ -92,7 +92,7 @@ test('search_defensive', async() => {
     const [e1, e2, e3] = res.visits
     // eh. fragile, but at least makes sure we test exactly the thing we want
     expect(e1.message).toMatch(/is not iterable/)
-    expect(e2.message).toMatch(/Cannot read property/)
+    expect(e2.message).toMatch(/Cannot read propert/)
     expect(e3.message).toMatch(/request .* failed/)
 })
 
