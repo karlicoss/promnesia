@@ -1,0 +1,29 @@
+To build the addon (expects Ubuntu 18.04/bionic at the moment):
+
+#+begin_src
+$ sudo apt update && sudo apt install -y git curl
+$ curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+$ sudo apt install -y nodejs
+$ git clone https://github.com/karlicoss/promnesia.git
+$ cd promnesia/extension/
+$ npm install
+$ ./build --firefox --release --lint
+#+end_src
+
+# TODO: how to keep the instructions consistent with the CI?
+
+The final artifact will be in =extension/dist/firefox/web-ext-artifacts/promnesia-<version>.zip=
+
+NOTE: the easiest ways to test the above instructions in Docker would be
+
+#+begin_src
+# run the container
+docker run -it ubuntu:bionic /bin/bash
+
+# inside the container
+$ sudo apt update && sudo apt install -y sudo
+
+# and after that run the same commands as above.
+
+#+end_src
+

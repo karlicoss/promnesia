@@ -88,7 +88,7 @@ You need go to https://addons.mozilla.org/en-GB/developers/addon/promnesia/versi
 
 Sometimes it may be flagged for a review, so you'll need to upload source code.
 You can use =git archive master --output=promnesia-source.zip= if you're asked for it.
-For build instructions, you can point the reviewers at =https://github.com/karlicoss/promnesia/blob/master/doc/DEVELOPMENT.org#build-extension= or/and the github actions config.
+For build instructions, you can point the reviewers at [[file:addons-mozilla-org.org][these instructions]], =https://github.com/karlicoss/promnesia/blob/master/doc/DEVELOPMENT.org#build-extension= or/and the github actions config.
 
 ** CWS (chrome web store)
 : cd extension
