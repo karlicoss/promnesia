@@ -494,7 +494,11 @@ def get_system_zone() -> str:
             return tzlocal.get_localzone_name() # type: ignore[attr-defined]
         except AttributeError as e:
             # 2.0 way
-            return tzlocal.get_localzone().zone # type: ignore[attr-defined]
+            zone = tzlocal.get_localzone().zone  # type: ignore[attr-defined]
+            # see https://github.com/python/typeshed/blame/968fd6d01d23470e0c8368e7ee7c43f54aaedc0e/stubs/pytz/pytz/tzinfo.pyi#L6
+            # it says all concrete instances should not be None
+            assert zone is not None
+            return zone
     except Exception as e:
         logger.exception(e)
         logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
