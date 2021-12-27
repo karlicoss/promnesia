@@ -268,11 +268,18 @@ def _index_file(pp: Path, opts: Options) -> Results:
 
     if suf == '.xz': # TODO zstd?
         import lzma
-        uname = pp.name[:-len('.xz')]
-        uncomp = Path(get_tmpdir().name) / uname
+        uname = pp.name[:-len('.xz')]  # chop off suffix, so the downstream indexer can handle it
+
+        assert pp.is_absolute(), pp
+        # make sure to keep hierarchy, otherwise might end up with some name conflicts if filenames clash
+        uncomp = Path(get_tmpdir().name) / Path(*pp.parts[1:-1]) / uname
+        uncomp.parent.mkdir(parents=True, exist_ok=True)
+        # todo would dump_file = wdir / Path(*cleaned_db.parts[1:])  # cut off '/' and use relative path
         with lzma.open(pp, 'rb') as cf:
             with uncomp.open('wb') as fb:
                 fb.write(cf.read())
+        # TODO maybe keep the original name?
+        # currently it would end up with something like /tmp/tmpxpgx1jy2promnesia/reddit-20190401231025.json
         yield from _index(path=uncomp, opts=opts)
         return
 
