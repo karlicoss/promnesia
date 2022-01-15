@@ -20,7 +20,12 @@ def index(p: PathIsh) -> Results:
     assert pp.exists(), pp # just in case of broken symlinks
 
     # is_file check because it also returns dirs
-    is_db = lambda x: x.is_file() and mime(x) in ['application/x-sqlite3']
+    # TODO hmm, not sure what I meant here -- which dirs? behind symlinks?
+    is_db = lambda x: x.is_file() and mime(x) in {
+        'application/x-sqlite3',
+        'application/vnd.sqlite3',
+        # TODO this mime can also match wal files/journals, not sure
+    }
 
     # todo warn if filtered out too many?
     # todo wonder how quickly mimes can be computed?
