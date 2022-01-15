@@ -54,7 +54,7 @@ CODE = {
     'text/x-sh',
     'text/x-haskell',
     'text/x-perl',
-    'text/x-python',
+    'text/x-python', 'text/x-script.python',
     'text/x-chdr',
     'text/x-csrc',
     'text/x-c',
@@ -64,6 +64,7 @@ CODE = {
     'text/x-asm',
     'text/x-objective-c',
     'text/x-lisp',
+    'text/vnd.graphviz',
 
     # these didn't have a mime type, or were mistyped?
     'css',
@@ -72,6 +73,8 @@ CODE = {
     'go',
     'hs',  # mistyped on osx
     'hpp', # mistyped on osx
+
+    '.ts', # most likely typescript.. otherwise determined as text/vnd.trolltech.linguist mime
 }
 # TODO discover more extensions with mimetypes library?
 
