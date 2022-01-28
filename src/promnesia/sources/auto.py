@@ -5,6 +5,7 @@
 
 import csv
 from concurrent.futures import ProcessPoolExecutor as Pool
+from contextlib import nullcontext
 from datetime import datetime
 import itertools
 import json
@@ -19,7 +20,6 @@ import pytz
 
 from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Result, Results, mime, traverse, file_mtime, echain, logger
 from ..config import use_cores
-from ..py37 import nullcontext
 
 
 from .filetypes import EUrl
@@ -207,6 +207,7 @@ def _index(path: Path, opts: Options) -> Results:
 
     cores = use_cores()
     if cores is None: # do not use cores
+        # todo use ExitStack instead?
         pool = nullcontext()
         mapper = map # dummy pool
     else:

@@ -15,7 +15,6 @@ import pytz
 import requests
 
 from promnesia.common import PathIsh
-from promnesia.py37 import fromisoformat
 
 from integration_test import index_hypothesis, index_urls, index_some_demo_visits
 from common import tdir, under_ci, tdata, tmp_popen, promnesia_bin
@@ -151,7 +150,7 @@ def test_visited_benchmark(count: int, tmp_path) -> None:
 
 def test_search_around(tmp_path: Path) -> None:
     # EDT, should be UTC-4
-    dt_extra = pytz.timezone('America/New_York').localize(fromisoformat('2018-06-01T10:00:00.000000'))
+    dt_extra = pytz.timezone('America/New_York').localize(datetime.fromisoformat('2018-06-01T10:00:00.000000'))
     # NOTE: negative timedelta to test that it captures some past context
     # at the moment it's hardcoded by delta_back/delta_front -- would be nice to make it configurable later...
     index_some_demo_visits(tmp_path, count=1000, base_dt=dt_extra, delta=-timedelta(minutes=1), update=False)

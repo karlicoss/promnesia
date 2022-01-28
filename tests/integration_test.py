@@ -5,8 +5,6 @@ from subprocess import check_call, run, Popen
 from textwrap import dedent
 from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping, List
 
-from promnesia.py37 import fromisoformat
-
 import pytest
 
 from common import tdir, under_ci, DATA, GIT_ROOT, promnesia_bin
@@ -126,14 +124,13 @@ def index_some_demo_visits(
 
     # todo would be nice if it was possible without importing anything at all
     def make_visits():
-        from datetime import timedelta
+        from datetime import timedelta, datetime
         from promnesia.sources import demo
-        from promnesia.py37 import fromisoformat
 
         # todo hmm, a bit messy, would be nice to do it in a more straighforward manner..
         yield from demo.index(
             count={count},
-            base_dt=fromisoformat('{base_dt.isoformat()}'),
+            base_dt=datetime.fromisoformat('{base_dt.isoformat()}'),
             delta=timedelta(seconds={delta.total_seconds()}),
         )
 
@@ -283,7 +280,7 @@ def test_indexing_update(tmp_path: Path) -> None:
     counter = Counter(v.src for v in visits)
     assert counter['hyp'] > 50, counter  # precondition
 
-    dt = fromisoformat('2018-06-01T10:00:00.000000+01:00')
+    dt = datetime.fromisoformat('2018-06-01T10:00:00.000000+01:00')
     index_some_demo_visits(tmp_path, count=1000, base_dt=dt, delta=timedelta(hours=1), update=True)
     visits = query_db_visits(tmp_path)
     counter = Counter(v.src for v in visits)
