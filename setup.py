@@ -27,7 +27,7 @@ def main() -> None:
         author_email='karlicoss@gmail.com',
         description='Enhancement of your browsing history',
 
-        python_requires='>=3.6',
+        python_requires='>=3.7',
         install_requires=[
             'appdirs', # for portable user directories detection
             'tzlocal',
