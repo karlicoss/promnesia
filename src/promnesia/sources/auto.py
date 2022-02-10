@@ -23,6 +23,7 @@ from ..config import use_cores
 
 
 from .filetypes import EUrl
+from .obsidian import obsidian_replacer
 
 
 def _collect(thing, path: List[str], result: List[EUrl]) -> None:
@@ -176,6 +177,14 @@ def index(
         # TODO for displaying maybe better not to expand/absolute, but need it for correct mime handling
         apath = Path(p).expanduser().resolve().absolute()
         root = apath if apath.is_dir() else None
+
+        if (root / ".obsidian").exists():
+            if replacer:
+                logger.debug('detected %s as Obsidian vault, but not changing replacer', root)
+            else:
+                logger.debug('detected %s as Obsidian vault', root)
+                replacer = obsidian_replacer
+
         opts = Options(
             ignored=ignored,
             follow=follow,
