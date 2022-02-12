@@ -51,3 +51,10 @@ def test_auto() -> None:
     assert v.locator.href.endswith('file.org:14')
     assert "xxx /r/cpp" in v.context
     assert "I've enjoyed [Chandler Carruth's" in v.context
+
+
+def test_obsidian() -> None:
+    mm = makemap(auto.index(tdata('obsidian-vault')))
+    example_url = 'https://example.com'
+    [v] = mm[example_url]
+    assert v.locator.href.startswith('obsidian://')
