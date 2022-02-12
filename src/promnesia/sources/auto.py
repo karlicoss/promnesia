@@ -178,7 +178,7 @@ def index(
         apath = Path(p).expanduser().resolve().absolute()
         root = apath if apath.is_dir() else None
 
-        if (root / ".obsidian").exists():
+        if root is not None and (root / ".obsidian").exists():
             if replacer:
                 logger.debug('detected %s as Obsidian vault, but not changing replacer', root)
             else:
