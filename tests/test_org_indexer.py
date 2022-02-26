@@ -50,3 +50,9 @@ def test_heading() -> None:
     }
 
 
+def test_url_in_properties() -> None:
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file4.org'))]
+
+    assert len(items) == 2, items
+    assert items[0].url == 'https://example.org/ref_example'
+    assert items[1].url == 'http://example.org/a_test'

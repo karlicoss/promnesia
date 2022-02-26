@@ -1,0 +1,7 @@
+:PROPERTIES:
+:ID:       1554c141-9567-4345-99d9-7c5e2853dbaa
+:ROAM_REFS: https://example.org/ref_example
+:END:
+#+title: A Ref Example
+
+We need [[http://example.org/a_test][a test]]!

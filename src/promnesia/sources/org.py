@@ -112,6 +112,15 @@ def iter_org_urls(n: OrgNode) -> Iterator[Res[Url]]:
         yield from iter_urls(heading, syntax='org')
 
     try:
+        values = n.properties.values()
+    except Exception as e:
+        logger.exception(e)
+        yield e
+    else:
+        for v in values:
+            yield from iter_urls(str(v), syntax='org')
+
+    try:
         content = get_body_compat(n)
     except Exception as e:
         logger.exception(e)
