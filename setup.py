@@ -96,7 +96,7 @@ DEPS_SOURCES = {
         'mistletoe',
     ],
     ('org'     , 'dependencies for sources.org'     ): [
-        'orgparse>=0.2.0',
+        'orgparse>=0.3.0',
     ],
     ('telegram', 'dependencies for sources.telegram'): [
         'dataset',
