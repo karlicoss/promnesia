@@ -294,3 +294,11 @@ def test_error():
     with pytest.raises(CanonifyException):
         # borrowed from https://bugs.mageia.org/show_bug.cgi?id=24640#c7
         canonify('https://example.com\uFF03@bing.com')
+
+@pytest.mark.parametrize("url,expected", [
+    ('https://news.ycombinator.com/item?id=', 'news.ycombinator.com/item?id='),
+    ('https://www.youtube.com/watch?v=hvoQiF0kBI8&list&index=2',
+     'youtube.com/watch?v=hvoQiF0kBI8&list='),
+])
+def test_empty_query_parameter(url, expected):
+    assert canonify(url) == expected

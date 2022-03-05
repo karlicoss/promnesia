@@ -271,7 +271,7 @@ def transform_split(split: SplitResult):
     netloc = canonify_domain(split.netloc)
 
     path     = split.path
-    qparts   = parse_qsl(split.query)
+    qparts   = parse_qsl(split.query, keep_blank_values=True)
 
     fragment = split.fragment
 
@@ -319,7 +319,7 @@ def transform_split(split: SplitResult):
             to = to + ('', )
 
         (netloc, path, qq) = [t.format(**gd) for t in to]
-        qparts.extend(parse_qsl(qq)) # TODO hacky..
+        qparts.extend(parse_qsl(qq, keep_blank_values=True)) # TODO hacky..
         # TODO eh, qparts should really be a map or something...
         break
 
