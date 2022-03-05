@@ -105,11 +105,13 @@ default_qkeep = [
 
 # TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?
 class Spec(NamedTuple):
-    qkeep  : Optional[Collection[str]] = None
+    qkeep  : Optional[Union[Collection[str], bool]] = None
     qremove: Optional[Set[str]] = None
     fkeep  : bool = False
 
     def keep_query(self, q: str) -> Optional[int]: # returns order
+        if self.qkeep is True:
+            return 1
         qkeep = {
             q: i for i, q in enumerate(chain(default_qkeep, self.qkeep or []))
         }
@@ -183,6 +185,7 @@ specs: Dict[str, Spec] = {
     'ycombinator.com'    : S(qkeep={'id'}), # todo just keep id by default?
     'play.google.com'    : S(qkeep={'id'}),
     'answers.yahoo.com'  : S(qkeep={'qid'}),
+    'isfdb.org': S(qkeep=True),
 }
 
 _def_spec = S()

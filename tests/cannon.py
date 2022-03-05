@@ -302,3 +302,11 @@ def test_error():
 ])
 def test_empty_query_parameter(url, expected):
     assert canonify(url) == expected
+
+@pytest.mark.parametrize("url,expected", [
+    ('http://www.isfdb.org/cgi-bin/title.cgi?2172', 'isfdb.org/cgi-bin/title.cgi?2172='),
+    ('http://www.isfdb.org/cgi-bin/title.cgi?2172+1', 'isfdb.org/cgi-bin/title.cgi?2172%201='),
+    ('http://www.isfdb.org/cgi-bin/title.cgi?2172&foo=bar&baz&quux', 'isfdb.org/cgi-bin/title.cgi?2172=&baz=&foo=bar&quux='),
+])
+def test_qkeep_true(url, expected):
+    assert canonify(url) == expected
