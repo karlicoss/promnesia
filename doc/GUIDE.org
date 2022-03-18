@@ -153,3 +153,6 @@ Some of my personal customizations:
   --promnesia-src-notes-color: #00ff0077;
 }
 #+end_src
+
+**** Custom sidebar example ( [[https://gist.github.com/kvgc/9bd2f6a93f0bbcd3bc486a6ca3a96b18][Link to css file]] )
+#+html: <img width="100%" src="https://user-images.githubusercontent.com/33746143/158910983-6bc47aae-5985-4bfd-bda9-3972fb001a7e.gif"></img>
