@@ -36,10 +36,11 @@ For the maximum privacy you can use the [[file:GUIDE.org#excludelist][excludelis
 
 * Extension permissions
 - =activeTab=: getting current tab info and adding the sidebar
-- =webNavigation=: watching page state changes (to trigger the extension on page load)
 - =storage=: for settings
 - =contextMenus=: context menu
 - =notifications=: showing notifications
+# NOTE: not used for now
+# - =webNavigation=: watching page state changes (to trigger the extension on page load)
 
 There permissions are required at the moment, but there is an [[https://github.com/karlicoss/promnesia/issues/97][issue]] for work on possibly making them optional.
 
