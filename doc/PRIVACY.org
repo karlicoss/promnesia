@@ -1,4 +1,4 @@
-*TLDR* : Promnesia isn't collecting any data and isn't transmitting your data to any external site. Not telemetry is collected or sent either.
+*TLDR: Promnesia extension isn't collecting any browser data and isn't transmitting your data to any external site. Not telemetry is collected or sent either.*
 
 * How Promnesia works
 See [[file:../README.org#how-does-it-work]["How does it work"]] for the longer explanation, but in summary:
@@ -31,7 +31,7 @@ For the maximum privacy you can use the [[file:GUIDE.org#excludelist][excludelis
 
 - if you have [[file:GUIDE.org#excludelist][external excludelists URLs]] in the extension settings, they will be updated now and then
 
-  These excludelists are downloaded and cached locally, so no information about when and what you're browsing gets out.
+  These excludelists are downloaded and cached locally, so *no information about when and what you're browsing gets out*.
 
 
 * Extension permissions
