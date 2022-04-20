@@ -1,8 +1,9 @@
 '''
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
 '''
+from typing import Iterable
 
-from ..common import logger, Results, Visit, Loc, extract_urls
+from ..common import logger, Results, Visit, Loc, extract_urls, Res
 
 
 def index() -> Results:
@@ -11,10 +12,13 @@ def index() -> Results:
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0
 
-    from typing import Iterable
     from my.twitter.archive import Tweet # todo extract to common or something?
-    tweets: Iterable[Tweet] = tw.tweets()
+    tweets: Iterable[Res[Tweet]] = tw.tweets()
     for t in tweets:
+        if isinstance(t, Exception):
+            yield t
+            continue
+
         processed += 1
         try:
             urls = t.urls

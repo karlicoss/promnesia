@@ -9,6 +9,9 @@ def index() -> Results:
     from . import hpi
     from my.fbmessenger import messages
     for m in messages():
+        if isinstance(m, Exception):
+            yield m
+            continue
         text = m.text
         if text is None:
             continue
