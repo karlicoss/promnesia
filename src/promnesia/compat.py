@@ -45,3 +45,10 @@ def Popen(args: Paths, **kwargs) -> subprocess.Popen:
     return subprocess.Popen(_fix(args), **kwargs)
 
 PIPE = subprocess.PIPE
+
+
+# can remove after python3.9
+def removeprefix(text: str, prefix: str) -> str:
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
