@@ -1,7 +1,3 @@
-'''
-Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
-'''
-
 from ..common import Visit, logger, PathIsh, Url, Loc, Results
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?

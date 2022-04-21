@@ -15,7 +15,7 @@ import pytest # type: ignore
 from pytest import mark # type: ignore
 
 
-from common import tdata
+from common import tdata, reset_hpi_modules
 from config_tests import with_config
 
 from promnesia.common import Visit, Indexer, Loc, Res, DbVisit, _is_windows
@@ -80,35 +80,20 @@ def assert_got_tzinfo(visits):
 # TODO cache should be in the configuration I suppose?
 
 @pytest.fixture
-def adhoc_config(tmp_path):
-    tdir = Path(tmp_path)
-    cdir = tdir / 'cache'
+def adhoc_config(tmp_path: Path):
+    cdir = tmp_path / 'cache'
     cdir.mkdir()
 
     from promnesia import config
 
     try:
         config.instance = config.Config(
-            OUTPUT_DIR=tdir,
+            OUTPUT_DIR=tmp_path,
             CACHE_DIR=cdir,
         )
         yield
     finally:
         config.reset()
-
-
-@pytest.mark.skip(reason='TODO support unpacked directories in HPI')
-def test_takeout_directory(adhoc_config, tmp_path):
-    from my.cfg import config
-    class user_config:
-        takeout_path = tdata('takeout')
-    config.google = user_config # type: ignore
-    import promnesia.sources.takeout as tex
-
-    visits = as_visits(W(tex.index))
-    assert len(visits) > 0 # kinda arbitrary?
-
-    assert_got_tzinfo(visits)
 
 
 def test_with_error() -> None:
@@ -130,14 +115,35 @@ def test_with_error() -> None:
     assert isinstance(v2, DbVisit)
 
 
-def test_takeout_new_zip(adhoc_config) -> None:
+# todo testing this logic probably belongs to hpi or google_takeout_export, but whatever
+def test_takeout_directory(adhoc_config, tmp_path: Path) -> None:
+    reset_hpi_modules()
+    from my.cfg import config
+    class user_config:
+        takeout_path = tdata('takeout')
+    config.google = user_config # type: ignore
+
+    # TODO ugh, the disabled_cachew thing isn't very nice
+    from my.core.cachew import disabled_cachew
+    with disabled_cachew():
+        import promnesia.sources.takeout as tex
+        visits = as_ok_visits(W(tex.index))
+    assert len(visits) == 3
+
+    assert_got_tzinfo(visits)
+
+
+def test_takeout_zip(adhoc_config) -> None:
+    reset_hpi_modules()
     from my.cfg import config
     class user_config:
         takeout_path = tdata('takeout-20150518T000000Z.zip')
     config.google = user_config # type: ignore
 
-    import promnesia.sources.takeout as tex
-    visits = as_ok_visits(tex.index)
+    from my.core.cachew import disabled_cachew
+    with disabled_cachew():
+        import promnesia.sources.takeout as tex
+        visits = as_ok_visits(tex.index)
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
 
