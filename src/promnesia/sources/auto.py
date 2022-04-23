@@ -187,11 +187,8 @@ def index(
                 replacer = obsidian_replacer
 
         if root is not None and (root / "logseq").exists():
-            if replacer:
-                logger.debug('detected %s as Logseq graph, but not changing replacer', root)
-            else:
-                logger.debug('detected %s as Logseq graph', root)
-                replacer = obsidian_replacer
+            logger.debug('detected %s as Logseq graph', root)
+            replacer = obsidian_replacer
 
         opts = Options(
             ignored=ignored,
