@@ -186,7 +186,7 @@ def index(
                 logger.debug('detected %s as Obsidian vault', root)
                 replacer = obsidian_replacer
 
-        if root is not None and (root / "logseq").exists():
+        if root is not None and (root / "logseq/config.edn").exists():
             logger.debug('detected %s as Logseq graph', root)
             replacer = logseq_replacer
 
@@ -345,7 +345,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
             loc = loc._replace(title=loc.title.replace(str(root) + os.sep, ''))
             v = v._replace(locator=loc)
 
-        if replacer is not None:
+        if replacer is not None and root is not None:
             upd: Dict[str, Any] = {}
             href = v.locator.href
             if href is not None:
