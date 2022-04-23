@@ -1,4 +1,4 @@
-def obsidian_replacer(p: str) -> str:
+def obsidian_replacer(p: str, r: str) -> str:
     if not p.startswith("editor://") or not p.endswith('.md'):
         return p
     

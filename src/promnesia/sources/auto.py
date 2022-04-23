@@ -24,6 +24,7 @@ from ..config import use_cores
 
 from .filetypes import EUrl
 from .obsidian import obsidian_replacer
+from .logseq import logseq_replacer
 
 
 def _collect(thing, path: List[str], result: List[EUrl]) -> None:
@@ -158,7 +159,7 @@ for t in CODE:
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
 
-Replacer = Optional[Callable[[str], str]]
+Replacer = Optional[Callable[[str, str], str]]
 
 def index(
         *paths: Union[PathIsh],
@@ -183,6 +184,13 @@ def index(
                 logger.debug('detected %s as Obsidian vault, but not changing replacer', root)
             else:
                 logger.debug('detected %s as Obsidian vault', root)
+                replacer = obsidian_replacer
+
+        if root is not None and (root / "logseq").exists():
+            if replacer:
+                logger.debug('detected %s as Logseq graph, but not changing replacer', root)
+            else:
+                logger.debug('detected %s as Logseq graph', root)
                 replacer = obsidian_replacer
 
         opts = Options(
@@ -344,10 +352,10 @@ def _index_file(pp: Path, opts: Options) -> Results:
             upd: Dict[str, Any] = {}
             href = v.locator.href
             if href is not None:
-                upd['locator'] = v.locator._replace(href=replacer(href), title=replacer(v.locator.title))
+                upd['locator'] = v.locator._replace(href=replacer(href, root), title=replacer(v.locator.title, root))
             ctx = v.context
             if ctx is not None:
                 # TODO in context, http is unnecessary
-                upd['context'] = replacer(ctx)
+                upd['context'] = replacer(ctx, root)
             v = v._replace(**upd)
         yield v
