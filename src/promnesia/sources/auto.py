@@ -349,10 +349,10 @@ def _index_file(pp: Path, opts: Options) -> Results:
             upd: Dict[str, Any] = {}
             href = v.locator.href
             if href is not None:
-                upd['locator'] = v.locator._replace(href=replacer(href, root), title=replacer(v.locator.title, root))
+                upd['locator'] = v.locator._replace(href=replacer(href, str(root)), title=replacer(v.locator.title, str(root)))
             ctx = v.context
             if ctx is not None:
                 # TODO in context, http is unnecessary
-                upd['context'] = replacer(ctx, root)
+                upd['context'] = replacer(ctx, str(root))
             v = v._replace(**upd)
         yield v
