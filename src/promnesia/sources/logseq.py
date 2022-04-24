@@ -5,7 +5,7 @@ def logseq_replacer(path: str, root: str) -> str:
         return path
         
     graph = os.path.basename(root)
-    page_name = os.path.basename(path).split('.')[0]
+    page_name = os.path.basename(path).rsplit('.', 1)[0]
     
     uri = f"logseq://graph/{graph}?page={page_name}"
 
