@@ -58,3 +58,10 @@ def test_obsidian() -> None:
     example_url = 'https://example.com'
     [v] = mm[example_url]
     assert v.locator.href.startswith('obsidian://')
+
+
+def test_logseq() -> None:
+    mm = makemap(auto.index(tdata('logseq-graph')))
+    example_url = 'https://example.com'
+    [v] = mm[example_url]
+    assert v.locator.href.startswith('logseq://')
