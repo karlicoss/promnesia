@@ -96,7 +96,9 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
   - discovers files recursively
   - guesses the format (orgmode/markdown/json/etc) by the extension/MIME type
   - can index most of plaintext files, including source code!
-
+  - autodetects Obsidian vault and adds `obsidian://` app protocol support [[file:../src/promnesia/sources/obsidian.py][promnesia.sources.obsidian]]
+  - autodetects Logseq graph and adds `logseq://` app protocol support [[file:../src/promnesia/sources/logseq.py][promnesia.sources.logseq]]
+  
 - [[file:../src/promnesia/sources/fbmessenger.py][promnesia.sources.fbmessenger]]
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
