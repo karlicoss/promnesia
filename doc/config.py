@@ -64,6 +64,13 @@ SOURCES = [
         name='notes',
     ),
 
+    # we can index Logseq graph: extract links from Org-mode and Markdown files
+    Source(
+        auto.index,
+        '/path/to/logseq/graph',
+        ignored=['*/.obsidian/*', '*/logseq/*', '*/assets/*'],
+        name='logseq',
+    ),
 
     # will clone the repository and index its contents!
     Source(
