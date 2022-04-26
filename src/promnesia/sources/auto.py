@@ -23,8 +23,8 @@ from ..config import use_cores
 
 
 from .filetypes import EUrl
-from .obsidian import obsidian_replacer
-from .logseq import logseq_replacer
+from .auto_obsidian import obsidian_replacer
+from .auto_logseq import logseq_replacer
 
 
 def _collect(thing, path: List[str], result: List[EUrl]) -> None:
