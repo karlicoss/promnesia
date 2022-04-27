@@ -10,7 +10,7 @@ const T = {
 };
 
 const env = {
-    TARGET : process.env.TARGET,
+    TARGET : process.env.TARGET || T.CHROME,
     RELEASE: process.env.RELEASE,
     PUBLISH: process.env.PUBLISH,
 };

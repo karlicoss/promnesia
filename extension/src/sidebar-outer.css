@@ -1,4 +1,4 @@
-#promnesia-sidebar.promnesia {
+#promnesia-frame {
     /* e.g. left should result in: left initial, right 0px, top 0px, bot 0px, height 100%, width 30%
        need to set irrelevant dimensions to 0px, otherwise it misbehaves
     */
@@ -28,7 +28,7 @@
     display: none;
 }
 
-body.promnesia {
+.promnesia {
     padding-left  : calc(var(--left)   * var(--size));
     padding-right : calc(var(--right)  * var(--size));
     padding-top   : calc(var(--top)    * var(--size));
