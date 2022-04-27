@@ -586,7 +586,7 @@ function requestVisits(): void {
 // eslint-disable-next-line no-unused-vars
 chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) => {
     const method = msg.method
-    if        (method == Methods.BIND_SIDEBAR_VISITS) {
+    if (method == Methods.BIND_SIDEBAR_VISITS) {
         bindSidebarData(Visits.fromJObject(msg.data))
     } else if (method == Methods.SIDEBAR_SHOW) {
         sidebar().then(s => s.show())

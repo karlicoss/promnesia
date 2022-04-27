@@ -28,7 +28,8 @@
 
         "tabs",
         "activeTab",
-
+		"webNavigation",
+		
         "notifications"
     ],
     "icons": {

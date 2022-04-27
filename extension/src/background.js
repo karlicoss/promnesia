@@ -99,9 +99,9 @@ function getIconStyle(result: Result): IconStyle {
 }
 
 
-async function updateState (tab: chrome$Tab) {
+async function onTabLoaded(tab) {
     const url = unwrap(tab.url);
-    const tabId = unwrap(tab.id);
+    const tabId = unwrap(tab.tabId);
 
     if (ignored(url)) {
         // todo reflect in the sidebar/popup?
@@ -453,41 +453,24 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
 
 // chrome.tabs.onReplaced.addListener(updateState);
 
-// $FlowFixMe
-chrome.tabs.onUpdated.addListener(defensify(async (tabId: number, info, tab: chrome$Tab) => {
-    // too spammy in logs
-    delete tab.favIconUrl
-    delete info.favIconUrl
-    //
-    console.debug('onUpdated %o %o', tab, info)
+chrome.webNavigation.onCompleted.addListener(defensify(async (info) => {
+    console.debug('onCompleted %o %o', info)
 
-    const url = tab.url
+    const url = info.url
     const ireason = ignored(url)
     if (ireason != null) {
         /* on Vivaldi I've seen url being "" */
-        console.debug('onUpdated %s: ignoring, reason: %s', url, ireason)
+        console.debug('onCompleted %s: ignoring, reason: %s', url, ireason)
     }
-    // right, tab updated triggered quite a lot, e.g. when the title is blinking
-    // ok, so far there are basically two cases
-    // 1. you open new tab. in that case 'url' won't be passed but onDomContentLoaded will be triggered
-    // 2. you navigate within the same tab, e.g. on youtube. then url will be passed, but onDomContentLoaded doesn't trigger. TODO not sure if it's always the case. maybe it's only YT
-    // TODO shit, so we might need to hide previous dots? ugh...
 
-    // TODO vvvv these might need to be cleaned up; not sure how relevant...
-    // page refresh: loading -> complete (no url at any point)
-    // clicking on link: loading (url) -> complete
-    // opening new link: loading -> loading (url) -> complete
-    // ugh. looks like 'complete' is the most realiable???
-    // but, I checked with 'complete' and sometimes it would reload many things with loading -> complete..... shit.
+    if (info.frameId !== 0) {
+		return
+	}
 
-    // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
-
-    if (info['status'] != 'complete') {
-        return
-    }
     console.info('requesting! %s', url)
+	
     try {
-        await updateState(tab);
+        await onTabLoaded(info);
     } catch (error) {
         const message = error.message;
         if (message == null) {
@@ -505,8 +488,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId: number, info, tab: chr
         }
         throw error;
     }
-}, 'onUpdated'));
-
+}, 'onCompleted'));
 
 export async function getActiveTab(): Promise<?chrome$Tab> {
     const tabs = await achrome.tabs.query({
