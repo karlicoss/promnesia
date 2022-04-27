@@ -141,10 +141,43 @@ function defaultOptions(): StoredOptions {
         // TODO add docs on positioning
         // TODO eh, would be nice to make it work with --right: true. right now it doesn't
         position_css: `
+		@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 /* you can use devtools to find other CSS attributes you can tweak */
 
+/* Teweak colors */
+
+/* Ligt mode */
+.promnesia {
+	--bg: #fffefc;
+    --bg1: #e8eef0;
+    --bg2: #f3f4f6;
+    --bg3: #ddd;
+    --bg4: #ccc;
+    --color: #222;
+    --color2: #999;
+    --accent-color: 178, 102, 40;
+}
+
+/* Dark mode */
+/*
+@media (prefers-color-scheme: dark) {
+    .promnesia {
+        --bg: #202124;
+        --bg1: #000;
+        --bg2: #303134;
+        --bg3: #171717;
+        --bg4: #000;
+        --color: #bdc1c6;
+        --color2: #999;
+    }
+}
+*/
+
+
 /* tweak sidebar position/size/style */
-#promnesia-sidebar {
+#promnesia-frame {
+
     /* you can also use
        --left/--top/--bottom
        to change the sidebar position */
@@ -154,7 +187,8 @@ function defaultOptions(): StoredOptions {
 
     /* you can also use any other valid CSS
        easiest is to experiment in devtools first */
-    background-color: rgba(236, 236, 236, 0.8);
+	border: 1px solid #999;
+	border-width: 1px 0 0 1px;
 }
 
 /* tweak elements within the sidebar */

@@ -1,6 +1,48 @@
-.promnesia body {
-    font-size: 15px;
-    color: black;
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* Ligt mode */
+.promnesia {
+    --opacity: 1;
+    --bg: rgba(255, 254, 252, var(--opacity));
+    --bg1: #e8eef0;
+    --bg2: #f3f4f6;
+    --bg3: #ddd;
+    --bg4: #ccc;
+    --color: #222;
+    --color2: #999;
+    --accent-color: 178, 102, 40;
+    --accent-color2: #2aa198;
+}
+
+/* Dark mode */
+/*
+@media (prefers-color-scheme: dark) {
+    .promnesia {
+        --bg: #202124;
+        --bg1: #000;
+        --bg2: #303134;
+        --bg3: #171717;
+        --bg4: #000;
+        --color: #bdc1c6;
+        --color2: #999;
+    }
+}
+*/
+
+.promnesia {
+    --header-bg: var(--bg1);
+    --source-color: rgb(var(--accent-color));
+    --source-bg: var(--bg2);
+    --num-color: var(--bg2);
+    --visits-item-bg: var(--bg2);
+    --locator-color: var(--accent-color2);
+    --date-bg: var(--bg);
+    --date-color: var(--color);
+    --time-color: var(--color2);
+
+    font-family: "PT Serif", serif;
+    font-size: 1em;
+    color: var(--color);
 }
 
 .promnesia .error {
@@ -14,34 +56,16 @@
     text-decoration: none;
 }
 
-/* todo would be nice to properly reuse it and share with the 'mark visited' */
-.promnesia .src {
-    /* color: orange; /\* TODO monospace font or smth? *\/ */
-    color: #b26628;
-
-    margin-right: 0.2em;
-    white-space: nowrap;
-}
-
 a.promnesia-visited {
     outline: 0.5em solid;
 }
 
-.src-filter .src {
-    cursor: pointer;
-    display: inline-block;
-}
-
-.src-filter .src:hover {
-    color: red; /* TODO ?? */
-}
-
 /* meh, but ok for now */
 #visits {
-    /* make table occupy whole sidebar */
-    width: 100%;
+    list-style: none;
+    margin: 8px;
+    padding: 0;
 }
-
 
 #visits .context {
     white-space: pre-wrap; /* need to keep linebreaks  */
@@ -51,6 +75,11 @@ a.promnesia-visited {
 /* TODO use proper flex layout... */
 #visits .locator {
     padding-left: 1em;
+    color: var(--locator-color);
+}
+
+#visits .locator a {
+    color: var(--locator-color);
 }
 
 #visits .index {
@@ -58,21 +87,20 @@ a.promnesia-visited {
     display: inline-block;
 }
 
-
-#visits {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+#visits .normalised_url {
+    padding-left: 1em;
 }
 
 #visits li {
-    margin-top: 1em;
+    margin: 0;
+    padding: 6px;
+    background: var(--visits-item-bg);
+    border: 1px solid var(--bg3);
+    border-radius: 3px;
+}
 
-    padding: 0.2em;
-
-    background: #e6e6e6cc;
-    border: 3px solid;
-    border-color: transparent;
+#visits li+li {
+    margin-top: 8px;
 }
 
 #visits li #relative_indicator {
@@ -90,7 +118,7 @@ a.promnesia-visited {
 }
 
 #visits li:hover {
-    border-color: #ddd;
+    border-color: rgba(var(--accent-color), 0.5);
 }
 
 #visits li.relative:hover {
@@ -104,25 +132,157 @@ a.promnesia-visited {
 #visits .datetime {
     white-space: nowrap;
     float: right;
-
-    color: #666;
-
     cursor: pointer;
+    font-family: monospace;
 }
-
 
 /* TODO not great, but quickest way to render it neatly */
 /* TODO not sure which order users expect first? */
 #visits .time {
-    /* color: blue; */
-    margin-right: 1em;
+    padding-right: 0.5em;
+    margin-right: 0.5em;
+    color: var(--time-color);
 }
+
 #visits .date {
-    /* color: red; */
     width: 11ch; /* TODO not sure how to alighn them properly across all of boxes... */
     display: inline-block; /* otherwise width doesn't work on span */
     text-align: end;
-
+    border-radius: 6px;
+    padding: 2px 4px;
+    color: var(--color2);
+    background: var(--date-bg);
 }
 
+#promnesia-sidebar {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    overscroll-behavior: contain;
+}
 
+#promnesia-sidebar-header {
+}
+
+#promnesia-sidebar-toolbar {
+    padding: 6px 8px 0 8px;
+    border-bottom: 1px solid var(--bg);
+    overflow: hidden;
+    background: var(--header-bg);
+}
+
+#promnesia-sidebar-toolbar .button.active {
+    border-color: var(--source-color);
+}
+
+#promnesia-sidebar-toolbar .button-close {
+    float: right;
+    border-radius: 999px;
+    padding: 4px;
+}
+
+#promnesia-sidebar-container {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+#promnesia-sidebar-filters {
+    text-transform: capitalize;
+    padding: 6px 10px 0px 10px;
+    background: linear-gradient(to bottom, var(--bg3) 0%, var(--bg) 100%);
+}
+
+#promnesia-sidebar-filters .src.button {
+    color: var(--source-color);
+    padding: 4px 8px;
+    font-weight: 400;
+}
+
+#promnesia-sidebar-filters .button:hover,
+#promnesia-sidebar-filters .button.active {
+    border-color: var(--source-color);
+}
+
+#visits .src {
+    color: var(--source-color);
+    font-weight: 700;
+}
+
+#visits .src.bookmark::before {
+    content: "\2B50";
+    margin-right: 4px;
+    font-size: 0.9em;
+    line-height: 1.2em;
+}
+
+#visits .src.logseq::before {
+    content: "\1F4D4";
+    margin-right: 4px;
+    font-size: 0.9em;
+    line-height: 1.2em;
+}
+
+#promnesia-sidebar-filters .src-num {
+    background-color: var(--source-color);
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 400;
+    font-size: 0.75rem;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    color: var(--num-color);
+    margin-left: 1ex;
+}
+
+/* Buttons */
+.promnesia .button {
+    color: var(--color);
+    background-color: var(--bg);
+    border: 1px solid var(--bg4);
+    border-radius: 6px;
+    box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0,
+        rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-block;
+    font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial,
+        sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    list-style: none;
+    padding: 6px 12px;
+    margin: 0 6px 6px 0;
+    position: relative;
+    appearance: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: middle;
+    white-space: nowrap;
+    word-wrap: break-word;
+}
+
+.promnesia .button:hover {
+    border-color: var(--color2);
+    text-decoration: none;
+}
+
+.promnesia .button:focus {
+    outline: 1px transparent;
+}
+
+/* Search page*/
+#promnesia-search #search_id {
+    display: flex;
+}
+
+#promnesia-search #query_id {
+    font-size: 1em;
+    height: 1.7em;
+    margin-right: 0.5em;
+}

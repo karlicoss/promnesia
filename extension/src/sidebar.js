@@ -15,8 +15,13 @@ function get_or_default(obj, key, def) {
     return res === undefined ? def : res;
 }
 
-
-const SIDEBAR_ID   = 'promnesia-sidebar';
+const PROMNESIA_FRAME_ID   = 'promnesia-frame';
+const PROMNESIA_CLASS   = 'promnesia';
+const SIDEBAR_ID = 'promnesia-sidebar';
+const HEADER_ID = 'promnesia-sidebar-header';
+const FILTERS_ID = 'promnesia-sidebar-filters';
+const FILTERS_CLASS = 'src-filter';
+const TOOLBAR_ID = 'promnesia-sidebar-toolbar';
 const CONTAINER_ID = 'promnesia-sidebar-container';
 
 
@@ -30,7 +35,7 @@ const Cls = {
 }
 
 
-const SIDEBAR_ACTIVE = 'promnesia';
+const SIDEBAR_ACTIVE = 'promnesia-sidebar-active';
 
 const doc = document;
 
@@ -42,6 +47,11 @@ class Sidebar {
     constructor(opts: Options) {
         this.body = unwrap(doc.body);
         this.opts = opts;
+    }
+
+    async getFiltersEl(): Promise<HTMLElement> {
+        const frame = await this.ensureFrame();
+        return unwrap(frame.contentDocument.getElementById(FILTERS_ID));
     }
 
     async getContainer(): Promise<HTMLElement> {
@@ -68,39 +78,54 @@ class Sidebar {
         head.appendChild(base);
 
         const cbody = unwrap(cdoc.body);
-        // TODO not sure if it should be same as SIDEBAR_ACTIVE thing?
-        cbody.classList.add('promnesia');
+        cbody.classList.add(PROMNESIA_CLASS);
         // it's a bit hacky.. but stuff inside and outside iframe got different namespace, so ok to reuse id?
         // makes it much easier for settings
         cbody.id = SIDEBAR_ID;
+		const sidebar_header = cdoc.createElement('div');
+        sidebar_header.id = HEADER_ID;
+        const sidebar_toolbar = cdoc.createElement('div');
+        sidebar_toolbar.id = TOOLBAR_ID;
+        sidebar_header.appendChild(sidebar_toolbar);
+        const sidebar_filters = cdoc.createElement('div');
+        sidebar_filters.id = FILTERS_ID;
+        sidebar_filters.classList.add(FILTERS_CLASS);
+        sidebar_header.appendChild(sidebar_filters);
         {
-            const show_dots_button = cdoc.createElement('button');
-            show_dots_button.appendChild(cdoc.createTextNode('Mark visited'));
+            const mark_visited_button = cdoc.createElement('button');
+			mark_visited_button.classList.add('button', 'button-mark');
+            mark_visited_button.appendChild(cdoc.createTextNode('👁 Mark visited'));
             // TODO hmm. not sure if defensify is gonna work from here? no access to notifications api?
-            show_dots_button.addEventListener('click', defensify(async () => {
+            mark_visited_button.addEventListener('click', defensify(async () => {
+                mark_visited_button.classList.toggle('active');
                 await achrome.runtime.sendMessage({method: Methods.MARK_VISITED});
             }, 'mark_visited.onClick'));
             // TODO maybe highlight or just use custom class for that?
-            show_dots_button.title = "Mark visited links on the current page with dots";
-            cbody.appendChild(show_dots_button);
+            mark_visited_button.title = "Mark visited links on the current";
+            sidebar_toolbar.appendChild(mark_visited_button);
         }
         {
-            const searchb = cdoc.createElement('button');
-            searchb.appendChild(cdoc.createTextNode('Search'));
-            searchb.addEventListener('click', defensify(async () => {
+            const search_button = cdoc.createElement('button');
+			search_button.classList.add('button', 'button-search');
+            search_button.appendChild(cdoc.createTextNode('🔎 Search'));
+            search_button.addEventListener('click', defensify(async () => {
                 await achrome.runtime.sendMessage({method: Methods.OPEN_SEARCH});
             }, 'open_search.onClick'));
-            cbody.appendChild(searchb);
+			search_button.title = "Search links in database";
+            sidebar_toolbar.appendChild(search_button);
         }
         {
             // TODO only on mobile?
-            const elem = cdoc.createElement('button');
-            elem.appendChild(cdoc.createTextNode('Close'));
-            elem.addEventListener('click', defensify(async () => {
+            const close_button = cdoc.createElement('button');
+			close_button.classList.add('button', 'button-close');
+            close_button.appendChild(cdoc.createTextNode('✖'));
+            close_button.addEventListener('click', defensify(async () => {
                 await this.hide();
             }, 'close_sidebar.onClick'));
-            cbody.appendChild(elem);
+			close_button.title = "Close sidebar";
+            sidebar_toolbar.appendChild(close_button);
         }
+		cbody.appendChild(sidebar_header);
         /*
         {
             const hb = cdoc.createElement('button');
@@ -114,7 +139,7 @@ class Sidebar {
         cbody.appendChild(ccc);
     }
 
-    async clear() {
+    async clearContainer() {
         // TODO not sure if that's even necessary?
         const cont = await this.getContainer();
         while (cont.firstChild) {
@@ -152,7 +177,7 @@ class Sidebar {
     }
 
     getFrame(): ?HTMLIFrameElement {
-        return ((doc.getElementById(SIDEBAR_ID): any): ?HTMLIFrameElement);
+        return ((doc.getElementById(PROMNESIA_FRAME_ID): any): ?HTMLIFrameElement);
     }
 
     async ensureFrame(): Promise<HTMLIFrameElement> {
@@ -163,8 +188,7 @@ class Sidebar {
 
         const sidebar = doc.createElement('iframe'); this.body.appendChild(sidebar);
         sidebar.src = '';
-        sidebar.id = SIDEBAR_ID;
-        sidebar.classList.add(SIDEBAR_ACTIVE);
+        sidebar.id = PROMNESIA_FRAME_ID;
 
 
         // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..
@@ -344,7 +368,9 @@ async function* _bindSidebarData(response: Visits) {
     const sidebar = new Sidebar(opts);
 
     const cont = await sidebar.getContainer();
-    await sidebar.clear(); // TODO probably, unnecessary?
+    const filtersEl = await sidebar.getFiltersEl();
+    filtersEl.innerHTML = '';
+    await sidebar.clearContainer(); // TODO probably, unnecessary?
 
     // a way to ensure the sidebar rendering isn't impacting the browsing experience
     // TODO use the same logic in search?
@@ -367,8 +393,6 @@ async function* _bindSidebarData(response: Visits) {
     //
 
     const binder = new Binder(doc, opts)
-
-    const all_tags_c = binder.makeChild(cont, 'div', ['src-filter']);
     const items = binder.makeChild(cont, 'ul');
     items.id = Ids.VISITS
 
@@ -412,7 +436,7 @@ async function* _bindSidebarData(response: Visits) {
         }
     }
 
-    binder.makeTchild(all_tags_c, 'filter: ');
+    binder.makeTchild(filtersEl, 'Filter: ');
     for (let [tag, count] of [[null, with_ctx.length], ...Array.from(all_tags).sort()]) {
         let predicate: ((string) => boolean);
         if (tag === null) {
@@ -427,10 +451,23 @@ async function* _bindSidebarData(response: Visits) {
 
         // TODO show total counts?
         // TODO if too many tags, just overlap on the seconds line
-        const tag_c = binder.makeChild(all_tags_c, 'span', ['src', asClass(tag)])
-        binder.makeTchild(tag_c, `${tag} (${count})`);
+        const tag_c = binder.makeChild(filtersEl, 'span', ['src', 'button', asClass(tag)])
+		const tag_c_name = binder.makeChild(tag_c, 'span', ['src-name'])
+		const tag_c_num = binder.makeChild(tag_c, 'span', ['src-num'])
+        binder.makeTchild(tag_c_name, `${tag}`);
+		binder.makeTchild(tag_c_num, `${count}`);
         // TODO checkbox??
         tag_c.addEventListener('click', () => {
+			// set active status to filter buttons
+			// 1) reset status from all sources
+			filtersEl.childNodes.forEach(filter_element => {
+				if (filter_element.nodeType == Node.ELEMENT_NODE) {
+					filter_element = ((filter_element: any): HTMLElement);
+					filter_element.classList.remove('active');
+				}
+			});
+			// 2) set active to clicked source
+			tag_c.classList.add('active');
             for (const x of items.children) {
                 const sources = unwrap(x.dataset['sources']).split(' ');
                 const found = sources.some(predicate);
