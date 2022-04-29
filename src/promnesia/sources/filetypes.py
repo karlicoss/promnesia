@@ -65,6 +65,7 @@ CODE = {
     'text/x-objective-c',
     'text/x-lisp',
     'text/vnd.graphviz',
+    'text/x-diff',  # patch files
 
     # these didn't have a mime type, or were mistyped?
     'css',

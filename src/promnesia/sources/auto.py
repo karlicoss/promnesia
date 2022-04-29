@@ -152,6 +152,8 @@ TYPE2IDX.update({
     '.html'    : _html,
     'text/html': _html,
     'text/xml' : _plaintext,
+
+    'text/x-po': _plaintext, # some translation files
 })
 
 for t in CODE:
