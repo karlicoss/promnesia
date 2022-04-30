@@ -28,6 +28,7 @@
 
         "tabs",
         "activeTab",
+		"webNavigation",
 
         "notifications"
     ],
