@@ -32,15 +32,16 @@ def main():
 
     assert target is not None
 
-    dist_dir = Path(__file__).absolute().parent / 'dist'
-    src_dir = (dist_dir / target).resolve() # webext can't into symlinks
+    base_ext_dir = Path(__file__).absolute().parent / 'dist'
+    ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks
+    # sadly no way to specify zip name in the regex..
+    artifacts_dir = (base_ext_dir / 'artifacts' / target).resolve()
     def webext(*args, **kwargs):
         check_call([
-            # TODO use npm run web-ext??
             'npm', 'run', 'web-ext',
             '--',
-            '--source-dir'   , src_dir,
-            '--artifacts-dir', src_dir / 'web-ext-artifacts',
+            '--source-dir'   , ext_dir,
+            '--artifacts-dir', artifacts_dir,
             *args,
         ], **kwargs)
 
@@ -66,10 +67,10 @@ def main():
     if args.release:
         assert args.lint # TODO not sure..
 
-    def webext_args():
+    def firefox_release_args():
         from firefox_dev_secrets import API_KEY, API_SECRET
         return [
-            '--artifacts-dir', str(dist_dir),
+            '--artifacts-dir', str(artifacts_dir),
             '--api-key'      , API_KEY,
             '--api-secret'   , API_SECRET,
             '--id'           , IDS[target],
@@ -82,8 +83,8 @@ def main():
                 'npm', 'run', 'release:amo',
                 '--',
                 '--channel', 'listed',
-                '--source-dir', str(src_dir),
-                *webext_args(),
+                '--source-dir', str(ext_dir),
+                *firefox_release_args(),
             ])
         elif target == 'chrome':
             from chrome_dev_secrets import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
@@ -92,7 +93,7 @@ def main():
                 '--',
                 'upload',
                 # '--auto-publish',
-                '--source'        , str(src_dir),
+                '--source'        , str(ext_dir),
                 '--client-id'     , CLIENT_ID,
                 '--client-secret' , CLIENT_SECRET,
                 '--refresh--token', REFRESH_TOKEN,

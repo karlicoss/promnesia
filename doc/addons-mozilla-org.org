@@ -12,7 +12,7 @@ $ ./build --firefox --release --lint
 
 # TODO: how to keep the instructions consistent with the CI?
 
-The final artifact will be in =extension/dist/firefox/web-ext-artifacts/promnesia-<version>.zip=
+The final artifact will be in =extension/dist/artifacts/firefox/promnesia-<version>.zip=
 
 NOTE: the easiest ways to test the above instructions in Docker would be
 

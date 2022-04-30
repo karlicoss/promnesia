@@ -118,16 +118,24 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: '16'
-    - run: scripts/ci/extension --release --lint
+    - run: scripts/ci/extension --lint # debug version
+    - run: scripts/ci/extension --lint --release
 
     # TODO ugh. can't share github actions artifacts publicly...
     # TODO for fuck's sake... why does it end up named as .zip.zip ????
     - uses: actions/upload-artifact@v2
       with:
-        name: 'promnesia-chrome-latest.zip'
-        path: 'extension/dist/chrome/web-ext-artifacts/*.zip'
-
+        name: 'promnesia-chrome-debug-latest.zip'
+        path: 'extension/dist/artifacts/chrome/promnesia_dev_-*.zip'
     - uses: actions/upload-artifact@v2
       with:
-        name: 'promnesia-firefox-latest.zip'
-        path: 'extension/dist/firefox/web-ext-artifacts/*.zip'
+        name: 'promnesia-chrome-release-latest.zip'
+        path: 'extension/dist/artifacts/chrome/promnesia-*.zip'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: 'promnesia-firefox-debug-latest.zip'
+        path: 'extension/dist/artifacts/firefox/promnesia_dev_-*.zip'
+    - uses: actions/upload-artifact@v2
+      with:
+        name: 'promnesia-firefox-release-latest.zip'
+        path: 'extension/dist/artifacts/firefox/promnesia-*.zip'
