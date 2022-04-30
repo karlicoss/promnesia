@@ -38,7 +38,7 @@ const HTML_MARKER = '!html ';
 type CssClass = string
 export function asClass(x: string): CssClass {
     // todo meh. too much trouble to fix properly...
-    const res = x.replace(/[^0-9a-z_-]/, '_')
+    const res = x.replace(/\s/g, '');
     return res.length == 0 ? 'bad_class' : res
 }
 
