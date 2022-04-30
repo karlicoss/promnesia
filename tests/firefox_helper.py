@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import re
 import json
@@ -19,6 +20,17 @@ def open_extension_page(driver, page: str):
 # also see driver.command_executor._commands
 def get_extension_page_chrome(driver):
     chrome_profile = Path(driver.capabilities['chrome']['userDataDir'])
+
+    # meh, don't know a better way..
+    is_snap = '.org.chromium.Chromium' in str(chrome_profile)
+    if is_snap:
+        # under snap the path is actually inside the snap mount namespace...
+        snap_tmp = Path('/tmp/snap.chromium')
+        assert snap_tmp.exists(), snap_tmp
+        assert os.access(snap_tmp, os.R_OK), f"You probably need to run 'chrod o+rx {snap_tmp}'"
+
+        chrome_profile = snap_tmp / Path(*chrome_profile.parts[1:])
+
     prefs_file = chrome_profile / 'Default/Preferences'
     # there are some default extensions as well (e.g. cloud print)
     # also oddly enough user install extensions don't have manifest information, so we can't find it by name
