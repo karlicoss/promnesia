@@ -422,13 +422,13 @@ async function* _bindSidebarData(response: Visits) {
             tag = 'all';
             predicate = () => true;
         } else {
-            predicate = t => t == tag;
+            predicate = t => t == asClass(tag);
         }
 
         // TODO show total counts?
         // TODO if too many tags, just overlap on the seconds line
         const tag_c = binder.makeChild(all_tags_c, 'span', ['src', asClass(tag)])
-        binder.makeTchild(tag_c, `${tag} (${count})`);
+        binder.makeTchild(tag_c, `${asClass(tag)} (${count})`);
         // TODO checkbox??
         tag_c.addEventListener('click', () => {
             for (const x of items.children) {

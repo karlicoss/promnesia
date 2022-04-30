@@ -38,7 +38,7 @@ const HTML_MARKER = '!html ';
 type CssClass = string
 export function asClass(x: string): CssClass {
     // todo meh. too much trouble to fix properly...
-    const res = x.replace(/[^0-9a-z_-]/, '_')
+    const res = x.replace(/\s/g, '');
     return res.length == 0 ? 'bad_class' : res
 }
 
@@ -110,7 +110,7 @@ export class Binder {
         const dt_c = child(header, 'span', ['datetime']);
         const time_c = child(dt_c, 'span', ['time']);
         const date_c = child(dt_c, 'span', ['date']);
-        item.setAttribute('data-sources', tags.join(' '));
+        item.setAttribute('data-sources', asClass(tags.join(' ')));
 
         const child_link = child(relative_c, 'a');
         // ugh. not sure why opening in new tab doesn't work :(
@@ -126,7 +126,7 @@ export class Binder {
         }
         for (const tag of tags) {
             const tag_c = child(tags_c, 'span', ['src', asClass(tag)]);
-            tchild(tag_c, tag);
+            tchild(tag_c, asClass(tag));
         }
         tchild(date_c, dates);
 
