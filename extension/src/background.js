@@ -36,6 +36,12 @@ type IconStyle = {
     text: string,
 }
 
+// https://developer.chrome.com/docs/extensions/reference/webNavigation/#type-onCompleted-callback-details
+type WebNavigationInfo = {
+    frameId: number,
+    tabId: number,
+    url: string,
+};
 
 // TODO this can be tested?
 function getIconStyle(result: Result): IconStyle {
@@ -99,7 +105,7 @@ function getIconStyle(result: Result): IconStyle {
 }
 
 
-async function onTabLoaded(tab) {
+async function onTabLoaded(tab: WebNavigationInfo) {
     const url = unwrap(tab.url);
     const tabId = unwrap(tab.tabId);
 
@@ -453,8 +459,9 @@ chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
 
 // chrome.tabs.onReplaced.addListener(updateState);
 
-// $FlowExpectedError
-chrome.webNavigation.onCompleted.addListener(defensify(async (info) => {
+// $FlowFixMe
+webNavigation = chrome.webNavigation;
+webNavigation.onCompleted.addListener(defensify(async (info: WebNavigationInfo) => {
     console.debug('onCompleted %o %o', info)
 
     const url = info.url
