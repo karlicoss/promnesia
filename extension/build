@@ -61,7 +61,7 @@ def main():
         webext('lint')
 
         # TODO move somewhere more appropriate..
-        webext('build')
+        webext('build', '-o') # -o overwrites existing artifact
 
 
     if args.release:

@@ -553,13 +553,26 @@ def test_show_visited_marks(tmp_path, browser):
 
 
 @browsers(FF, CH)
-def test_sidebar(tmp_path, browser) -> None:
-    test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
+@pytest.mark.parametrize(
+    'url',
+    [
+        "https://en.wikipedia.org/wiki/Symplectic_group",
+
+        # regression test for https://github.com/karlicoss/promnesia/issues/295
+        # note: seemed to reproduce on chrome more consistently for some reason
+        "https://www.udemy.com/course/javascript-bible/",
+    ],
+    ids=[
+        'wiki',
+        'udemy'
+    ],
+)
+def test_sidebar(tmp_path, browser, url: str) -> None:
     visited = {
-        test_url                                            : 'whatever',
+        url : 'whatever',
     }
     indexer = index_urls(visited, source_name='ælso test unicode 💩')
-    with _test_helper(tmp_path, indexer, test_url, show_dots=True, browser=browser) as helper:
+    with _test_helper(tmp_path, indexer, url, show_dots=True, browser=browser) as helper:
         trigger_command(helper.driver, Command.ACTIVATE)
         confirm("You should see green icon, also one visit in sidebar. Make sure the unicode is displayed correctly.")
 
