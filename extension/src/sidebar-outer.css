@@ -1,7 +1,22 @@
-#promnesia-sidebar.promnesia {
+/* Resets for sites  https://github.com/karlicoss/promnesia/issues/102 */
+body.promnesia-sidebar-active {
+    transform: none;
+}
+.promnesia-sidebar-active #promnesia-frame {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-left: 1px solid #999;
+}
+
+#promnesia-frame {
     /* e.g. left should result in: left initial, right 0px, top 0px, bot 0px, height 100%, width 30%
        need to set irrelevant dimensions to 0px, otherwise it misbehaves
     */
+    --right: 1;
+    --size: 30%;
 
     --is-v: var(--left, var(--right ));
     --is-h: var(--top , var(--bottom));
@@ -23,12 +38,12 @@
     height: var(--hhelper, 100%);
 
     position: fixed;
-    z-index: 9999;
+    z-index: 2147483647;
 
     display: none;
 }
 
-body.promnesia {
+.promnesia {
     padding-left  : calc(var(--left)   * var(--size));
     padding-right : calc(var(--right)  * var(--size));
     padding-top   : calc(var(--top)    * var(--size));

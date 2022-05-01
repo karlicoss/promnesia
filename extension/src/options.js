@@ -143,8 +143,60 @@ function defaultOptions(): StoredOptions {
         position_css: `
 /* you can use devtools to find other CSS attributes you can tweak */
 
+/* Tweak colors */
+
+/* Common used colors, you are welcome to customize them! */
+/*
+.promnesia {
+    --opacity: 1;
+    --main: rgba(255, 254, 252, var(--opacity));
+    --secondary: #e8eef0;
+    --thirdly: #f3f4f6;
+    --borders: #dddddd;
+    --text: #222222;
+    --text-secondary: #999999;
+    --accent: 178, 102, 40;
+    --accent-secondary: #2aa198;
+}
+*/
+
+/* Styling of main elements. Mostly you don't need to customize it */
+/*
+.promnesia {
+    --header-bg: var(--secondary);
+    --source-text: rgb(var(--accent));
+    --count-text: var(--thirdly);
+    --visits-item-bg: var(--thirdly);
+    --visits-item-border: var(--borders);
+    --locator-text: var(--accent-secondary);
+    --timestamp-text: var(--text-secondary);
+    --date-bg: var(--main);
+    --date-color: var(--text);
+}
+*/
+
+/* Custom fonts */
+/*
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+.promnesia {
+    font-family: "PT Serif", serif;
+    font-size: 1em;
+}
+*/
+
+
+/* shadows example */
+/*
+#promnesia-sidebar-filters {
+    text-transform: capitalize;
+    background: linear-gradient(to bottom, var(--thirdly) 0%, var(--main) 100%);
+}
+*/
+
+
 /* tweak sidebar position/size/style */
-#promnesia-sidebar {
+#promnesia-frame {
+
     /* you can also use
        --left/--top/--bottom
        to change the sidebar position */
@@ -154,14 +206,7 @@ function defaultOptions(): StoredOptions {
 
     /* you can also use any other valid CSS
        easiest is to experiment in devtools first */
-    background-color: rgba(236, 236, 236, 0.8);
 }
-
-/* tweak elements within the sidebar */
-#promnesia-sidebar .src {
-    font-weight: bold;
-}
-
 
 /* tweak 'visited' marks: specify hex color here */
 :root {
