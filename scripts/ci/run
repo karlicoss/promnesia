@@ -4,22 +4,27 @@ cd "$(dirname "$0")"
 cd ../.. # git root
 
 if ! command -v sudo; then
-    # e.g. CI doesn't have it..
+    # CI or Docker sometimes doesn't have it, so useful to have a dummy
     function sudo {
         "$@"
     }
 fi
 
 if [ -n "${CI-}" ]; then
+    # install OS specific stuff here
     # TODO: pyjq is not necessary anymore? will keep CI deps just in case I guess
     PYJQ_DEPS=('autoconf' 'automake' 'libtool') # see https://github.com/mwilliamson/jq.py#installation
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # Mac OSX
+    if   [[ "$OSTYPE" == "darwin"* ]]; then
+        # macos
         brew install "${PYJQ_DEPS[@]}"
 
         # TODO hmm. this should be in setup.py?
         brew install libmagic # for python-magic
+    elif [[ "$OSTYPE" == "cygwin" ]]; then
+        # windows on CI
+        :
     else
+        # must be linux?
         sudo apt update
 
         # TODO also need to warn from readme??
@@ -28,6 +33,7 @@ if [ -n "${CI-}" ]; then
 fi
 
 PY_BIN="python3"
+# some systems might have python pointing to python3
 if ! command -v python3 &> /dev/null; then
     PY_BIN="python"
 fi

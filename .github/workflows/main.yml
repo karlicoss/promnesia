@@ -8,16 +8,18 @@ on:
   pull_request: # needed to trigger on others' PRs
   workflow_dispatch: # needed to trigger workflows manually
 
-env:
-  # useful for scripts & sometimes tests to know
-  CI: true
 
 jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest] # todo windows-latest?
+        platform: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.7', '3.8', '3.9']
+        exclude: [
+            # windows runners are pretty scarce, so let's only run one of them..
+            {platform: windows-latest, python-version: '3.7'},
+            {platform: windows-latest, python-version: '3.9'},
+        ]
 
     runs-on: ${{ matrix.platform }}
 
@@ -25,11 +27,11 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
    
@@ -37,22 +39,23 @@ jobs:
     # - uses: mxschmitt/action-tmate@v3
 
     # need bash, otherwise isn't running under Windows? seems to be a powershell thing?
-    - run: bash scripts/ci/run
+    - run: bash -eux scripts/ci/run
 
-    - uses: actions/upload-artifact@v2
+    - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
+      uses: actions/upload-artifact@v2
       with:
         name: .coverage.mypy-core_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-core/
-    - uses: actions/upload-artifact@v2
+    - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
+      uses: actions/upload-artifact@v2
       with:
         name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-misc/
 
   end2end_tests:
-    needs: [build] # just so it doesn't uses less resources
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - run: |
@@ -65,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -84,11 +87,11 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v2
       with:
-        python-version: '3.7'
+        python-version: '3.8'
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -112,10 +115,10 @@ jobs:
   build_extension:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@v3
       with:
         node-version: '16'
     - run: scripts/ci/extension --lint # debug version
