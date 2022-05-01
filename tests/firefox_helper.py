@@ -14,11 +14,7 @@ def open_extension_page(driver, page: str):
     driver.get(extension_prefix + '/' + page)
 
 
-# TODO looks like it used to be posssible in webdriver api?
-# at least as of 2011 https://github.com/gavinp/chromium/blob/681563ea0f892a051f4ef3d5e53438e0bb7d2261/chrome/test/webdriver/test/chromedriver.py#L35-L40
-# but here https://github.com/SeleniumHQ/selenium/blob/master/cpp/webdriver-server/command_types.h there are no Extension commands
-# also see driver.command_executor._commands
-def get_extension_page_chrome(driver):
+def get_chrome_prefs_file(driver) -> Path:
     chrome_profile = Path(driver.capabilities['chrome']['userDataDir'])
 
     # meh, don't know a better way..
@@ -31,9 +27,17 @@ def get_extension_page_chrome(driver):
 
         chrome_profile = snap_tmp / Path(*chrome_profile.parts[1:])
 
-    prefs_file = chrome_profile / 'Default/Preferences'
     # there are some default extensions as well (e.g. cloud print)
     # also oddly enough user install extensions don't have manifest information, so we can't find it by name
+    return chrome_profile / 'Default/Preferences'
+
+
+# TODO looks like it used to be posssible in webdriver api?
+# at least as of 2011 https://github.com/gavinp/chromium/blob/681563ea0f892a051f4ef3d5e53438e0bb7d2261/chrome/test/webdriver/test/chromedriver.py#L35-L40
+# but here https://github.com/SeleniumHQ/selenium/blob/master/cpp/webdriver-server/command_types.h there are no Extension commands
+# also see driver.command_executor._commands
+def get_extension_page_chrome(driver):
+    prefs_file = get_chrome_prefs_file(driver)
 
     # seems to be quite a bit asynchronous (e.g. up to several seconds), so good to be defensive for a bit
     prefs = None

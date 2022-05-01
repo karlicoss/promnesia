@@ -81,8 +81,8 @@ def get_addon_path(kind: str) -> Path:
 def get_hotkey(driver, cmd: str) -> str:
     # TODO shit, need to unify this...
     if driver.name == 'chrome':
-        chrome_profile = Path(driver.capabilities['chrome']['userDataDir'])
-        prefs_file = chrome_profile / 'Default/Preferences'
+        from firefox_helper import get_chrome_prefs_file
+        prefs_file = get_chrome_prefs_file(driver)
         import json
         prefs = json.loads(prefs_file.read_text())
         # "commands": {
