@@ -38,8 +38,8 @@ def get_extension_page_chrome(driver):
     # seems to be quite a bit asynchronous (e.g. up to several seconds), so good to be defensive for a bit
     prefs = None
     addon_id = None
-    for _ in range(30):
-        sleep(0.5)
+    for _ in range(300):
+        sleep(0.05)
         if not prefs_file.exists():
             continue
 
@@ -62,23 +62,27 @@ def get_extension_page_firefox(driver):
     moz_profile = Path(driver.capabilities['moz:profile'])
     prefs_file = moz_profile / 'prefs.js'
 
-    # doesn't appear immediately after installing somehow, so need to wait for a bit..
-    for _ in range(10):
-        sleep(0.5)
-        if prefs_file.exists():
-            break
-
     addon_name = 'temporary_addon'
     # TODO ok, apparently I should add it to tips on using or something..
     addon_name = 'promnesia@karlicoss.github.com'
 
+    # doesn't appear immediately after installing somehow, so need to wait for a bit..
     addon_id = None
-    for line in prefs_file.read_text().splitlines():
-        # temporary-addon\":\"53104c22-acd0-4d44-904c-22d11d31559a\"}")
-        m = re.search(addon_name + r'.....([0-9a-z-]+)."', line)
-        if m is None:
+    for _ in range(100):
+        if addon_id is not None:
+            break
+
+        sleep(0.05)
+        if not prefs_file.exists():
             continue
-        addon_id = m.group(1)
+
+        for line in prefs_file.read_text().splitlines():
+            # temporary-addon\":\"53104c22-acd0-4d44-904c-22d11d31559a\"}")
+            m = re.search(addon_name + r'.....([0-9a-z-]+)."', line)
+            if m is None:
+                continue
+            addon_id = m.group(1)
+            break
     assert addon_id is not None
     return f'moz-extension://{addon_id}'
 
