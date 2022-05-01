@@ -23,6 +23,9 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
+    # TODO let's at least start running windows for now, will fix later
+    continue-on-error: ${{ matrix.platform == 'windows-latest' }}
+
     steps:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
