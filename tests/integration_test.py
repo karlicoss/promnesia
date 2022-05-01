@@ -52,7 +52,7 @@ Urls = Union[
     Sequence[Tuple[str, Optional[str]]],
 ]
 
-def index_urls(urls: Urls):
+def index_urls(urls: Urls, *, source_name: str='test'):
     uuu = list(urls.items()) if isinstance(urls, dict) else urls
 
     def idx(tdir: Path):
@@ -70,7 +70,7 @@ indexer = Source(
         locator=Loc.make('test'),
         context=ctx,
     ) for i, (url, ctx) in enumerate({uuu})],
-    name='test',
+    name=f'{source_name}',
 )
 
 SOURCES = [indexer]

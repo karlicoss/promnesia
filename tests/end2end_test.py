@@ -553,6 +553,18 @@ def test_show_visited_marks(tmp_path, browser):
 
 
 @browsers(FF, CH)
+def test_sidebar(tmp_path, browser) -> None:
+    test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
+    visited = {
+        test_url                                            : 'whatever',
+    }
+    indexer = index_urls(visited, source_name='ælso test unicode 💩')
+    with _test_helper(tmp_path, indexer, test_url, show_dots=True, browser=browser) as helper:
+        trigger_command(helper.driver, Command.ACTIVATE)
+        confirm("You should see green icon, also one visit in sidebar. Make sure the unicode is displayed correctly.")
+
+
+@browsers(FF, CH)
 def test_search(tmp_path, browser):
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
