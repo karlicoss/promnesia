@@ -1,4 +1,5 @@
-FROM ubuntu:20.04
+FROM ubuntu:21.04
+# for now keeping it 21.04 because firefox became snap in 21.10...
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -10,6 +11,10 @@ RUN apt-get update        \
     atool \
     curl git \
     firefox-geckodriver   \
+ # using python docs as a source of some html test data
+ # also prefent dpkg from excluding doc files...
+ && sed -i '/usr.share.doc/d' /etc/dpkg/dpkg.cfg.d/excludes \
+ && apt-get install --yes python3-doc \
  # https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions
  && (curl -sL https://deb.nodesource.com/setup_16.x | bash - ) \
  && apt-get install --yes nodejs \

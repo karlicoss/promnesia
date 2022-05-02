@@ -623,10 +623,8 @@ def test_new_background_tab(tmp_path, browser) -> None:
 
 
 # TODO shit disappears on chrome and present on firefox
-@browsers(FF, CH)
-# FIXME fails on headless firefox because in docker python3-doc isn't installing this file??
-# really weird, mismatches dpkg -L
-def test_local_page(tmp_path, browser) -> None:
+@browsers()
+def test_local_page(tmp_path: Path, browser: Browser) -> None:
     tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
     urls = {
          tutorial                                                : 'TODO read this',
