@@ -19,6 +19,8 @@ if __name__ == '__main__':
 from selenium import webdriver # type: ignore
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait as Wait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 from common import under_ci, uses_x, has_x
@@ -292,17 +294,31 @@ class TestHelper(NamedTuple):
         from selenium.webdriver.common.action_chains import ActionChains # type: ignore
         ActionChains(self.driver).move_to_element(element).perform()
 
-    def switch_to_sidebar(self):
+    def switch_to_sidebar(self) -> None:
         self.driver.switch_to.default_content()
-        self.driver.switch_to.frame('promnesia-sidebar')
+        self.driver.switch_to.frame('promnesia-frame')
+
+    @contextmanager
+    def sidebar(self, wait=False):
+        try:
+            self.switch_to_sidebar()
+            if wait:
+                sidebar = Wait(self.driver, 10).until(EC.presence_of_element_located(
+                    (By.ID, 'promnesia-sidebar'),
+                ))
+                yield wait
+            else:
+                yield None
+        finally:
+            self.driver.switch_to.default_content()
 
     def command(self, cmd):
         trigger_command(self.driver, cmd)
 
-    def activate(self):
+    def activate(self) -> None:
         self.command(Command.ACTIVATE)
 
-    def mark_visited(self):
+    def mark_visited(self) -> None:
         self.command(Command.MARK_VISITED)
 
     def wid(self) -> str:
@@ -523,15 +539,47 @@ def test_add_to_blacklist(tmp_path, browser):
         confirm('page should be blacklisted (black icon)')
 
 
+
+# todo might be nice to run soft asserts for this test?
 @browsers()
 def test_visits(tmp_path: Path, browser: Browser) -> None:
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
-        trigger_command(helper.driver, Command.ACTIVATE)
-        confirm('you should see hypothesis contexts')
+        driver = helper.driver
+        with helper.sidebar():
+            # hmm not sure how come it returns anything at all.. but whatever
+            srcs = driver.find_elements_by_class_name('src')
+            for s in srcs:
+                assert not s.is_displayed(), s
+            assert len(srcs) >= 8, srcs
+            # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
 
-        # TODO hmm need to figure out how to actuall meaningfully test it
+        helper.activate()
+
+        with helper.sidebar(wait=True) as sidebar:
+            assert sidebar is not None
+
+            confirm('you should see hypothesis contexts')
+
+            link = driver.find_element_by_partial_link_text('how_algorithms_shape_our_world')
+            assert link.is_displayed(), link
+
+            contexts = helper.driver.find_elements_by_class_name('context')
+            for c in contexts:
+                assert c.is_displayed(), c
+            assert len(contexts) == 8
+
+
+        helper.activate()
+        # todo wait till it disappears properly?
+        sleep(0.5)
+
+        with helper.sidebar():
+            # hmm not sure how come it returns anything at all.. but whatever
+            srcs = driver.find_elements_by_class_name('src')
+            for s in srcs:
+                assert not s.is_displayed(), s
 
 
 @browsers()
