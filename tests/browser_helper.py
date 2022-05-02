@@ -5,7 +5,7 @@ import json
 from time import sleep
 
 # TODO share with grasp... maybe move to kython?
-def open_extension_page(driver, page: str):
+def open_extension_page(driver, page: str) -> None:
     ff = {
         'chrome' : get_extension_page_chrome,
         'firefox': get_extension_page_firefox,
@@ -62,7 +62,7 @@ def get_extension_page_chrome(driver):
     return f'chrome-extension://{addon_id}'
 
 
-def get_extension_page_firefox(driver):
+def get_extension_page_firefox(driver) -> str:
     moz_profile = Path(driver.capabilities['moz:profile'])
     prefs_file = moz_profile / 'prefs.js'
 
@@ -91,3 +91,16 @@ def get_extension_page_firefox(driver):
     return f'moz-extension://{addon_id}'
 
 # TODO could also check for errors
+
+def get_cmd_hotkey(driver, cmd: str, *, cmd_map=None) -> str:
+    # TODO shit, need to unify this...
+    if cmd_map is None:
+        if driver.name == 'chrome':
+            prefs_file = get_chrome_prefs_file(driver)
+            import json
+            prefs = json.loads(prefs_file.read_text())
+            cmd_map = {cmd['command_name']: k.split(':')[-1] for k, cmd in prefs['extensions']['commands'].items()}
+        else:
+            # ugh. doesn't look like it's anywhere in prefs on the disk...
+            raise RuntimeError("Firefox not supported yet")
+    return cmd_map[cmd].split('+')

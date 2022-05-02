@@ -24,7 +24,7 @@ from selenium.webdriver.common.by import By
 from common import under_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
-from browser_helper import open_extension_page
+from browser_helper import open_extension_page, get_cmd_hotkey
 
 from promnesia.logging import LazyLogger
 
@@ -79,21 +79,8 @@ def get_addon_path(kind: str) -> Path:
 
 
 def get_hotkey(driver, cmd: str) -> str:
-    # TODO shit, need to unify this...
-    if driver.name == 'chrome':
-        from browser_helper import get_chrome_prefs_file
-        prefs_file = get_chrome_prefs_file(driver)
-        import json
-        prefs = json.loads(prefs_file.read_text())
-        # "commands": {
-        #        "linux:Ctrl+Shift+V": {
-        #            "command_name": "show_dots",
-        #            "extension": "ceedkmkoeooncekjljapnkkjhldddcid",
-        #            "global": false
-        #        }
-        #    },
-        cmd_map = {cmd['command_name']: k.split(':')[-1] for k, cmd in prefs['extensions']['commands'].items()}
-    else:
+    cmd_map = None
+    if driver.name == 'firefox':
         # TODO remove hardcoding somehow...
         # perhaps should be extracted somewhere..
         cmd_map = {
@@ -101,7 +88,7 @@ def get_hotkey(driver, cmd: str) -> str:
             '_execute_browser_action': 'Ctrl+Alt+e',
             'search'                 : 'Ctrl+Alt+h',
         }
-    return cmd_map[cmd].split('+')
+    return get_cmd_hotkey(driver, cmd=cmd, cmd_map=cmd_map)
 
 
 def _get_webdriver(tdir: Path, browser: Browser, extension=True):
@@ -263,12 +250,36 @@ def send_key(key):
     pyautogui.hotkey(*key)
 
 
-def trigger_hotkey(driver, hotkey):
-    trigger_callback(driver, lambda: send_key(hotkey))
+def is_headless(driver) -> bool:
+    if driver.name == 'firefox':
+        return driver.capabilities.get('moz:headless', False)
+    else:
+        raise RuntimeError(driver)
 
 
-def trigger_command(driver, cmd):
-    trigger_hotkey(driver, get_hotkey(driver, cmd))
+# TODO move to common or something
+def trigger_hotkey(driver, hotkey: str) -> None:
+    headless = is_headless(driver)
+    try:
+        trigger_callback(driver, lambda: send_key(hotkey))
+    except Exception as e:
+        if headless:
+            raise RuntimeError("Likely failed because the browser is headless") from e
+        else:
+            raise e
+
+
+def trigger_command(driver, cmd: str) -> None:
+    if is_headless(driver):
+        assert cmd == Command.ACTIVATE, cmd  # will support the rest later..
+        # see background-injector.js
+        driver.execute_script("""
+        var event = document.createEvent('HTMLEvents');
+        event.initEvent('selenium-bridge-activate', true, true);
+        document.dispatchEvent(event);
+        """)
+    else:
+        trigger_hotkey(driver, get_hotkey(driver, cmd))
 
 
 class TestHelper(NamedTuple):
@@ -303,6 +314,12 @@ class TestHelper(NamedTuple):
 
 
 def confirm(what: str) -> None:
+    is_headless = 'headless' in os.environ.get('PYTEST_CURRENT_TEST', '')
+    if is_headless:
+        # ugh.hacky
+        Headless().confirm(what)
+        return
+
     import click # type: ignore
     click.confirm(click.style(what, blink=True, fg='yellow'), abort=True)
 
@@ -438,8 +455,7 @@ def set_position(driver, settings: str):
         area.send_keys(settings)
 
 
-# TODO ffh?
-@browsers(FF, CH)
+@browsers()
 def test_sidebar_bottom(browser):
     with get_webdriver(browser=browser) as driver:
         open_extension_page(driver, page='options_page.html')
@@ -464,7 +480,7 @@ def test_sidebar_bottom(browser):
         confirm("You should see sidebar below")
 
 
-@browsers(FF, CH)
+@browsers()
 def test_blacklist_custom(tmp_path, browser) -> None:
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
@@ -507,13 +523,15 @@ def test_add_to_blacklist(tmp_path, browser):
         confirm('page should be blacklisted (black icon)')
 
 
-@browsers(FF, CH)
-def test_visits(tmp_path, browser):
+@browsers()
+def test_visits(tmp_path: Path, browser: Browser) -> None:
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
         trigger_command(helper.driver, Command.ACTIVATE)
         confirm('you should see hypothesis contexts')
+
+        # TODO hmm need to figure out how to actuall meaningfully test it
 
 
 @browsers()
