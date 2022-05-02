@@ -24,7 +24,7 @@ from selenium.webdriver.common.by import By
 from common import under_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
-from firefox_helper import open_extension_page
+from browser_helper import open_extension_page
 
 from promnesia.logging import LazyLogger
 
@@ -81,7 +81,7 @@ def get_addon_path(kind: str) -> Path:
 def get_hotkey(driver, cmd: str) -> str:
     # TODO shit, need to unify this...
     if driver.name == 'chrome':
-        from firefox_helper import get_chrome_prefs_file
+        from browser_helper import get_chrome_prefs_file
         prefs_file = get_chrome_prefs_file(driver)
         import json
         prefs = json.loads(prefs_file.read_text())
