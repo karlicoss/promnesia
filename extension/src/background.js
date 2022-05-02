@@ -206,7 +206,7 @@ async function updateState (tab: chrome$Tab) {
     if (opts.sidebar_always_show) {
         // TODO maybe hide if there are no visits?
         // let it sxecute asynchronously
-        setTimeout(() => openSidebar(tab))
+        setTimeout(() => toggleSidebarOnTab(tab))
     }
 
     if (visits instanceof Error) {
@@ -624,22 +624,7 @@ const onMessageCallback = async (msg) => { // TODO not sure if should defensify 
 }
 
 
-/*
-   On android, clicking on icon in address bar doesn't seem to work.. however clicking in menu triggers this action?
-   https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
-
-   popup is available for pageAction?? can use it for blacklisting/search?
-*/
-async function registerActions() {
-    // NOTE: on mobile, this sets action for both icon (if it's displayed) and in the menu
-    for (const action of (await actions())) {
-        // $FlowFixMe
-        action.onClicked.addListener(defensify(openSidebar, 'action.onClicked'));
-    }
-}
-
-// note: this is user click callback
-export async function openSidebar(tab: chrome$Tab) {
+export async function toggleSidebarOnTab(tab: chrome$Tab) {
     const should = await shouldProcessPage(tab)
     if (should == null) {
         return
@@ -649,6 +634,25 @@ export async function openSidebar(tab: chrome$Tab) {
     sendSidebarMessage(tid, {method: Methods.SIDEBAR_TOGGLE})
 }
 
+export async function handleToggleSidebar() {
+    const atab = await getActiveTab()
+    toggleSidebarOnTab(unwrap(atab))
+}
+
+/*
+   On android, clicking on icon in address bar doesn't seem to work.. however clicking in menu triggers this action?
+   https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
+
+   popup is available for pageAction?? can use it for blacklisting/search?
+*/
+// note: this is user click callback
+async function registerActions() {
+    // NOTE: on mobile, this sets action for both icon (if it's displayed) and in the menu
+    for (const action of (await actions())) {
+        // $FlowFixMe
+        action.onClicked.addListener(defensify(toggleSidebarOnTab, 'action.onClicked'));
+    }
+}
 
 // NOTE: these have to be in sync with webpack.config.js
 // presumably shouldn't rename either otherwise will impact existing user keybindings
@@ -990,6 +994,10 @@ function initBackground() {
   If background happens to be extensions' background, it's ignored; otherwise we're trying to register callbacks.
  */
 chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) => {
+    // see background_injector.js
+    if (info === 'selenium-bridge-activate') {
+        handleToggleSidebar()
+    }
     if (info.method != "INJECT_BACKGROUND_CALLBACKS") {
         console.debug("ignoring %o %o; %s", info, sender, backgroundInitialised);
         return;
