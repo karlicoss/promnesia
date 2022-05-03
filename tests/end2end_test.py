@@ -132,8 +132,14 @@ def get_webdriver(browser: Browser, extension=True):
             driver.quit()
 
 
-def set_host(*, driver, host: str, port: str):
-    ep = driver.find_element(By.ID, 'host_id') # TODO rename to 'backend'?
+def set_host(*, driver, host: Optional[str], port: Optional[str]) -> None:
+    # todo rename to 'backend_id'?
+    if host is None:
+        ep = driver.find_element(By.ID, 'host_id')
+        ep.clear()
+        return
+    assert port is not None
+    ep = driver.find_element(By.ID, 'host_id')
     ep.clear()
     ep.send_keys(f'{host}:{port}')
 
@@ -173,10 +179,7 @@ def configure(
     open_extension_page(driver, page='options_page.html')
     sleep(1) # err, wtf? otherwise not always interacts with the elements correctly
 
-    assert not (host is None) ^ (port is None), (host, port)
-    if host is not None:
-        assert port is not None
-        set_host(driver=driver, host=host, port=port)
+    set_host(driver=driver, host=host, port=port)
 
     # dots = driver.find_element(By.ID, 'dots_id')
     # if dots.is_selected() != show_dots:
@@ -200,6 +203,12 @@ def configure(
         bl.click()
         # ugh, that's hacky. presumably due to using Codemirror?
         bla = driver.switch_to.active_element
+        # ugh. doesn't work, .text always returns 0...
+        # if len(bla.text) > 0:
+        # for some reason bla.clear() isn't working...
+        # results in ElementNotInteractableException: Element <textarea> could not be scrolled into view
+        bla.send_keys(Keys.CONTROL + 'a')
+        bla.send_keys(Keys.BACKSPACE)
         bla.send_keys('\n'.join(blacklist))
 
     save_settings(driver)
@@ -294,19 +303,23 @@ class TestHelper(NamedTuple):
         from selenium.webdriver.common.action_chains import ActionChains # type: ignore
         ActionChains(self.driver).move_to_element(element).perform()
 
-    def switch_to_sidebar(self) -> None:
+    def switch_to_sidebar(self, wait=False):
         self.driver.switch_to.default_content()
-        self.driver.switch_to.frame('promnesia-frame')
+
+        frame_id = 'promnesia-frame'
+        frame = None
+        if wait:
+            Wait(self.driver, timeout=5).until(
+                EC.presence_of_element_located((By.ID, frame_id))
+            )
+        self.driver.switch_to.frame(frame_id)
 
     @contextmanager
     def sidebar(self, wait=False):
         try:
-            self.switch_to_sidebar()
-            if wait:
-                sidebar = Wait(self.driver, 10).until(EC.presence_of_element_located(
-                    (By.ID, 'promnesia-sidebar'),
-                ))
-                yield wait
+            self.switch_to_sidebar(wait=wait)
+            if wait: # meh
+                yield self.driver.find_element_by_id('promnesia-sidebar')
             else:
                 yield None
         finally:
@@ -440,8 +453,10 @@ def test_settings(tmp_path, browser):
 @browsers()
 def test_backend_status(tmp_path, browser):
     with get_webdriver(browser=browser) as driver:
-        open_extension_page(driver, page='options_page.html')
+        helper = TestHelper(driver)
+        helper.open_page('options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
+
         set_host(driver=driver, host='https://nosuchhost.com', port='1234')
         driver.find_element(By.ID, 'backend_status_id').click()
         sleep(1 + 0.5) # needs enough time for timeout to trigger...
@@ -497,20 +512,47 @@ def test_sidebar_bottom(browser):
 
 
 @browsers()
-def test_blacklist_custom(tmp_path, browser) -> None:
+def test_blacklist_custom(tmp_path: Path, browser: Browser) -> None:
     with get_webdriver(browser=browser) as driver:
+        helper = TestHelper(driver)
         configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
-        driver.get('http://stackoverflow.com')
-        trigger_command(driver, Command.ACTIVATE)
+        driver.get('https://stackoverflow.com/questions/27215462')
+
+        helper.activate()
+
         manual.confirm('page should be blacklisted (black icon), your should see an error notification')
+
+        # make sure we can't open sidebar for blacklisted page
+        # meh, but that'll do for now
+        from selenium.common.exceptions import NoSuchFrameException
+        with pytest.raises(NoSuchFrameException):
+            with helper.sidebar():
+                pass
+
+        # reset blacklist
+        # also running without backend here, so need to set host to none as well
+        configure_extension(driver, host=None, blacklist=())
+        driver.back() # TODO maybe configure_extension should go back instead...
+        driver.refresh()
+
+        with helper.sidebar(wait=True):
+            # at least shouln't fail
+            pass
+
+        manual.confirm('sidebar should be visible')
 
 
 @browsers()
-def test_blacklist_builtin(tmp_path, browser):
+def test_blacklist_builtin(tmp_path: Path, browser: Browser) -> None:
     with get_webdriver(browser=browser) as driver:
+        helper = TestHelper(driver)
         configure_extension(driver, port='12345')
         driver.get('https://www.hsbc.co.uk/mortgages/')
-        manual.confirm('page should be blacklisted (black icon)')
+
+        helper.activate()
+
+        manual.confirm('page should be blacklisted (black icon), your should see an error notification')
+        # TODO implent similar logic to the above test
 
 
 @browsers(FF, CH)
