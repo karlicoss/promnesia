@@ -334,7 +334,7 @@ def connect_db(
                 ) from None
             db = sqlite3.connect(f"file:{decrypted_file}?mode=ro", uri=True)
         else:
-            from pysqlcipher3 import dbapi2  # type: ignore[import]
+            from sqlcipher3 import dbapi2  # type: ignore[import]
 
             db = dbapi2.connect(f"file:{db_path}?mode=ro", uri=True)
             # Param-binding doesn't work for pragmas, so use a direct string concat.
