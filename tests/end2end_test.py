@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from contextlib import contextmanager
+import json
 from pathlib import Path
 from datetime import datetime
 from tempfile import TemporaryDirectory
@@ -154,7 +155,7 @@ def save_settings(driver):
 LOCALHOST = 'http://localhost'
 
 
-def configure(
+def configure_extension(
         driver,
         *,
         host: Optional[str]=LOCALHOST,
@@ -162,6 +163,7 @@ def configure(
         show_dots: bool=True,
         highlights: Optional[bool]=None,
         blacklist=None,
+        excludelists=None,
         notify_contexts: Optional[bool]=None,
         position: Optional[str]=None,
         verbose_errors: bool=True,
@@ -211,11 +213,26 @@ def configure(
         bla.send_keys(Keys.BACKSPACE)
         bla.send_keys('\n'.join(blacklist))
 
+    if excludelists is not None:
+        excludelists_json = json.dumps(excludelists)
+
+        bl = driver.find_element(By.ID, 'global_excludelists_ext_id') # .find_element_by_tag_name('textarea')
+        bl.click()
+        # ugh, that's hacky. presumably due to using Codemirror?
+        bla = driver.switch_to.active_element
+        # ugh. doesn't work, .text always returns 0...
+        # if len(bla.text) > 0:
+        # for some reason bla.clear() isn't working...
+        # results in ElementNotInteractableException: Element <textarea> could not be scrolled into view
+        bla.send_keys(Keys.CONTROL + 'a')
+        bla.send_keys(Keys.BACKSPACE)
+        bla.send_keys(excludelists_json)
+
     save_settings(driver)
 
 
 # legacy name
-configure_extension = configure
+configure = configure_extension
 
 
 def get_window_id(driver):
@@ -552,7 +569,25 @@ def test_blacklist_builtin(tmp_path: Path, browser: Browser) -> None:
         helper.activate()
 
         manual.confirm('page should be blacklisted (black icon), your should see an error notification')
-        # TODO implent similar logic to the above test
+
+        # make sure we can't open sidebar for blacklisted page
+        # meh, but that'll do for now
+        from selenium.common.exceptions import NoSuchFrameException
+        with pytest.raises(NoSuchFrameException):
+            with helper.sidebar():
+                pass
+
+        # reset blacklist
+        # also running without backend here, so need to set host to none as well
+        configure_extension(driver, host=None, excludelists=())
+        driver.back() # TODO maybe configure_extension should go back instead...
+        driver.refresh()
+
+        with helper.sidebar(wait=True):
+            # at least shouln't fail
+            pass
+
+        manual.confirm('sidebar should be visible')
 
 
 @browsers(FF, CH)
