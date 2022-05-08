@@ -270,3 +270,49 @@ export function* chunkBy<T>(it: Iterable<T>, count: number): Iterator<Array<T>> 
         yield group
     }
 }
+
+export type HttpResponse = {
+    headers: any,
+    ok: boolean,
+    statusText: string,
+    text: () => Promise<string>,
+}
+
+export function rejectIfHttpError(response: HttpResponse): HttpResponse {
+    if (!response.ok) {
+        throw Error(response.statusText)
+    } else {
+        return response
+    }
+}
+
+// todo ugh, need to use some proper type annotations?
+function fetch_typed(...args): Promise<HttpResponse> {
+    // $FlowFixMe
+    return fetch(...args)
+}
+
+export async function fetch_max_stale(url: string, {max_stale}: {max_stale: number}): Promise<HttpResponse> {
+    /* In Firefox, Cache-Control allows max-stale param,
+     * which forces the browser to return cached responses past max-age (controlled by server).
+     * see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#max-stale
+     * However, it's not supported for most browsers :(
+     * https://github.com/web-platform-tests/wpt/blob/4e0796bcd669c3caf123d5a8f4a2d9acf9e12393/fetch/http-cache/cc-request.any.js#L57
+     * https://wpt.fyi/results/fetch/http-cache/cc-request.any.html?label=experimental&label=master&aligned
+     * If it was, this function would be as simple as fetch(url, {'Cache-Control': 'max-stale=...'})
+     */
+
+    // if it's not cached, it will make a real request
+    // anso works offline (returns cached response with no errors)
+    const cached_resp = await fetch_typed(url, {cache: 'force-cache'}).then(rejectIfHttpError)
+    const expires = cached_resp.headers.get('expires')
+    // not sure if it's possible not to have 'expires'
+    const stale_ms = new Date() - new Date(expires == null ? 0 : expires)
+    const max_stale_ms = max_stale * 1000
+    if (stale_ms < max_stale_ms) {
+        return cached_resp
+    } else {
+        // do a regular request instead
+        return fetch_typed(url).then(rejectIfHttpError)
+    }
+}

@@ -198,25 +198,6 @@ const options = {
           exclude: /node_modules/
       },
       {
-          test: /node_modules\/basket.js\/lib\/basket.js/,
-          use: {
-              loader: path.join(__dirname, 'patcher.js'),
-              options: {
-                  patches: [
-                      /* see
-                       * https://github.com/addyosmani/basket.js/issues/174
-                       * https://github.com/addyosmani/basket.js/issues/173
-                       */
-                      {code: /RSVP.Promise/g, newCode: 'Promise'},
-                      {code: 'RSVP.all', newCode: 'Promise.all'},
-                      {code: 'window.basket = {', newCode: 'var basket = window.basket= {'},
-                      // ugh. sometimes it patches it twice somehow??? wtf???
-                      {code: 'var basket = var basket = window.basket= {', newCode: 'var basket = window.basket= {'},
-                  ],
-              }
-          },
-      },
-      {
           test: /node_modules\/anchorme\/dist\/browser\/anchorme.js/,
           use: {
               loader: path.join(__dirname, 'patcher.js'),

@@ -1,7 +1,7 @@
 /* @flow */
 import type {Url} from './common';
 import {getOptions} from './options'
-import {asList} from './common';
+import {asList, fetch_max_stale} from './common'
 import {normalisedURLHostname} from './normalise';
 
 type Reason = string
@@ -68,19 +68,20 @@ export class Filterlist {
 
         console.debug('loading %s from %s', name, url)
 
-        const {basket} = await import(
-            /* webpackChunkName: "basket" */
-            // $FlowFixMe
-             'basket.js/lib/basket.js'
-        )
-        // TODO defensive??
+        // clear old basket.js local storge
+        for (const key of Object.keys(localStorage)) {
+            if (key.startsWith('basket-')) {
+                localStorage.removeItem(key)
+            }
+        }
 
-        const resp = (await basket.require({
-            url    : url,
-            execute: false,
-            expire : 24 * 3, // 3 days
-        }))[0]
-        list = new Set(asList(resp.data))
+        // ugh. so for github (where the shallalist lists are kept), server max-age is about 5 mins
+        // so relying on default caching will result in downloading lists every 5 minutes
+        const max_stale = 24 * 3600  // 1 day
+        const response = await fetch_max_stale(url, {max_stale: max_stale})
+        const contents = await response.text()
+        // so I guess it's abit suboptimal to query every 5 minutes... idk
+        list = new Set(asList(contents))
         this._lists.set(name, list);
         return list;
     }
