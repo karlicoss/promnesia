@@ -282,7 +282,7 @@ def is_headless(driver) -> bool:
     if driver.name == 'firefox':
         return driver.capabilities.get('moz:headless', False)
     else:
-        raise RuntimeError(driver)
+        return False
 
 
 # TODO move to common or something
