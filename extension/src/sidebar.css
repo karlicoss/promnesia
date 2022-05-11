@@ -188,6 +188,8 @@ a.promnesia-visited {
 #visits .src {
     color: var(--source-text);
     font-weight: 700;
+
+    margin-right: 0.2em; /* need to keep space between sources */
 }
 
 #visits .src.bookmark::before {
