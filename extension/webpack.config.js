@@ -175,6 +175,7 @@ const options = {
     // chunkFilename: '[name].bundle.js',
   },
   optimization: {
+    minimize: false, // no point for webext, it loads fast enough anyway
     splitChunks: {
       automaticNameDelimiter: '_', // ugh. default ~ can't be loaded by the browser??
     }
