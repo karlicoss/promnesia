@@ -167,6 +167,20 @@ var Cls = {
     POPUP_LINK:'promnesia-visited-popup-link',
 }
 
+
+function _hasFormParent(element) {
+    var pel = element
+    while (pel != null) {
+        if (pel.tagName == "FORM") {
+            // todo maybe log?
+            return true
+        }
+        pel = pel.parentElement
+    }
+    return false
+}
+
+
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 /*
  * So, there are a few requirements from the marks we're trying to achieve here
@@ -189,6 +203,11 @@ function showMark(element) {
     const v = visited.get(url)
     if (!v) {
         return // no visits or was excluded (add some data attribute maybe?)
+    }
+
+    if (_hasFormParent(element)) {
+        // workaround for this issue with github inline edits https://github.com/karlicoss/promnesia/issues/317
+        return
     }
 
     // meh. might not work well on images etc...
