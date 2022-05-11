@@ -63,7 +63,7 @@ class Sidebar {
         const cdoc = frame.contentDocument;
         const head = unwrap(cdoc.head);
 
-        const sidebar_css = chrome.extension.getURL("sidebar.css");
+        const sidebar_css = chrome.runtime.getURL("sidebar.css")
         const link = cdoc.createElement("link");
         link.href = sidebar_css;
         link.type = "text/css";
