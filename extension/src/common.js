@@ -199,7 +199,9 @@ export const Ids = {
 
 export type SearchPageParams = {
     // TODO allow passing iso string??
-    utc_timestamp_s?: string
+    utc_timestamp_s?: string,
+    // Query string
+    q?: string
 }
 
 // $FlowFixMe
