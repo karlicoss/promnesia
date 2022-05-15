@@ -14,7 +14,7 @@ from typing import NamedTuple, ContextManager, Optional
 import pytz
 import requests
 
-from promnesia.common import PathIsh
+from promnesia.common import PathIsh, _is_windows
 
 from integration_test import index_hypothesis, index_urls, index_some_demo_visits
 from common import tdir, under_ci, tdata, tmp_popen, promnesia_bin
@@ -86,7 +86,7 @@ CACHE_DIR  = r'{cache_dir}'
 
 def post(*args):
     cmd = [
-        'http',
+        sys.executable, '-m', 'httpie',
         # '--timeout', '10000', # useful for debugging
         '--ignore-stdin',
         'post',
@@ -104,9 +104,10 @@ def test_query_instapaper(tdir):
         # TODO actually test response?
 
 
-def test_visits(tmp_path):
+def test_visits(tmp_path: Path) -> None:
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
+        # TODO why are we querying 3 times ???
         for q in range(3):
             print(f"querying {q}")
             response = post(f'http://localhost:{helper.port}/visits', f'url={test_url}')
@@ -121,7 +122,7 @@ def test_search(tdir):
         assert len(response['visits']) == 8
 
 
-def test_visited(tmp_path):
+def test_visited(tmp_path: Path) -> None:
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
         endp = f'http://localhost:{helper.port}/visited'

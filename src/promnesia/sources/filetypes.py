@@ -75,6 +75,8 @@ CODE = {
     'hs',  # mistyped on osx
     'hpp', # mistyped on osx
 
+    'edn', # clojure data
+
     '.ts', # most likely typescript.. otherwise determined as text/vnd.trolltech.linguist mime
 }
 # TODO discover more extensions with mimetypes library?

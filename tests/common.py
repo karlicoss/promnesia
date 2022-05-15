@@ -64,7 +64,7 @@ def promnesia_bin(*args):
     # whatever...
     if under_ci() or _is_windows:
         # should be able to use the installed version
-        return ['promnesia', *args]
+        return [sys.executable, '-m', 'promnesia', *args]
     else:
         # use version from the repository
         root = Path(__file__).parent.parent

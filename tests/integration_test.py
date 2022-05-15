@@ -9,6 +9,8 @@ import pytest
 
 from common import tdir, under_ci, DATA, GIT_ROOT, promnesia_bin
 
+from promnesia.common import _is_windows
+
 
 def run_index(cfg: Path, *, update=False) -> None:
     from promnesia.__main__ import do_index
@@ -18,10 +20,13 @@ def run_index(cfg: Path, *, update=False) -> None:
 index = run_index # legacy name
 
 
-def test_example_config(tdir) -> None:
+def test_example_config(tmp_path: Path) -> None:
+    if _is_windows:
+        pytest.skip("doesn't work on Windows: example config references /usr/include paths")
+
     from promnesia.__main__ import read_example_config
     ex = read_example_config()
-    cfg = tdir / 'test_config.py'
+    cfg = tmp_path / 'test_config.py'
     cfg.write_text(ex)
     index(cfg)
 
