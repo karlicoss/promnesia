@@ -1,10 +1,12 @@
 from datetime import datetime
+import os
 import re
-from ..compat import run, PIPE, Paths
 from typing import Optional, Union
 import warnings
 
-from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz
+from ..compat import run, PIPE, Paths
+from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows
+from .plaintext import _has_grep
 
 
 def index(command: Union[str, Paths]) -> Results:
@@ -20,6 +22,12 @@ def index(command: Union[str, Paths]) -> Results:
 
     tz = get_system_tz()
 
+    # ugh... on windows grep does something nasty? e.g:
+    # grep --color=never -r -H -n -I -E http 'D:\\a\\promnesia\\promnesia\\tests\\testdata\\custom'
+    # D:\a\promnesia\promnesia\tests\testdata\custom/file1.txt:1:Right, so this points at http://google.com
+    # so part of the path has fwd slashes, part has bwd slashes...
+    needs_windows_grep_patching = _has_grep() and _is_windows
+
     def handle_line(line: str) -> Results:
         # grep dumps this as
         # /path/to/file:lineno:rest
@@ -33,6 +41,9 @@ def index(command: Union[str, Paths]) -> Results:
             fname  = m.group(1)
             lineno = int(m.group(2))
             line   = m.group(3)
+
+        if fname is not None and needs_windows_grep_patching:
+            fname = fname.replace('/', os.sep)
 
         urls = extract_urls(line)
         if len(urls) == 0:
@@ -58,7 +69,7 @@ def index(command: Union[str, Paths]) -> Results:
 
     r = run(cmd, stdout=PIPE)
     if r.returncode > 0:
-        if not (cmd[0] == 'grep' and r.returncode == 1): # ugh. grep returns 1 on no matches...
+        if not (cmd[0] in {'grep', 'findstr'} and r.returncode == 1): # ugh. grep returns 1 on no matches...
             r.check_returncode()
     output = r.stdout
     assert output is not None
