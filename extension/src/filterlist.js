@@ -75,11 +75,31 @@ export class Filterlist {
             }
         }
 
+        if (url.includes('/cbuijs/shallalist/')) {
+            // use my fork just in case... they stopped updating the list anyway
+            url = url.replace('/cbuijs/shallalist/', '/karlicoss/shallalist/')
+            // the cbuijs repo switched to main branch, so let's do that too
+            url = url.replace('/master/', '/main/')
+            // see https://github.com/karlicoss/promnesia/issues/325
+            console.debug('replacing shallalist entry to %s')
+        }
+
         // ugh. so for github (where the shallalist lists are kept), server max-age is about 5 mins
         // so relying on default caching will result in downloading lists every 5 minutes
         const max_stale = 24 * 3600  // 1 day
-        const response = await fetch_max_stale(url, {max_stale: max_stale})
-        const contents = await response.text()
+        let contents = null
+        try {
+            const response = await fetch_max_stale(url, {max_stale: max_stale})
+            contents = await response.text()
+        } catch (error) {
+            console.error('suppressing error until we have a proper fix: %o', error)
+            contents  = '[]'
+            // TODO not sure how to fix this properly..
+            // I guess it should cache things and only update when the request succeeds
+            // but also what if it fails on the first request??
+            // probably should be defensive list by list, but also report error to the UI
+            // and suggest suppressing list in settings for example
+        }
         // so I guess it's abit suboptimal to query every 5 minutes... idk
         list = new Set(asList(contents))
         this._lists.set(name, list);
