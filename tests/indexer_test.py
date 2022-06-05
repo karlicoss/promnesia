@@ -1,28 +1,20 @@
-#!/usr/bin/env python3
 from contextlib import contextmanager
-from datetime import datetime, date
-from os.path import join, getsize
+from datetime import datetime
 from pathlib import Path
-from tempfile import TemporaryDirectory
 import pytz
-from shutil import copytree
-import os
-from os import mkdir
-from os.path import lexists
 from typing import Union, List
 
-import pytest # type: ignore
-from pytest import mark # type: ignore
+import pytest
 
+from promnesia.common import Visit, Indexer, Loc, Res, DbVisit, _is_windows
 
 from common import tdata, reset_hpi_modules
 from config_tests import with_config
 
-from promnesia.common import Visit, Indexer, Loc, Res, DbVisit, _is_windows
 
 # TODO need to expire dbcache in tests..
 
-skip = mark.skip
+skip = pytest.mark.skip
 
 
 def W(*args, **kwargs):
@@ -46,7 +38,6 @@ def as_ok_visits(*args, **kwargs) -> List[DbVisit]:
     return r
 
 
-from contextlib import contextmanager
 @contextmanager
 def extra_path(p: Path):
     import sys
@@ -68,10 +59,7 @@ def import_file(p: Union[str, Path], name=None):
     return foo
 
 
-# TODO eh. need to separate stuff for history backups out...
-backup_db = import_file('scripts/browser_history.py')
-
-def assert_got_tzinfo(visits):
+def assert_got_tzinfo(visits) -> None:
     for v in visits:
         assert v.dt.tzinfo is not None
 
@@ -99,6 +87,7 @@ def adhoc_config(tmp_path: Path):
 def test_with_error() -> None:
     class ExtractionError(Exception):
         pass
+
     def err_ex():
         for i in range(3):
             if i == 1:
@@ -119,6 +108,7 @@ def test_with_error() -> None:
 def test_takeout_directory(adhoc_config, tmp_path: Path) -> None:
     reset_hpi_modules()
     from my.cfg import config
+
     class user_config:
         takeout_path = tdata('takeout')
     config.google = user_config # type: ignore
@@ -136,6 +126,7 @@ def test_takeout_directory(adhoc_config, tmp_path: Path) -> None:
 def test_takeout_zip(adhoc_config) -> None:
     reset_hpi_modules()
     from my.cfg import config
+
     class user_config:
         takeout_path = tdata('takeout-20150518T000000Z.zip')
     config.google = user_config # type: ignore
@@ -161,25 +152,12 @@ def test_takeout_zip(adhoc_config) -> None:
     assert_got_tzinfo(visits)
 
 
-@skip("TODO not sure how to trigger firefox on CI...")
-def test_backup_firefox(tmp_path):
-    tdir = Path(tmp_path)
-    path = backup_db.backup_history('firefox', to=tdir, profile='*release*')
-    # shouldn't fail at least
-
-        # [hist] = list(chrome_gen.iter_chrome_histories(path, 'sqlite'))
-        # assert len(hist) > 10 # kinda random sanity check
-
-        # render([hist], join(tdir, 'res.json'))
-
-        # assert_got_tzinfo(hist)
-
-
 def test_plaintext_path_extractor() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = as_ok_visits(W(custom_gen.index,
+    visits = as_ok_visits(W(
+        custom_gen.index,
         extract_from_path(tdata('custom')),
     ))
     assert {
@@ -201,7 +179,8 @@ def test_normalise() -> None:
     import promnesia.sources.shellcmd as custom_gen
     from promnesia.sources.plaintext import extract_from_path
 
-    visits = as_ok_visits(W(custom_gen.index,
+    visits = as_ok_visits(W(
+        custom_gen.index,
         extract_from_path(tdata('normalise')),
     ))
     assert len(visits) == 7
@@ -267,7 +246,7 @@ def test_custom() -> None:
     visits = as_visits(W(
         custom_gen.index,
         # meh. maybe should deprecate plain string here...
-        """grep -Eo -r --no-filename (http|https)://\S+ """ + tdata('custom'),
+        r"""grep -Eo -r --no-filename (http|https)://\S+ """ + tdata('custom'),
     ))
     # TODO I guess filtering of equivalent urls should rather be tested on something having context (e.g. org mode)
     assert len(visits) == 5
@@ -317,90 +296,3 @@ def HOOK(visit: Res[DbVisit]) -> Iterable[Res[DbVisit]]:
         assert p41 == p42
         assert isinstance(p6, DbVisit)
         assert p6.locator is not None
-
-
-TESTDATA_CHROME_HISTORY = "/L/data/promnesia/testdata/chrome-history"
-
-def get_chrome_history_backup(td: str):
-    copytree(TESTDATA_CHROME_HISTORY, join(td, 'backup'))
-
-@skip("TODO move this to populate script instead")
-def test_merge():
-    merge = backup_db.merge
-
-    # TODO third is implicit... use merging function
-    with TemporaryDirectory() as tdir:
-        get_chrome_history_backup(tdir)
-        first  = join(tdir, "backup/20180415/History")
-        second = join(tdir, "backup/20180417/History")
-
-        mdir = join(tdir, 'merged')
-        mkdir(mdir)
-        merged_path = join(mdir, 'merged.sql')
-
-
-        def merged_size() -> int:
-            return getsize(merged_path)
-
-        merge(merged_path, first)
-        fsize = merged_size()
-
-        merge(merged_path, first)
-        fsize_2 = merged_size()
-
-        assert fsize == fsize_2
-
-        merge(merged_path, second)
-        ssize = merged_size()
-
-        assert ssize > fsize
-
-        merge(merged_path, second)
-        ssize_2 = merged_size()
-
-        assert ssize_2 == ssize
-
-
-def _test_merge_all_from(tdir):
-    merge_all_from = backup_db.merge_all_from # type: ignore
-    mdir = join(tdir, 'merged')
-    mkdir(mdir)
-    mfile = join(mdir, 'merged.sql')
-
-    get_chrome_history_backup(tdir)
-
-    merge_all_from(mfile, join(tdir, 'backup'), None)
-
-    first  = join(tdir, "backup/20180415/History")
-    second = join(tdir, "backup/20180417/History")
-
-    # should be removed
-    assert not lexists(first)
-    assert not lexists(second)
-
-    import promnesia.sources.chrome as chrome_ex # type: ignore
-
-    hist = history(W(chrome_ex.extract, mfile)) # type: ignore
-    assert len(hist) > 0
-
-    older = hist['github.com/orgzly/orgzly-android/issues']
-    assert any(v.dt.date() < date(year=2018, month=1, day=17) for v in older)
-    # in particular, "2018-01-16 19:56:56"
-
-    newer = hist['en.wikipedia.org/wiki/Notice_and_take_down']
-    assert any(v.dt.date() >= date(year=2018, month=4, day=16) for v in newer)
-
-    # from implicit db
-    newest = hist['feedly.com/i/discover']
-    assert any(v.dt.date() >= date(year=2018, month=9, day=27) for v in newest)
-
-@skip("TODO move this to populate script")
-def test_merge_all_from(tmp_path):
-    tdir = Path(tmp_path)
-    _test_merge_all_from(tdir)
-    # TODO and also some other unique thing..
-
-if __name__ == '__main__':
-    pytest.main([__file__])
-
-# TODO once I integrate test for db population, test chrome/firefox extractors
