@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+DEPRECATION = 'NOTE: this is DEPRECATED! Please use https://github.com/seanbreckenridge/browserexport instead'
+
 from datetime import datetime
 from pathlib import Path
 from subprocess import check_output
-from typing import Optional
 import filecmp
 import logging
+import warnings
+import sys
+
+warnings.warn(DEPRECATION, DeprecationWarning)
 
 Browser = str
 
@@ -115,6 +120,10 @@ def main():
 
     # TODO do I need pattern??
     backup_history(browser=args.browser, to=args.to, profile=args.profile)
+
+    warnings.warn(DEPRECATION, DeprecationWarning)
+    logger.error("This script is DEPRECATED! Exiting with error code so that the use notices")
+    sys.exit(44)
 
 
 if __name__ == '__main__':
