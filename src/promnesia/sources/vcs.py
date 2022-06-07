@@ -5,10 +5,10 @@ Clones & indexes Git repositories (via sources.auto)
 
 from pathlib import Path
 import re
-from ..compat import check_call
 from typing import Iterable
 
 from ..common import Extraction, PathIsh, get_tmpdir, slugify
+from ..compat import check_call
 
 
 def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
@@ -20,7 +20,7 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
     # note: https://bugs.python.org/issue33617 , it doesn't like Path here on Windows
     check_call(['git', 'clone', repo, str(tp)])
 
-    def replacer(p: PathIsh, prefix=str(tp), repo=repo) -> str:
+    def replacer(p: PathIsh, prefix: str=str(tp), repo: str=repo) -> str:
         ps = str(p)
         # TODO prefix is a bit misleading
         pos = ps.find(prefix)

@@ -11,7 +11,6 @@ from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, 
 
 # TODO potentially, belongs to my. package
 
-# TODO kython?
 T = TypeVar("T")
 
 
@@ -43,7 +42,7 @@ def index(database: PathIsh, *, http_only: bool=None) -> Results:
     path = Path(database)
     assert path.is_file(), path # TODO could check is_file inside `dataset_readonly()`
 
-    def make_query(text_query: str):
+    def make_query(text_query: str) -> str:
         extra_criteria = "AND (M.has_media == 1 OR text LIKE '%http%')" if http_only else ""
         return dedent(
             f"""

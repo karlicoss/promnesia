@@ -39,7 +39,7 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
         # rest of the errors are a bit more critical..
         res.check_returncode()
 
-    def replacer(p: PathIsh, prefix=str(tp), url=url) -> str:
+    def replacer(p: PathIsh, prefix: str=str(tp), url: str=url) -> str:
         ps = str(p)
         pos = ps.find(prefix)
         if pos == -1:
