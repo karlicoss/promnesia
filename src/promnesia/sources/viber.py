@@ -10,12 +10,13 @@ from typing import Iterable, Optional
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, join_tags
 
+
 logger = logging.getLogger(__name__)
 
 
 def index(
     db_path: PathIsh = "~/.ViberPC/*/viber.db",
-    locator_schema="editor",
+    locator_schema: str="editor",
     *,
     http_only: bool = None,
 ) -> Results:
@@ -165,7 +166,7 @@ def _get_files(path: PathIsh) -> Iterable[Path]:
     return Path(path.root).glob(str(Path("").joinpath(*parts)))
 
 
-def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str):
+def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str) -> Results:
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
     # Note: for displaying maybe better not to expand/absolute,

@@ -1,9 +1,8 @@
 from pathlib import Path
 from typing import Union, Sequence, List, TYPE_CHECKING
 
+
 PathIsh = Union[Path, str]
-
-
 Paths = Sequence[PathIsh]
 
 # TLDR: py37 on windows has an annoying bug.. https://github.com/karlicoss/promnesia/issues/91#issuecomment-701051074
@@ -31,20 +30,23 @@ def register_argparse_extend_action_in_pre_py38(parser: argparse.ArgumentParser)
 
 
 import subprocess
+from subprocess import PIPE  # for convenience?
 
-def run(args: Paths, **kwargs) -> subprocess.CompletedProcess:
-    return subprocess.run(_fix(args), **kwargs)
 
-def check_call(args: Paths, **kwargs) -> None:
-    subprocess.check_call(_fix(args), **kwargs)
+if TYPE_CHECKING:
+    from subprocess import run, check_call, check_output, Popen
+else:
+    def run(args: Paths, **kwargs) -> subprocess.CompletedProcess:
+        return subprocess.run(_fix(args), **kwargs)
 
-def check_output(args: Paths, **kwargs) -> bytes:
-    return subprocess.check_output(_fix(args), **kwargs)
+    def check_call(args: Paths, **kwargs) -> None:
+        subprocess.check_call(_fix(args), **kwargs)
 
-def Popen(args: Paths, **kwargs) -> subprocess.Popen:
-    return subprocess.Popen(_fix(args), **kwargs)
+    def check_output(args: Paths, **kwargs) -> bytes:
+        return subprocess.check_output(_fix(args), **kwargs)
 
-PIPE = subprocess.PIPE
+    def Popen(args: Paths, **kwargs) -> subprocess.Popen:
+        return subprocess.Popen(_fix(args), **kwargs)
 
 
 # can remove after python3.9
@@ -52,3 +54,8 @@ def removeprefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         return text[len(prefix):]
     return text
+
+
+# TODO Deprecate instead, they shouldn't be exported form this module
+# del PathIsh
+# del Paths

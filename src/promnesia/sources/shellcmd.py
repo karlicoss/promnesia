@@ -1,16 +1,16 @@
 from datetime import datetime
 import os
 import re
-from typing import Optional, Union
+from typing import Optional, Union, Sequence
 import warnings
 
-from ..compat import run, PIPE, Paths
-from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows
+from ..compat import run, PIPE
+from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows, PathIsh
 from .plaintext import _has_grep
 
 
-def index(command: Union[str, Paths]) -> Results:
-    cmd: Paths
+def index(command: Union[str, Sequence[PathIsh]]) -> Results:
+    cmd: Sequence[PathIsh]
     cmds: str
     if isinstance(command, str):
         cmds = command

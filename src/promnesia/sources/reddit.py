@@ -3,12 +3,12 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit
 '''
 
 from itertools import chain
-from typing import Set, Optional
+from typing import Set, Optional, Type
 
 from ..common import Visit, Loc, extract_urls, Results, logger
 
 
-def index(*, render_markdown: bool = False, renderer: Optional['RedditRenderer'] = None) -> Results:
+def index(*, render_markdown: bool = False, renderer: Optional[Type['RedditRenderer']] = None) -> Results:
     from . import hpi
     try:
         from my.reddit.all import submissions, comments, saved, upvoted
@@ -58,9 +58,7 @@ def index(*, render_markdown: bool = False, renderer: Optional['RedditRenderer']
 # mostly here so we can keep track of how the user
 # wants to render markdown
 class RedditRenderer:
-
-    def __init__(self, render_markdown: bool = False):
-
+    def __init__(self, render_markdown: bool = False) -> None:
         self._link_extractor = None
         self._parser_cls = None
         try:
