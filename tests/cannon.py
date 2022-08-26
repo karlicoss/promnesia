@@ -121,6 +121,19 @@ def test_hackernews(url, expected):
 def test_reddit(url, expected):
     assert canonify(url) == expected
 
+# ugh. good example of motication for cannon.py?
+@param('url,expected', [
+    ( 'https://app.getpocket.com/read/3479402594'
+    , 'app.getpocket.com/read/3479402594'
+    ),
+
+    ( 'https://getpocket.com/read/3479402594'
+    , 'app.getpocket.com/read/3479402594'
+    ),
+])
+def test_pocket(url, expected):
+    assert canonify(url) == expected
+
 @pytest.mark.parametrize("url,expected", [
     # TODO ?? 'https://groups.google.com/a/list.hypothes.is/forum/#!topic/dev/kcmS7H8ssis',
     #
