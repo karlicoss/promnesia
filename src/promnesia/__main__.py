@@ -98,7 +98,7 @@ def do_index(
     if len(errors) > 0:
         logger.error('%d errors, printing them out:', len(errors))
         for e in errors:
-            logger.error('    %s', e)
+            logger.error('    %s', e, exc_info=e)
         logger.error('%d errors, exit code 1', len(errors))
         sys.exit(1)
 
