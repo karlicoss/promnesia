@@ -18,7 +18,7 @@ def index(
     db_path: PathIsh = "~/.ViberPC/*/viber.db",
     locator_schema: str="editor",
     *,
-    http_only: bool = None,
+    http_only: bool = False,
 ) -> Results:
     """
     :param db_path:

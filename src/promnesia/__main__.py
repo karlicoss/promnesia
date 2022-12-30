@@ -287,7 +287,7 @@ def _ordinal_or_name(s: str) -> Union[str, int]:
 def main() -> None:
     # TODO longer, literate description?
 
-    def add_index_args(parser: argparse.ArgumentParser, default_config_path: PathIsh=None) -> None:
+    def add_index_args(parser: argparse.ArgumentParser, default_config_path: Optional[PathIsh]=None) -> None:
         """
         :param default_config_path:
             if not given, all :func:`demo_sources()` are run

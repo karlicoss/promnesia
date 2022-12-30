@@ -78,6 +78,7 @@ CODE = {
     'edn', # clojure data
 
     '.ts', # most likely typescript.. otherwise determined as text/vnd.trolltech.linguist mime
+    '.js',
 }
 # TODO discover more extensions with mimetypes library?
 
