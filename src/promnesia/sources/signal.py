@@ -16,7 +16,7 @@ import subprocess as sbp
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent, indent
-from typing import Any, Iterable, Iterator, Mapping, Sequence, Union
+from typing import Any, Iterable, Iterator, Mapping, Union, Optional
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
 
@@ -25,10 +25,10 @@ PathIshes = Union[PathIsh, Iterable[PathIsh]]
 
 def index(
     *db_paths: PathIsh,
-    http_only: bool = None,
-    locator_schema="editor",
-    append_platform_path: bool = None,
-    override_key: str = None,
+    http_only: bool = False,
+    locator_schema: str="editor",
+    append_platform_path: bool = False,
+    override_key: Optional[str] = None,
 ) -> Results:
     """
     :param db_paths:
@@ -150,7 +150,7 @@ def _is_pathish(p) -> bool:
     return isinstance(p, (str, Path))
 
 
-def _expand_path(path_pattern: PathIsh = None) -> Iterable[Path]:
+def _expand_path(path_pattern: PathIsh) -> Iterable[Path]:
     """
     Expand homedir(`~`) and globs any file-paths matched.
 
@@ -191,7 +191,7 @@ def _expand_paths(paths: PathIshes) -> Iterable[Path]:
     return [pp.resolve() for p in paths for pp in _expand_path(p)]  # type: ignore[union-attr,list-item]
 
 
-def collect_db_paths(*db_paths: PathIsh, append: bool = None) -> Iterable[Path]:
+def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]:
     """
     Get OS-dependent (or user overridden) db locations (1st existing used).
 
@@ -260,7 +260,7 @@ def _key_from_config(signal_desktop_config_path: PathIsh) -> str:
 def connect_db(
     db_path: Path,
     key,
-    decrypt_db: bool = None,
+    decrypt_db: bool = False,
     sqlcipher_exe: PathIsh = "sqlcipher",
     **decryption_pragmas: Mapping[str, Any],
 ) -> Iterator[sqlite3.Connection]:
@@ -391,9 +391,9 @@ def _harvest_db(
     db_path: Path,
     messages_query: str,
     *,
-    override_key: str = None,
+    override_key: Optional[str] = None,
     locator_schema: str = "editor",
-    decrypt_db: bool = None,
+    decrypt_db: bool = False,
     **decryption_pragmas,
 ) -> Results:
     """

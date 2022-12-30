@@ -14,6 +14,8 @@ on:
 jobs:
   build:
     strategy:
+      # useful to quickly debug all versions, otherwise a bit wasteful
+      # fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']

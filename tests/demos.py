@@ -17,7 +17,7 @@ from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
 
 
 def real_db():
-    from private import real_db_path, test_filter # type: ignore
+    from private import real_db_path, test_filter  # type: ignore[import,attr-defined]
     from tempfile import TemporaryDirectory
     import shutil
     def indexer(tdir: Path):
@@ -474,7 +474,7 @@ def test_demo_highlights(tmp_path, browser):
 
 
     def before(driver):
-        from private import instapaper_cookies
+        from private import instapaper_cookies  # type: ignore[import,attr-defined]
 
         # necessary to set cookies on instapaper..
         driver.get('http://instapaper.com')
