@@ -9,11 +9,11 @@ fi
 
 # compensate for differences between ubuntu:focal and github action image...
 
-sudo apt -y install python3.8 python3.8-dev
-sudo python3.8 -m pip install -U setuptools pip # ugh. otherwise find_namespace_packages is missing
+sudo apt -y install python3.10 python3.10-dev
+sudo python3.10 -m pip install -U setuptools pip # ugh. otherwise find_namespace_packages is missing
 
 # just in case? not sure if need anymore
-sudo ln -sfT $(which python3.8) /usr/bin/python3
+sudo ln -sfT "$(which python3.10)" /usr/bin/python3
 
 # otherwise setuptools don't work..
 sudo apt -y install git

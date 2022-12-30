@@ -83,11 +83,11 @@ jobs:
       with:
         submodules: recursive
 
-    - run: ci/github-ci-compat
+    - run: .ci/github-ci-compat
 
     - run: |
         python3 -m pip install .
-        export PATH=ci/fake-systemd:$PATH
+        export PATH=.ci/fake-systemd:$PATH
         tests/install_and_run
 
   pypi:
