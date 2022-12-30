@@ -19,9 +19,11 @@ from pathlib import Path
 from subprocess import check_call
 import shutil
 
+
 is_ci = os.environ.get('CI') is not None
 
-def main():
+
+def main() -> None:
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument('--test', action='store_true', help='use test pypi')
