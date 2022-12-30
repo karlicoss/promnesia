@@ -97,6 +97,8 @@ For build instructions, you can point the reviewers at [[file:addons-mozilla-org
 
 This command should work in theory and upload automatically... however getting the api keys is super annoying (see [[https://github.com/DrewML/chrome-webstore-upload/blob/master/How%20to%20generate%20Google%20API%20keys.md][this]]).
 
+NOTE: even after succcessful upload, seems that you still need to go to "Privacy practices" tab and click "Submit for review".
+
 Also it might still fail anyway, and require you to justify permissions etc..
 If you only release the extension once in a while maybe simpler to [[https://chrome.google.com/webstore/developer/dashboard][upload the zip manually]] :shrug:
 Usually review in CWS takes a couple of days.

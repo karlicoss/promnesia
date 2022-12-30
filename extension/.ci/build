@@ -1,4 +1,5 @@
-#!/bin/bash -eux
+#!/bin/bash
+set -eux
 
 cd "$(dirname "$0")"
 cd ../.. # git root

@@ -2,7 +2,7 @@
 set -eu
 
 cd "$(dirname "$0")"
-cd ../.. # git root
+cd .. # git root
 
 if ! command -v sudo; then
     # CI or Docker sometimes doesn't have it, so useful to have a dummy
@@ -16,7 +16,7 @@ if [ -n "${CI-}" ]; then
     # TODO: pyjq is not necessary anymore? will keep CI deps just in case I guess
     PYJQ_DEPS=('autoconf' 'automake' 'libtool') # see https://github.com/mwilliamson/jq.py#installation
     case "$OSTYPE" in
-    darwin*)
+    darwin*) 
         # macos
         brew install "${PYJQ_DEPS[@]}"
 
@@ -33,8 +33,10 @@ if [ -n "${CI-}" ]; then
 
         # TODO also need to warn from readme??
         sudo apt install "${PYJQ_DEPS[@]}" python3-dev
+        ;;
     esac
 fi
+
 
 PY_BIN="python3"
 # some systems might have python pointing to python3

@@ -5,6 +5,7 @@ on:
   push:
     branches: '*'
     tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
+    # Ideally I would put this in the pypi job... but github syntax doesn't allow for regexes there :shrug:
   pull_request: # needed to trigger on others' PRs
   # Note that people who fork it need to go to "Actions" tab on their fork and click "I understand my workflows, go ahead and enable them".
   workflow_dispatch: # needed to trigger workflows manually
@@ -15,12 +16,15 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         exclude: [
             # windows runners are pretty scarce, so let's only run one of them..
             # also 3.7 on windows is a bit broken due to the WindowsPath bug
             {platform: windows-latest, python-version: '3.7'},
             {platform: windows-latest, python-version: '3.9'},
+            # 3.11 on windows has this bug, lxml setup fails
+            #https://bugs.launchpad.net/lxml/+bug/1977998
+            {platform: windows-latest, python-version: '3.11'},
         ]
 
     runs-on: ${{ matrix.platform }}
@@ -30,8 +34,11 @@ jobs:
     steps:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+    - if: ${{ matrix.platform == 'macos-latest' && matrix.python-version == '3.11' }}
+      # hmm somehow only seems necessary for 3.11 on osx??
+      run: echo "$HOME/Library/Python/${{ matrix.python-version }}/bin" >> $GITHUB_PATH
 
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -43,15 +50,15 @@ jobs:
     # - uses: mxschmitt/action-tmate@v3
 
     # explicit bash command is necessary for Windows CI runner, otherwise it thinks it's cmd...
-    - run: bash scripts/ci/run
+    - run: bash .ci/run
 
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: .coverage.mypy-core_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-core/
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-misc/
@@ -91,7 +98,7 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
 
@@ -104,7 +111,7 @@ jobs:
       if: github.event_name != 'pull_request' && github.event.ref == 'refs/heads/master'
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
-      run: pip3 install --user wheel twine && scripts/release --test
+      run: pip3 install --user wheel twine && .ci/release --test
       # TODO run pip install just to test?
 
     - name: 'release to pypi'
@@ -113,10 +120,12 @@ jobs:
       if: github.event_name != 'pull_request' && startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-      run: pip3 install --user wheel twine && scripts/release
+      run: pip3 install --user wheel twine && .ci/release
 
   ###
   build_extension:
+    env:
+      name: 'promnesia'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -125,24 +134,24 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16'
-    - run: scripts/ci/extension --lint # debug version
-    - run: scripts/ci/extension --lint --release
+    - run: extension/.ci/build --lint # debug version
+    - run: extension/.ci/build --lint --release
 
     # TODO ugh. can't share github actions artifacts publicly...
     # TODO for fuck's sake... why does it end up named as .zip.zip ????
     - uses: actions/upload-artifact@v2
       with:
-        name: 'promnesia-chrome-debug-latest.zip'
-        path: 'extension/dist/artifacts/chrome/promnesia_dev_-*.zip'
+        name: '${{ env.name }}-chrome-debug-latest.zip'
+        path: 'extension/dist/artifacts/chrome/${{ env.name }}_dev_-*.zip'
     - uses: actions/upload-artifact@v2
       with:
-        name: 'promnesia-chrome-release-latest.zip'
-        path: 'extension/dist/artifacts/chrome/promnesia-*.zip'
+        name : '${{ env.name }}-chrome-release-latest.zip'
+        path: 'extension/dist/artifacts/chrome/${{ env.name }}-*.zip'
     - uses: actions/upload-artifact@v2
       with:
-        name: 'promnesia-firefox-debug-latest.zip'
-        path: 'extension/dist/artifacts/firefox/promnesia_dev_-*.zip'
+        name : '${{ env.name }}-firefox-debug-latest.zip'
+        path: 'extension/dist/artifacts/firefox/${{ env.name }}_dev_-*.zip'
     - uses: actions/upload-artifact@v2
       with:
-        name: 'promnesia-firefox-release-latest.zip'
-        path: 'extension/dist/artifacts/firefox/promnesia-*.zip'
+        name : '${{ env.name }}-firefox-release-latest.zip'
+        path: 'extension/dist/artifacts/firefox/${{ env.name }}-*.zip'
