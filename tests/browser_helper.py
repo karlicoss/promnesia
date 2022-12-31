@@ -4,8 +4,11 @@ import re
 import json
 from time import sleep
 
+from selenium.webdriver import Remote as Driver
+
+
 # TODO share with grasp... maybe move to kython?
-def open_extension_page(driver, page: str) -> None:
+def open_extension_page(driver: Driver, page: str) -> None:
     ff = {
         'chrome' : get_extension_page_chrome,
         'firefox': get_extension_page_firefox,
@@ -14,18 +17,20 @@ def open_extension_page(driver, page: str) -> None:
     driver.get(extension_prefix + '/' + page)
 
 
-def get_chrome_prefs_file(driver) -> Path:
+def get_chrome_prefs_file(driver: Driver) -> Path:
     chrome_profile = Path(driver.capabilities['chrome']['userDataDir'])
 
     # meh, don't know a better way..
     is_snap = '.org.chromium.Chromium' in str(chrome_profile)
     if is_snap:
         # under snap the path is actually inside the snap mount namespace...
-        snap_tmp = Path('/tmp/snap.chromium')
-        assert snap_tmp.exists(), snap_tmp
-        assert os.access(snap_tmp, os.R_OK), f"You probably need to run 'chrod o+rx {snap_tmp}'"
+        snap_tmp = Path('/tmp/snap-private-tmp')
+        snap_tmp_chromium = snap_tmp / 'snap.chromium'
+        for path in [snap_tmp, snap_tmp_chromium]:
+            assert path.exists(), path
+            assert os.access(path, os.R_OK), f"You probably need to run 'chmod o+rx {path}'"
 
-        chrome_profile = snap_tmp / Path(*chrome_profile.parts[1:])
+        chrome_profile = snap_tmp_chromium / Path(*chrome_profile.parts[1:])
 
     # there are some default extensions as well (e.g. cloud print)
     # also oddly enough user install extensions don't have manifest information, so we can't find it by name
@@ -36,7 +41,7 @@ def get_chrome_prefs_file(driver) -> Path:
 # at least as of 2011 https://github.com/gavinp/chromium/blob/681563ea0f892a051f4ef3d5e53438e0bb7d2261/chrome/test/webdriver/test/chromedriver.py#L35-L40
 # but here https://github.com/SeleniumHQ/selenium/blob/master/cpp/webdriver-server/command_types.h there are no Extension commands
 # also see driver.command_executor._commands
-def get_extension_page_chrome(driver):
+def get_extension_page_chrome(driver: Driver) -> str:
     prefs_file = get_chrome_prefs_file(driver)
 
     # seems to be quite a bit asynchronous (e.g. up to several seconds), so good to be defensive for a bit
@@ -62,7 +67,7 @@ def get_extension_page_chrome(driver):
     return f'chrome-extension://{addon_id}'
 
 
-def get_extension_page_firefox(driver) -> str:
+def get_extension_page_firefox(driver: Driver) -> str:
     moz_profile = Path(driver.capabilities['moz:profile'])
     prefs_file = moz_profile / 'prefs.js'
 
@@ -92,7 +97,7 @@ def get_extension_page_firefox(driver) -> str:
 
 # TODO could also check for errors
 
-def get_cmd_hotkey(driver, cmd: str, *, cmd_map=None) -> str:
+def get_cmd_hotkey(driver: Driver, cmd: str, *, cmd_map=None) -> str:
     # TODO shit, need to unify this...
     if cmd_map is None:
         if driver.name == 'chrome':
