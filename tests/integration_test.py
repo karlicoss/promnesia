@@ -149,7 +149,7 @@ def index_some_demo_visits(
     run_index(cfg_file, update=update)
 
 
-def index_local_chrome(tdir: Path):
+def index_local_chrome(tdir: Path) -> None:
     # TODO mm, would be good to keep that for proper end2end
     # inp = Path('/L/data/promnesia/testdata/chrome-history/History') # TODO make it accessible to the repository
     # merged = tdir / 'chrome-merged.sqlite'
@@ -163,9 +163,9 @@ OUTPUT_DIR = r'{tdir}'
 
 from promnesia.common import Indexer as I
 # TODO FIXME -- fix back
-from promnesia.sources.browser import chrome
+from promnesia.sources.browser import index
 
-chrome_extractor = I(chrome, '{merged}', src='chrome')
+chrome_extractor = I(index, '{merged}', src='chrome')
 
 SOURCES = [chrome_extractor]
 """)
