@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 import os
 from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple, Optional, Iterator
+from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence
 
 import pytest # type: ignore
 
@@ -17,7 +17,9 @@ if __name__ == '__main__':
     pytest.main(['-s', __file__])
 
 
-from selenium import webdriver # type: ignore
+from selenium import webdriver
+from selenium.webdriver import Remote as Driver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait as Wait
@@ -43,7 +45,7 @@ class Browser(NamedTuple):
     def name(self) -> str:
         return self.dist.split('-')[0] # TODO meh
 
-    def skip_ci_x(self):
+    def skip_ci_x(self) -> None:
         if under_ci() and not self.headless:
             pytest.skip("Only can't use headless browser on CI")
 
@@ -62,7 +64,7 @@ FFH = Browser('firefox', headless=True)
 FM  = Browser('firefox-mobile', headless=False)
 
 
-def browser_(driver):
+def browser_(driver: Driver) -> Browser:
     name = driver.name
     # TODO figure out headless??
     if name == 'firefox':
@@ -81,7 +83,7 @@ def get_addon_path(kind: str) -> Path:
     return addon_path
 
 
-def get_hotkey(driver, cmd: str) -> str:
+def get_hotkey(driver: Driver, cmd: str) -> str:
     cmd_map = None
     if driver.name == 'firefox':
         # TODO remove hardcoding somehow...
@@ -94,14 +96,15 @@ def get_hotkey(driver, cmd: str) -> str:
     return get_cmd_hotkey(driver, cmd=cmd, cmd_map=cmd_map)
 
 
-def _get_webdriver(tdir: Path, browser: Browser, extension=True):
+def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver:
     addon = get_addon_path(kind=browser.dist)
+    driver: Driver
     if browser.name == 'firefox':
-        options = webdriver.FirefoxOptions()
-        options.set_preference('profile', str(tdir))
-        options.headless = browser.headless
+        ff_options = webdriver.FirefoxOptions()
+        ff_options.set_preference('profile', str(tdir))
+        ff_options.headless = browser.headless
         # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
-        driver = webdriver.Firefox(options=options)
+        driver = webdriver.Firefox(options=ff_options)
         # todo pass firefox-dev binary?
         if extension:
             driver.install_addon(str(addon), temporary=True)
@@ -112,10 +115,10 @@ def _get_webdriver(tdir: Path, browser: Browser, extension=True):
         files = [x.name for x in addon.iterdir()]
         check_call(['apack', '-q', str(ex), *files], cwd=addon)
         # looks like chrome uses temporary dir for data anyway
-        options = webdriver.ChromeOptions()
-        options.headless = browser.headless
-        options.add_extension(ex)
-        driver = webdriver.Chrome(options=options)
+        cr_options = webdriver.ChromeOptions()
+        cr_options.headless = browser.headless
+        cr_options.add_extension(str(ex))
+        driver = webdriver.Chrome(options=cr_options)
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
     return driver
@@ -123,7 +126,7 @@ def _get_webdriver(tdir: Path, browser: Browser, extension=True):
 
 # TODO copy paste from grasp
 @contextmanager
-def get_webdriver(browser: Browser, extension=True):
+def get_webdriver(browser: Browser, extension=True) -> Iterator[Driver]:
     with TemporaryDirectory() as td:
         tdir = Path(td)
         driver = _get_webdriver(tdir, browser=browser, extension=extension)
@@ -133,7 +136,7 @@ def get_webdriver(browser: Browser, extension=True):
             driver.quit()
 
 
-def set_host(*, driver, host: Optional[str], port: Optional[str]) -> None:
+def set_host(*, driver: Driver, host: Optional[str], port: Optional[str]) -> None:
     # todo rename to 'backend_id'?
     if host is None:
         ep = driver.find_element(By.ID, 'host_id')
@@ -145,7 +148,7 @@ def set_host(*, driver, host: Optional[str], port: Optional[str]) -> None:
     ep.send_keys(f'{host}:{port}')
 
 
-def save_settings(driver):
+def save_settings(driver: Driver) -> None:
     se = driver.find_element(By.ID, 'save_id')
     se.click()
 
@@ -156,19 +159,19 @@ LOCALHOST = 'http://localhost'
 
 
 def configure_extension(
-        driver,
+        driver: Driver,
         *,
         host: Optional[str]=LOCALHOST,
         port: Optional[str]=None,
         show_dots: bool=True,
         highlights: Optional[bool]=None,
-        blacklist=None,
-        excludelists=None,
+        blacklist: Optional[Sequence[str]]=None,
+        excludelists: Optional[Sequence[str]]=None,
         notify_contexts: Optional[bool]=None,
         position: Optional[str]=None,
         verbose_errors: bool=True,
 ) -> None:
-    def set_checkbox(cid: str, value: bool):
+    def set_checkbox(cid: str, value: bool) -> None:
         cb = driver.find_element(By.ID, cid)
         selected = cb.is_selected()
         if selected != value:
@@ -235,7 +238,7 @@ def configure_extension(
 configure = configure_extension
 
 
-def get_window_id(driver):
+def get_window_id(driver: Driver) -> str:
     if driver.name == 'firefox':
         pid = str(driver.capabilities['moz:processID'])
     else:
@@ -245,7 +248,7 @@ def get_window_id(driver):
     return get_wid_by_pid(pid)
 
 
-def get_wid_by_pid(pid: str):
+def get_wid_by_pid(pid: str) -> str:
     wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf8').splitlines()
     wids = [w.strip() for w in wids if len(w.strip()) > 0]
 
@@ -258,18 +261,18 @@ def get_wid_by_pid(pid: str):
     return wid
 
 
-def focus_browser_window(driver):
+def focus_browser_window(driver: Driver) -> None:
     wid = get_window_id(driver)
     check_call(['xdotool', 'windowactivate', wid])
 
 
-def trigger_callback(driver, callback):
+def trigger_callback(driver: Driver, callback) -> None:
     focus_browser_window(driver)
     sleep(0.5)
     callback()
 
 
-def send_key(key):
+def send_key(key) -> None:
     if isinstance(key, str):
         key = key.split('+')
 
@@ -278,7 +281,7 @@ def send_key(key):
     pyautogui.hotkey(*key)
 
 
-def is_headless(driver) -> bool:
+def is_headless(driver: Driver) -> bool:
     if driver.name == 'firefox':
         return driver.capabilities.get('moz:headless', False)
     else:
@@ -286,7 +289,7 @@ def is_headless(driver) -> bool:
 
 
 # TODO move to common or something
-def trigger_hotkey(driver, hotkey: str) -> None:
+def trigger_hotkey(driver: Driver, hotkey: str) -> None:
     headless = is_headless(driver)
     try:
         trigger_callback(driver, lambda: send_key(hotkey))
@@ -297,7 +300,7 @@ def trigger_hotkey(driver, hotkey: str) -> None:
             raise e
 
 
-def trigger_command(driver, cmd: str) -> None:
+def trigger_command(driver: Driver, cmd: str) -> None:
     if is_headless(driver):
         assert cmd == Command.ACTIVATE, cmd  # will support the rest later..
         # see background-injector.js
@@ -311,16 +314,16 @@ def trigger_command(driver, cmd: str) -> None:
 
 
 class TestHelper(NamedTuple):
-    driver: webdriver.Remote
+    driver: Driver
 
     def open_page(self, page: str) -> None:
         open_extension_page(self.driver, page)
 
-    def move_to(self, element):
-        from selenium.webdriver.common.action_chains import ActionChains # type: ignore
+    def move_to(self, element) -> None:
+        from selenium.webdriver.common.action_chains import ActionChains
         ActionChains(self.driver).move_to_element(element).perform()
 
-    def switch_to_sidebar(self, wait=False):
+    def switch_to_sidebar(self, wait: bool=False) -> None:
         self.driver.switch_to.default_content()
 
         frame_id = 'promnesia-frame'
@@ -329,20 +332,23 @@ class TestHelper(NamedTuple):
             Wait(self.driver, timeout=5).until(
                 EC.presence_of_element_located((By.ID, frame_id))
             )
+            # ugh. seems that sometimes a bit more time is necessary to render sidebard contents???
+            # otherwise test_visits was flaky at times
+            sleep(1)
         self.driver.switch_to.frame(frame_id)
 
     @contextmanager
-    def sidebar(self, wait=False):
+    def sidebar(self, wait: bool=False) -> Iterator[Optional[WebElement]]:
         try:
             self.switch_to_sidebar(wait=wait)
             if wait: # meh
-                yield self.driver.find_element_by_id('promnesia-sidebar')
+                yield self.driver.find_element(By.ID, 'promnesia-sidebar')
             else:
                 yield None
         finally:
             self.driver.switch_to.default_content()
 
-    def command(self, cmd):
+    def command(self, cmd) -> None:
         trigger_command(self.driver, cmd)
 
     def activate(self) -> None:
@@ -354,7 +360,7 @@ class TestHelper(NamedTuple):
     def wid(self) -> str:
         return get_window_id(self.driver)
 
-    def screenshot(self, path):
+    def screenshot(self, path) -> None:
         # ugh, webdriver's save_screenshot doesn't behave well with frames
         check_call(['import', '-window', self.wid(), path])
 
@@ -393,7 +399,7 @@ manual = Interactive() if has_x() else Headless()
 
 
 @contextmanager
-def _test_helper(tmp_path, indexer, test_url: Optional[str], browser: Browser=FFH, **kwargs):
+def _test_helper(tmp_path: Path, indexer: Callable[[Path], None], test_url: Optional[str], browser: Browser=FFH, **kwargs) -> Iterator[TestHelper]:
     tdir = Path(tmp_path)
 
     indexer(tdir)
@@ -410,6 +416,7 @@ def _test_helper(tmp_path, indexer, test_url: Optional[str], browser: Browser=FF
 
         yield TestHelper(driver=driver)
 
+
 class Command:
     MARK_VISITED = 'mark_visited'
     ACTIVATE  = '_execute_browser_action'
@@ -425,7 +432,11 @@ with_browser_tests = pytest.mark.skipif(
 )
 
 
-def browsers(*br: Browser):
+X = TypeVar('X')
+IdType = Callable[[X], X]
+
+
+def browsers(*br: Browser) -> IdType:
     if len(br) == 0:
         br = (FF, FFH, CH)
     if not has_x():
@@ -450,14 +461,14 @@ PYTHON_DOC_URL = 'file:///usr/share/doc/python3/html/index.html'
 
 
 @browsers()
-def test_installs(tmp_path, browser):
+def test_installs(tmp_path: Path, browser: Browser) -> None:
     with get_webdriver(browser=browser):
         # just shouldn't crash
         pass
 
 
 @browsers()
-def test_settings(tmp_path, browser):
+def test_settings(tmp_path: Path, browser: Browser) -> None:
     # TODO fixture for driver?
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345', show_dots=False)
@@ -468,7 +479,7 @@ def test_settings(tmp_path, browser):
 
 
 @browsers()
-def test_backend_status(tmp_path, browser):
+def test_backend_status(tmp_path: Path, browser: Browser) -> None:
     with get_webdriver(browser=browser) as driver:
         helper = TestHelper(driver)
         helper.open_page('options_page.html')
@@ -485,11 +496,12 @@ def test_backend_status(tmp_path, browser):
         driver.switch_to.alert.accept()
         # TODO implement positive check??
 
-def set_position(driver, settings: str):
+
+def set_position(driver: Driver, settings: str) -> None:
     browser = browser_(driver)
 
     # TODO figure out browser from driver??
-    field = driver.find_element_by_xpath('//*[@id="position_css_id"]')
+    field = driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
     if browser.name == 'chrome':
         # ugh... for some reason wouldn't send the keys...
         field.click()
@@ -498,13 +510,13 @@ def set_position(driver, settings: str):
         pyautogui.press(['backspace'] * 500 + ['delete'] * 500)
         pyautogui.typewrite(settings, interval=0.05)
     else:
-        area = field.find_element_by_xpath('.//textarea')
+        area = field.find_element(By.XPATH, './/textarea')
         area.send_keys([Keys.DELETE] * 1000)
         area.send_keys(settings)
 
 
 @browsers()
-def test_sidebar_bottom(browser):
+def test_sidebar_bottom(browser: Browser) -> None:
     with get_webdriver(browser=browser) as driver:
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
@@ -591,7 +603,7 @@ def test_blacklist_builtin(tmp_path: Path, browser: Browser) -> None:
 
 
 @browsers(FF, CH)
-def test_add_to_blacklist(tmp_path, browser):
+def test_add_to_blacklist(tmp_path: Path, browser: Browser) -> None:
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://example.com')
@@ -626,7 +638,7 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
         driver = helper.driver
         with helper.sidebar():
             # hmm not sure how come it returns anything at all.. but whatever
-            srcs = driver.find_elements_by_class_name('src')
+            srcs = driver.find_elements(By.CLASS_NAME, 'src')
             for s in srcs:
                 assert not s.is_displayed(), s
             assert len(srcs) >= 8, srcs
@@ -639,10 +651,10 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
 
             confirm('you should see hypothesis contexts')
 
-            link = driver.find_element_by_partial_link_text('how_algorithms_shape_our_world')
+            link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
             assert link.is_displayed(), link
 
-            contexts = helper.driver.find_elements_by_class_name('context')
+            contexts = helper.driver.find_elements(By.CLASS_NAME, 'context')
             for c in contexts:
                 assert c.is_displayed(), c
             assert len(contexts) == 8
@@ -654,13 +666,13 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
 
         with helper.sidebar():
             # hmm not sure how come it returns anything at all.. but whatever
-            srcs = driver.find_elements_by_class_name('src')
+            srcs = driver.find_elements(By.CLASS_NAME, 'src')
             for s in srcs:
                 assert not s.is_displayed(), s
 
 
 @browsers()
-def test_search_around(tmp_path, browser) -> None:
+def test_search_around(tmp_path: Path, browser: Browser) -> None:
     # TODO it actually lacks a proper end-to-end test within browser... although I do have something in automatic demos?
     test_url = "about:blank"
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
@@ -674,7 +686,7 @@ def test_search_around(tmp_path, browser) -> None:
 # TODO skip if not my hostname
 @uses_x
 @browsers(FF, CH)
-def test_chrome_visits(tmp_path, browser):
+def test_chrome_visits(tmp_path: Path, browser: Browser) -> None:
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:
@@ -683,7 +695,7 @@ def test_chrome_visits(tmp_path, browser):
 
 
 @browsers(FF, CH)
-def test_show_visited_marks(tmp_path, browser):
+def test_show_visited_marks(tmp_path: Path, browser: Browser) -> None:
     visited = {
         'https://en.wikipedia.org/wiki/Special_linear_group': None,
         'http://en.wikipedia.org/wiki/Unitary_group'        : None,
@@ -710,7 +722,7 @@ def test_show_visited_marks(tmp_path, browser):
         'udemy'
     ],
 )
-def test_sidebar(tmp_path, browser, url: str) -> None:
+def test_sidebar(tmp_path: Path, browser: Browser, url: str) -> None:
     visited = {
         url : 'whatever',
     }
@@ -721,7 +733,7 @@ def test_sidebar(tmp_path, browser, url: str) -> None:
 
 
 @browsers(FF, CH)
-def test_search(tmp_path, browser):
+def test_search(tmp_path: Path, browser: Browser) -> None:
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
         trigger_command(helper.driver, Command.SEARCH)
@@ -731,7 +743,7 @@ def test_search(tmp_path, browser):
 
 
 @browsers()
-def test_new_background_tab(tmp_path, browser) -> None:
+def test_new_background_tab(tmp_path: Path, browser: Browser) -> None:
     start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
@@ -769,7 +781,7 @@ def test_local_page(tmp_path: Path, browser: Browser) -> None:
 
 
 @browsers()
-def test_unreachable(tmp_path, browser) -> None:
+def test_unreachable(tmp_path: Path, browser: Browser) -> None:
     url = 'https://somenonexist1ngurl.com'
     urls = {
         url: 'some context',
@@ -789,7 +801,7 @@ def test_unreachable(tmp_path, browser) -> None:
 
 
 @browsers()
-def test_stress(tmp_path, browser) -> None:
+def test_stress(tmp_path: Path, browser: Browser) -> None:
     url = 'https://www.reddit.com/'
     urls = [
         (f'{url}/subpath/{i}.html', f'context {i}' if i > 10000 else None) for i in range(50000)
@@ -806,7 +818,7 @@ You should be able to scroll the page, trigger tooltips, etc., without any lags.
 
     
 @browsers(FF, CH)
-def test_fuzz(tmp_path, browser):
+def test_fuzz(tmp_path: Path, browser: Browser) -> None:
     # TODO ugh. this still results in 'tab permissions' pages, but perhaps because of closed tabs?
     # dunno if it's worth fixing..
     urls = {
@@ -834,15 +846,15 @@ def test_fuzz(tmp_path, browser):
         confirm("shouldn't result in 'unexpected error occured'; show only show single notification per page")
 
 
-def trigger_sidebar_search(driver):
+def trigger_sidebar_search(driver: Driver) -> None:
     driver.switch_to.default_content()
     driver.switch_to.frame('promnesia-sidebar')
-    search_button = driver.find_element_by_xpath('//button[text()="Search"]')
+    search_button = driver.find_element(By.XPATH, '//button[text()="Search"]')
     search_button.click()
 
 
 @browsers(FF, CH)
-def test_duplicate_background_pages(tmp_path, browser):
+def test_duplicate_background_pages(tmp_path: Path, browser: Browser) -> None:
     url = PYTHON_DOC_URL
     with _test_helper(tmp_path, index_urls({'whatever.coom': '123'}), url, browser=browser) as helper:
         driver = helper.driver
