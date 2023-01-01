@@ -506,44 +506,59 @@ def test_backend_status(tmp_path: Path, browser: Browser) -> None:
 def set_position(driver: Driver, settings: str) -> None:
     browser = browser_(driver)
 
-    # TODO figure out browser from driver??
     field = driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
+    area = field.find_element(By.XPATH, './/textarea')
+
+    # for some reason area.clear() caused
+    # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
+
+    # TODO FFS. these don't seem to work??
+    # count = len(area.get_attribute('value'))
+    # and this only returns visible porition of the text??? so only 700 characters or something
+    # count = len(field.text)
+    # count += 100  # just in case
+    count = 3000 # meh
     if browser.name == 'chrome':
         # ugh... for some reason wouldn't send the keys...
         field.click()
         import pyautogui # type: ignore
         # it usually ends up in the middle of the area...
-        pyautogui.press(['backspace'] * 500 + ['delete'] * 500)
-        pyautogui.typewrite(settings, interval=0.05)
+        pyautogui.press(['backspace'] * count + ['delete'] * count)
+        # TODO ugh... tbh it's really unsafe to execute, who knows where it sends these deletes...
+        pyautogui.typewrite(settings, interval=0.05) # TODO do faster??
     else:
-        area = field.find_element(By.XPATH, './/textarea')
-        area.send_keys([Keys.DELETE] * 1000)
+        area.send_keys([Keys.DELETE] * count)
         area.send_keys(settings)
 
 
 @browsers()
-def test_sidebar_bottom(browser: Browser) -> None:
+def test_sidebar_position(browser: Browser) -> None:
     with get_webdriver(browser=browser) as driver:
+        open_extension_page(driver, page='options_page.html')
+        # TODO WTF; if we don't open extension page once, we can't read out hotkeys from the chrome extension settings file
+        # (so e.g. trigger_command isn't working???)
+        helper = TestHelper(driver)
+
+        driver.get('https://example.com')
+
+        helper.activate()  # todo 'open' instead??
+        confirm("sidebar: should be displayed on the right (default)")
+        helper.activate()  # todo 'close' instead?
+
         open_extension_page(driver, page='options_page.html')
         sleep(1) # ugh. for some reason pause here seems necessary..
 
-        # for some reason area.clear() caused
-        # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
-
         settings = """
-#promnesia-sidebar {
+#promnesia-frame {
     --bottom: 1;
     --size: 20%;
 }"""
-
         set_position(driver, settings)
-
         save_settings(driver)
 
-        driver.get(PYTHON_DOC_URL)
-
-        trigger_command(driver, Command.ACTIVATE)
-        confirm("You should see sidebar below")
+        driver.get('https://example.com')
+        helper.activate()
+        confirm("sidebar: should be displayed below")
 
 
 @browsers()
