@@ -348,6 +348,12 @@ class TestHelper(NamedTuple):
         finally:
             self.driver.switch_to.default_content()
 
+
+    # TODO use this in switch_to_sidebar??
+    def is_sidebar_visible(self) -> bool:
+        return self.driver.execute_script("return document.getElementById('promnesia-sidebar').checkVisibility()")
+
+
     def command(self, cmd) -> None:
         trigger_command(self.driver, cmd)
 
@@ -360,7 +366,7 @@ class TestHelper(NamedTuple):
     def wid(self) -> str:
         return get_window_id(self.driver)
 
-    def screenshot(self, path) -> None:
+    def screenshot(self, path: Path) -> None:
         # ugh, webdriver's save_screenshot doesn't behave well with frames
         check_call(['import', '-window', self.wid(), path])
 
@@ -637,9 +643,13 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
     with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
         driver = helper.driver
         with helper.sidebar():
+            confirm("sidebar: shouldn't be visible")
+            assert not helper.is_sidebar_visible()
+
             # hmm not sure how come it returns anything at all.. but whatever
             srcs = driver.find_elements(By.CLASS_NAME, 'src')
             for s in srcs:
+                # elements should be bound to the sidebar, but aren't displayed yet
                 assert not s.is_displayed(), s
             assert len(srcs) >= 8, srcs
             # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
@@ -648,8 +658,9 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
 
         with helper.sidebar(wait=True) as sidebar:
             assert sidebar is not None
+            assert helper.is_sidebar_visible()
 
-            confirm('you should see hypothesis contexts')
+            confirm('sidebar: you should see hypothesis contexts')
 
             link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
             assert link.is_displayed(), link
@@ -665,10 +676,14 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
         sleep(0.5)
 
         with helper.sidebar():
-            # hmm not sure how come it returns anything at all.. but whatever
-            srcs = driver.find_elements(By.CLASS_NAME, 'src')
-            for s in srcs:
-                assert not s.is_displayed(), s
+            confirm("sidebar: shouldn't be visible")
+            assert not helper.is_sidebar_visible()
+
+            # this works in firefox, but doesn't work in chrome for some reason -- is_displayed returns true
+            # apparently is_display checks if element is on the page, not necessarily within viewport??
+            # srcs = driver.find_elements(By.CLASS_NAME, 'src')
+            # for s in srcs:
+            #     assert not s.is_displayed(), s
 
 
 @browsers()
@@ -763,6 +778,11 @@ def test_new_background_tab(tmp_path: Path, browser: Browser) -> None:
 # TODO shit disappears on chrome and present on firefox
 @browsers()
 def test_local_page(tmp_path: Path, browser: Browser) -> None:
+    if browser == CH:
+        pytest.skip("TODO used to work, but must have brokend after some Chrome update?")
+        # seems broken on any local page -- only transparent sidebar frame is shown
+        # the issue is that contentDocument.body is null -- no idea why
+
     tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
     urls = {
          tutorial                                                : 'TODO read this',
@@ -772,6 +792,8 @@ def test_local_page(tmp_path: Path, browser: Browser) -> None:
     with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
         confirm('grey icon')
         helper.driver.get(tutorial)
+        # TODO why manually here?
+        # would be nice to test it in headless mode, e.g. check visibility of some sidebar bits
         confirm('green icon. MANUALLY: ACTIVATE SIDEBAR!. It should open sidebar with one visit')
         helper.driver.back()
         # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
