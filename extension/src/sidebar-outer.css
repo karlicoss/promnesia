@@ -15,7 +15,9 @@ body.promnesia-sidebar-active {
     /* e.g. left should result in: left initial, right 0px, top 0px, bot 0px, height 100%, width 30%
        need to set irrelevant dimensions to 0px, otherwise it misbehaves
     */
-    --right: 1;
+
+    /* NOTE: default is --right: 1, set via javascript in sidebar.js */
+
     --size: 30%;
 
     --is-v: var(--left, var(--right ));

@@ -71,6 +71,14 @@ class Sidebar {
         head.appendChild(link);
 
         addStyle(cdoc, this.opts.position_css);
+        // ugh. this is fucking horrible. hack to add default --right: 1 if it's not defined anywhere...
+        // I spent hours trying to implement it on pure css via vars/calc -- but didn't manage
+        {
+            const values = ['--right', '--left', '--top', '--bottom']
+            if (values.every(v => getComputedStyle(frame).getPropertyValue(v) == null)) {
+                frame.style.setProperty('--right', '1')
+            }
+        }
 
         // make links open in new tab instead of iframe https://stackoverflow.com/a/2656798/706389
         const base = cdoc.createElement('base');
