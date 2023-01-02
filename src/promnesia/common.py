@@ -1,4 +1,5 @@
 from collections.abc import Sized
+from contextlib import contextmanager
 from datetime import datetime, date
 import os
 from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar, TYPE_CHECKING
@@ -9,6 +10,7 @@ from more_itertools import intersperse
 import logging
 from functools import lru_cache
 import shutil
+from timeit import default_timer as timer
 import pytz
 import warnings
 
@@ -547,3 +549,14 @@ def default_config_path() -> Path:
     else:
         return user_config_file()
     # TODO need to test this..
+
+
+@contextmanager
+def measure(tag: str='', *, logger, unit: str='ms'):
+    before = timer()
+    yield
+    after = timer()
+    secs = after - before
+    mult = {'s': 1, 'ms': 10**3, 'us': 10**6}[unit]
+    xx = secs * mult
+    logger.debug(f'[{tag}]: {xx:.1f}{unit} elapsed')
