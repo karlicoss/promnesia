@@ -40,7 +40,15 @@ from webdriver_utils import frame_context
 from promnesia.logging import LazyLogger
 
 
-logger = LazyLogger('promnesia-tests')
+logger = LazyLogger('promnesia-tests', level='debug')
+
+
+from promnesia.common import measure as measure_orig
+@contextmanager
+def measure(*args, **kwargs):
+    kwargs['logger'] = logger
+    with measure_orig(*args, **kwargs):
+        yield
 
 
 PROMNESIA_FRAME_ID = 'promnesia-frame'
@@ -374,20 +382,16 @@ class Sidebar(NamedTuple):
         assert not self.visible
         self.helper.activate()
 
-        for _ in range(100):
-            if self.visible:
-                return
-            sleep(0.01)
-        assert self.visible
+        with measure('Sidebar.open'):
+            while not self.visible:
+                sleep(0.001)
 
     def close(self) -> None:
         assert self.visible
         self.helper.activate()
-        for _ in range(100):
-            if not self.visible:
-                return
-            sleep(0.01)
-        assert not self.visible
+        with measure('Sidebar.close'):
+            while self.visible:
+                sleep(0.001)
 
     @property
     def filters(self) -> list[WebElement]:
