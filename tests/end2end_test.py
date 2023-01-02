@@ -34,6 +34,8 @@ from common import under_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from browser_helper import open_extension_page, get_cmd_hotkey
+from webdriver_utils import frame_context
+
 
 from promnesia.logging import LazyLogger
 
@@ -343,12 +345,13 @@ class Sidebar(NamedTuple):
     helper: 'TestHelper'
 
     @contextmanager
-    def ctx(self):
-        self.helper.switch_to_sidebar(wait=1, wait2=False)
-        try:
-            yield
-        finally:
-            self.driver.switch_to.default_content()
+    def ctx(self) -> Iterator[WebElement]:
+        wait = 2  # hmm, wait = 1 triggered with timeout on firefox at least once?
+        Wait(self.driver, timeout=wait).until(EC.presence_of_element_located((By.ID, PROMNESIA_FRAME_ID)))
+
+        with frame_context(self.driver, PROMNESIA_FRAME_ID) as frame:
+            assert frame is not None
+            yield frame
 
     @property
     def available(self) -> bool:
@@ -385,6 +388,14 @@ class Sidebar(NamedTuple):
                 return
             sleep(0.01)
         assert not self.visible
+
+    @property
+    def filters(self) -> list[WebElement]:
+        # TODO hmm this only works within sidebar frame context
+        # but if we add with self.ctx() here, it seems unhappy with enterinng the context twice
+        # do something about it later..
+        outer = self.driver.find_element(By.ID, 'promnesia-sidebar-filters')
+        return outer.find_elements(By.CLASS_NAME, 'src')
 
 
 class TestHelper(NamedTuple):
@@ -840,7 +851,7 @@ def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
         confirm("You should see visited marks near special linear group, Unitary group, Transpose")
 
 
-@browsers(FF, CH)
+@browsers()
 @pytest.mark.parametrize(
     'url',
     [
@@ -855,13 +866,36 @@ def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
         'udemy'
     ],
 )
-def test_sidebar(tmp_path: Path, browser: Browser, url: str) -> None:
+def test_sidebar_basic(tmp_path: Path, driver: Driver, url: str) -> None:
     visited = {
         url : 'whatever',
     }
-    indexer = index_urls(visited, source_name='ælso test unicode 💩')
-    with _test_helper(tmp_path, indexer, url, show_dots=True, browser=browser) as helper:
-        trigger_command(helper.driver, Command.ACTIVATE)
+    src = "ælso test unicode 💩"
+    indexer = index_urls(visited, source_name=src)
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver, show_dots=True) as helper:
+        driver.get(url)
+        helper._sidebar.open()
+
+        # a bit crap, but also annoying to indent just to put it in context considering it impacts all of the test...
+        # ugh also it doesn't work for some reason..
+        # helper._sidebar.ctx().__enter__()
+
+        with helper._sidebar.ctx():
+            filters = helper._sidebar.filters
+            assert len(filters) == 2, filters
+
+            _all = filters[0]
+            tag  = filters[1]
+
+            # this should happen in JS
+            sanitized = src.replace(' ', '')
+
+            assert 'all'     in _all.text
+            assert sanitized in tag.text
+
+            assert 'all' in _all.get_attribute('class').split()
+            assert sanitized in tag.get_attribute('class').split()
+
         confirm("You should see green icon, also one visit in sidebar. Make sure the unicode is displayed correctly.")
 
 
