@@ -998,6 +998,9 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
     if (info === 'selenium-bridge-activate') {
         handleToggleSidebar()
     }
+    if (info === 'selenium-bridge-mark-visited') {
+        handleToggleMarkVisited()
+    }
     if (info.method != "INJECT_BACKGROUND_CALLBACKS") {
         console.debug("ignoring %o %o; %s", info, sender, backgroundInitialised);
         return;
