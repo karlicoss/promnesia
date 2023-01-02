@@ -49,6 +49,8 @@ def get_extension_page_chrome(driver: Driver) -> str:
     addon_id = None
     for _ in range(300):
         sleep(0.05)
+        # ugh. no idea why this file takes like 20 seconds to appear...
+        # also extension id changes every time so can't even hardcode it??
         if not prefs_file.exists():
             continue
 
@@ -62,6 +64,8 @@ def get_extension_page_chrome(driver: Driver) -> str:
             print('addon_ids is none')
             continue
         [addon_id] = addon_ids
+        break
+
     assert addon_id is not None
     assert prefs is not None
     return f'chrome-extension://{addon_id}'

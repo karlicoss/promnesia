@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -7,7 +9,7 @@ from tempfile import TemporaryDirectory
 import os
 from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence
+from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence, Union
 
 import pytest # type: ignore
 
@@ -22,8 +24,10 @@ from selenium.webdriver import Remote as Driver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoAlertPresentException, NoSuchFrameException, TimeoutException
 
 
 from common import under_ci, uses_x, has_x
@@ -141,21 +145,36 @@ def get_webdriver(browser: Browser, extension=True) -> Iterator[Driver]:
 
 def set_host(*, driver: Driver, host: Optional[str], port: Optional[str]) -> None:
     # todo rename to 'backend_id'?
-    if host is None:
-        ep = driver.find_element(By.ID, 'host_id')
-        ep.clear()
-        return
-    assert port is not None
     ep = driver.find_element(By.ID, 'host_id')
     ep.clear()
+    # sanity check -- make sure there are no race conditions with async operations
+    assert ep.get_attribute('value') == ''
+    if host is None:
+        return
+    assert port is not None
     ep.send_keys(f'{host}:{port}')
+    assert ep.get_attribute('value') == f'{host}:{port}'
+
+
+def _switch_to_alert(driver: Driver) -> Alert:
+    """
+    Alert is often shown as a result of async operations, so this is to prevent race conditions
+    """
+    e: Optional[Exception] = None
+    for _ in range(100 * 10): # wait 10 secs max
+        try:
+            return driver.switch_to.alert
+        except NoAlertPresentException as e:
+            continue
+        sleep(0.01)
+    assert e is not None
+    raise e
 
 
 def save_settings(driver: Driver) -> None:
     se = driver.find_element(By.ID, 'save_id')
     se.click()
-
-    driver.switch_to.alert.accept()
+    _switch_to_alert(driver).accept()
 
 
 LOCALHOST = 'http://localhost'
@@ -184,8 +203,8 @@ def configure_extension(
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
-    open_extension_page(driver, page='options_page.html')
-    sleep(1) # err, wtf? otherwise not always interacts with the elements correctly
+    helper = TestHelper(driver)
+    helper.open_options_page()
 
     set_host(driver=driver, host=host, port=port)
 
@@ -266,12 +285,11 @@ def get_wid_by_pid(pid: str) -> str:
 
 def focus_browser_window(driver: Driver) -> None:
     wid = get_window_id(driver)
-    check_call(['xdotool', 'windowactivate', wid])
+    check_call(['xdotool', 'windowactivate', '--sync', wid])
 
 
 def trigger_callback(driver: Driver, callback) -> None:
     focus_browser_window(driver)
-    sleep(0.5)
     callback()
 
 
@@ -305,15 +323,68 @@ def trigger_hotkey(driver: Driver, hotkey: str) -> None:
 
 def trigger_command(driver: Driver, cmd: str) -> None:
     if is_headless(driver):
-        assert cmd == Command.ACTIVATE, cmd  # will support the rest later..
+        ccc = {
+            Command.ACTIVATE    : 'selenium-bridge-activate',
+            Command.MARK_VISITED: 'selenium-bridge-mark-visited',
+        }[cmd]
         # see background-injector.js
-        driver.execute_script("""
+        driver.execute_script(f"""
         var event = document.createEvent('HTMLEvents');
-        event.initEvent('selenium-bridge-activate', true, true);
+        event.initEvent('{ccc}', true, true);
         document.dispatchEvent(event);
         """)
     else:
         trigger_hotkey(driver, get_hotkey(driver, cmd))
+
+
+PROMNESIA_SIDEBAR_ID = 'promnesia-sidebar'
+class Sidebar(NamedTuple):
+    driver: Driver
+    helper: 'TestHelper'
+
+    @contextmanager
+    def ctx(self):
+        self.helper.switch_to_sidebar(wait=1, wait2=False)
+        try:
+            yield
+        finally:
+            self.driver.switch_to.default_content()
+
+    @property
+    def available(self) -> bool:
+        try:
+            with self.ctx():
+                return True
+        except TimeoutException:
+            return False
+
+    @property
+    def visible(self) -> bool:
+        with self.ctx():
+            Wait(self.driver, timeout=5).until(
+                EC.presence_of_element_located((By.ID, PROMNESIA_SIDEBAR_ID))
+            )
+            # NOTE: document in JS here is in the context of iframe
+            return self.driver.execute_script(f"return document.getElementById('{PROMNESIA_SIDEBAR_ID}').checkVisibility()")
+
+    def open(self) -> None:
+        assert not self.visible
+        self.helper.activate()
+
+        for _ in range(100):
+            if self.visible:
+                return
+            sleep(0.01)
+        assert self.visible
+
+    def close(self) -> None:
+        assert self.visible
+        self.helper.activate()
+        for _ in range(100):
+            if not self.visible:
+                return
+            sleep(0.01)
+        assert not self.visible
 
 
 class TestHelper(NamedTuple):
@@ -322,21 +393,38 @@ class TestHelper(NamedTuple):
     def open_page(self, page: str) -> None:
         open_extension_page(self.driver, page)
 
+    def open_options_page(self) -> None:
+        self.open_page('options_page.html')
+        # sleep is necessary to make sure settings are loaded and set into the fields by the time we see page
+        # without it it's possible that what we type in the test is overwritten
+        # ideally this should be solved in the extension, e.g. do not present the interface until we loaded settings
+        sleep(1)
+
+    def open_search_page(self, query: str="") -> None:
+        self.open_page('search.html' + query)
+
+        Wait(self.driver, timeout=10).until(
+            EC.presence_of_element_located((By.ID, 'visits')),
+        )
+
     def move_to(self, element) -> None:
         from selenium.webdriver.common.action_chains import ActionChains
         ActionChains(self.driver).move_to_element(element).perform()
 
-    def switch_to_sidebar(self, wait: bool=False) -> None:
+    def switch_to_sidebar(self, wait: Union[bool, int]=False, *, wait2: bool=True) -> None:
+        # wait2 is just compat, will get rid of it later
         self.driver.switch_to.default_content()
 
-        frame = None
-        if wait:
-            Wait(self.driver, timeout=5).until(
+        if wait is not False:
+            timeout = 5 if wait is True else wait
+            Wait(self.driver, timeout=timeout).until(
                 EC.presence_of_element_located((By.ID, PROMNESIA_FRAME_ID))
             )
             # ugh. seems that sometimes a bit more time is necessary to render sidebard contents???
             # otherwise test_visits was flaky at times
-            sleep(1)
+            if wait2:
+                # TODO really need to get rid of this
+                sleep(1)
         self.driver.switch_to.frame(PROMNESIA_FRAME_ID)
 
     @contextmanager
@@ -344,17 +432,19 @@ class TestHelper(NamedTuple):
         try:
             self.switch_to_sidebar(wait=wait)
             if wait: # meh
-                yield self.driver.find_element(By.ID, 'promnesia-sidebar')
+                yield self.driver.find_element(By.ID, PROMNESIA_SIDEBAR_ID)
             else:
                 yield None
         finally:
             self.driver.switch_to.default_content()
 
+    @property
+    def _sidebar(self) -> Sidebar:
+        return Sidebar(driver=self.driver, helper=self)
 
     # TODO use this in switch_to_sidebar??
     def is_sidebar_visible(self) -> bool:
-        return self.driver.execute_script("return document.getElementById('promnesia-sidebar').checkVisibility()")
-
+        return self._sidebar.visible
 
     def command(self, cmd) -> None:
         trigger_command(self.driver, cmd)
@@ -406,22 +496,35 @@ Helper for tests that are not yet fully automated and require a human to check..
 manual = Interactive() if has_x() else Headless()
 
 
+# TODO deprecate this in favor of run_server
 @contextmanager
-def _test_helper(tmp_path: Path, indexer: Callable[[Path], None], test_url: Optional[str], browser: Browser=FFH, **kwargs) -> Iterator[TestHelper]:
+def _test_helper(tmp_path: Path, indexer: Callable[[Path], None], test_url: Optional[str], browser: Browser, **kwargs) -> Iterator[TestHelper]:
     tdir = Path(tmp_path)
 
     indexer(tdir)
     with wserver(db=tdir / 'promnesia.sqlite') as srv, get_webdriver(browser=browser) as driver:
         port = srv.port
-        configure(driver, port=port, **kwargs)
+        configure_extension(driver, port=port, **kwargs)
         sleep(0.5)
 
         if test_url is not None:
             driver.get(test_url)
+            # TODO meh, it's really crap
             sleep(3) # todo use some condition...
         else:
             driver.get('about:blank')
 
+        yield TestHelper(driver=driver)
+
+
+@contextmanager
+def run_server(tmp_path: Path, indexer: Callable[[Path], None], driver: Driver, **kwargs) -> Iterator[TestHelper]:
+    # TODO ideally should index in a separate thread? and perhaps start server too
+    indexer(tmp_path)
+    with wserver(db=tmp_path / 'promnesia.sqlite') as srv:
+        port = srv.port
+        configure_extension(driver, port=port, **kwargs)
+        driver.get('about:blank')  # not sure if necessary
         yield TestHelper(driver=driver)
 
 
@@ -468,41 +571,54 @@ def browsers(*br: Browser) -> IdType:
 PYTHON_DOC_URL = 'file:///usr/share/doc/python3/html/index.html'
 
 
-@browsers()
-def test_installs(tmp_path: Path, browser: Browser) -> None:
-    with get_webdriver(browser=browser):
-        # just shouldn't crash
-        pass
+@pytest.fixture
+def driver(browser: Browser) -> Iterator[Driver]:
+    with get_webdriver(browser=browser) as d:
+        yield d
 
 
 @browsers()
-def test_settings(tmp_path: Path, browser: Browser) -> None:
-    # TODO fixture for driver?
-    with get_webdriver(browser=browser) as driver:
-        configure_extension(driver, port='12345', show_dots=False)
-        driver.get('about:blank')
-        open_extension_page(driver, page='options_page.html')
-        hh = driver.find_element(By.ID, 'host_id')
-        assert hh.get_attribute('value') == 'http://localhost:12345'
+def test_installs(tmp_path: Path, driver: Driver) -> None:
+    """
+    Even loading the extension into webdriver is pretty elaborate, so the test just checks it works
+    """
+    pass
 
 
 @browsers()
-def test_backend_status(tmp_path: Path, browser: Browser) -> None:
-    with get_webdriver(browser=browser) as driver:
-        helper = TestHelper(driver)
-        helper.open_page('options_page.html')
-        sleep(1) # ugh. for some reason pause here seems necessary..
+def test_settings(tmp_path: Path, driver: Driver) -> None:
+    """
+    Just a basic test for opening options page and making sure it loads options
+    """
+    helper = TestHelper(driver)
+    helper.open_options_page()
+    hh = driver.find_element(By.ID, 'host_id')
+    assert hh.get_attribute('value') == 'http://localhost:13131'  # default
 
-        set_host(driver=driver, host='https://nosuchhost.com', port='1234')
-        driver.find_element(By.ID, 'backend_status_id').click()
-        sleep(1 + 0.5) # needs enough time for timeout to trigger...
+    configure_extension(driver, port='12345', show_dots=False)
+    driver.get('about:blank')
 
-        alert = driver.switch_to.alert
-        assert 'ERROR' in alert.text
+    helper.open_options_page()
+    hh = driver.find_element(By.ID, 'host_id')
+    assert hh.get_attribute('value') == 'http://localhost:12345'
 
-        sleep(0.5) #  don't remember if needed?
-        driver.switch_to.alert.accept()
-        # TODO implement positive check??
+
+@browsers()
+def test_backend_status(tmp_path: Path, driver: Driver) -> None:
+    """
+    We should get an alert if backend is unavailable on the status check
+    """
+    helper = TestHelper(driver)
+    helper.open_options_page()
+    set_host(driver=driver, host='https://nosuchhost.com', port='1234')
+
+    driver.find_element(By.ID, 'backend_status_id').click()
+
+    alert = _switch_to_alert(driver)
+    assert 'ERROR' in alert.text
+    alert.accept()
+
+    # TODO implement positive check, e.g. when backend is present
 
 
 def set_position(driver: Driver, settings: str) -> None:
@@ -534,101 +650,80 @@ def set_position(driver: Driver, settings: str) -> None:
 
 
 @browsers()
-def test_sidebar_position(browser: Browser) -> None:
-    with get_webdriver(browser=browser) as driver:
-        open_extension_page(driver, page='options_page.html')
-        # TODO WTF; if we don't open extension page once, we can't read out hotkeys from the chrome extension settings file
-        # (so e.g. trigger_command isn't working???)
-        helper = TestHelper(driver)
+def test_sidebar_position(driver: Driver) -> None:
+    """
+    Checks that default sidebar position is on the right, and that changing it to --bottom: 1 works
+    """
+    helper = TestHelper(driver)
+    helper.open_options_page()
+    # TODO WTF; if we don't open extension page once, we can't read out hotkeys from the chrome extension settings file
+    # (so e.g. trigger_command isn't working???)
 
-        driver.get('https://example.com')
+    driver.get('https://example.com')
 
-        helper.activate()  # todo 'open' instead??
-        confirm("sidebar: should be displayed on the right (default)")
-        helper.activate()  # todo 'close' instead?
+    helper._sidebar.open()
+    confirm("sidebar: should be displayed on the right (default)")
+    helper._sidebar.close()
 
-        open_extension_page(driver, page='options_page.html')
-        sleep(1) # ugh. for some reason pause here seems necessary..
-
-        settings = """
+    helper.open_options_page()
+    settings = """
 #promnesia-frame {
-    --bottom: 1;
-    --size: 20%;
+--bottom: 1;
+--size: 20%;
 }"""
-        set_position(driver, settings)
-        save_settings(driver)
+    set_position(driver, settings)
+    save_settings(driver)
 
-        driver.get('https://example.com')
-        helper.activate()
-        confirm("sidebar: should be displayed below")
-
-
-@browsers()
-def test_blacklist_custom(tmp_path: Path, browser: Browser) -> None:
-    with get_webdriver(browser=browser) as driver:
-        helper = TestHelper(driver)
-        configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
-        driver.get('https://stackoverflow.com/questions/27215462')
-
-        helper.activate()
-
-        manual.confirm('page should be blacklisted (black icon), your should see an error notification')
-
-        # make sure we can't open sidebar for blacklisted page
-        # meh, but that'll do for now
-        from selenium.common.exceptions import NoSuchFrameException
-        with pytest.raises(NoSuchFrameException):
-            with helper.sidebar():
-                pass
-
-        # reset blacklist
-        # also running without backend here, so need to set host to none as well
-        configure_extension(driver, host=None, blacklist=())
-        driver.back() # TODO maybe configure_extension should go back instead...
-        driver.refresh()
-
-        helper.activate()
-        with helper.sidebar(wait=True):
-            # at least shouln't fail
-            pass
-
-        manual.confirm('sidebar: should be visible')
+    driver.get('https://example.com')
+    helper._sidebar.open()
+    confirm("sidebar: should be displayed below")
 
 
 @browsers()
-def test_blacklist_builtin(tmp_path: Path, browser: Browser) -> None:
-    with get_webdriver(browser=browser) as driver:
-        helper = TestHelper(driver)
-        configure_extension(driver, port='12345')
-        driver.get('https://www.hsbc.co.uk/mortgages/')
+def test_blacklist_custom(driver: Driver) -> None:
+    helper = TestHelper(driver)
+    configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
+    driver.get('https://stackoverflow.com/questions/27215462')
 
-        helper.activate()
+    helper.activate()
+    manual.confirm('page should be blacklisted (black icon), you should see an error notification')
+    # make sure there is not even the frame for blacklisted page
+    assert not helper._sidebar.available
 
-        manual.confirm('page should be blacklisted (black icon), your should see an error notification')
+    # reset blacklist
+    # also running without backend here, so need to set host to none as well
+    configure_extension(driver, host=None, blacklist=())
+    driver.back()
+    driver.refresh()
 
-        # make sure we can't open sidebar for blacklisted page
-        # meh, but that'll do for now
-        from selenium.common.exceptions import NoSuchFrameException
-        with pytest.raises(NoSuchFrameException):
-            with helper.sidebar():
-                pass
+    helper._sidebar.open()
+    manual.confirm('sidebar: should be visible')
 
-        # reset blacklist
-        # also running without backend here, so need to set host to none as well
-        configure_extension(driver, host=None, excludelists=())
-        driver.back() # TODO maybe configure_extension should go back instead...
-        driver.refresh()
 
-        helper.activate()
-        with helper.sidebar(wait=True):
-            # at least shouln't fail
-            pass
+@browsers()
+def test_blacklist_builtin(driver: Driver) -> None:
+    helper = TestHelper(driver)
+    configure_extension(driver, port='12345')
+    driver.get('https://www.hsbc.co.uk/mortgages/')
 
-        manual.confirm('sidebar should be visible')
+    helper.activate()
+    manual.confirm('page should be blacklisted (black icon), your should see an error notification')
+    # make sure there is not even the frame for blacklisted page
+    assert not helper._sidebar.available
+
+    # reset blacklist
+    # also running without backend here, so need to set host to none as well
+    configure_extension(driver, host=None, excludelists=())
+    driver.back()
+    driver.refresh()
+
+    helper._sidebar.open()
+    manual.confirm('sidebar: should be visible')
 
 
 @browsers(FF, CH)
-def test_add_to_blacklist(tmp_path: Path, browser: Browser) -> None:
+def test_add_to_blacklist_context_menu(tmp_path: Path, browser: Browser) -> None:
+    # doesn't work on headless because not sure how to interact with context menu.
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://example.com')
@@ -645,7 +740,7 @@ def test_add_to_blacklist(tmp_path: Path, browser: Browser) -> None:
         pyautogui.typewrite(['up'] + ['up'] * offset + ['enter'] + ['enter'], interval=0.5)
 
         confirm('shows prompt with alert to enter pattern to block?')
-        driver.switch_to.alert.accept()
+        _switch_to_alert(driver).accept()
         # ugh, seems necessary to guard with sleep; otherwise racey
         sleep(0.5)
 
@@ -653,18 +748,16 @@ def test_add_to_blacklist(tmp_path: Path, browser: Browser) -> None:
         confirm('page should be blacklisted (black icon)')
 
 
-
 # todo might be nice to run soft asserts for this test?
 @browsers()
-def test_visits(tmp_path: Path, browser: Browser) -> None:
+def test_visits(tmp_path: Path, driver: Driver) -> None:
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
-    with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
-        driver = helper.driver
-        with helper.sidebar():
-            confirm("sidebar: shouldn't be visible")
-            assert not helper.is_sidebar_visible()
+    with run_server(tmp_path=tmp_path, indexer=index_hypothesis, driver=driver) as helper:
+        driver.get(test_url)
+        confirm("sidebar: shouldn't be visible")
 
+        with helper._sidebar.ctx():
             # hmm not sure how come it returns anything at all.. but whatever
             srcs = driver.find_elements(By.CLASS_NAME, 'src')
             for s in srcs:
@@ -673,14 +766,10 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
             assert len(srcs) >= 8, srcs
             # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
 
-        helper.activate()
+        helper._sidebar.open()
+        confirm('sidebar: you should see hypothesis contexts')
 
-        with helper.sidebar(wait=True) as sidebar:
-            assert sidebar is not None
-            assert helper.is_sidebar_visible()
-
-            confirm('sidebar: you should see hypothesis contexts')
-
+        with helper._sidebar.ctx():
             link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
             assert link.is_displayed(), link
 
@@ -689,14 +778,8 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
                 assert c.is_displayed(), c
             assert len(contexts) == 8
 
-
-        helper.activate()
-        # todo wait till it disappears properly?
-        sleep(0.5)
-
-        with helper.sidebar():
-            confirm("sidebar: shouldn't be visible")
-            assert not helper.is_sidebar_visible()
+        helper._sidebar.close()
+        confirm("sidebar: shouldn't be visible")
 
             # this works in firefox, but doesn't work in chrome for some reason -- is_displayed returns true
             # apparently is_display checks if element is on the page, not necessarily within viewport??
@@ -706,13 +789,20 @@ def test_visits(tmp_path: Path, browser: Browser) -> None:
 
 
 @browsers()
-def test_search_around(tmp_path: Path, browser: Browser) -> None:
-    # TODO it actually lacks a proper end-to-end test within browser... although I do have something in automatic demos?
-    test_url = "about:blank"
-    with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as h:
-        # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??
-        ts = int(datetime.strptime("2017-05-22T10:59:12.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
-        h.open_page(f'search.html?utc_timestamp_s={ts}')
+def test_search_around(tmp_path: Path, driver: Driver) -> None:
+    # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??
+    ts = int(datetime.strptime("2017-05-22T10:59:12.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
+    with run_server(tmp_path=tmp_path, indexer=index_hypothesis, driver=driver) as helper:
+        helper.open_search_page(f'?utc_timestamp_s={ts}')
+
+        visits = driver.find_element(By.ID, 'visits')
+        sleep(1)  # wait till server responds and renders results
+        results = visits.find_elements(By.CSS_SELECTOR, 'li')
+        assert len(results) == 9
+
+        hl = visits.find_element(By.CLASS_NAME, 'highlight')
+        assert 'anthrocidal' in hl.text
+
         manual.confirm('you should see search results, "anthrocidal" should be highlighted red')
         # FIXME test clicking search around in actual search page.. it didn't work, seemingly because of initBackground() handling??
 
@@ -729,16 +819,24 @@ def test_chrome_visits(tmp_path: Path, browser: Browser) -> None:
         confirm("You shoud see chrome visits now; with time spent")
 
 
-@browsers(FF, CH)
-def test_show_visited_marks(tmp_path: Path, browser: Browser) -> None:
+@browsers()
+def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
     visited = {
         'https://en.wikipedia.org/wiki/Special_linear_group': None,
         'http://en.wikipedia.org/wiki/Unitary_group'        : None,
         'en.wikipedia.org/wiki/Transpose'                   : None,
     }
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
-    with _test_helper(tmp_path, index_urls(visited), test_url, show_dots=True, browser=browser) as helper:
-        trigger_command(helper.driver, Command.MARK_VISITED)
+    with run_server(tmp_path=tmp_path, indexer=index_urls(visited), driver=driver, show_dots=True) as helper:
+        driver.get(test_url)
+        helper.mark_visited()
+        sleep(1)  # marks are async, wait till it marks
+
+        slg = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
+        assert len(slg) > 0
+        for s in slg:
+            assert 'promnesia-visited' in s.get_attribute('class')
+
         confirm("You should see visited marks near special linear group, Unitary group, Transpose")
 
 
