@@ -587,11 +587,12 @@ def test_blacklist_custom(tmp_path: Path, browser: Browser) -> None:
         driver.back() # TODO maybe configure_extension should go back instead...
         driver.refresh()
 
+        helper.activate()
         with helper.sidebar(wait=True):
             # at least shouln't fail
             pass
 
-        manual.confirm('sidebar should be visible')
+        manual.confirm('sidebar: should be visible')
 
 
 @browsers()
@@ -618,6 +619,7 @@ def test_blacklist_builtin(tmp_path: Path, browser: Browser) -> None:
         driver.back() # TODO maybe configure_extension should go back instead...
         driver.refresh()
 
+        helper.activate()
         with helper.sidebar(wait=True):
             # at least shouln't fail
             pass
