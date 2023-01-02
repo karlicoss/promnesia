@@ -865,7 +865,13 @@ def test_fuzz(tmp_path: Path, browser: Browser) -> None:
         'https://www.iana.org/domains/reserved': 'IANA',
         'iana.org/domains/reserved': 'IANA2',
     }
-    with _test_helper(tmp_path, index_urls(urls), 'https://example.com', browser=browser) as helper:
+    with _test_helper(
+            tmp_path,
+            index_urls(urls),
+            'https://example.com',
+            browser=browser,
+            notify_contexts=True,
+    ) as helper:
         driver = helper.driver
         tabs = 30
         for _ in range(tabs):
@@ -879,10 +885,9 @@ def test_fuzz(tmp_path: Path, browser: Browser) -> None:
 
         def cb():
             for _ in range(10):
-                send_key('Ctrl+Shift+t')
+                send_key('Ctrl+Shift+t')  # restore tabs
                 sleep(0.1)
         trigger_callback(driver, cb)
-        # FIXME shows quite a bunch of notifications here...
         confirm("shouldn't result in 'unexpected error occured'; show only show single notification per page")
 
 
