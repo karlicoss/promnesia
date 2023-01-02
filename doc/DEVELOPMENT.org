@@ -76,6 +76,9 @@ You can also run them via tox:
 
 : TOX_TESTENV_PASSENV='DISPLAY HOME' tox -e end2end -- -s -k 'test_blacklist_custom[firefox]'
 
+- after initial run, it's best pass =--skip-pkg-install= to tox to speedup repetitive test runs
+- when you're in development/debugging process, perhaps best to run the firefox version of tests -- Chrome has a 5-ish seconds lag after installing the extension
+
 * Releasing
 ** AMO (addons.mozilla.org)
 

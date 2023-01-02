@@ -37,6 +37,9 @@ from promnesia.logging import LazyLogger
 logger = LazyLogger('promnesia-tests')
 
 
+PROMNESIA_FRAME_ID = 'promnesia-frame'
+
+
 class Browser(NamedTuple):
     dist: str
     headless: bool
@@ -326,16 +329,15 @@ class TestHelper(NamedTuple):
     def switch_to_sidebar(self, wait: bool=False) -> None:
         self.driver.switch_to.default_content()
 
-        frame_id = 'promnesia-frame'
         frame = None
         if wait:
             Wait(self.driver, timeout=5).until(
-                EC.presence_of_element_located((By.ID, frame_id))
+                EC.presence_of_element_located((By.ID, PROMNESIA_FRAME_ID))
             )
             # ugh. seems that sometimes a bit more time is necessary to render sidebard contents???
             # otherwise test_visits was flaky at times
             sleep(1)
-        self.driver.switch_to.frame(frame_id)
+        self.driver.switch_to.frame(PROMNESIA_FRAME_ID)
 
     @contextmanager
     def sidebar(self, wait: bool=False) -> Iterator[Optional[WebElement]]:
@@ -886,14 +888,14 @@ def test_fuzz(tmp_path: Path, browser: Browser) -> None:
 
 def trigger_sidebar_search(driver: Driver) -> None:
     driver.switch_to.default_content()
-    driver.switch_to.frame('promnesia-sidebar')
-    search_button = driver.find_element(By.XPATH, '//button[text()="Search"]')
+    driver.switch_to.frame(PROMNESIA_FRAME_ID)
+    search_button = driver.find_element(By.ID, 'button-search')
     search_button.click()
 
 
 @browsers(FF, CH)
 def test_duplicate_background_pages(tmp_path: Path, browser: Browser) -> None:
-    url = PYTHON_DOC_URL
+    url = 'https://example.com'
     with _test_helper(tmp_path, index_urls({'whatever.coom': '123'}), url, browser=browser) as helper:
         driver = helper.driver
 
