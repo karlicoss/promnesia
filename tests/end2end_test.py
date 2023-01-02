@@ -537,6 +537,7 @@ def run_server(tmp_path: Path, indexer: Callable[[Path], None], driver: Driver, 
     # TODO ideally should index in a separate thread? and perhaps start server too
     indexer(tmp_path)
     with wserver(db=tmp_path / 'promnesia.sqlite') as srv:
+        # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
         port = srv.port
         configure_extension(driver, port=port, **kwargs)
         driver.get('about:blank')  # not sure if necessary
@@ -932,8 +933,8 @@ def test_new_background_tab(tmp_path: Path, browser: Browser) -> None:
 
 # TODO shit disappears on chrome and present on firefox
 @browsers()
-def test_local_page(tmp_path: Path, browser: Browser) -> None:
-    if browser == CH:
+def test_local_page(tmp_path: Path, driver: Driver) -> None:
+    if driver.name == 'chrome':
         pytest.skip("TODO used to work, but must have brokend after some Chrome update?")
         # seems broken on any local page -- only transparent sidebar frame is shown
         # the issue is that contentDocument.body is null -- no idea why
@@ -943,18 +944,26 @@ def test_local_page(tmp_path: Path, browser: Browser) -> None:
          tutorial                                                : 'TODO read this',
         'file:///usr/share/doc/python3/html/reference/index.html': None,
     }
+    indexer = index_urls(urls)
     url = PYTHON_DOC_URL
-    with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver) as helper:
+        # TODO hmm so this bit is actually super fast, takes like 1.5 secs
+        # need to speed up the preparation
+        helper.driver.get(url)
         confirm('grey icon')
         helper.driver.get(tutorial)
-        # TODO why manually here?
-        # would be nice to test it in headless mode, e.g. check visibility of some sidebar bits
-        confirm('green icon. MANUALLY: ACTIVATE SIDEBAR!. It should open sidebar with one visit')
-        helper.driver.back()
+
+        helper._sidebar.open()
+        confirm('green icon. sidebar should show one visit')
+
         # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
-        confirm('grey icon, should be no sidebar')
+        helper.driver.back()
+        assert not helper._sidebar.visible
+        confirm('grey/purple icon, should be no sidebar')
+
         # fIXME fuck. failing here to load anchorme as well as webext-options-sync? ugh.
         helper.driver.forward()
+        assert helper._sidebar.visible
         confirm('green icon, sidebar visible')
 
 
