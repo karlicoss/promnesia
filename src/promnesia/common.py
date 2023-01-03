@@ -554,7 +554,7 @@ def default_config_path() -> Path:
 @contextmanager
 def measure(tag: str='', *, logger, unit: str='ms'):
     before = timer()
-    yield
+    yield lambda: timer() - before
     after = timer()
     secs = after - before
     mult = {'s': 1, 'ms': 10**3, 'us': 10**6}[unit]

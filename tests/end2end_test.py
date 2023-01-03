@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 from tempfile import TemporaryDirectory
 import os
+import shutil
 from subprocess import check_call, check_output
 from time import sleep
 from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence, Union
@@ -47,8 +48,8 @@ from promnesia.common import measure as measure_orig
 @contextmanager
 def measure(*args, **kwargs):
     kwargs['logger'] = logger
-    with measure_orig(*args, **kwargs):
-        yield
+    with measure_orig(*args, **kwargs) as m:
+        yield m
 
 
 PROMNESIA_FRAME_ID = 'promnesia-frame'
@@ -70,10 +71,7 @@ class Browser(NamedTuple):
 FF  = Browser('firefox', headless=False)
 CH  = Browser('chrome' , headless=False)
 FFH = Browser('firefox', headless=True)
-# NOTE: sadly headless chrome doesn't support extensions..
-# https://stackoverflow.com/a/45372648/706389
-# there is some workaround, but it's somewhat tricky...
-# https://stackoverflow.com/a/46475980/706389
+CHH = Browser('chrome' , headless=True)
 
 
 # TODO ugh, I guess it's not that easy to make it work because of isAndroid checks...
@@ -129,11 +127,16 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
         # TODO ugh. very hacky...
         assert extension, "TODO add support for extension arg"
         ex = tdir / 'extension.zip'
-        files = [x.name for x in addon.iterdir()]
-        check_call(['apack', '-q', str(ex), *files], cwd=addon)
+        shutil.make_archive(str(ex.with_suffix('')), format='zip', root_dir=addon)
         # looks like chrome uses temporary dir for data anyway
         cr_options = webdriver.ChromeOptions()
-        cr_options.headless = browser.headless
+        if browser.headless:
+            if 'UNDER_DOCKER' in os.environ:
+                # docker runs as root and chrome refuses to use headless in that case
+                cr_options.add_argument('--no-sandbox')
+
+            # regular --headless doesn't support extensions for some reason
+            cr_options.add_argument('--headless=chrome')
         cr_options.add_extension(str(ex))
         driver = webdriver.Chrome(options=cr_options)
     else:
@@ -174,9 +177,10 @@ def _switch_to_alert(driver: Driver) -> Alert:
     for _ in range(100 * 10): # wait 10 secs max
         try:
             return driver.switch_to.alert
-        except NoAlertPresentException as e:
+        except NoAlertPresentException as ex:
+            e = ex
+            sleep(0.01)
             continue
-        sleep(0.01)
     assert e is not None
     raise e
 
@@ -294,6 +298,7 @@ def get_wid_by_pid(pid: str) -> str:
 
 
 def focus_browser_window(driver: Driver) -> None:
+    assert not is_headless(driver)  # just in case
     wid = get_window_id(driver)
     check_call(['xdotool', 'windowactivate', '--sync', wid])
 
@@ -315,8 +320,11 @@ def send_key(key) -> None:
 def is_headless(driver: Driver) -> bool:
     if driver.name == 'firefox':
         return driver.capabilities.get('moz:headless', False)
+    elif driver.name == 'chrome':
+        # https://antoinevastel.com/bot%20detection/2018/01/17/detect-chrome-headless-v2.html
+        return driver.execute_script("return navigator.webdriver") is True
     else:
-        return False
+        raise RuntimeError(driver.name)
 
 
 # TODO move to common or something
@@ -382,15 +390,17 @@ class Sidebar(NamedTuple):
         assert not self.visible
         self.helper.activate()
 
-        with measure('Sidebar.open'):
+        with measure('Sidebar.open') as m:
             while not self.visible:
+                assert m() <= 10 * 1000, 'timeout'
                 sleep(0.001)
 
     def close(self) -> None:
         assert self.visible
         self.helper.activate()
-        with measure('Sidebar.close'):
+        with measure('Sidebar.close') as m:
             while self.visible:
+                assert m() <= 10 * 1000, 'timeout'
                 sleep(0.001)
 
     @property
@@ -566,7 +576,7 @@ IdType = Callable[[X], X]
 
 def browsers(*br: Browser) -> IdType:
     if len(br) == 0:
-        br = (FF, FFH, CH)
+        br = (FF, FFH, CH, CHH)
     if not has_x():
         br = tuple(b for b in br if b.headless)
 
@@ -654,6 +664,8 @@ def set_position(driver: Driver, settings: str) -> None:
     # count += 100  # just in case
     count = 3000 # meh
     if browser.name == 'chrome':
+        assert not is_headless(driver)
+
         # ugh... for some reason wouldn't send the keys...
         field.click()
         import pyautogui # type: ignore
@@ -666,7 +678,7 @@ def set_position(driver: Driver, settings: str) -> None:
         area.send_keys(settings)
 
 
-@browsers()
+@browsers(FF, FFH, CH)  # TODO for now skipping headless chrome because we're using pyautogui for chrome in this test
 def test_sidebar_position(driver: Driver) -> None:
     """
     Checks that default sidebar position is on the right, and that changing it to --bottom: 1 works
