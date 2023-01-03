@@ -47,6 +47,7 @@ def main() -> None:
         extras_require={
             'testing': [
                  'pytest',
+                 'pytest-timeout',
                  'pytest-xdist', # why??
 
                  'psutil',
