@@ -23,3 +23,13 @@ def frame_context(driver: Driver, frame) -> Iterator[Optional[WebElement]]:
         yield new_frame
     finally:
         driver.switch_to.frame(current)
+
+
+@contextmanager
+def window_context(driver: Driver, window_handle: str) -> Iterator[None]:
+    original = driver.current_window_handle
+    driver.switch_to.window(window_handle)
+    try:
+        yield
+    finally:
+        driver.switch_to.window(original)
