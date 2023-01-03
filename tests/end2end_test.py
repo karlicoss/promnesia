@@ -35,7 +35,7 @@ from common import under_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from browser_helper import open_extension_page, get_cmd_hotkey
-from webdriver_utils import frame_context
+from webdriver_utils import frame_context, window_context
 
 
 from promnesia.logging import LazyLogger
@@ -344,6 +344,7 @@ def trigger_command(driver: Driver, cmd: str) -> None:
         ccc = {
             Command.ACTIVATE    : 'selenium-bridge-activate',
             Command.MARK_VISITED: 'selenium-bridge-mark-visited',
+            Command.SEARCH      : 'selenium-bridge-search',
         }[cmd]
         # see background-injector.js
         driver.execute_script(f"""
@@ -410,6 +411,14 @@ class Sidebar(NamedTuple):
         # do something about it later..
         outer = self.driver.find_element(By.ID, 'promnesia-sidebar-filters')
         return outer.find_elements(By.CLASS_NAME, 'src')
+
+    def trigger_search(self) -> None:
+        # this should be the window with extension
+        cur_window_handles = self.driver.window_handles
+        with self.ctx():
+            search_button = self.driver.find_element(By.ID, 'button-search')
+            search_button.click()
+            self.helper.wait_for_search_tab(cur_window_handles)
 
 
 class TestHelper(NamedTuple):
@@ -480,6 +489,21 @@ class TestHelper(NamedTuple):
 
     def mark_visited(self) -> None:
         self.command(Command.MARK_VISITED)
+
+    def search(self) -> None:
+        cur_window_handles = self.driver.window_handles
+        self.command(Command.SEARCH)
+        # self.wait_for_search_tab(cur_window_handles)
+
+    def wait_for_search_tab(self, cur_window_handles) -> None:
+        # for some reason the webdriver's context stays the same even when new tab is opened
+        # ugh. not sure why it's so elaborate, but that's what stackoverflow suggested
+        Wait(self.driver, timeout=5).until(EC.number_of_windows_to_be(len(cur_window_handles) + 1))
+        new_windows = set(self.driver.window_handles) - set(cur_window_handles)
+        assert len(new_windows) == 1, new_windows
+        [new_window] = new_windows
+        self.driver.switch_to.window(new_window)
+        Wait(self.driver, timeout=5).until(EC.presence_of_element_located((By.ID, 'promnesia-search')))
 
     def wid(self) -> str:
         return get_window_id(self.driver)
@@ -917,11 +941,16 @@ def test_sidebar_basic(tmp_path: Path, driver: Driver, url: str) -> None:
         confirm("You should see green icon, also one visit in sidebar. Make sure the unicode is displayed correctly.")
 
 
-@browsers(FF, CH)
-def test_search(tmp_path: Path, browser: Browser) -> None:
+@browsers()
+def test_search_command(tmp_path: Path, driver: Driver) -> None:
+    """
+    Basic test that search command handler works and it opens search inteface
+    """
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_hypothesis, test_url, browser=browser) as helper:
-        trigger_command(helper.driver, Command.SEARCH)
+    with run_server(tmp_path=tmp_path, indexer=index_hypothesis, driver=driver) as helper:
+        driver.get(test_url)
+
+        helper.search()
         # TODO actually search something?
         # TODO use current domain as default? or 'parent' url?
         confirm("You shoud see search prompt now, with focus on search field")
@@ -1051,37 +1080,29 @@ def test_fuzz(tmp_path: Path, browser: Browser) -> None:
         confirm("shouldn't result in 'unexpected error occured'; show only show single notification per page")
 
 
-def trigger_sidebar_search(driver: Driver) -> None:
-    driver.switch_to.default_content()
-    driver.switch_to.frame(PROMNESIA_FRAME_ID)
-    search_button = driver.find_element(By.ID, 'button-search')
-    search_button.click()
-
-
-@browsers(FF, CH)
-def test_duplicate_background_pages(tmp_path: Path, browser: Browser) -> None:
+@browsers()
+def test_duplicate_background_pages(tmp_path: Path, driver: Driver) -> None:
     url = 'https://example.com'
-    with _test_helper(tmp_path, index_urls({'whatever.coom': '123'}), url, browser=browser) as helper:
-        driver = helper.driver
+    indexer = index_urls({'whatever.coom': '123'})
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver) as helper:
+        driver.get(url)
 
-        trigger_command(driver, Command.ACTIVATE)
-        # TODO separate test just for buttons from extension
+        helper._sidebar.open()
         confirm('sidebar opened?')
 
-        trigger_sidebar_search(driver)
-        sleep(1)
-        driver.switch_to.window(driver.window_handles[0])
-        sleep(1)
+        original = driver.current_window_handle
 
-        trigger_sidebar_search(driver)
-        sleep(1)
-        driver.switch_to.window(driver.window_handles[0])
-        sleep(1)
+        # NOTE: Sidebar.trigger_search asserts that only one search window is opened
+        # so this test is actually fairly automated
+        helper._sidebar.trigger_search()
+        driver.switch_to.window(original)
 
-        confirm('only two search pages should be opened')
+        helper._sidebar.trigger_search()
+        driver.switch_to.window(original)
 
-        trigger_command(driver, Command.ACTIVATE)
+        confirm('only two search pages should be opened (in background tabs)')
 
+        helper._sidebar.close()
         confirm('sidebar should be closed now')
 
         # TODO wtf? browser with search pages stays open after test... 

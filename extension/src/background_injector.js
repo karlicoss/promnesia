@@ -3,9 +3,12 @@ chrome.runtime.sendMessage({method: "INJECT_BACKGROUND_CALLBACKS"})
 
 
 // hack to hook into the extension... https://stackoverflow.com/a/38554438/706389
-document.addEventListener('selenium-bridge-activate', () => {
-    chrome.runtime.sendMessage('selenium-bridge-activate')
-})
-document.addEventListener('selenium-bridge-mark-visited', () => {
-    chrome.runtime.sendMessage('selenium-bridge-mark-visited')
-})
+for (const x of [
+    'selenium-bridge-activate',
+    'selenium-bridge-mark-visited',
+    'selenium-bridge-search',
+]) {
+    document.addEventListener(x, () => {
+        chrome.runtime.sendMessage(x)
+    })
+}
