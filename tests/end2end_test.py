@@ -410,10 +410,11 @@ class TestHelper(NamedTuple):
 
     def open_options_page(self) -> None:
         self.open_page('options_page.html')
-        # sleep is necessary to make sure settings are loaded and set into the fields by the time we see page
-        # without it it's possible that what we type in the test is overwritten
-        # ideally this should be solved in the extension, e.g. do not present the interface until we loaded settings
-        sleep(1)
+
+        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
+        Wait(self.driver, timeout=5).until(
+            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
+        )
 
     def open_search_page(self, query: str="") -> None:
         self.open_page('search.html' + query)

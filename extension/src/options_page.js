@@ -184,6 +184,13 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
         el.bind({CodeMirror: CodeMirror})
         el.value = value
     }
+
+    /* a marker for tests */
+    const settings_loaded = document.createElement('span')
+    settings_loaded.id = 'promnesia-settings-loaded'
+    settings_loaded.style.display = 'none'
+
+    unwrap(document.body).appendChild(settings_loaded)
 }));
 
 
