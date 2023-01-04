@@ -71,9 +71,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+    # NOTE: dev/shm mount to prevent crashes during headless chrome
     - run: |
         docker build -f .ci/end2end_tests.Dockerfile . -t promnesia_end2end_tests
-        docker run -e CI promnesia_end2end_tests
+        docker run -v /dev/shm:/dev/shm -e CI promnesia_end2end_tests
 
   install_and_run_test:
     # todo use setup-python thing?
