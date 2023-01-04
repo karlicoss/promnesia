@@ -909,6 +909,9 @@ def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
     ],
 )
 def test_sidebar_basic(tmp_path: Path, driver: Driver, url: str) -> None:
+    if 'udemy' in url:
+        pytest.skip('TODO udemy tests are very timing out. Perhaps because of cloudflare protection?')
+
     visited = {
         url : 'whatever',
     }
