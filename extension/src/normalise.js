@@ -7,14 +7,14 @@ import type {Url} from './common';
 //
 var R = RegExp;
 
-export const
+const
 STRIP_RULES = [
     [[R('.*')                     , R('^\\w+://'         )]],
     [[R('.*')                     , R('(www|ww|amp)\\.'  )]],
     [[R('.*')                     , R('[&#].*$'          )]],
     [[R('.*')                     , R('/$'               )]],
 ]
-; // TODO perhaps that should be semi-configurable
+// TODO perhaps that should be semi-configurable
 
 // TODO maybe use that normalisation library and then adjust query params etc
 

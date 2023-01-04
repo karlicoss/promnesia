@@ -2,7 +2,7 @@
 const loaderUtils = require('loader-utils')
 
 module.exports.default = function (source) {
-  const options = loaderUtils.getOptions(this)
+  const options = this.getOptions()
   const patches = options.patches;
   for (const patch of patches) {
     let res = source.replace(patch.code, patch.newCode)

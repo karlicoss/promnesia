@@ -68,6 +68,7 @@ export class Visit {
     // ugh..
     toJObject(): any {
         const o = {}
+        // $FlowFixMe[prop-missing]
         Object.assign(o, this)
         // $FlowFixMe
         o.time     = o.time    .getTime()
@@ -81,6 +82,7 @@ export class Visit {
         o.dt_local = new Date(o.dt_local)
         // $FlowFixMe
         const v = new Visit()
+        // $FlowFixMe[prop-missing]
         Object.assign(v, o)
         return v
     }
@@ -142,7 +144,10 @@ export class Visits {
     // NOTE: JSON.stringify will use this method
     toJObject(): any {
         const o = {}
+        // $FlowFixMe[prop-missing]
         Object.assign(o, this)
+        // $FlowFixMe[prop-missing]
+        // $FlowFixMe[incompatible-use]
         o.visits = o.visits.map(v => {
             return (v instanceof Visit)
                 ? v.toJObject()
@@ -153,6 +158,7 @@ export class Visits {
     }
 
     static fromJObject(o: any): Visits {
+        // $FlowFixMe[prop-missing]
         o.visits = o.visits.map(x => {
             const err = x.error
             if (err != null) {
@@ -164,8 +170,10 @@ export class Visits {
                 return Visit.fromJObject(x)
             }
         })
+        // $FlowFixMe[prop-missing]
         // $FlowFixMe
         const r = new Visits()
+        // $FlowFixMe[prop-missing]
         Object.assign(r, o)
         return r
     }
@@ -205,7 +213,7 @@ export type SearchPageParams = {
 }
 
 // $FlowFixMe
-export function log() {
+export function log(): void {
     const args = [];
     for (var i = 1; i < arguments.length; i++) {
         const arg = arguments[i];
@@ -219,13 +227,13 @@ export function asList(bl: string): Array<string> {
     return bl.split(/\n/).filter(s => s.length > 0);
 }
 
-export function addStyle(doc: Document, css: string) {
+export function addStyle(doc: Document, css: string): void {
     const st = doc.createElement('style');
     st.appendChild(doc.createTextNode(css));
     unwrap(doc.head).appendChild(st);
 }
 
-export function safeSetInnerHTML(element: HTMLElement, html: string) {
+export function safeSetInnerHTML(element: HTMLElement, html: string): void {
     const tags = new DOMParser()
           .parseFromString(html, 'text/html')
           .getElementsByTagName('body')[0]
@@ -289,6 +297,7 @@ export function rejectIfHttpError(response: HttpResponse): HttpResponse {
 }
 
 // todo ugh, need to use some proper type annotations?
+// $FlowFixMe[missing-local-annot]
 function fetch_typed(...args): Promise<HttpResponse> {
     // $FlowFixMe
     return fetch(...args)

@@ -79,7 +79,7 @@ class IToggle extends Option<?boolean> {
 
 class Editor extends Option<string> {
     mode: ?string
-    constructor(id: string, {mode}) {
+    constructor(id: string, {mode}: {mode: ?string}) {
         super(id)
         this.mode = mode
     }
@@ -92,6 +92,7 @@ class Editor extends Option<string> {
         return this.editor.getValue()
     }
 
+    // $FlowFixMe[missing-local-annot]
     bind({CodeMirror}): void {
         CodeMirror(this.element, {
             mode: this.mode,
@@ -100,8 +101,9 @@ class Editor extends Option<string> {
         })
     }
 
-    get editor() {
-        // $FlowFixMe
+    get editor(): any {
+        // $FlowFixMe[prop-missing]
+        // $FlowFixMe[incompatible-use]
         return this.element.querySelector('.CodeMirror').CodeMirror
     }
 }
@@ -252,7 +254,7 @@ unwrap(document.getElementById(
 
 // https://stackoverflow.com/questions/46946380/fetch-api-request-timeout
 // not fully correct, need to cancel request; but hopefully ok for now
-function fetchTimeout(url, options, timeout) {
+function fetchTimeout(url: string, options: any, timeout: ?number): Promise<any> {
     return new Promise((resolve, reject) => {
         fetch(url, options).then(resolve, reject);
 

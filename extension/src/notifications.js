@@ -90,7 +90,7 @@ Toastify({
 }
 
 // TODO maybe if tabId = -1, show normal notification?
-async function showTabNotification(tabId: ?number, message: string, opts: ToastOptions) {
+async function showTabNotification(tabId: ?number, message: string, opts: ToastOptions): Promise<void> {
     if (tabId == null) {
         // not much else we can do..
         desktopNotify(message)
@@ -117,16 +117,16 @@ async function showTabNotification(tabId: ?number, message: string, opts: ToastO
 }
 
 export const notifications = {
-    notify: async function(tabId: ?number, message: string, opts: ToastOptions) {
+    notify: async function(tabId: ?number, message: string, opts: ToastOptions): Promise<void> {
         return showTabNotification(tabId, message, opts)
     },
-    error: async function(tabId: number, e: Error | string) {
+    error: async function(tabId: number, e: Error | string): Promise<void> {
         return notifications.notify(tabId, String(e), {color: 'red'})
     },
-    page_ignored: async function(tabId: ?number, url: ?Url, reason: string) {
+    page_ignored: async function(tabId: ?number, url: ?Url, reason: string): Promise<void> {
         return notifications.notify(tabId, `${url || ''} is ignored: ${reason}`, {color: 'red'})
     },
-    excluded: async function(tabId: number, b: Blacklisted) {
+    excluded: async function(tabId: number, b: Blacklisted): Promise<void> {
         return notifications.notify(tabId, `${b.url} is excluded: ${b.reason}`, {color: 'red'})
     },
     desktop: desktopNotify,
