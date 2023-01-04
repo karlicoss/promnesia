@@ -90,7 +90,7 @@ export const USE_ORIGINAL_TZ = true;
 export const GROUP_CONSECUTIVE_SECONDS = 20 * 60;
 
 // TODO: make it configurable in options?
-export const THIS_BROWSER_TAG = getBrowser()
+export const THIS_BROWSER_TAG: string = getBrowser()
 
 // TODO allow to export settings
 // https://github.com/fregante/webext-options-sync/issues/23
@@ -296,17 +296,18 @@ export async function setOptions(opts: StoredOptions) {
     await os.set(opts)
 }
 
-export async function setOption(opt: Opt1 | Opt2) {
+export async function setOption(opt: Opt1 | Opt2): Promise<void> {
     const os = optSync()
     await os.set(opt)
 }
 
-export async function resetOptions() {
+export async function resetOptions(): Promise<void> {
     const os = optSync()
     await os.setAll({})
 }
 
-function toggleOption(toggle: (StoredOptions) => void): () => Promise<void> {
+type ToggleOptionRes = () => Promise<void>
+function toggleOption(toggle: (StoredOptions) => void): ToggleOptionRes {
     return async () => {
         const opts = await getStoredOptions()
         toggle(opts)
@@ -315,9 +316,9 @@ function toggleOption(toggle: (StoredOptions) => void): () => Promise<void> {
 }
 
 export const Toggles = {
-    showSidebar   : toggleOption((opts) => { opts.sidebar_always_show = !opts.sidebar_always_show; }),
-    markVisited   : toggleOption((opts) => { opts.mark_visited_always = !opts.mark_visited_always; }),
-    showHighlights: toggleOption((opts) => { opts.highlight_on        = !opts.highlight_on       ; }),
+    showSidebar   : (toggleOption((opts) => { opts.sidebar_always_show = !opts.sidebar_always_show; }): ToggleOptionRes),
+    markVisited   : (toggleOption((opts) => { opts.mark_visited_always = !opts.mark_visited_always; }): ToggleOptionRes),
+    showHighlights: (toggleOption((opts) => { opts.highlight_on        = !opts.highlight_on       ; }): ToggleOptionRes),
 }
 
 // TODO try optionsStorage.syncForm?

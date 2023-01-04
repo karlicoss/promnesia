@@ -10,7 +10,7 @@ import {achrome} from './async_chrome'
 // TODO how to prevent sidebar hiding on click??
 
 // TODO move to common?
-function get_or_default(obj, key, def) {
+function get_or_default<T>(obj: any, key: string, def: T): T {
     const res = obj[key];
     return res === undefined ? def : res;
 }
@@ -59,7 +59,7 @@ class Sidebar {
         return unwrap(frame.contentDocument.getElementById(CONTAINER_ID));
     }
 
-    setupFrame(frame) {
+    setupFrame(frame: HTMLIFrameElement): void {
         const cdoc = frame.contentDocument;
         const head = unwrap(cdoc.head);
 
@@ -294,6 +294,7 @@ function _highlight(text: string, idx: number, v: Visit) {
     for (let [line, target] of findMatches(unwrap(doc.body), lines)) {
         // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
         while (target != null && target.nodeType != Node.ELEMENT_NODE) {
+            // $FlowFixMe[incompatible-type]
             target = target.parentElement
         }
 
@@ -458,7 +459,8 @@ async function* _bindSidebarData(response: Visits) {
             tag = 'all';
             predicate = () => true;
         } else {
-            predicate = t => t == asClass(tag);
+            const tag_ = tag  // make Flow happy
+            predicate = t => t == asClass(tag_)
         }
 
         // TODO show total counts?

@@ -14,6 +14,7 @@ class Awrap0 {
         cb: (R => void)) => void))
     : (()         => Promise<R>)
     {
+        // $FlowFixMe
         return helper(fn)
     }
 }
@@ -24,6 +25,7 @@ class Awrap1<A> {
         cb: (R => void)) => void))
     : ((arg1: A) => Promise<R>)
     {
+        // $FlowFixMe
         return helper(fn)
     }
 }
@@ -35,11 +37,13 @@ class Awrap2<A1, A2> {
         cb: (R => void)) => void))
     : ((arg1: A1, arg2: A2) => Promise<R>)
     {
+        // $FlowFixMe
         return helper(fn)
     }
 }
 
 
+// $FlowFixMe
 function helper<R, TArgs: *>(fn): ((...args: TArgs) => Promise<R>) {
     return (...args: Array<any>) => {
         return new Promise((resolve, reject) => {
@@ -60,26 +64,40 @@ function helper<R, TArgs: *>(fn): ((...args: TArgs) => Promise<R>) {
 // fucking hell.. also had to make them properties because apis might not exist in certain contexts
 // e.g. access to chrome.tabs.get might crash
 export const achrome = {
+    // $FlowFixMe
     bookmarks: {
+        // $FlowFixMe
         get search       () { return new Awrap1<{url: string}                              >().wrap(chrome.bookmarks.search  ) },
+        // $FlowFixMe
         get getTree      () { return new Awrap0                                             ().wrap(chrome.bookmarks.getTree ) },
     },
+    // $FlowFixMe
     tabs: {
+        // $FlowFixMe
         get get          () { return new Awrap1<number                                     >().wrap(chrome.tabs.get          ) },
+        // $FlowFixMe
         get query        () { return new Awrap1<{currentWindow?: boolean, active?: boolean}>().wrap(chrome.tabs.query        ) },
+        // $FlowFixMe
         get executeScript() { return new Awrap2<number, {file?: string, code?: string}     >().wrap(chrome.tabs.executeScript) },
+        // $FlowFixMe
         get insertCSS    () { return new Awrap2<number, {file?: string, code?: string}     >().wrap(chrome.tabs.insertCSS    ) },
     },
+    // $FlowFixMe
     runtime: {
+        // $FlowFixMe
         get getPlatformInfo() { return new Awrap0    ().wrap(chrome.runtime.getPlatformInfo) },
+        // $FlowFixMe
         get sendMessage    () { return new Awrap1<{}>().wrap(chrome.runtime.sendMessage    ) },
     },
+    // $FlowFixMe
     history: {
         // crap, missing in flow-interfaces-chrome
+        // $FlowFixMe
         get getVisits    () { return new Awrap1<{url: string }>().wrap<Array<VisitItem>>(
             // $FlowFixMe
             chrome.history.getVisits
         ) },
+        // $FlowFixMe
         get search       () { return new Awrap1<{text: string, startTime?: number, endTime?: number}>().wrap<Array<HistoryItem>>(
             // $FlowFixMe
             chrome.history.search

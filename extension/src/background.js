@@ -583,7 +583,7 @@ async function handleOpenSearch(p: SearchPageParams = {}) {
 }
 
 
-const onMessageCallback = async (msg) => { // TODO not sure if should defensify here?
+const onMessageCallback = async (msg: any) => { // TODO not sure if should defensify here?
     const method = msg.method
     if (method == Methods.GET_SIDEBAR_VISITS) {
         // TODO not sure if it might do unnecessary notifications here?
@@ -795,7 +795,7 @@ window.addEventListener('keydown', cancel)
 
 }`})
     },
-    handleZapperResult: async function(msg) {
+    handleZapperResult: async function(msg: any) {
         const urls: Array<Url> = msg.data
         await AddToMarkVisitedExcludelist.add(urls)
     },

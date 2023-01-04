@@ -52,7 +52,7 @@ export class Binder {
         this.options = options
     }
 
-    makeChild(parent: HTMLElement, name: string, classes: ?Array<CssClass> = null) {
+    makeChild(parent: HTMLElement, name: string, classes: ?Array<CssClass> = null): HTMLElement {
         const res = this.doc.createElement(name);
         if (classes != null) {
             for (const cls of classes) {
@@ -63,7 +63,7 @@ export class Binder {
         return res;
     }
 
-    makeTchild(parent: HTMLElement, text: string) {
+    makeTchild(parent: HTMLElement, text: string): Text {
         const res = this.doc.createTextNode(text);
         parent.appendChild(res);
         return res;
@@ -72,8 +72,10 @@ export class Binder {
     async renderError(
         parent: HTMLElement,
         error: Error,
-    ) {
+    ): Promise<void> {
+        // $FlowFixMe[method-unbinding]
         const child  = this.makeChild .bind(this)
+        // $FlowFixMe[method-unbinding]
         const tchild = this.makeTchild.bind(this)
 
         const item = child(parent, 'li', ['error'])
@@ -96,9 +98,11 @@ export class Binder {
             locator,
             relative,
         }: Params,
-    ) {
+    ): Promise<HTMLElement> {
         // todo ugh. looks like Flow can't guess the type of closure that we get by .bind...
+        // $FlowFixMe[method-unbinding]
         const child = this.makeChild.bind(this);
+        // $FlowFixMe[method-unbinding]
         const tchild = this.makeTchild.bind(this); // TODO still necessary??
 
         const item = child(parent, 'li', relative ? ['relative'] : []);

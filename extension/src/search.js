@@ -98,6 +98,8 @@ async function* _doSearch(
             locator       : v.locator,
             relative      : false,
         });
+        // hmm flow seems a bit dumb here
+        // $FlowFixMe[not-a-function]
         if (highlight_if(v)) {
             cc.classList.add('highlight');
         }
@@ -115,6 +117,7 @@ function showOrAlert(err: Error): void {
     }
 }
 
+// $FlowFixMe[missing-local-annot]
 async function doSearch(...args) {
     const dom_updates = _doSearch(...args)
     async function consume_one() {

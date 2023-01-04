@@ -354,19 +354,19 @@ export class MultiSource implements VisitsSource {
         this.sources = sources
     }
 
-    async visits(url: Url) {
+    async visits(url: Url): Promise<Visits | Error> {
         return await _merge(url, ...this.sources.map(s => s.visits(url)))
     }
 
-    async search(url: Url) {
+    async search(url: Url): Promise<Visits | Error> {
         return await _merge(url, ...this.sources.map(s => s.search(url)))
     }
 
-    async searchAround(utc_timestamp_s: number) {
+    async searchAround(utc_timestamp_s: number): Promise<Visits | Error> {
         return await _merge(null, ...this.sources.map(s => s.searchAround(utc_timestamp_s)))
     }
 
-    async visited(urls: Array<Url>) {
+    async visited(urls: Array<Url>): Promise<VisitedResult | Error> {
         const pms = this.sources.map(s => s.visited(urls))
         const errors = []
         let res: ?VisitedResult = null
