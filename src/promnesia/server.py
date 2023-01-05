@@ -1,35 +1,38 @@
 #!/usr/bin/python3
-__package__ = 'promnesia'  # ugh. hacky way to make hug work properly...
+__package__ = 'promnesia'  # ugh. hacky way to make wsgi runner work properly...
 
 import argparse
+from dataclasses import dataclass
 import os
-import sys
 import json
-from datetime import timedelta, datetime
+from datetime import timedelta
 from pathlib import Path
 import logging
 from functools import lru_cache
-from typing import Collection, List, NamedTuple, Dict, Optional, Any, Tuple
+from typing import List, NamedTuple, Dict, Optional, Any, Tuple, Callable
 
 from cachew import NTBinder
 
 import pytz
 from pytz import BaseTzInfo
 
-import hug # type: ignore
-import hug.types as T # type: ignore
+import fastapi
 
-from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc, select  # type: ignore
-from sqlalchemy import Column, Table, func, types # type: ignore
-from sqlalchemy.sql import text # type: ignore
+from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc, select
+from sqlalchemy import Column, Table, func, types
+from sqlalchemy.sql.elements import ClauseElement
+from sqlalchemy.engine import Engine
+from sqlalchemy.sql import text
 
 
-from .common import PathWithMtime, DbVisit, Url, Loc, setup_logger, PathIsh, default_output_dir, get_system_tz
+from .common import PathWithMtime, DbVisit, Url, setup_logger, default_output_dir, get_system_tz
+from .compat import Protocol
 from .cannon import canonify
 
 
 Json = Dict[str, Any]
 
+app = fastapi.FastAPI()
 
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
@@ -117,9 +120,11 @@ def get_db_path(check: bool=True) -> Path:
     return db
 
 
+DbStuff = Tuple[Engine, NTBinder, Table]
+
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
-def _get_stuff(db_path: PathWithMtime):
+def _get_stuff(db_path: PathWithMtime) -> DbStuff:
     get_logger().debug('Reloading DB: %s', db_path)
     # todo how to open read only?
     engine = create_engine(f'sqlite:///{db_path.path}') # , echo=True)
@@ -144,15 +149,15 @@ def _get_stuff(db_path: PathWithMtime):
     return engine, binder, table
 
 
-def get_stuff(db_path: Optional[Path]=None): # TODO better name
+def get_stuff(db_path: Optional[Path]=None) -> DbStuff: # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
     if db_path is None:
         db_path = get_db_path()
     return _get_stuff(PathWithMtime.make(db_path))
 
 
-def db_stats(*args, **kwargs) -> Json:
-    engine, binder, table = get_stuff(*args, **kwargs)
+def db_stats(db_path: Path) -> Json:
+    engine, binder, table = get_stuff(db_path)
     query = select([func.count()]).select_from(table)
     with engine.connect() as conn:
         total = list(conn.execute(query))[0][0]
@@ -161,7 +166,18 @@ def db_stats(*args, **kwargs) -> Json:
     }
 
 
-def search_common(url: str, where) -> Json:
+class Where(Protocol):
+    def __call__(self, table: Table, url: str) -> ClauseElement:
+        ...
+
+@dataclass
+class VisitsResponse:
+    original_url: Url
+    normalised_url: Url
+    visits: Any
+
+
+def search_common(url: str, where: Where) -> VisitsResponse:
     logger = get_logger()
     config = EnvConfig.get()
 
@@ -171,14 +187,6 @@ def search_common(url: str, where) -> Json:
     if not url:  # Don't eliminate a "#tag" query.
         url = original_url
     logger.info('normalised url: %s', url)
-
-    visits0: List[Any] = []
-
-    result = {
-        'orginal_url'   : original_url,
-        'normalised_url': url,
-        'visits': visits0
-    }
 
     engine, binder, table = get_stuff()
 
@@ -209,19 +217,21 @@ def search_common(url: str, where) -> Json:
 
     logger.debug('responding with %d visits', len(vlist))
     # TODO respond with normalised result, then frontent could choose how to present children/siblings/whatever?
-    result['visits'] = list(map(as_json, vlist))
-    return result
+    return VisitsResponse(
+        original_url=original_url,
+        normalised_url=url,
+        visits=list(map(as_json, vlist)),
+    )
 
 
-@hug.local()
-@hug.get ('/status')
-# NOTE: not sure why I used post in the first place... but it was used in the extension so need to keep
-@hug.post('/status')
-def status():
+# TODO hmm, seems that the extension is using post for all requests??
+# perhasp should switch to get for most endpoint
+@app.get ('/status', response_model=Json)
+@app.post('/status', response_model=Json)
+def status() -> Json:
     '''
     Ideally, status will always respond, regardless the internal state of the backend?
     '''
-    # TODO hug stats?
     logger = get_logger()
 
     db = get_db_path(check=False)
@@ -252,13 +262,15 @@ def status():
     }
 
 
-# TODO ugh. hug doesn't like return Json type??
-# fails with "TypeError: Type Dict cannot be instantiated; use dict() instead"
-@hug.local()
-@hug.post('/visits')
-def visits(
-        url: T.text,
-):
+from dataclasses import dataclass
+@dataclass
+class VisitsRequest:
+    url: Url
+
+@app.get ('/visits', response_model=VisitsResponse)
+@app.post('/visits', response_model=VisitsResponse)
+def visits(request: VisitsRequest) -> VisitsResponse:
+    url = request.url
     get_logger().info('/visited %s', url)
     return search_common(
         url=url,
@@ -270,11 +282,14 @@ def visits(
     )
 
 
-@hug.local()
-@hug.post('/search')
-def search(
-        url: T.text
-):
+@dataclass
+class SearchRequest:
+    url: Url
+
+@app.get ('/search', response_model=VisitsResponse)
+@app.post('/search', response_model=VisitsResponse)
+def search(request: SearchRequest) -> VisitsResponse:
+    url = request.url
     get_logger().info('/search %s', url)
     return search_common(
         url=url,
@@ -288,11 +303,14 @@ def search(
     )
 
 
-@hug.local()
-@hug.post('/search_around')
-def search_around(
-        timestamp: T.number,
-):
+@dataclass
+class SearchAroundRequest:
+    timestamp: float
+
+@app.get ('/search_around', response_model=VisitsResponse)
+@app.post('/search_around', response_model=VisitsResponse)
+def search_around(request: SearchAroundRequest) -> VisitsResponse:
+    timestamp = request.timestamp
     get_logger().info('/search_around %s', timestamp)
     utc_timestamp = timestamp # old 'timestamp' name is legacy
 
@@ -339,13 +357,20 @@ def as_version(version: str) -> Tuple[int, int, int]:
         return _LATEST
 
 
-# todo ugh. hug chokes over annotation types? List[Dict[str, Any]]
-@hug.local()
-@hug.post('/visited')
-def visited(
-        urls,
-        client_version: str='',
-):
+@dataclass
+class VisitedRequest:
+    urls: List[str]
+    client_version: str = ''
+
+VisitedResponse = List[Optional[Json]]
+
+@app.get ('/visited', response_model=VisitedResponse)
+@app.post('/visited', response_model=VisitedResponse)
+def visited(request: VisitedRequest) -> VisitedResponse:
+    # TODO instead switch logging to fastapi
+    urls = request.urls
+    client_version = request.client_version
+
     logger = get_logger()
     logger.info('/visited %s %s', urls, client_version)
 
@@ -385,35 +410,36 @@ SELECT queried, visits.*
     # brings down large queries to 50ms...
     with engine.connect() as conn:
         res = list(conn.execute(query))
-        present = {row[0]: binder.from_row(row[1:]) for row in res}
+        present: Dict[str, Any] = {row[0]: binder.from_row(row[1:]) for row in res}
     results = []
     for nu in nurls:
         r = present.get(nu, None)
         results.append(None if r is None else as_json(r))
 
-    if version <= (0, 11, 14):
-        # older extension versions expected boolean result here
-        results = [r is not None for r in results] # type: ignore[misc]
+    # no need for it anymore, extension has been updated since
+    # just keeping as an example
+    # if version <= (0, 11, 14):
+    #     # older extension versions expected boolean result here
+    #     results = [r is not None for r in results] # type: ignore[misc]
 
     return results
 
 
-def _run(*, port: str, quiet: bool, config: ServerConfig) -> None:
+def _run(*, host: str, port: str, quiet: bool, config: ServerConfig) -> None:
     logger = get_logger()
 
-    logger.info('Running hug with %s', config)
+    logger.info('Running server with %s', config)
 
     EnvConfig.set(config)
-    import hug.development_runner # type: ignore
-    hug.development_runner.hug(
-        file=__file__,
-        port=int(port),
-    )
+
+    import uvicorn
+    uvicorn.run('promnesia.server:app', host=host, port=int(port), log_level='debug')
 
 
 def run(args: argparse.Namespace) -> None:
     _run(
         port=args.port,
+        host=args.host,
         quiet=args.quiet,
         config=ServerConfig(
             db=args.db,
@@ -427,6 +453,16 @@ def default_db_path() -> Path:
 
 
 def setup_parser(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        '--host',
+        type=str,
+        # TODO hmm it's a somewhat unfortunate default..
+        # but for now at least keeping it for compatibility with old hug runner
+        # otherwise Promnesia might stop working for people who upgrade it
+        default='0.0.0.0',
+        help='Local IP to listen on',
+    )
+
     p.add_argument(
         '--port',
         type=str,

@@ -163,6 +163,7 @@ def do_demo(
         else:
             from .server import ServerConfig
             server._run(
+                host='127.0.0.1',
                 port=port,
                 quiet=False,
                 config=ServerConfig(
