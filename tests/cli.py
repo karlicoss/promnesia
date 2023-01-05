@@ -34,7 +34,7 @@ def test_demo() -> None:
             try:
                 res = requests.post(
                     "http://localhost:16789/search",
-                    data=dict(url="https://github.com/kaushalmodi/ox-hugo/issues")
+                    json=dict(url="https://github.com/kaushalmodi/ox-hugo/issues"),
                 ).json()
                 break
             except:

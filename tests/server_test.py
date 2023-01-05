@@ -126,7 +126,10 @@ def test_visited(tmp_path: Path) -> None:
     test_url = 'https://takeout.google.com/settings/takeout'
     with _test_helper(tmp_path) as helper:
         endp = f'http://localhost:{helper.port}/visited'
-        assert post(endp, f'''urls:=["{test_url}","http://badurl.org"]''') == [True, False]
+        res = post(endp, f'''urls:=["{test_url}","http://badurl.org"]''')
+        [r1, r2] = res
+        assert r1 is not None
+        assert r2 is None
         assert post(endp, f'''urls:=[]''') == []
 
 

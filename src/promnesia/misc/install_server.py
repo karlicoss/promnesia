@@ -93,7 +93,7 @@ def install_launchd(name: str, out: Path, launcher: str, largs: List[str]) -> No
     check_call(f'launchctl list | grep {name}', shell=True)
 
 
-def install(args) -> None:
+def install(args: argparse.Namespace) -> None:
     name = args.name
     # todo use appdirs for config dir detection
     if SYSTEM == 'Linux':
@@ -126,6 +126,7 @@ def install(args) -> None:
         'serve',
         *([] if db is None else ['--db', str(db)]),
         '--timezone', args.timezone,
+        '--host', args.host,
         '--port', args.port,
     ]
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 from typing import Union, Sequence, List, TYPE_CHECKING
 
 
@@ -59,3 +60,12 @@ def removeprefix(text: str, prefix: str) -> str:
 # TODO Deprecate instead, they shouldn't be exported form this module
 # del PathIsh
 # del Paths
+
+if sys.version_info[:2] >= (3, 8):
+    from typing import Protocol
+else:
+    if TYPE_CHECKING:
+        from typing_extensions import Protocol  # type: ignore[misc]
+    else:
+        # todo could also use NamedTuple?
+        Protocol = object
