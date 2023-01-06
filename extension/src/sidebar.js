@@ -5,7 +5,6 @@ import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options'
 import type {Options} from './options';
 import {Binder, _fmt, asClass} from './display';
 import {defensify} from './notifications';
-import {achrome} from './async_chrome'
 
 // TODO how to prevent sidebar hiding on click??
 
@@ -107,7 +106,7 @@ class Sidebar {
             // TODO hmm. not sure if defensify is gonna work from here? no access to notifications api?
             mark_visited_button.addEventListener('click', defensify(async () => {
                 mark_visited_button.classList.toggle('active');
-                await achrome.runtime.sendMessage({method: Methods.MARK_VISITED});
+                await browser.runtime.sendMessage({method: Methods.MARK_VISITED});
             }, 'mark_visited.onClick'));
             // TODO maybe highlight or just use custom class for that?
             mark_visited_button.title = "Mark visited links on the current";
@@ -119,7 +118,7 @@ class Sidebar {
             search_button.id = 'button-search';
             search_button.appendChild(cdoc.createTextNode('🔎 Search'));
             search_button.addEventListener('click', defensify(async () => {
-                await achrome.runtime.sendMessage({method: Methods.OPEN_SEARCH});
+                await browser.runtime.sendMessage({method: Methods.OPEN_SEARCH});
             }, 'open_search.onClick'));
 			search_button.title = "Search links in database";
             sidebar_toolbar.appendChild(search_button);
@@ -604,9 +603,10 @@ async function bindSidebarData(response: Visits) {
 
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
+// todo hmm this isn't used??
 // eslint-disable-next-line no-unused-vars
 function requestVisits(): void {
-    achrome.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
+    browser.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
            .then((response: {}) => {
                if (response == null) {
                    // todo why would it be?

@@ -109,17 +109,65 @@ type browser$scripting = {
 }
 
 
+type browser$runtime = {
+  getPlatformInfo: () => Promise<chrome$PlatformInfo>,
+  sendMessage: (
+    ((
+      extensionId: string,
+      message: any,
+      options?: {includeTlsChannelId?: boolean},
+    ) => Promise<any>) &
+    ((
+      message: any,
+      options?: {includeTlsChannelId?: boolean},
+    ) => Promise<any>)
+  ),
+}
+
+
+type browser$bookmarks = {
+  getTree: () => Promise<Array<chrome$BookmarkTreeNode>>,
+}
+
+
+// https://developer.chrome.com/extensions/history#type-HistoryItem
+export type browser$VisitItem = {
+    visitTime?: number,
+}
+
+export type browser$HistoryItem = {
+    url?: string,
+    lastVisitTime?: number,
+}
+
+type browser$history = {
+  getVisits: ({url: string}) => Promise<Array<browser$VisitItem>>,
+  search: (query: {|
+    text: string,
+    maxResults?: number,
+    startTime?: number,
+    endTime?: number,
+  |}) => Promise<Array<browser$HistoryItem>>,
+}
+
+
 declare var browser: {
-  storage: browser$storage,
+  bookmarks  : browser$bookmarks,
+  history    : browser$history,
+  storage    : browser$storage,
   permissions: browser$permissions,
-  tabs: browser$tabs,
-  scripting: browser$scripting,
+  tabs       : browser$tabs,
+  scripting  : browser$scripting,
+  runtime    : browser$runtime,
 }
 
 
 declare module "webextension-polyfill" {
-  declare var storage: browser$storage;
+  declare var bookmarks  : browser$bookmarks;
+  declare var history    : browser$history;
+  declare var storage    : browser$storage;
   declare var permissions: browser$permissions;
-  declare var tabs: browser$tabs;
-  declare var scripting: browser$scripting;
+  declare var tabs       : browser$tabs;
+  declare var scripting  : browser$scripting;
+  declare var runtime    : browser$runtime;
 }
