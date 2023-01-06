@@ -117,8 +117,9 @@ async function updateState (tab: chrome$Tab) {
     // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages received multiple times)
 
     // TODO only inject after blacklist check? just in case?
-    const inject = () =>
-          browser.tabs.executeScript(tabId, {file: 'browser-polyfill.js'})
+    const inject = () => Promise.resolve()
+          .then(() => browser.tabs.executeScript(tabId, {file: 'browser-polyfill.js'}))
+          .then(() => browser.tabs.executeScript(tabId, {file: 'webext-options-sync.js'}))
           .then(() => browser.tabs.executeScript(tabId, {file: 'sidebar.js'}))
     // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
     // not sure, but using deferred promises just in case

@@ -159,12 +159,33 @@ const buildPath = path.join(__dirname, 'dist', target);
 
 const options = {
   mode: dev ? 'development' : 'production',
+  node: {
+    // no idea what does it mean... https://github.com/webpack/webpack/issues/5627#issuecomment-394290231
+    // but it does get rid of some Function() which webpack generates (and which is flagged by web-ext lint)
+    // this was still necessary at times (depending on webpack imports) circa 2023
+    global: false,
+  },
   entry: {
-    background              : path.join(__dirname, './src/background'),
-    options_page            : path.join(__dirname, './src/options_page'),
-    sidebar                 : path.join(__dirname, './src/sidebar'),
-    search                  : path.join(__dirname, './src/search'),
+    background: {
+      import: path.join(__dirname, './src/background'),
+      dependOn: ['webext-options-sync'],
+    },
+    options_page: {
+      import: path.join(__dirname, './src/options_page'),
+      dependOn: ['webext-options-sync'],
+    },
+    sidebar: {
+      import: path.join(__dirname, './src/sidebar'),
+      dependOn: ['webext-options-sync'],
+    },
+    search: {
+      import: path.join(__dirname, './src/search'),
+      dependOn: ['webext-options-sync'],
+    },
     background_injector     : path.join(__dirname, './src/background_injector'),
+    'webext-options-sync': {
+      import: "webext-options-sync",
+    },
   },
   output: {
     // hmm. according to https://stackoverflow.com/a/64715069

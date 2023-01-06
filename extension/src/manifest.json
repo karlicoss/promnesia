@@ -7,7 +7,11 @@
         "sidebar.css"
     ],
     "background": {
-        "scripts": ["background.js", "browser-polyfill.js"],
+        "scripts": [
+            "browser-polyfill.js",
+            "webext-options-sync.js",
+            "background.js"
+        ],
         "persistent": true
     },
     "content_scripts": [{
