@@ -2,7 +2,6 @@
 import type {Url} from './common';
 import {Blacklisted} from './common';
 import {getOptions} from './options';
-import {achrome} from './async_chrome'
 
 
 // last resort.. because these could be annoying (also might not make sense to display globally)
@@ -71,10 +70,10 @@ export async function _showTabNotification(tabId: number, text: string, {color: 
     // TODO can it be remote script?
     text = text.replace(/\n/g, "\\n"); // ....
 
-    await achrome.tabs.executeScript(tabId, {file: 'toastify.js'})
-    await achrome.tabs.insertCSS(tabId, {file: 'toastify.css'});
+    await browser.tabs.executeScript(tabId, {file: 'toastify.js'})
+    await browser.tabs.insertCSS(tabId, {file: 'toastify.css'});
     // TODO extract toast settings somewhere...
-    await achrome.tabs.executeScript(tabId, { code: `
+    await browser.tabs.executeScript(tabId, { code: `
 Toastify({
   text: "${text}",
   duration: ${duration_ms},
