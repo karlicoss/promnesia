@@ -198,20 +198,6 @@ const options = {
           loader: 'html-loader',
           exclude: /node_modules/
       },
-      {
-          test: /node_modules\/anchorme\/dist\/browser\/anchorme.js/,
-          use: {
-              loader: path.join(__dirname, 'patcher.js'),
-              options: {
-                  patches: [
-                      /* need [] for org-mode */
-                      // https://github.com/alexcorvi/anchorme.js/blob/098843bc0d042601cff592c4f8c9f6d0424c09cd/src/regex.ts#L11
-                      {code   : '\\\\[\\\\]', // need double escaping for \...
-                       newCode: ''          } // TODO ugh. sort of flaky..
-                  ],
-              }
-          },
-      }
     ]
   },
   plugins: [

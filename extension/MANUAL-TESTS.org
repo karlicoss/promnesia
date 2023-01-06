@@ -1,0 +1,7 @@
+These are tests that aren't yet in end2end/extension unit tests
+
+* [2023-01-06 Fri 00:18] check that linkifying is working
+- go to https://wiki.openhumans.org/wiki/Personal_Science_Wiki
+- open sidebar
+- [[https://wiki.openhumans.org/wiki/Personal_Science_Wiki][Personal Science Wiki]] should be in contexts
+- *expected*: https://wiki.openhumans.org/wiki/Personal_Science_Wiki is highlighted as URL
