@@ -6,6 +6,7 @@ src/
 
 [libs]
 node_modules/flow-interfaces-chrome/interfaces/
+flow-typed/
 
 [lints]
 

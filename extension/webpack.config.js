@@ -216,6 +216,7 @@ const options = {
         // not sure if it's the right way, but I guess webpack can't guess otherwise
         { context: 'src', from: 'toastify.js'   },  // TODO my version is tweaked, right?
         { context: 'src', from: 'showvisited.js'},
+        { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.js' },
        ]
     }),
     new WebpackExtensionManifestPlugin({

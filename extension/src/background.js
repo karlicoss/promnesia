@@ -1,11 +1,13 @@
 /* @flow */
 
+// provided by the manifest
+// import * as browser from "webextension-polyfill"
+
 import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
 
-import {achrome} from './async_chrome'
 import {defensify, notifications, Notify} from './notifications'
 import {Filterlist} from './filterlist'
 import {isAndroid, allsources} from './sources'
@@ -115,12 +117,12 @@ async function updateState (tab: chrome$Tab) {
     // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages received multiple times)
 
     // TODO only inject after blacklist check? just in case?
-    const inject = () => achrome.tabs.executeScript(tabId, {file: 'sidebar.js'})
+    const inject = () => browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
     // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
     // not sure, but using deferred promises just in case
-          .then(() => achrome.tabs.insertCSS(tabId, {file: 'sidebar-outer.css'}))
-          .then(() => achrome.tabs.insertCSS(tabId, {file: 'sidebar.css'      }))
-          .then(() => achrome.tabs.insertCSS(tabId, {code: opts.position_css  }))
+          .then(() => browser.tabs.insertCSS(tabId, {file: 'sidebar-outer.css'}))
+          .then(() => browser.tabs.insertCSS(tabId, {file: 'sidebar.css'      }))
+          .then(() => browser.tabs.insertCSS(tabId, {code: opts.position_css  }))
 
 
     // NOTE: if the page is unreachable, we can't inject stuff in it
@@ -220,7 +222,7 @@ async function updateState (tab: chrome$Tab) {
     // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
     // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
     // a little hacky, but kinda works? in Firefox too apparently
-    const isOk = (await achrome.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg'
+    const isOk = (await browser.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg'
 
     // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
     const locs = visits.self_contexts().map(l => l == null ? null : l.title)
@@ -274,7 +276,7 @@ async function filter_urls(urls: Array<?Url>) {
 
 async function doToggleMarkVisited(tabId: number, {show}: {show: ?boolean} = {show: null}) {
     // first check if we need to disable TODO
-    const _should_show = await achrome.tabs.executeScript(tabId, {
+    const _should_show = await browser.tabs.executeScript(tabId, {
         code: `
 {
     let res // ?boolean
@@ -307,7 +309,7 @@ async function doToggleMarkVisited(tabId: number, {show}: {show: ?boolean} = {sh
     }
 
     // collect URLS from the page
-    const mresults = await achrome.tabs.executeScript(tabId, {
+    const mresults = await browser.tabs.executeScript(tabId, {
         code: `
      // NOTE: important to make a snapshot here.. otherwise might go in an infinite loop
      link_elements = Array.from(document.getElementsByTagName("a"))
@@ -371,13 +373,13 @@ async function doToggleMarkVisited(tabId: number, {show}: {show: ?boolean} = {sh
     }
     // todo ugh. errors inside the script (e.g. syntax errors) get swallowed..
     // TODO not sure.. probably need to inject the script once and then use a message listener or something like in sidebar??
-    await achrome.tabs.insertCSS(tabId, {
+    await browser.tabs.insertCSS(tabId, {
         file: 'showvisited.css',
     })
-    await achrome.tabs.executeScript(tabId, {
+    await browser.tabs.executeScript(tabId, {
         file: 'showvisited.js',
     })
-    await achrome.tabs.executeScript(tabId, {
+    await browser.tabs.executeScript(tabId, {
         code: `
 visited = new Map(JSON.parse(${JSON.stringify(JSON.stringify([...visited]))}))
 setTimeout(() => showMarks())
@@ -509,7 +511,7 @@ chrome.tabs.onUpdated.addListener(defensify(async (tabId: number, info, tab: chr
 
 
 export async function getActiveTab(): Promise<?chrome$Tab> {
-    const tabs = await achrome.tabs.query({
+    const tabs = await browser.tabs.query({
         currentWindow: true,
         active: true,
     })
@@ -701,7 +703,7 @@ async function globalExcludelistPrompt(): Promise<Array<Url>> {
 `;
 
     // ugh. won't work for multiple urls, prompt can only be single line...
-    const res = await achrome.tabs.executeScript(tabId, {
+    const res = await browser.tabs.executeScript(tabId, {
         code: `prompt(\`${prompt}\`, "${url}");`
     })
     if (res == null || res[0] == null) {
@@ -744,7 +746,7 @@ const AddToMarkVisitedExcludelist = {
         // TODO only call prompts if more than one? sort before showing?
         const {tabId: tabId, url: _url} = await active()
 
-        await achrome.tabs.executeScript(tabId, {
+        await browser.tabs.executeScript(tabId, {
             code: `{
 let listener = e => {
     e.stopPropagation()
