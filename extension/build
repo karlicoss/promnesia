@@ -20,6 +20,7 @@ TARGETS = [
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--release', action='store_true', help="Use release flavor of build")
+    p.add_argument('--watch'  , action='store_true')
     p.add_argument('--lint'   , action='store_true')
     p.add_argument('--publish', action='store_true', help="Publish on chrome web store/addons.mozilla.org")
 
@@ -46,11 +47,20 @@ def main():
         ], **kwargs)
 
     env = {
-        'TARGET': target,
+        'TARGET' : target,
         'RELEASE': 'YES' if args.release else 'NO',
         'PUBLISH': 'YES' if args.publish else 'NO',
+        'EXT_ID' : IDS[target],
         **os.environ,
     }
+
+    if args.watch:
+        check_call([
+            'npm', 'run', 'watch',
+        ], env=env, cwd=str(Path(__file__).absolute().parent))
+        # TODO exec instead?
+        return
+
     check_call([
         'npm', 'run', 'build',
     ], env=env, cwd=str(Path(__file__).absolute().parent))

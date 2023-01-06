@@ -13,7 +13,8 @@ const env = {
     TARGET : process.env.TARGET,
     RELEASE: process.env.RELEASE,
     PUBLISH: process.env.PUBLISH,
-};
+}
+const ext_id = process.env.EXT_ID
 
 const pkg = require('./package.json');
 const baseManifest = require('./src/manifest.json');
@@ -147,7 +148,9 @@ if (!publish && target === T.FIREFOX) {
      * Otherwise, use temporary id (or some APIs don't work, at least in firefox..)
      */
     manifestExtra.browser_specific_settings = {
-        'gecko': {'id': 'promnesia@karlicoss.github.com'}
+      gecko: {
+        id: ext_id,
+      },
     }
 }
 
@@ -156,11 +159,6 @@ const buildPath = path.join(__dirname, 'dist', target);
 
 const options = {
   mode: dev ? 'development' : 'production',
-  node: {
-    // no idea what does it mean... https://github.com/webpack/webpack/issues/5627#issuecomment-394290231
-    // but it does get rid of some Function() which webpacka apparently generates
-    global: false,
-  },
   entry: {
     background              : path.join(__dirname, './src/background'),
     options_page            : path.join(__dirname, './src/options_page'),
@@ -169,7 +167,11 @@ const options = {
     background_injector     : path.join(__dirname, './src/background_injector'),
   },
   output: {
-    publicPath: '', // https://stackoverflow.com/a/64715069
+    // hmm. according to https://stackoverflow.com/a/64715069
+    // settings publicPath: '' shouldn't be necessary anymore
+    // but still without it getting "Automatic publicPath is not supported in this browser" when trying to open sidebar
+    // whatever.
+    publicPath: '',
     path: buildPath,
     filename: '[name].js',
     // chunkFilename: '[name].bundle.js',
@@ -181,17 +183,18 @@ const options = {
     }
   },
   module: {
+    // todo no idea why is exclude: /node_modules/ necessary here???
       rules: [
       {
           test: /\.js$/,
+          loader: 'babel-loader',
           exclude: /node_modules/,
-          use: {
-              loader: 'babel-loader',
-          }
       },
       {
-          test: /\.css$/i,
+          test: /\.css$/i,  // todo why case independent??
           use: ['style-loader', 'css-loader'],
+          // hmm, if we add the exclude, codemirror.css loading isn't working???
+          // exclude: /node_modules/,
       },
       {
           test: /\.html$/,
@@ -202,14 +205,17 @@ const options = {
   },
   plugins: [
     new CleanWebpackPlugin(), // ok, respects symlinks
+
+    // without copy plugin, webpack only bundles js/json files referenced in entrypoints
     new CopyWebpackPlugin({
       patterns: [
-        { from: 'images/*'          },
-        { from: 'src/**/*.html', to: '[name][ext]'},
-        { from: 'src/**/*.css' , to: '[name][ext]'},
-        { from: 'src/toastify.js'   }, // TODO my version is tweaked, right?
-        { from: 'src/showvisited.js'},
-        // { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'},
+        { from: 'images/*.png' },
+        { context: 'src', from: '**/*.html'     },
+        { context: 'src', from: '**/*.css'      },
+        // these js files aren't entrypoints so need copying too
+        // not sure if it's the right way, but I guess webpack can't guess otherwise
+        { context: 'src', from: 'toastify.js'   },  // TODO my version is tweaked, right?
+        { context: 'src', from: 'showvisited.js'},
        ]
     }),
     new WebpackExtensionManifestPlugin({
@@ -218,8 +224,10 @@ const options = {
         extend: manifestExtra,
       }
     }),
-  ]
-};
+  ],
+  // docs claim it's the slowest but pretty fast anyway
+  devtool: 'source-map',
+}
 
 
 module.exports = options;
