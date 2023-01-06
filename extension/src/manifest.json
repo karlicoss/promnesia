@@ -7,7 +7,7 @@
         "sidebar.css"
     ],
     "background": {
-        "scripts": ["background.js"],
+        "scripts": ["background.js", "browser-polyfill.js"],
         "persistent": true
     },
     "content_scripts": [{
