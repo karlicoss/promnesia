@@ -75,14 +75,16 @@ def get_extension_page_firefox(driver: Driver) -> str:
     moz_profile = Path(driver.capabilities['moz:profile'])
     prefs_file = moz_profile / 'prefs.js'
 
-    addon_name = 'temporary_addon'
+    # addon_name = 'temporary_addon'
     # TODO ok, apparently I should add it to tips on using or something..
-    addon_name = 'promnesia@karlicoss.github.com'
+    # addon_name = 'promnesia@karlicoss.github.com'
+    # meh, hardcoded, but not clear how to extract it from profile folder...
+    addon_id = '{07c6b8e1-94f7-4bbf-8e91-26c0a8992ab5}'
 
     # doesn't appear immediately after installing somehow, so need to wait for a bit..
-    addon_id = None
+    addon_uuid = None
     for _ in range(100):
-        if addon_id is not None:
+        if addon_uuid is not None:
             break
 
         sleep(0.05)
@@ -90,14 +92,16 @@ def get_extension_page_firefox(driver: Driver) -> str:
             continue
 
         for line in prefs_file.read_text().splitlines():
+            if 'extensions.webextensions.uuids' not in line:
+                continue
             # temporary-addon\":\"53104c22-acd0-4d44-904c-22d11d31559a\"}")
-            m = re.search(addon_name + r'.....([0-9a-z-]+)."', line)
+            m = re.search(addon_id + r'.....([0-9a-z-]+)."', line)
             if m is None:
                 continue
-            addon_id = m.group(1)
+            addon_uuid = m.group(1)
             break
-    assert addon_id is not None
-    return f'moz-extension://{addon_id}'
+    assert addon_uuid is not None
+    return f'moz-extension://{addon_uuid}'
 
 # TODO could also check for errors
 

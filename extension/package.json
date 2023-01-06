@@ -12,9 +12,12 @@
     "eslint": "eslint src",
     "flow": "flow",
     "web-ext": "web-ext",
-    "release:cws": "webstore",
+    "release:cws": "chrome-webstore-upload",
     "release:amo": "web-ext-submit"
   },
+  "browserslist": [
+    "defaults and supports es6-module"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/karlicoss/promnesia.git"
