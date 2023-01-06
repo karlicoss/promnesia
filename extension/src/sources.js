@@ -19,8 +19,6 @@ import {Visit, Visits} from './common'
 import {backend} from './api'
 import {THIS_BROWSER_TAG, getOptions} from './options'
 import {normalise_url} from './normalise'
-import type {HistoryItem} from './async_chrome'
-import {achrome} from './async_chrome'
 
 
 /* todo add to settings? */
@@ -47,7 +45,7 @@ interface VisitsSource {
 }
 
 
-function* search2visits(it: Iterable<HistoryItem>): Iterator<Visit> {
+function* search2visits(it: Iterable<browser$HistoryItem>): Iterator<Visit> {
     const delay = getDelayMs()
     const now = new Date()
     for (const r of it) {
@@ -82,7 +80,7 @@ export const thisbrowser: VisitsSource = {
             return new Visits(url, url, [])
         }
 
-        const results = await achrome.history.getVisits({url: url})
+        const results = await browser.history.getVisits({url: url})
 
         // without delay you will always be seeing website as visited
         // TODO but could be a good idea to make it configurable; e.g. sometimes we do want to know immediately. so could do domain-based delay or something like that?
@@ -113,7 +111,7 @@ export const thisbrowser: VisitsSource = {
             return new Visits(url, url, [])
         }
         const nurl = normalise_url(url)
-        const results = await achrome.history.search({text: url})
+        const results = await browser.history.search({text: url})
         const visits = Array.from(search2visits(results))
         return new Visits(url, nurl, visits)
     },
@@ -128,7 +126,7 @@ export const thisbrowser: VisitsSource = {
 
         const start = (utc_timestamp_s - DELTA_BACK_S ) * 1000
         const end   = (utc_timestamp_s + DELTA_FRONT_S) * 1000
-        const results = await achrome.history.search({
+        const results = await browser.history.search({
             // NOTE: I checked and it does seem like this method takes UTC epoch (although not clear from the docs)
             // note: it wants millis
             startTime: start,
@@ -147,7 +145,7 @@ export const thisbrowser: VisitsSource = {
             }
             const nu = normalise_url(u)
             // eh. apparently URL is the only useful?
-            for (const v of await achrome.history.getVisits({url: u})) {
+            for (const v of await browser.history.getVisits({url: u})) {
                 const vt = v.visitTime || 0.0
                 if (start <= vt && vt <= end) {
                     const t = new Date(vt)
@@ -165,7 +163,7 @@ export const thisbrowser: VisitsSource = {
     },
     visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         const opts = await getOptions()
-        const res = await achrome.history.search({
+        const res = await browser.history.search({
             maxResults: opts.browserhistory_max_results,
             text: '',
         })
@@ -254,7 +252,7 @@ export const bookmarks: VisitsSource = {
             return new Visits(url, url, [])
         }
         const nurl = normalise_url(url)
-        const root = (await achrome.bookmarks.getTree())[0]
+        const root = (await browser.bookmarks.getTree())[0]
         const all = bookmarksContaining(nurl, root, null)
         const visits = Array.from(bookmarks2visits(all))
         return new Visits(url, nurl, visits)
@@ -272,7 +270,7 @@ export const bookmarks: VisitsSource = {
             // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Browser_support_for_JavaScript_APIs#bookmarks :(
             return new Visits(durl, ndurl, [])
         }
-        const root = (await achrome.bookmarks.getTree())[0]
+        const root = (await browser.bookmarks.getTree())[0]
         const all = bookmarksContaining('', root, null)
         // todo for the sake of optimization might be better to do this before building all the Visit objects..
         // same in visited method actually
@@ -294,7 +292,7 @@ export const bookmarks: VisitsSource = {
             return res
         }
 
-        const root = (await achrome.bookmarks.getTree())[0]
+        const root = (await browser.bookmarks.getTree())[0]
         const all = bookmarksContaining('', root, null)
 
         const vmap: Map<Url, Visit> = new Map()
@@ -454,7 +452,7 @@ for (let i = 0; i < 100; i++) {
 
 export async function isAndroid(): Promise<boolean> {
     try {
-        const platform = await achrome.runtime.getPlatformInfo()
+        const platform = await browser.runtime.getPlatformInfo()
         return platform.os === 'android'
     } catch (error) {
         // defensive just in case since isAndroid is kinda crucial for extension functioning
