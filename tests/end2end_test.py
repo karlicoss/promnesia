@@ -393,7 +393,7 @@ class Sidebar(NamedTuple):
 
         with measure('Sidebar.open') as m:
             while not self.visible:
-                assert m() <= 10 * 1000, 'timeout'
+                assert m() <= 10, 'timeout'
                 sleep(0.001)
 
     def close(self) -> None:
@@ -401,7 +401,7 @@ class Sidebar(NamedTuple):
         self.helper.activate()
         with measure('Sidebar.close') as m:
             while self.visible:
-                assert m() <= 10 * 1000, 'timeout'
+                assert m() <= 10, 'timeout'
                 sleep(0.001)
 
     @property
@@ -617,9 +617,6 @@ def browsers(*br: Browser) -> IdType:
             return f(*args, **kwargs)
         return ff
     return dec
-
-
-PYTHON_DOC_URL = 'file:///usr/share/doc/python3/html/index.html'
 
 
 @pytest.fixture
@@ -978,38 +975,60 @@ def test_new_background_tab(tmp_path: Path, browser: Browser) -> None:
 
 # TODO shit disappears on chrome and present on firefox
 @browsers()
-def test_local_page(tmp_path: Path, driver: Driver) -> None:
-    if driver.name == 'chrome':
+@pytest.mark.parametrize(
+    'base_url',
+    [
+        'file:///usr/share/doc/python3/html',
+        'https://docs.python.org/3',
+    ],
+    ids=[
+        'local',
+        'web',
+    ],
+)
+def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> None:
+    if 'file:' in base_url and driver.name == 'chrome':
         pytest.skip("TODO used to work, but must have brokend after some Chrome update?")
         # seems broken on any local page -- only transparent sidebar frame is shown
         # the issue is that contentDocument.body is null -- no idea why
 
-    tutorial = 'file:///usr/share/doc/python3/html/tutorial/index.html'
+    tutorial  = f'{base_url}/tutorial/index.html'
+    reference = f'{base_url}/reference/index.html'
+    # reference has a link to tutorial (so will display a context)
+
     urls = {
-         tutorial                                                : 'TODO read this',
-        'file:///usr/share/doc/python3/html/reference/index.html': None,
+        tutorial : 'TODO read this',
+        reference: None,
     }
     indexer = index_urls(urls)
-    url = PYTHON_DOC_URL
+    url = reference
     with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver) as helper:
         # TODO hmm so this bit is actually super fast, takes like 1.5 secs
         # need to speed up the preparation
         helper.driver.get(url)
-        confirm('grey icon')
+        confirm("grey icon. sidebar shouldn't be visible")
         helper.driver.get(tutorial)
 
         helper._sidebar.open()
-        confirm('green icon. sidebar should show one visit')
+        confirm("green icon. sidebar should open and show one visit")
 
-        # TODO it's always guaranteed to work? https://stackoverflow.com/questions/27626783/python-selenium-browser-driver-back
+        if driver.name == 'chrome':
+            pytest.skip('TODO chrome is broken here, loses sidebar ifram somewhere (same in prod version)')
+
         helper.driver.back()
         assert not helper._sidebar.visible
-        confirm('grey/purple icon, should be no sidebar')
+        confirm("grey/purple icon, sidebar shouldn't be visible")
 
-        # fIXME fuck. failing here to load anchorme as well as webext-options-sync? ugh.
+        # FIXME fuck. failing here to load anchorme as well as webext-options-sync? ugh.
         helper.driver.forward()
+        # TODO hmm failed here once?? might need timeout??
         assert helper._sidebar.visible
         confirm('green icon, sidebar visible')
+
+        pytest.skip('TODO: we have an actual bug here, seems that sidebar stops closing')
+
+        helper._sidebar.close()
+        confirm('green icon, sidebar is closed')
 
 
 @browsers()
