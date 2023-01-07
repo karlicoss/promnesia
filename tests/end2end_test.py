@@ -217,10 +217,8 @@ def configure_extension(
 
     set_host(driver=driver, host=host, port=port)
 
-    # dots = driver.find_element(By.ID, 'dots_id')
-    # if dots.is_selected() != show_dots:
-    #     dots.click()
-    # assert dots.is_selected() == show_dots
+    if show_dots is not None:
+        set_checkbox('mark_visited_always_id', show_dots)
 
     # TODO not sure, should be False for demos?
     set_checkbox('verbose_errors_id', verbose_errors)
@@ -883,7 +881,7 @@ def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
         'en.wikipedia.org/wiki/Transpose'                   : None,
     }
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
-    with run_server(tmp_path=tmp_path, indexer=index_urls(visited), driver=driver, show_dots=True) as helper:
+    with run_server(tmp_path=tmp_path, indexer=index_urls(visited), driver=driver, show_dots=False) as helper:
         driver.get(test_url)
         helper.mark_visited()
         sleep(1)  # marks are async, wait till it marks
@@ -1148,6 +1146,49 @@ def test_duplicate_background_pages(tmp_path: Path, driver: Driver) -> None:
 #     at notify (VM2056 notifications.js:17)
 #     at notifyError (VM2056 notifications.js:41)
 
+
+@browsers()
+def test_multiple_page_updates(tmp_path: Path, driver: Driver) -> None:
+    # on some pages, onUpdated is triggered multiple times (because of iframes or perhaps something else??)
+    # which previously resulted in flickering sidebar/performance degradation etc, so it's a regression test against this
+    # TODO would be nice to hook to the backend and check how many requests it had...
+    url = 'https://github.com/karlicoss/promnesia/projects/1'
+    indexer = index_urls([
+        ('https://github.com/karlicoss/promnesia', 'some comment'),
+        ('https://github.com/karlicoss/promnesia/projects/1', 'just a note for the sidebar'),
+    ])
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver, notify_contexts=True, show_dots=True) as helper:
+        driver.get(url)
+
+        had_toast = False
+        # TODO need a better way to check this...
+        for _ in range(50):
+            toasts = driver.find_elements(By.CLASS_NAME, 'toastify')
+            if len(toasts) == 1:
+                had_toast = True
+            assert len(toasts) <= 1
+            sleep(0.1)
+        assert had_toast
+
+        helper._sidebar.open()
+        helper._sidebar.close()
+
+        xpath = '//a[@href = "https://github.com/karlicoss/promnesia"]'
+        links_to_mark = driver.find_elements(By.XPATH, xpath)
+        assert len(links_to_mark) > 2  # sanity check
+        for l in links_to_mark:
+            assert 'promnesia-visited' in l.get_attribute('class')
+            # TODO would be nice to test clicking on them...
+
+        # meh...
+        header_link = driver.find_elements(By.XPATH, '//a[text() = "promnesia" and @href = "/karlicoss/promnesia"]')[0]
+        # hmm a bit crap, but works!!
+        header_link.find_element(By.XPATH, './../..').find_element(By.CLASS_NAME, 'promnesia-visited-toggler').click()
+
+        popup = driver.find_element(By.CLASS_NAME, 'context')
+        assert popup.text == 'some comment'
+
+        assert is_visible(driver, popup)
 
 
 # TODO FIXME need to test racey conditions _while_ page is loading, results in this 'unexpected error occured'?
