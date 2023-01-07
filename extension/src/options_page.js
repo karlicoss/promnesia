@@ -3,30 +3,7 @@ import {unwrap} from './common'
 import {getStoredOptions, setOptions, resetOptions} from './options'
 import {defensifyAlert, alertError} from './notifications'
 
-// re: codemirror imports
-// err. that's a bit stupid, js injected css? surely it can be done via webpack and static files...
-// TODO right, I suppose that's why I need style bunder?
-// turned out more tedious than expected... https://github.com/codemirror/CodeMirror/issues/5484#issue-338185331
-// $FlowFixMe[cannot-resolve-module]
-import {EditorView, minimalSetup} from "codemirror"
-// $FlowFixMe[cannot-resolve-module]
-import {highlightActiveLine, lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
-// $FlowFixMe[cannot-resolve-module]
-import {indentOnInput, bracketMatching} from "@codemirror/language"
-// $FlowFixMe[cannot-resolve-module]
-import {highlightSelectionMatches} from "@codemirror/search"
-// $FlowFixMe[cannot-resolve-module]
-import {autocompletion} from "@codemirror/autocomplete"
 
-// $FlowFixMe[cannot-resolve-module]
-import {Compartment} from "@codemirror/state"
-// $FlowFixMe[cannot-resolve-module]
-import {css} from "@codemirror/lang-css"
-// $FlowFixMe[cannot-resolve-module]
-import {javascript} from "@codemirror/lang-javascript"
-
-
-// helpers for options
 class Option<T> {
     id: string
 
@@ -34,11 +11,12 @@ class Option<T> {
         this.id = id
     }
 
-    set value(x: T): void {
-        throw Error('Not implemented')
+    async setValue(_: T): Promise<void> {
+        throw new Error("AAA")
     }
-    get value(): T {
-        throw Error('Not implemented')
+
+    async getValue(): Promise<T> {
+        throw new Error("AAA")
     }
 
     get element(): HTMLInputElement {
@@ -47,37 +25,37 @@ class Option<T> {
 }
 
 class Simple extends Option<string> {
-    set value(x: string): void {
+    async setValue(x: string): Promise<void> {
         this.element.value = x
     }
 
-    get value(): string {
+    async getValue(): Promise<string> {
         return this.element.value
     }
 }
 
 class ONumber extends Option<number> {
-    set value(x: number): void {
+    async setValue(x: number): Promise<void> {
         this.element.value = String(x)
     }
-    get value(): number {
+    async getValue(): Promise<number> {
         return parseInt(this.element.value)
     }
 }
 
 class Toggle extends Option<boolean> {
-    set value(x: boolean): void {
+    async setValue(x: boolean): Promise<void> {
         this.element.checked = x
     }
 
-    get value(): boolean {
+    async getValue(): Promise<boolean> {
         return this.element.checked
     }
 }
 
 // none means 'rely on the default set by developer'
 class IToggle extends Option<?boolean> {
-    set value(x: ?boolean): void {
+    async setValue(x: ?boolean): Promise<void> {
         if (x == null) {
             this.element.indeterminate = true
         } else {
@@ -85,7 +63,7 @@ class IToggle extends Option<?boolean> {
         }
     }
 
-    get value(): ?boolean {
+    async getValue(): Promise<?boolean> {
         if (this.element.indeterminate) {
             return null
         } else {
@@ -101,19 +79,36 @@ class Editor extends Option<string> {
         this.mode = mode
     }
 
-    set value(x: string): void {
-        const editor = this.editor
+    async setValue(x: string): Promise<void> {
+        const editor = await this.editor()
         editor.dispatch({
             changes: {from: 0, to: editor.state.doc.length, insert: x}
         })
     }
 
-    get value(): string {
-        return this.editor.state.doc.toString()
+    async getValue(): Promise<string> {
+        return (await this.editor()).state.doc.toString()
     }
 
     // $FlowFixMe[missing-local-annot]
-    bind(value: string): void {
+    async bind(value: string): Promise<void> {
+        // $FlowFixMe[cannot-resolve-module]
+        const {EditorView, minimalSetup} = await import(/* webpackChunkName: "codermirror" */"codemirror")
+        // $FlowFixMe[cannot-resolve-module]
+        const {highlightActiveLine, lineNumbers, highlightActiveLineGutter} = await import (/* webpackChunkName: "codermirror" */"@codemirror/view")
+        // $FlowFixMe[cannot-resolve-module]
+        const {indentOnInput, bracketMatching} = await import (/* webpackChunkName: "codermirror" */"@codemirror/language")
+        // $FlowFixMe[cannot-resolve-module]
+        const {highlightSelectionMatches} = await import (/* webpackChunkName: "codermirror" */"@codemirror/search")
+        // $FlowFixMe[cannot-resolve-module]
+        const {autocompletion} = await import (/* webpackChunkName: "codermirror" */"@codemirror/autocomplete")
+        // $FlowFixMe[cannot-resolve-module]
+        const {Compartment} = await import (/* webpackChunkName: "codermirror" */"@codemirror/state")
+        // $FlowFixMe[cannot-resolve-module]
+        const {css} = await import (/* webpackChunkName: "codermirror" */"@codemirror/lang-css")
+        // $FlowFixMe[cannot-resolve-module]
+        const {javascript} = await import (/* webpackChunkName: "codermirror" */"@codemirror/lang-javascript")
+
         // see https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
         // and https://codemirror.net/docs/ref/
         const extra_extensions = [
@@ -144,7 +139,10 @@ class Editor extends Option<string> {
         })
     }
 
-    get editor(): EditorView {
+    // $FlowFixMe[missing-local-annot]
+    async editor() {
+        // $FlowFixMe[cannot-resolve-module]
+        const {EditorView} = await import(/* webpackChunkName: "codermirror" */"codemirror")
         return unwrap(EditorView.findFromDOM(this.element))
     }
 }
@@ -172,18 +170,17 @@ const o_extra_css    = new Editor('extra_css_id'   , {mode: 'css' })
 
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await getStoredOptions()
-    o_host          .value = opts.host
-    o_token         .value = opts.token
-    o_use_bookmarks .value = opts.use_bookmarks
-    o_use_browserhistory.value = opts.use_browserhistory
-    o_browserhistory_max_results.value = opts.browserhistory_max_results
-
-    o_verbose_errors.value = opts.verbose_errors_on
-    o_contexts_popup.value = opts.contexts_popup_on
-    o_sidebar_detect_urls.value = opts.sidebar_detect_urls
-    o_sidebar_always_show.value = opts.sidebar_always_show
-    o_highlights_on .value = opts.highlight_on
-    o_mark_visited_always.value = opts.mark_visited_always
+    await o_host                      .setValue(opts.host)
+    await o_token                     .setValue(opts.token)
+    await o_use_bookmarks             .setValue(opts.use_bookmarks)
+    await o_use_browserhistory        .setValue(opts.use_browserhistory)
+    await o_browserhistory_max_results.setValue(opts.browserhistory_max_results)
+    await o_verbose_errors            .setValue(opts.verbose_errors_on)
+    await o_contexts_popup            .setValue(opts.contexts_popup_on)
+    await o_sidebar_detect_urls       .setValue(opts.sidebar_detect_urls)
+    await o_sidebar_always_show       .setValue(opts.sidebar_always_show)
+    await o_highlights_on             .setValue(opts.highlight_on)
+    await o_mark_visited_always       .setValue(opts.mark_visited_always)
 
     // TODO it should know the syntax? or infer from the class??
     for (const [el, value] of [
@@ -194,7 +191,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
         [o_position_css            , opts.position_css            ],
         [o_extra_css               , opts.extra_css               ],
     ]) {
-        el.bind(value)
+        await el.bind(value)
     }
 
     /* a marker for tests */
@@ -230,23 +227,23 @@ unwrap(document.getElementById(
 )).addEventListener('click', defensifyAlert(async () => {
     // todo make opts active object so we don't query unnecessary things like blacklist every time?
     const opts = {
-        host               : o_host              .value,
-        token              : o_token             .value,
-        use_bookmarks      : o_use_bookmarks     .value,
-        use_browserhistory : o_use_browserhistory.value,
-        browserhistory_max_results: o_browserhistory_max_results.value,
-        verbose_errors_on  : o_verbose_errors.value,
-        contexts_popup_on  : o_contexts_popup.value,
-        sidebar_detect_urls: o_sidebar_detect_urls.value,
-        sidebar_always_show: o_sidebar_always_show.value,
-        highlight_on       : o_highlights_on .value,
-        mark_visited_always: o_mark_visited_always.value,
-        mark_visited_excludelist: o_mark_visited_excludelist.value,
-        blacklist               : o_global_excludelist      .value,
-        global_excludelists_ext : o_global_excludelists_ext .value,
-        src_map            : o_src_map       .value,
-        position_css       : o_position_css  .value,
-        extra_css          : o_extra_css     .value,
+        host                      : await (o_host                      .getValue()),
+        token                     : await (o_token                     .getValue()),
+        use_bookmarks             : await (o_use_bookmarks             .getValue()),
+        use_browserhistory        : await (o_use_browserhistory        .getValue()),
+        browserhistory_max_results: await (o_browserhistory_max_results.getValue()),
+        verbose_errors_on         : await (o_verbose_errors            .getValue()),
+        contexts_popup_on         : await (o_contexts_popup            .getValue()),
+        sidebar_detect_urls       : await (o_sidebar_detect_urls       .getValue()),
+        sidebar_always_show       : await (o_sidebar_always_show       .getValue()),
+        highlight_on              : await (o_highlights_on             .getValue()),
+        mark_visited_always       : await (o_mark_visited_always       .getValue()),
+        mark_visited_excludelist  : await (o_mark_visited_excludelist  .getValue()),
+        blacklist                 : await (o_global_excludelist        .getValue()),
+        global_excludelists_ext   : await (o_global_excludelists_ext   .getValue()),
+        src_map                   : await (o_src_map                   .getValue()),
+        position_css              : await (o_position_css              .getValue()),
+        extra_css                 : await (o_extra_css                 .getValue()),
     };
     await setOptions(opts);
     alert("Saved!");
@@ -276,8 +273,8 @@ function fetchTimeout(url: string, options: any, timeout: ?number): Promise<any>
 }
 
 unwrap(document.getElementById('backend_status_id')).addEventListener('click', defensifyAlert(async() => {
-    const host  = o_host .value
-    const token = o_token.value
+    const host  = await o_host .getValue()
+    const token = await o_token.getValue()
 
     const second = 1000;
     await fetchTimeout(`${host}/status`, {
