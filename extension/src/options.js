@@ -1,11 +1,6 @@
 /* @flow */
 import {getBrowser} from './common'
 
-// $FlowFixMe
-import OptionsSync from 'webext-options-sync';
-
-
-
 /* NOTE: options can only be renamed in-between store releases */
 /* maybe later will bother with migrations for consistent naming, but that would require tests first */
 
@@ -254,20 +249,19 @@ function defaultOptions(): StoredOptions {
 }
 
 
-// TODO mm. don't really like having global object, but seems that it's easiest way to avoid race conditions
-// TODO https://github.com/fregante/webext-options-sync/issues/38 -- fixed now
-const _options = new OptionsSync({
-    defaults: defaultOptions(),
-});
-
-
-function optSync() {
-    return _options;
+async function optSync() {
+    // uhh.. for some reason await import here works with jest
+    // whereas static import on top of file doesn't??
+    // $FlowFixMe
+    const {default: OptionsSync} = await import('webext-options-sync')
+    return new OptionsSync({
+        defaults: defaultOptions(),
+    })
 }
 
 // gets the actual raw values that user set, just for the options page
 export async function getStoredOptions(): Promise<StoredOptions> {
-    const r = await optSync().getAll()
+    const r = await (await optSync()).getAll()
     let smap = r.src_map
     if (typeof smap !== 'string') {
         // old format, we used to keep as a map
@@ -292,17 +286,17 @@ export async function getOptions(): Promise<Options> {
 
 // TODO would be nice to accept a substructure of Options??
 export async function setOptions(opts: StoredOptions) {
-    const os = optSync()
+    const os = await optSync()
     await os.set(opts)
 }
 
 export async function setOption(opt: Opt1 | Opt2): Promise<void> {
-    const os = optSync()
+    const os = await optSync()
     await os.set(opt)
 }
 
 export async function resetOptions(): Promise<void> {
-    const os = optSync()
+    const os = await optSync()
     await os.setAll({})
 }
 

@@ -35,7 +35,7 @@
   "dependencies": {
     "anchorme": "github:karlicoss/anchorme.js#promnesia",
     "codemirror": "^5.48.2",
-    "webext-options-sync": "^1.0.0"
+    "webext-options-sync": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",

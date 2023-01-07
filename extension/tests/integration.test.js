@@ -1,3 +1,10 @@
+/*
+ * Ugh FFS.
+ * NODE_OPTIONS=--experimental-vm-modules npm run test is working much better with ES6 imports/node dependenceis
+ * but it segfaults every other time
+ * https://github.com/nodejs/node/issues/35889
+ */
+
 import {setOptions, getOptions} from '../src/options'
 
 global.chrome = {
