@@ -1003,6 +1003,9 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # need to speed up the preparation
         helper.driver.get(url)
         confirm("grey icon. sidebar shouldn't be visible")
+
+        sleep(1)  # workaround for https://github.com/karlicoss/promnesia/issues/295
+        # hopefully we can get rid of it after switching to webNavigation instead of onUpdated callbacks
         helper.driver.get(tutorial)
 
         helper._sidebar.open()
