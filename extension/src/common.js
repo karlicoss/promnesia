@@ -15,6 +15,7 @@ export opaque type NaiveDate: Date = Date;
 
 export function unwrap<T>(x: ?T): T {
     if (x == null) {
+        console.trace("undefined or null")  // print trace as well, so it's easier to find out what was null
         throw new Error("undefined or null!")
     }
     return x

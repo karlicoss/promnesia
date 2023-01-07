@@ -199,7 +199,6 @@ class Sidebar {
 
         const sidebar = doc.createElement('iframe'); this.body.appendChild(sidebar);
         sidebar.src = '';
-        sidebar.id = PROMNESIA_FRAME_ID;
 
 
         // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..
@@ -221,8 +220,9 @@ class Sidebar {
         // unless there is some sort of race condition?
         // requestVisits();
 
-
-        return sidebar;
+        // "publish" the frame, so other components can get it by that id
+        sidebar.id = PROMNESIA_FRAME_ID
+        return sidebar
     }
 
 }
