@@ -328,3 +328,9 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
         return fetch_typed(url).then(rejectIfHttpError)
     }
 }
+
+
+// useful for debugging
+export function uuid(): string {
+    return URL.createObjectURL(new Blob([])).substr(-36)
+}

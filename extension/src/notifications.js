@@ -39,21 +39,27 @@ export function alertError(obj: any) {
     alert(message);
 }
 
-export function defensify(pf: (...any) => Promise<any>, name: string): (any) => Promise<any> {
+
+export function defensify(pf: (...any) => Promise<any>, name: string): (...any) => Promise<void> {
     const fname = pf.name // hopefully it's always present?
-    return (...args) => pf(...args).catch((err) => {
-        console.error('function "%s" %s failed: %o', fname, name, err);
+    const error_handler = (err: Error) => {
+        console.error('function "%s" %s failed: %o', fname, name, err)
         getOptions().then(opts => {
             if (opts.verbose_errors_on) {
-                notifyError(err, 'defensify');
+                notifyError(err, 'defensify')
             } else {
-                console.warn("error notification is suppressed by 'verbose_errors' option");
+                console.warn("error notification is suppressed by 'verbose_errors' option")
             }
-        });
-    });
+        })
+    }
+    return (...args) => pf(...args).then(() => {
+        // suppress return values, since the defensive error handler 'erases; the type anyway'
+        return
+    }).catch(error_handler)
 }
 
 
+// TODO return type should be void here too...
 export function defensifyAlert(pf: (...any) => Promise<any>): (any) => Promise<any> {
     return (...args) => pf(...args).catch(alertError);
 }

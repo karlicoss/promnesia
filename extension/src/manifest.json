@@ -32,6 +32,7 @@
 
         "tabs",
         "activeTab",
+        "webNavigation",
 
         "notifications"
     ],
