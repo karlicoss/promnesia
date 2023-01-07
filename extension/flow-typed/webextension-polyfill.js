@@ -150,24 +150,46 @@ type browser$history = {
   |}) => Promise<Array<browser$HistoryItem>>,
 }
 
+// https://developer.chrome.com/docs/extensions/reference/webNavigation/#type-onCompleted-callback-details
+type browser$WebNavigationDetail = {
+    frameId: number,
+    tabId: number,
+    url?: string,
+}
+
+type browser$WebNavigationX = {
+  addListener(cb: (detail: browser$WebNavigationDetail) => Promise<void>): void,
+}
+
+type browser$webNavigation = {
+  onBeforeNavigate        : browser$WebNavigationX,
+  onCompleted             : browser$WebNavigationX,
+  onCommitted             : browser$WebNavigationX,
+  onTabReplaced           : browser$WebNavigationX,
+  onCreateNavigationTarget: browser$WebNavigationX,
+  onDOMContentLoaded      : browser$WebNavigationX,
+}
+
 
 declare var browser: {
-  bookmarks  : browser$bookmarks,
-  history    : browser$history,
-  storage    : browser$storage,
-  permissions: browser$permissions,
-  tabs       : browser$tabs,
-  scripting  : browser$scripting,
-  runtime    : browser$runtime,
+  bookmarks    : browser$bookmarks,
+  history      : browser$history,
+  storage      : browser$storage,
+  permissions  : browser$permissions,
+  tabs         : browser$tabs,
+  scripting    : browser$scripting,
+  runtime      : browser$runtime,
+  webNavigation: browser$webNavigation,
 }
 
 
 declare module "webextension-polyfill" {
-  declare var bookmarks  : browser$bookmarks;
-  declare var history    : browser$history;
-  declare var storage    : browser$storage;
-  declare var permissions: browser$permissions;
-  declare var tabs       : browser$tabs;
-  declare var scripting  : browser$scripting;
-  declare var runtime    : browser$runtime;
+  declare var bookmarks    : browser$bookmarks;
+  declare var history      : browser$history;
+  declare var storage      : browser$storage;
+  declare var permissions  : browser$permissions;
+  declare var tabs         : browser$tabs;
+  declare var scripting    : browser$scripting;
+  declare var runtime      : browser$runtime;
+  declare var webNavigation: browser$webNavigation;
 }

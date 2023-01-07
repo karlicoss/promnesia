@@ -4,7 +4,7 @@
 // import * as browser from "webextension-polyfill"
 
 import type {Url, SearchPageParams} from './common';
-import {Visit, Visits, Blacklisted, unwrap, Methods} from './common'
+import {Visit, Visits, Blacklisted, unwrap, Methods, uuid} from './common'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
 
@@ -13,6 +13,11 @@ import {Filterlist} from './filterlist'
 import {isAndroid, allsources} from './sources'
 
 const isMobile = isAndroid;
+
+
+// useful for debugging
+const UUID = uuid()
+console.info('[promnesia]: running background page with UUID %s', UUID)
 
 
 async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction>> {
@@ -37,6 +42,12 @@ type IconStyle = {
     title: string,
     text: string,
 }
+
+
+type TabUrl = {|
+    url: string,
+    id : number,
+|}
 
 
 // TODO this can be tested?
@@ -101,9 +112,8 @@ function getIconStyle(result: Result): IconStyle {
 }
 
 
-async function updateState (tab: chrome$Tab) {
-    const url = unwrap(tab.url);
-    const tabId = unwrap(tab.id);
+async function updateState(tab: TabUrl): Promise<void> {
+    const {url: url, id: tabId} = tab
 
     if (ignored(url)) {
         // todo reflect in the sidebar/popup?
@@ -429,91 +439,63 @@ function ignored(url: ?string): ?string {
     return null
 }
 
-/*
-// TODO ehh... not even sure that this is correct thing to do...
-// $FlowFixMe
-chrome.webNavigation.onDOMContentLoaded.addListener(detail => {
-    get_options(opts => {
-        if (!opts.dots) {
-            return;
-        }
-        const url = unwrap(detail.url);
-        if (detail.frameId != 0) {
-            ldebug('ignoring child iframe for %s', url);
-            return;
-        }
 
-        if (ignored(url)) {
-            ldebug("ignoring %s", url);
-            return;
-        }
-        // https://kk.org/thetechnium/
-        ldebug('finished loading DOM %s', detail);
+/* Some info about webNavigation callbacks
+- opening new tab, typing https://example.com/ and pressing enter
+  before -> committed -> domloaded -> completed
+- opening in new back tab -- seems same as above
+- ctrl-shift-t -- same as above
+- reloading: same as above, the different thing is it has trabsitionType: reload
+- clicking a page link: same as above, transitionType: link
+- pressing "back" or "forward"
+  different events before -> commit -> complete (so no domloaded)
+  type: reload, qualifiers: back
 
-        markVisited(detail.tabId, opts);
-        // updateState();
-    });
-});
-*/
+  TODO: might be interesting to start loading things in "before" instead -- could update icon etc earlier?
+ **/
+// TODO maybe best to add filter object so the callback doesn't fire at all
+browser.webNavigation.onCompleted.addListener(defensify(async (detail: browser$WebNavigationDetail) => {
+    const fid = detail.frameId
+    const url = detail.url
+    if (fid == null || url == null) {
+        return
+    }
+    if (fid != 0) {
+        return
+    }
 
-// chrome.tabs.onReplaced.addListener(updateState);
-
-// $FlowFixMe
-chrome.tabs.onUpdated.addListener(defensify(async (tabId: number, info, tab: chrome$Tab) => {
-    // too spammy in logs
-    delete tab.favIconUrl
-    delete info.favIconUrl
-    //
-    console.debug('onUpdated %o %o', tab, info)
-
-    const url = tab.url
     const ireason = ignored(url)
     if (ireason != null) {
         /* on Vivaldi I've seen url being "" */
-        console.debug('onUpdated %s: ignoring, reason: %s', url, ireason)
-    }
-    // right, tab updated triggered quite a lot, e.g. when the title is blinking
-    // ok, so far there are basically two cases
-    // 1. you open new tab. in that case 'url' won't be passed but onDomContentLoaded will be triggered
-    // 2. you navigate within the same tab, e.g. on youtube. then url will be passed, but onDomContentLoaded doesn't trigger. TODO not sure if it's always the case. maybe it's only YT
-    // TODO shit, so we might need to hide previous dots? ugh...
-
-    // TODO vvvv these might need to be cleaned up; not sure how relevant...
-    // page refresh: loading -> complete (no url at any point)
-    // clicking on link: loading (url) -> complete
-    // opening new link: loading -> loading (url) -> complete
-    // ugh. looks like 'complete' is the most realiable???
-    // but, I checked with 'complete' and sometimes it would reload many things with loading -> complete..... shit.
-
-    // also if you, say, go to web.telegram.org it's gonna show multiple notifications due to redirect... but perhaps this can just be suppressed..
-
-    if (info['status'] != 'complete') {
+        // TODO check "" here??
         return
     }
-    console.info('requesting! %s', url)
+
+    console.debug('webNavigation.onCompleted: %o %o', uuid, detail)
+
     try {
-        await updateState(tab);
+        await updateState({url: url, id: detail.tabId})
     } catch (error) {
-        const message = error.message;
+        const message = error.message
         if (message == null) {
-            throw error;
+            throw error
         }
 
         if (message.includes('Invalid tab ID')) {
-            console.warn('Error %o ignored; most likely due to closed tab', error);
-            return;
+            console.warn('Error %o ignored; most likely due to closed tab', error)
+            return
         }
         if (message.includes('An unexpected error occurred')) {
-            console.warn('Error %o ignored; presumably bug in Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1397667', error);
+            console.warn('Error %o ignored; presumably bug in Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1397667', error)
             // also that https://bugzilla.mozilla.org/show_bug.cgi?id=1290016
-            return;
+            return
         }
-        throw error;
+        throw error
     }
-}, 'onUpdated'));
+}, 'webNavigation.onCompleteed'))
 
 
-export async function getActiveTab(): Promise<?chrome$Tab> {
+export async function getActiveTab(): Promise<?TabUrl> {
     const tabs = await browser.tabs.query({
         currentWindow: true,
         active: true,
@@ -526,7 +508,10 @@ export async function getActiveTab(): Promise<?chrome$Tab> {
         console.error("Multiple active tabs: %o", tabs) // TODO handle properly?
     }
     const tab = tabs[0]
-    return tab
+    if (tab.url == null || tab.id == null) {
+        return null // meh..
+    }
+    return {url: tab.url, id: tab.id}
 }
 
 
@@ -536,7 +521,7 @@ type ShouldProcess = {|
 |}
 
 // check if page needs handling and notify suer if/why it can't be processed
-async function shouldProcessPage(tab: ?chrome$Tab): Promise<?ShouldProcess> {
+async function shouldProcessPage(tab: ?TabUrl): Promise<?ShouldProcess> {
     if (tab == null) {
         await notifications.page_ignored(null, null, "Couldn't determine current tab: must be a special page (or a bug?)")
         return
@@ -629,7 +614,7 @@ const onMessageCallback = async (msg: any) => { // TODO not sure if should defen
 }
 
 
-export async function toggleSidebarOnTab(tab: chrome$Tab) {
+export async function toggleSidebarOnTab(tab: TabUrl) {
     const should = await shouldProcessPage(tab)
     if (should == null) {
         return
@@ -685,17 +670,13 @@ type MenuInfo = {
 
 
 async function active(): Promise<TabUrl> {
-    const atab = unwrap(await getActiveTab())
-    return {
-        tabId: unwrap(atab.id ),
-        url  : unwrap(atab.url),
-    }
+    return unwrap(await getActiveTab())
 }
 
 
 async function globalExcludelistPrompt(): Promise<Array<Url>> {
     // NOTE: needs to take active tab becaue tab isn't present in the 'info' object if it was clicked from the launcher etc.
-    const {tabId: tabId, url: url} = await active()
+    const {id: tabId, url: url} = await active()
     let prompt = `Global excludelist. Supported formats:
 - domain.name, e.g.: web.telegram.org
       Will exclude whole Telegram website.
@@ -721,7 +702,7 @@ async function handleAddToGlobalExcludelist() {
     if (added.length == 0) {
         return
     }
-    const {tabId: tabId, url: _url} = await active()
+    const {id: tabId, url: _url} = await active()
     // TODO not sure if it should be normalised? just rely on regexes, it should be fine 99% of time?
     console.debug('excluding %o', added)
 
@@ -738,16 +719,10 @@ async function handleAddToGlobalExcludelist() {
     await setOption({blacklist: blacklist})
 }
 
-type TabUrl = {|
-    tabId: number,
-    url: string,
-|}
-
-
 const AddToMarkVisitedExcludelist = {
     zapper: async function () {
         // TODO only call prompts if more than one? sort before showing?
-        const {tabId: tabId, url: _url} = await active()
+        const {id: tabId, url: _url} = await active()
 
         await browser.tabs.executeScript(tabId, {
             code: `{
@@ -806,7 +781,7 @@ window.addEventListener('keydown', cancel)
     },
     add: async function(urls: Array<Url>) {
         // TODO filter against existing list first? not sure + global list??
-        const {tabId: tabId, url: _tabUrl} = await active()
+        const {id: tabId, url: _tabUrl} = await active()
         if (urls.length > 1) {
             // TODO prompt to filter?
         }

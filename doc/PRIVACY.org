@@ -36,6 +36,7 @@ For the maximum privacy you can use the [[file:GUIDE.org#excludelist][excludelis
 
 * Extension permissions
 - =activeTab=: getting current tab info and adding the sidebar
+- =webNavigation=: receiving page status updates so extension knows when to load data
 - =storage=: for settings
 - =contextMenus=: context menu
 - =notifications=: showing notifications
