@@ -198,10 +198,11 @@ const options = {
     // chunkFilename: '[name].bundle.js',
   },
   optimization: {
-    minimize: false, // no point for webext, it loads fast enough anyway
+    // https://webpack.js.org/configuration/optimization
+    minimize: !dev,
     splitChunks: {
       automaticNameDelimiter: '_', // ugh. default ~ can't be loaded by the browser??
-    }
+    },
   },
   module: {
     // todo no idea why is exclude: /node_modules/ necessary here???
@@ -248,6 +249,7 @@ const options = {
     }),
   ],
   // docs claim it's the slowest but pretty fast anyway
+  // also works with production builds
   devtool: 'source-map',
 }
 
