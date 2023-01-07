@@ -35,7 +35,7 @@ from common import under_ci, uses_x, has_x
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from browser_helper import open_extension_page, get_cmd_hotkey
-from webdriver_utils import frame_context, window_context
+from webdriver_utils import frame_context, window_context, is_visible
 
 
 from promnesia.logging import LazyLogger
@@ -380,12 +380,13 @@ class Sidebar(NamedTuple):
 
     @property
     def visible(self) -> bool:
+        loc = (By.ID, PROMNESIA_SIDEBAR_ID)
         with self.ctx():
             Wait(self.driver, timeout=5).until(
-                EC.presence_of_element_located((By.ID, PROMNESIA_SIDEBAR_ID))
+                EC.presence_of_element_located(loc)
             )
             # NOTE: document in JS here is in the context of iframe
-            return self.driver.execute_script(f"return document.getElementById('{PROMNESIA_SIDEBAR_ID}').checkVisibility()")
+            return is_visible(self.driver, self.driver.find_element(*loc))
 
     def open(self) -> None:
         assert not self.visible
@@ -812,7 +813,7 @@ def test_visits(tmp_path: Path, driver: Driver) -> None:
             srcs = driver.find_elements(By.CLASS_NAME, 'src')
             for s in srcs:
                 # elements should be bound to the sidebar, but aren't displayed yet
-                assert not s.is_displayed(), s
+                assert not is_visible(driver, s), s
             assert len(srcs) >= 8, srcs
             # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
 
@@ -820,22 +821,17 @@ def test_visits(tmp_path: Path, driver: Driver) -> None:
         confirm('sidebar: you should see hypothesis contexts')
 
         with helper._sidebar.ctx():
+            # sleep(1)
             link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
-            assert link.is_displayed(), link
+            assert is_visible(driver, link), link
 
             contexts = helper.driver.find_elements(By.CLASS_NAME, 'context')
             for c in contexts:
-                assert c.is_displayed(), c
+                assert is_visible(driver, c), c
             assert len(contexts) == 8
 
         helper._sidebar.close()
         confirm("sidebar: shouldn't be visible")
-
-            # this works in firefox, but doesn't work in chrome for some reason -- is_displayed returns true
-            # apparently is_display checks if element is on the page, not necessarily within viewport??
-            # srcs = driver.find_elements(By.CLASS_NAME, 'src')
-            # for s in srcs:
-            #     assert not s.is_displayed(), s
 
 
 @browsers()

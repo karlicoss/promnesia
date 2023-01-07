@@ -33,3 +33,11 @@ def window_context(driver: Driver, window_handle: str) -> Iterator[None]:
         yield
     finally:
         driver.switch_to.window(original)
+
+
+def is_visible(driver: Driver, element: WebElement) -> bool:
+    # apparently is_display checks if element is on the page, not necessarily within viewport??
+    # but I also found  element.is_displayed() to be unreliable in other direction too
+    # (returning true for elements that aren't displayed)
+    # it seems to even differ between browsers
+    return driver.execute_script('return arguments[0].checkVisibility()', element)
