@@ -7,6 +7,23 @@ import {defensifyAlert, alertError} from './notifications'
 // err. that's a bit stupid, js injected css? surely it can be done via webpack and static files...
 // TODO right, I suppose that's why I need style bunder?
 // turned out more tedious than expected... https://github.com/codemirror/CodeMirror/issues/5484#issue-338185331
+// $FlowFixMe[cannot-resolve-module]
+import {EditorView, minimalSetup} from "codemirror"
+// $FlowFixMe[cannot-resolve-module]
+import {highlightActiveLine, lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
+// $FlowFixMe[cannot-resolve-module]
+import {indentOnInput, bracketMatching} from "@codemirror/language"
+// $FlowFixMe[cannot-resolve-module]
+import {highlightSelectionMatches} from "@codemirror/search"
+// $FlowFixMe[cannot-resolve-module]
+import {autocompletion} from "@codemirror/autocomplete"
+
+// $FlowFixMe[cannot-resolve-module]
+import {Compartment} from "@codemirror/state"
+// $FlowFixMe[cannot-resolve-module]
+import {css} from "@codemirror/lang-css"
+// $FlowFixMe[cannot-resolve-module]
+import {javascript} from "@codemirror/lang-javascript"
 
 
 // helpers for options
@@ -85,26 +102,50 @@ class Editor extends Option<string> {
     }
 
     set value(x: string): void {
-        this.editor.setValue(x)
-    }
-
-    get value(): string {
-        return this.editor.getValue()
-    }
-
-    // $FlowFixMe[missing-local-annot]
-    bind({CodeMirror}): void {
-        CodeMirror(this.element, {
-            mode: this.mode,
-            lineNumbers: true,
-            value: 'IF YOU SEE THIS PLEASE REPORT AS A BUG!',
+        const editor = this.editor
+        editor.dispatch({
+            changes: {from: 0, to: editor.state.doc.length, insert: x}
         })
     }
 
-    get editor(): any {
-        // $FlowFixMe[prop-missing]
-        // $FlowFixMe[incompatible-use]
-        return this.element.querySelector('.CodeMirror').CodeMirror
+    get value(): string {
+        return this.editor.state.doc.toString()
+    }
+
+    // $FlowFixMe[missing-local-annot]
+    bind(value: string): void {
+        // see https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
+        // and https://codemirror.net/docs/ref/
+        const extra_extensions = [
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            indentOnInput(),
+            bracketMatching(),
+            autocompletion(),  // TODO not sure..
+            highlightActiveLine(),
+            highlightSelectionMatches(),
+        ]
+        let language = new Compartment
+        const lang = []
+        if (this.mode === 'javascript') {
+            lang.push(language.of(javascript()))
+        } else if (this.mode == 'css') {
+            lang.push(language.of(css()))
+        }
+
+        new EditorView({
+            extensions: [
+                minimalSetup,
+                ...lang,
+                ...extra_extensions,
+            ],
+            parent: this.element,
+            doc: value,
+        })
+    }
+
+    get editor(): EditorView {
+        return unwrap(EditorView.findFromDOM(this.element))
     }
 }
 // end
@@ -129,34 +170,6 @@ const o_position_css = new Editor('position_css_id', {mode: 'css' })
 const o_extra_css    = new Editor('extra_css_id'   , {mode: 'css' })
 
 
-// TODO meh. not sure how to make sure it's only imported once?..
-async function importCM() {
-    // TODO I don't really understand, what's up with these fucking chunks and their naming
-    // at least it reduces size of the options page
-    const {default: CodeMirror} = await import(
-        /* webpackChunkName: "codemirror-main" */
-        // $FlowFixMe
-        'codemirror/lib/codemirror.js'
-    )
-    // TODO just copy css in webpack directly??
-    await import(
-        /* webpackChunkName: "codemirror.css" */
-        // $FlowFixMe
-        'codemirror/lib/codemirror.css'
-    )
-    await import(
-        /* webpackChunkName: "codemirror-css-module" */
-        // $FlowFixMe
-        'codemirror/mode/css/css.js'
-    )
-    await import(
-        /* webpackChunkName: "codemirror-js-module" */
-        // $FlowFixMe
-        'codemirror/mode/javascript/javascript.js'
-    )
-    return CodeMirror
-}
-
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     const opts = await getStoredOptions()
     o_host          .value = opts.host
@@ -172,8 +185,6 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     o_highlights_on .value = opts.highlight_on
     o_mark_visited_always.value = opts.mark_visited_always
 
-    const CodeMirror = await importCM()
-
     // TODO it should know the syntax? or infer from the class??
     for (const [el, value] of [
         [o_mark_visited_excludelist, opts.mark_visited_excludelist],
@@ -183,8 +194,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
         [o_position_css            , opts.position_css            ],
         [o_extra_css               , opts.extra_css               ],
     ]) {
-        el.bind({CodeMirror: CodeMirror})
-        el.value = value
+        el.bind(value)
     }
 
     /* a marker for tests */

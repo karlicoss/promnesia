@@ -185,12 +185,6 @@ def _switch_to_alert(driver: Driver) -> Alert:
     raise e
 
 
-def save_settings(driver: Driver) -> None:
-    se = driver.find_element(By.ID, 'save_id')
-    se.click()
-    _switch_to_alert(driver).accept()
-
-
 LOCALHOST = 'http://localhost'
 
 
@@ -218,7 +212,8 @@ def configure_extension(
     print(f"Setting: port {port}, show_dots {show_dots}")
 
     helper = TestHelper(driver)
-    helper.open_options_page()
+    page = helper.options_page
+    page.open()
 
     set_host(driver=driver, host=host, port=port)
 
@@ -237,7 +232,7 @@ def configure_extension(
         set_checkbox('contexts_popup_id', notify_contexts)
 
     if position is not None:
-        set_position(driver, position)
+        page.set_position(position)
 
     if blacklist is not None:
         bl = driver.find_element(By.ID, 'global_excludelist_id') # .find_element_by_tag_name('textarea')
@@ -267,7 +262,7 @@ def configure_extension(
         bla.send_keys(Keys.BACKSPACE)
         bla.send_keys(excludelists_json)
 
-    save_settings(driver)
+    page.save()
 
 
 # legacy name
@@ -422,6 +417,49 @@ class Sidebar(NamedTuple):
             self.helper.wait_for_search_tab(cur_window_handles)
 
 
+class OptionsPage(NamedTuple):
+    driver: Driver
+    helper: 'TestHelper'
+
+    def set_position(self, settings: str) -> None:
+        field = self.driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
+
+        area = field.find_element(By.CLASS_NAME, 'cm-content')
+        area.click()
+
+        # for some reason area.clear() caused
+        # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
+
+        def contents() -> str:
+            return self.driver.execute_script('return arguments[0].cmView.view.state.doc.toString()', area)
+
+        # TODO FFS. these don't seem to work??
+        # count = len(area.get_attribute('value'))
+        # and this only returns visible porition of the text??? so only 700 characters or something
+        # count = len(field.text)
+        # count += 100  # just in case
+        count = 3000 # meh
+        # focus ends up at some random position, so need both backspace and delete
+        area.send_keys([Keys.BACKSPACE] * count + [Keys.DELETE] * count)
+        assert contents() == ''
+        area.send_keys(settings)
+
+        # just in case, also need to remove spaces to workaround indentation
+        assert [l.strip() for l in contents().splitlines()] == [l.strip() for l in settings.splitlines()]
+
+    def open(self) -> None:
+        self.helper.open_page('options_page.html')
+        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
+        Wait(self.driver, timeout=5).until(
+            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
+        )
+
+    def save(self) -> None:
+        se = self.driver.find_element(By.ID, 'save_id')
+        se.click()
+        _switch_to_alert(self.driver).accept()
+
+
 class TestHelper(NamedTuple):
     driver: Driver
 
@@ -429,12 +467,8 @@ class TestHelper(NamedTuple):
         open_extension_page(self.driver, page)
 
     def open_options_page(self) -> None:
+        self.options_page.open()
         self.open_page('options_page.html')
-
-        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
-        Wait(self.driver, timeout=5).until(
-            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
-        )
 
     def open_search_page(self, query: str="") -> None:
         self.open_page('search.html' + query)
@@ -477,6 +511,10 @@ class TestHelper(NamedTuple):
     @property
     def _sidebar(self) -> Sidebar:
         return Sidebar(driver=self.driver, helper=self)
+
+    @property
+    def options_page(self) -> OptionsPage:
+        return OptionsPage(driver=self.driver, helper=self)
 
     # TODO use this in switch_to_sidebar??
     def is_sidebar_visible(self) -> bool:
@@ -670,60 +708,32 @@ def test_backend_status(tmp_path: Path, driver: Driver) -> None:
     # TODO implement positive check, e.g. when backend is present
 
 
-def set_position(driver: Driver, settings: str) -> None:
-    browser = browser_(driver)
-
-    field = driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
-    area = field.find_element(By.XPATH, './/textarea')
-
-    # for some reason area.clear() caused
-    # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
-
-    # TODO FFS. these don't seem to work??
-    # count = len(area.get_attribute('value'))
-    # and this only returns visible porition of the text??? so only 700 characters or something
-    # count = len(field.text)
-    # count += 100  # just in case
-    count = 3000 # meh
-    if browser.name == 'chrome':
-        assert not is_headless(driver)
-
-        # ugh... for some reason wouldn't send the keys...
-        field.click()
-        import pyautogui # type: ignore
-        # it usually ends up in the middle of the area...
-        pyautogui.press(['backspace'] * count + ['delete'] * count)
-        # TODO ugh... tbh it's really unsafe to execute, who knows where it sends these deletes...
-        pyautogui.typewrite(settings, interval=0.05) # TODO do faster??
-    else:
-        area.send_keys([Keys.DELETE] * count)
-        area.send_keys(settings)
-
-
-@browsers(FF, FFH, CH)  # TODO for now skipping headless chrome because we're using pyautogui for chrome in this test
+@browsers()
 def test_sidebar_position(driver: Driver) -> None:
     """
     Checks that default sidebar position is on the right, and that changing it to --bottom: 1 works
     """
     helper = TestHelper(driver)
-    helper.open_options_page()
+    options_page = helper.options_page
+    options_page.open()
     # TODO WTF; if we don't open extension page once, we can't read out hotkeys from the chrome extension settings file
     # (so e.g. trigger_command isn't working???)
 
+    # TODO hmm maybe need to disable backend here... otherwise it connects to the default backend and might be a bit slow
     driver.get('https://example.com')
 
     helper._sidebar.open()
     confirm("sidebar: should be displayed on the right (default)")
     helper._sidebar.close()
 
-    helper.open_options_page()
+    options_page.open()
     settings = """
 #promnesia-frame {
---bottom: 1;
---size: 20%;
-}"""
-    set_position(driver, settings)
-    save_settings(driver)
+  --bottom: 1;
+  --size: 20%;
+}""".strip()
+    helper.options_page.set_position(settings)
+    options_page.save()
 
     driver.get('https://example.com')
     helper._sidebar.open()
