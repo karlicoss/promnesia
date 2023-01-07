@@ -33,8 +33,10 @@
   },
   "homepage": "https://github.com/karlicoss/promnesia#readme",
   "dependencies": {
+    "@codemirror/lang-css": "^6.0.1",
+    "@codemirror/lang-javascript": "^6.1.2",
     "anchorme": "github:karlicoss/anchorme.js#promnesia",
-    "codemirror": "^5.48.2",
+    "codemirror": "^6.0.1",
     "webext-options-sync": "^4.0.0"
   },
   "devDependencies": {
