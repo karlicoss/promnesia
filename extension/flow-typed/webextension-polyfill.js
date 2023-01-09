@@ -162,12 +162,12 @@ type browser$WebNavigationX = {
 }
 
 type browser$webNavigation = {
-  onBeforeNavigate        : browser$WebNavigationX,
-  onCompleted             : browser$WebNavigationX,
-  onCommitted             : browser$WebNavigationX,
-  onTabReplaced           : browser$WebNavigationX,
-  onCreateNavigationTarget: browser$WebNavigationX,
-  onDOMContentLoaded      : browser$WebNavigationX,
+  onBeforeNavigate         : browser$WebNavigationX,
+  onCompleted              : browser$WebNavigationX,
+  onCommitted              : browser$WebNavigationX,
+  onTabReplaced            : browser$WebNavigationX,
+  onCreatedNavigationTarget: browser$WebNavigationX,
+  onDOMContentLoaded       : browser$WebNavigationX,
 }
 
 
