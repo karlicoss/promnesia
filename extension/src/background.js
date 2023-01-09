@@ -123,28 +123,42 @@ async function updateState(tab: TabUrl): Promise<void> {
 
     const opts = await getOptions()
 
-    // TODO right... so if sidebar isn't injected, the messages will not be delivered.. well, hopefully it's quick enough..
+    // NOTE if sidebar isn't injected, the messages will not be delivered.. well, hopefully it's quick enough..
     // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages received multiple times)
 
-    // TODO only inject after blacklist check? just in case?
-    const inject = () => Promise.resolve()
-          .then(() => browser.tabs.executeScript(tabId, {file: 'browser-polyfill.js'}))
-          .then(() => browser.tabs.executeScript(tabId, {file: 'webext-options-sync.js'}))
-          .then(() => browser.tabs.executeScript(tabId, {file: 'sidebar.js'}))
-    // TODO hmm. in theory script and CSS injections commute, but css order on the othe hand might matter?
-    // not sure, but using deferred promises just in case
-          .then(() => browser.tabs.insertCSS(tabId, {file: 'sidebar-outer.css'}))
-          .then(() => browser.tabs.insertCSS(tabId, {file: 'sidebar.css'      }))
-          .then(() => browser.tabs.insertCSS(tabId, {code: opts.position_css  }))
-
+    // todo only inject after blacklist check? just in case?
+    let proceed: boolean
+    try {
+        await browser.tabs.insertCSS    (tabId, {file: 'sidebar-outer.css'})
+        await browser.tabs.insertCSS    (tabId, {file: 'sidebar.css'      })
+        await browser.tabs.insertCSS    (tabId, {code: opts.position_css  })
+        await browser.tabs.executeScript(tabId, {file: 'browser-polyfill.js'})
+        await browser.tabs.executeScript(tabId, {file: 'webext-options-sync.js'})
+        await browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
+        proceed = true // successful code injection
+    } catch (error) {
+        const msg = error.message
+        if (msg == null) {
+            throw error
+        }
+        if (msg.includes('Missing host permission for the tab')) {
+            // this seems to happen if we started injecting the code, but URL changed during that
+            // e.g. if you click on links in quick succession or press backward/forward quickly (esp. with hotkeys)
+            // should be covered by test_sidebar_navigation (TODO after we remove the 1s wait from it)
+            proceed = false
+        } else {
+            throw error
+        }
+    }
 
     // NOTE: if the page is unreachable, we can't inject stuff in it
     // not sure how to detect it? tab doesn't have any interesting attributes
     // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
-    // TODO in this case, could set browser action to open a new tab (i.e. search) or something?
-    await defensify(inject, `sidebar injection for tabId: ${tabId} url: ${url}`)();
-    // TODO crap, at first I forgot () at the end, and flow didn't complain which resulted in flakiness wtf??
-
+    // TODO not sure if worth mapping promnesia button to something else in this case
+    if (!proceed) {
+        console.debug('cancelling state update request for %o -- likely URL changed during processing', tab)
+        return
+    }
 
     let visits: Result
     const filterlist = await Filterlist.global()
@@ -414,6 +428,7 @@ function isSpecialProtocol(url: string): boolean {
         'chrome-extension:',
         'moz-extension:',
         'about:', // e.g. about:addons or about:devtool
+        'data:', // start page under chrome webdriver
     ].includes(pro)) {
         return true;
     }
@@ -471,7 +486,7 @@ browser.webNavigation.onCompleted.addListener(defensify(async (detail: browser$W
         return
     }
 
-    console.debug('webNavigation.onCompleted: %o %o', uuid, detail)
+    console.debug('webNavigation.onCompleted: %o %o', UUID, detail)
 
     try {
         await updateState({url: url, id: detail.tabId})

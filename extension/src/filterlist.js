@@ -81,7 +81,7 @@ export class Filterlist {
             // the cbuijs repo switched to main branch, so let's do that too
             url = url.replace('/master/', '/main/')
             // see https://github.com/karlicoss/promnesia/issues/325
-            console.debug('replacing shallalist entry to %s')
+            console.debug('replacing shallalist entry to %s', url)
         }
 
         // ugh. so for github (where the shallalist lists are kept), server max-age is about 5 mins
