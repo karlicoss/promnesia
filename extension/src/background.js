@@ -144,7 +144,7 @@ async function updateState(tab: TabUrl): Promise<void> {
         if (msg.includes('Missing host permission for the tab')) {
             // this seems to happen if we started injecting the code, but URL changed during that
             // e.g. if you click on links in quick succession or press backward/forward quickly (esp. with hotkeys)
-            // should be covered by test_sidebar_navigation (TODO after we remove the 1s wait from it)
+            // should be covered by test_sidebar_navigation
             proceed = false
         } else {
             throw error

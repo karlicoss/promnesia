@@ -1001,7 +1001,7 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
     # reference has a link to tutorial (so will display a context)
 
     urls = {
-        tutorial : 'TODO read this',
+        tutorial : 'TODO read this https://please-highligh-this-link.com',
         reference: None,
     }
     indexer = index_urls(urls)
@@ -1010,32 +1010,47 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # TODO hmm so this bit is actually super fast, takes like 1.5 secs
         # need to speed up the preparation
         helper.driver.get(url)
+        assert not helper._sidebar.visible
         confirm("grey icon. sidebar shouldn't be visible")
 
-        sleep(1)  # workaround for https://github.com/karlicoss/promnesia/issues/295
-        # hopefully we can get rid of it after switching to webNavigation instead of onUpdated callbacks
         helper.driver.get(tutorial)
+        assert not helper._sidebar.visible
+        confirm("green icon. sidebar shouldn't be visible")
+
+        # switch between these in quick succession deliberately
+        # previously it was triggering a bug when multiple sidebars would be injected due to race condition
+        for _ in range(5):
+            helper.driver.get(url)
+            helper.driver.get(tutorial)
 
         helper._sidebar.open()
         confirm("green icon. sidebar should open and show one visit")
-
-        if driver.name == 'chrome':
-            pytest.skip('TODO chrome is broken here, loses sidebar ifram somewhere (same in prod version)')
 
         helper.driver.back()
         assert not helper._sidebar.visible
         confirm("grey/purple icon, sidebar shouldn't be visible")
 
-        # FIXME fuck. failing here to load anchorme as well as webext-options-sync? ugh.
+        # again, stress test it to try to trigger weird bugs
+        for _ in range(5):
+            helper.driver.forward()
+            helper.driver.back()
+
+        # FIXME hmm failing here to load anchorme here?
+        # if you look in the page inspector console and click back/forward
+        # weird that it tries to load it wrt the page??
+        # Loading failed for the <script> with source “file:///usr/share/doc/python3/html/tutorial/anchorme.js”
         helper.driver.forward()
-        # TODO hmm failed here once?? might need timeout??
-        assert helper._sidebar.visible
-        confirm('green icon, sidebar visible')
 
-        pytest.skip('TODO: we have an actual bug here, seems that sidebar stops closing')
+        if driver.name == 'firefox':
+            # LOL actually it's weird that firefox works
+            # because previously preserved sidebar was more of a bug
+            assert helper._sidebar.visible
+            confirm('green icon, sidebar visible')
 
-        helper._sidebar.close()
-        confirm('green icon, sidebar is closed')
+            pytest.skip('TODO: we have an actual bug here, seems that sidebar stops closing')
+
+            helper._sidebar.close()
+            confirm('green icon, sidebar is closed')
 
 
 @browsers()
