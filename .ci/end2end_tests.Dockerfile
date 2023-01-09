@@ -53,4 +53,4 @@ WORKDIR   /repo
 RUN git init
 
 # builds both firefox and chrome targets
-CMD bash -c 'extension/.ci/build && tox -e end2end'
+ENTRYPOINT ["/bin/bash", "-c", "extension/.ci/build && tox -e end2end -- \"$@\""]
