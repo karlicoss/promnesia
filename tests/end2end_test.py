@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 import json
 from pathlib import Path
 from datetime import datetime
@@ -31,7 +31,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoAlertPresentException, NoSuchFrameException, TimeoutException
 
 
-from common import under_ci, uses_x, has_x
+from common import under_ci, uses_x, has_x, local_http_server
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from browser_helper import open_extension_page, get_cmd_hotkey
@@ -977,36 +977,46 @@ def test_new_background_tab(tmp_path: Path, browser: Browser) -> None:
         # TODO https://www.e-flux.com/journal/53/
 
 
-# TODO shit disappears on chrome and present on firefox
+PYTHON_DOC_PATH = Path('/usr/share/doc/python3/html')
+
+
 @browsers()
 @pytest.mark.parametrize(
     'base_url',
     [
-        'file:///usr/share/doc/python3/html',
-        'https://docs.python.org/3',
+        f'file://{PYTHON_DOC_PATH}',
+        'LOCAL',
     ],
     ids=[
+        'file',
         'local',
-        'web',
     ],
 )
 def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> None:
     if 'file:' in base_url and driver.name == 'chrome':
-        pytest.skip("TODO used to work, but must have brokend after some Chrome update?")
+        pytest.skip("TODO used to work, but must have broken after some Chrome update?")
         # seems broken on any local page -- only transparent sidebar frame is shown
         # the issue is that contentDocument.body is null -- no idea why
 
-    tutorial  = f'{base_url}/tutorial/index.html'
-    reference = f'{base_url}/reference/index.html'
-    # reference has a link to tutorial (so will display a context)
+    with ExitStack() as stack:
+        if base_url == 'LOCAL':
+            local_addr = stack.enter_context(local_http_server(PYTHON_DOC_PATH, port=15454))
+            base_url = local_addr
 
-    urls = {
-        tutorial : 'TODO read this https://please-highligh-this-link.com',
-        reference: None,
-    }
-    indexer = index_urls(urls)
-    url = reference
-    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver) as helper:
+
+        tutorial  = f'{base_url}/tutorial/index.html'
+        reference = f'{base_url}/reference/index.html'
+        # reference has a link to tutorial (so will display a context)
+
+        urls = {
+            tutorial : 'TODO read this https://please-highligh-this-link.com',
+            reference: None,
+        }
+        indexer = index_urls(urls)
+        url = reference
+
+        helper = stack.enter_context(run_server(tmp_path=tmp_path, indexer=indexer, driver=driver))
+
         # TODO hmm so this bit is actually super fast, takes like 1.5 secs
         # need to speed up the preparation
         helper.driver.get(url)
@@ -1017,12 +1027,22 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         assert not helper._sidebar.visible
         confirm("green icon. sidebar shouldn't be visible")
 
+        # TODO ideally we'll get rid of it
+        # at the moment without this sleep chrome pretty much always fails
+        def sleep_if_chrome() -> None:
+            if driver.name == 'chrome':
+                sleep(0.01)
+
         # switch between these in quick succession deliberately
         # previously it was triggering a bug when multiple sidebars would be injected due to race condition
-        for _ in range(5):
+        for _ in range(100):
             helper.driver.get(url)
+            sleep_if_chrome()
             helper.driver.get(tutorial)
+            sleep_if_chrome()
 
+        # hmm, headless chrome web test failed here on CI once...
+        # yep, still happening...
         helper._sidebar.open()
         confirm("green icon. sidebar should open and show one visit")
 
@@ -1031,9 +1051,14 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         confirm("grey/purple icon, sidebar shouldn't be visible")
 
         # again, stress test it to try to trigger weird bugs
-        for _ in range(5):
+        for _ in range(100):
+            sleep_if_chrome()
             helper.driver.forward()
+            sleep_if_chrome()
             helper.driver.back()
+
+        # checks it's still possible to interact with the sidebar
+        assert not helper._sidebar.visible
 
         # FIXME hmm failing here to load anchorme here?
         # if you look in the page inspector console and click back/forward
@@ -1044,10 +1069,12 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         if driver.name == 'firefox':
             # LOL actually it's weird that firefox works
             # because previously preserved sidebar was more of a bug
+            # UPD -- ok actually doesn't always work, on rare occasions still failing?
             assert helper._sidebar.visible
             confirm('green icon, sidebar visible')
 
             pytest.skip('TODO: we have an actual bug here, seems that sidebar stops closing')
+            # hmm ^ I think it's actually cause the sidebar we see is disfunctional and deatched from the 'current' context?
 
             helper._sidebar.close()
             confirm('green icon, sidebar is closed')
