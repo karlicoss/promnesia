@@ -52,9 +52,6 @@ def measure(*args, **kwargs):
         yield m
 
 
-PROMNESIA_FRAME_ID = 'promnesia-frame'
-
-
 class Browser(NamedTuple):
     dist: str
     headless: bool
@@ -356,10 +353,18 @@ class Sidebar(NamedTuple):
 
     @contextmanager
     def ctx(self) -> Iterator[WebElement]:
+        selector = (By.XPATH, '//iframe[contains(@id, "promnesia-frame")]')
         wait = 2  # hmm, wait = 1 triggered with timeout on firefox at least once?
-        Wait(self.driver, timeout=wait).until(EC.presence_of_element_located((By.ID, PROMNESIA_FRAME_ID)))
+        frame_element = Wait(self.driver, timeout=wait).until(
+            EC.presence_of_element_located(selector),
+        )
 
-        with frame_context(self.driver, PROMNESIA_FRAME_ID) as frame:
+        frames = self.driver.find_elements(*selector)
+        # TODO uncomment it later when sidebar is injected gracefully...
+        # assert len(frames) == 1, frames  # just in case
+
+        frame_id = frame_element.get_attribute('id')
+        with frame_context(self.driver, frame_id) as frame:
             assert frame is not None
             yield frame
 
@@ -480,43 +485,20 @@ class TestHelper(NamedTuple):
         ActionChains(self.driver).move_to_element(element).perform()
 
     def switch_to_sidebar(self, wait: Union[bool, int]=False, *, wait2: bool=True) -> None:
-        # wait2 is just compat, will get rid of it later
-        self.driver.switch_to.default_content()
+        raise RuntimeError('not used anymore, use with helper.sidebar instead!')
 
-        if wait is not False:
-            timeout = 5 if wait is True else wait
-            Wait(self.driver, timeout=timeout).until(
-                EC.presence_of_element_located((By.ID, PROMNESIA_FRAME_ID))
-            )
-            # ugh. seems that sometimes a bit more time is necessary to render sidebard contents???
-            # otherwise test_visits was flaky at times
-            if wait2:
-                # TODO really need to get rid of this
-                sleep(1)
-        self.driver.switch_to.frame(PROMNESIA_FRAME_ID)
-
-    @contextmanager
-    def sidebar(self, wait: bool=False) -> Iterator[Optional[WebElement]]:
-        try:
-            self.switch_to_sidebar(wait=wait)
-            if wait: # meh
-                yield self.driver.find_element(By.ID, PROMNESIA_SIDEBAR_ID)
-            else:
-                yield None
-        finally:
-            self.driver.switch_to.default_content()
+    @property
+    def sidebar(self) -> Sidebar:
+        return Sidebar(driver=self.driver, helper=self)
 
     @property
     def _sidebar(self) -> Sidebar:
-        return Sidebar(driver=self.driver, helper=self)
+        # legacy method
+        return self.sidebar
 
     @property
     def options_page(self) -> OptionsPage:
         return OptionsPage(driver=self.driver, helper=self)
-
-    # TODO use this in switch_to_sidebar??
-    def is_sidebar_visible(self) -> bool:
-        return self._sidebar.visible
 
     def command(self, cmd) -> None:
         trigger_command(self.driver, cmd)
@@ -1020,11 +1002,11 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # TODO hmm so this bit is actually super fast, takes like 1.5 secs
         # need to speed up the preparation
         helper.driver.get(url)
-        assert not helper._sidebar.visible
+        assert not helper.sidebar.visible
         confirm("grey icon. sidebar shouldn't be visible")
 
         helper.driver.get(tutorial)
-        assert not helper._sidebar.visible
+        assert not helper.sidebar.visible
         confirm("green icon. sidebar shouldn't be visible")
 
         # TODO ideally we'll get rid of it
@@ -1035,30 +1017,39 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
 
         # switch between these in quick succession deliberately
         # previously it was triggering a bug when multiple sidebars would be injected due to race condition
-        for _ in range(100):
+        for i in range(100):
             helper.driver.get(url)
             sleep_if_chrome()
             helper.driver.get(tutorial)
             sleep_if_chrome()
+            if i % 10 == 0:
+                # huh, it's quite slow... to run it on single iteration
+                # what it's really testing here is that there is only one promnesia frame/sidebar
+                assert not helper.sidebar.visible
 
         # hmm, headless chrome web test failed here on CI once...
         # yep, still happening...
-        helper._sidebar.open()
+        # and firefox is failing as well at times (which is sort of good news)
+        helper.sidebar.open()
         confirm("green icon. sidebar should open and show one visit")
 
         helper.driver.back()
-        assert not helper._sidebar.visible
+        assert not helper.sidebar.visible
         confirm("grey/purple icon, sidebar shouldn't be visible")
 
         # again, stress test it to try to trigger weird bugs
-        for _ in range(100):
+        for i in range(100):
             sleep_if_chrome()
             helper.driver.forward()
             sleep_if_chrome()
             helper.driver.back()
+            if i % 10 == 0:
+                # huh, it's quite slow... to run it on single iteration
+                # what it's really testing here is that there is only one promnesia frame/sidebar
+                assert not helper.sidebar.visible
 
         # checks it's still possible to interact with the sidebar
-        assert not helper._sidebar.visible
+        assert not helper.sidebar.visible
 
         # FIXME hmm failing here to load anchorme here?
         # if you look in the page inspector console and click back/forward
@@ -1066,17 +1057,16 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # Loading failed for the <script> with source “file:///usr/share/doc/python3/html/tutorial/anchorme.js”
         helper.driver.forward()
 
-        if driver.name == 'firefox':
-            # LOL actually it's weird that firefox works
-            # because previously preserved sidebar was more of a bug
-            # UPD -- ok actually doesn't always work, on rare occasions still failing?
-            assert helper._sidebar.visible
+        if False:
+            # so previously this worked somewhat by accident because of race conditions
+            # doesn't loook like the DOM is preserved during navigating back/forth
+            assert helper.sidebar.visible
             confirm('green icon, sidebar visible')
 
             pytest.skip('TODO: we have an actual bug here, seems that sidebar stops closing')
             # hmm ^ I think it's actually cause the sidebar we see is disfunctional and deatched from the 'current' context?
 
-            helper._sidebar.close()
+            helper.sidebar.close()
             confirm('green icon, sidebar is closed')
 
 
