@@ -1,5 +1,5 @@
 /* @flow */
-import {Visits, Visit, unwrap, format_duration, Methods, addStyle, Ids} from './common'
+import {Visits, Visit, unwrap, format_duration, Methods, addStyle, Ids, uuid, getOrDefault} from './common'
 import type {Second} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
@@ -8,11 +8,7 @@ import {defensify} from './notifications';
 
 // TODO how to prevent sidebar hiding on click??
 
-// TODO move to common?
-function get_or_default<T>(obj: any, key: string, def: T): T {
-    const res = obj[key];
-    return res === undefined ? def : res;
-}
+const UUID = uuid()
 
 const PROMNESIA_FRAME_ID   = 'promnesia-frame';
 const PROMNESIA_CLASS   = 'promnesia';
@@ -89,6 +85,7 @@ class Sidebar {
         // it's a bit hacky.. but stuff inside and outside iframe got different namespace, so ok to reuse id?
         // makes it much easier for settings
         cbody.id = SIDEBAR_ID;
+        cbody.setAttribute('uuid', UUID)
 		const sidebar_header = cdoc.createElement('div');
         sidebar_header.id = HEADER_ID;
         const sidebar_toolbar = cdoc.createElement('div');
@@ -569,8 +566,8 @@ async function* _bindSidebarData(response: Visits) {
                 total_dur += v.duration;
             }
             for (const tag of v.tags) {
-                const mapped_tag = get_or_default(tag_map, tag, tag);
-                tset.add(mapped_tag);
+                const mapped_tag = getOrDefault(tag_map, tag, tag)
+                tset.add(mapped_tag)
             }
         }
         const tags = [...tset].sort();
@@ -599,7 +596,6 @@ async function bindSidebarData(response: Visits) {
     }
     await consume_one()
 }
-
 
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
