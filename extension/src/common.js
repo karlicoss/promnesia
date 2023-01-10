@@ -197,6 +197,7 @@ export const Methods = {
     MARK_VISITED        : 'markVisited',
     OPEN_SEARCH         : 'openSearch',
     SIDEBAR_TOGGLE      : 'sidebarToggle',
+    // TODO not used
     SIDEBAR_SHOW        : 'sidebarShow',
     ZAPPER_EXCLUDELIST  : 'zapperExcludelist',
 }
@@ -333,4 +334,10 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
 // useful for debugging
 export function uuid(): string {
     return URL.createObjectURL(new Blob([])).substr(-36)
+}
+
+
+export function getOrDefault<T>(obj: any, key: string, def: T): T {
+    const res = obj[key];
+    return res === undefined ? def : res;
 }
