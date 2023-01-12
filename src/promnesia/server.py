@@ -11,7 +11,6 @@ import logging
 from functools import lru_cache
 from typing import List, NamedTuple, Dict, Optional, Any, Tuple, Callable
 
-from cachew import NTBinder
 
 import pytz
 from pytz import BaseTzInfo
@@ -21,7 +20,6 @@ import fastapi
 from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc, select
 from sqlalchemy import Column, Table, func, types
 from sqlalchemy.sql.elements import ClauseElement
-from sqlalchemy.engine import Engine
 from sqlalchemy.sql import text
 
 
@@ -120,33 +118,13 @@ def get_db_path(check: bool=True) -> Path:
     return db
 
 
-DbStuff = Tuple[Engine, NTBinder, Table]
+from .read_db import DbStuff, get_db_stuff
 
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime) -> DbStuff:
     get_logger().debug('Reloading DB: %s', db_path)
-    # todo how to open read only?
-    engine = create_engine(f'sqlite:///{db_path.path}') # , echo=True)
-
-    binder = NTBinder.make(DbVisit)
-
-    meta = MetaData(engine)
-    table = Table('visits', meta, *binder.columns)
-
-    from sqlalchemy import Index # type: ignore
-    idx = Index('index_norm_url', table.c.norm_url)
-    try:
-        idx.create(bind=engine)
-    except exc.OperationalError as e:
-        if 'already exists' in str(e):
-            # meh, but no idea how to check it properly...
-            pass
-        else:
-            raise e
-
-    # NOTE: apparently it's ok to open connection on every request? at least my comparisons didn't show anything
-    return engine, binder, table
+    return get_db_stuff(db_path=db_path.path)
 
 
 def get_stuff(db_path: Optional[Path]=None) -> DbStuff: # TODO better name

@@ -34,6 +34,7 @@ def filters() -> Sequence[Filter]:
     return tuple(make_filter(f) for f in flt)
 
 
+# TODO type it properly...
 def extract_visits(extractor, *, src: SourceName) -> Iterable[Res[DbVisit]]:
     ex = extractor
 
