@@ -28,14 +28,15 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
 
     hook = cfg.hook
 
-    indexers = list(cfg.sources)
+    sources = list(cfg.sources)
 
     is_subset_sources = bool(sources_subset)
     if is_subset_sources:
         sources_subset = set(sources_subset)
 
-    for i, idx in enumerate(indexers):
-        name = getattr(idx, "name", None)
+    for i, source in enumerate(sources):
+        # TODO why would it not be present??
+        name = getattr(source, "name", None)
         if name and is_subset_sources:
             matched = name in sources_subset or i in sources_subset
             if matched:
@@ -44,12 +45,19 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
                 logger.debug("skipping '%s' not in --sources.", name)
                 continue
 
-        if isinstance(idx, Exception):
-            yield idx
+        if isinstance(source, Exception):
+            yield source
             continue
-        # todo use this context? not sure where to attach...
-        einfo = f'{getattr(idx.ff, "__module__", None)}:{getattr(idx.ff, "__name__", None)} {idx.args} {idx.kwargs}'
-        for v in extract_visits(idx, src=idx.name):
+
+        if not isinstance(source, Source):
+            # just in case cause previously it was technically possible to be something else
+            # but I think that was a dead codepath
+            yield RuntimeError(f"Shouldn't have gotten this as a source: {source}")
+            continue
+
+        # todo hmm it's not even used??
+        einfo = source.description
+        for v in extract_visits(source, src=source.name):
             if hook is None:
                 yield v
             else:
@@ -62,7 +70,7 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
         logger.warning("unknown --sources: %s", ", ".join(repr(i) for i in sources_subset))
 
 
-def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), overwrite_db=False) -> Iterable[Exception]:
+def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), overwrite_db: bool=False) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: List[Exception] = []
     def it() -> Iterable[Res[DbVisit]]:

@@ -4,10 +4,15 @@ import traceback
 from typing import Set, Iterable, Sequence, Union
 
 from .cannon import CanonifyException
-from .common import Res, SourceName, DbVisit, Visit, get_logger, Indexer, Filter, Url, Results
-
-
-logger = get_logger()
+from .common import (
+    logger,
+    DbVisit, Visit,
+    Res,
+    SourceName, Source,
+    Filter,
+    Url,
+    Results, Extractor,
+)
 
 
 DEFAULT_FILTERS = (
@@ -34,25 +39,15 @@ def filters() -> Sequence[Filter]:
     return tuple(make_filter(f) for f in flt)
 
 
-# TODO type it properly...
-def extract_visits(extractor, *, src: SourceName) -> Iterable[Res[DbVisit]]:
-    ex = extractor
-
-    log_info: str
-    if isinstance(ex, Indexer):
-        log_info = f'{ex.ff.__module__}:{ex.ff.__name__} {ex.args} {ex.kwargs} ...'
-        extr = lambda: ex.ff(*ex.args, **ex.kwargs)
-    else:
-        # TODO if it's a lambda?
-        log_info = f'{ex.__module__}:{ex.__name__}'
-        extr = ex
-
-    logger.info('extracting via %s ...', log_info)
+def extract_visits(source: Source, *, src: SourceName) -> Iterable[Res[DbVisit]]:
+    extractor = source.extractor
+    logger.info('extracting via %s ...', source.description)
 
     try:
-        vit: Results = extr()
+        vit: Results = extractor()
     except Exception as e:
         # todo critical error?
+        # cause that means error during binding extractor args
         logger.exception(e)
         yield e
         return
@@ -80,7 +75,7 @@ def extract_visits(extractor, *, src: SourceName) -> Iterable[Res[DbVisit]]:
         yield e
 
 
-    logger.info('extracting via %s: got %d visits', log_info, len(handled))
+    logger.info('extracting via %s: got %d visits', source.description, len(handled))
 
 
 def as_db_visit(v: Visit, *, src: SourceName) -> Iterable[Res[DbVisit]]:

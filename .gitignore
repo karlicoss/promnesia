@@ -305,3 +305,4 @@ dmypy.json
 
 **/node_modules
 .idea
+.coverage*

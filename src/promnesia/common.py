@@ -11,8 +11,10 @@ import logging
 from functools import lru_cache
 import shutil
 from timeit import default_timer as timer
-import pytz
+from types import ModuleType
 import warnings
+
+import pytz
 
 from .cannon import canonify
 
@@ -128,10 +130,11 @@ class Visit(NamedTuple):
     # spent: Optional[Second] = None
     debug: Optional[str] = None
 
-Extraction = Union[Visit, Exception]
-Result = Extraction # TODO extraction is a bit too long? deprecate?
+Result = Union[Visit, Exception]
 Results = Iterable[Result]
+Extractor = Callable[[], Results]
 
+Extraction = Result  # TODO deprecate!
 
 class DbVisit(NamedTuple):
     norm_url: Url
@@ -180,6 +183,7 @@ from .logging import LazyLogger
 logger = LazyLogger('promnesia', level='DEBUG')
 
 def get_logger() -> logging.Logger:
+    # deprecate? no need since logger is lazy already
     return logger
 
 
@@ -197,7 +201,7 @@ Syntax = str
 
 
 @lru_cache(None)
-def _get_extractor(syntax: Syntax):
+def _get_urlextractor(syntax: Syntax):
     from urlextract import URLExtract # type: ignore
     u = URLExtract()
     # https://github.com/lipoja/URLExtract/issues/13
@@ -223,9 +227,9 @@ def _sanitize(url: str) -> str:
 
 
 def iter_urls(s: str, *, syntax: Syntax='') -> Iterable[Url]:
-    extractor = _get_extractor(syntax=syntax)
+    urlextractor = _get_urlextractor(syntax=syntax)
     # note: it also has get_indices, might be useful
-    for u in extractor.gen_urls(s):
+    for u in urlextractor.gen_urls(s):
         yield _sanitize(u)
 
 
@@ -261,9 +265,18 @@ class PathWithMtime(NamedTuple):
         )
 
 
+# like an Extractor, but with args not bound yet
+PreExtractor = Callable[..., Results]
+
+
+PreSource = Union[
+    PreExtractor,
+    ModuleType,   # module with 'index' functon defined in it
+]
+
+
 # todo not sure about this...
-def _guess_name(thing: Any) -> str:
-    from types import ModuleType
+def _guess_name(thing: PreSource) -> str:
     guess = ''
     if isinstance(thing, ModuleType):
         guess = thing.__name__
@@ -277,21 +290,30 @@ def _guess_name(thing: Any) -> str:
     return guess
 
 
-def _get_index_function(thing: Any):
+def _get_index_function(sourceish: PreSource) -> PreExtractor:
     # see config_tests
-    # not sure about this
-    if hasattr(thing, 'index'):
-        thing = getattr(thing, 'index')
-    return thing
+    res: PreExtractor
+    if hasattr(sourceish, 'index'):
+        res = getattr(sourceish, 'index')
+    else:
+        res = sourceish
+    return res
 
 
 class Source:
     # TODO make sure it works with empty src?
     # TODO later, make it properly optional?
-    def __init__(self, ff, *args, src: SourceName='', name: SourceName='', **kwargs) -> None:
-        self.ff = _get_index_function(ff)
+    def __init__(self, ff: PreSource, *args, src: SourceName='', name: SourceName='', **kwargs) -> None:
+        # NOTE: in principle, would be nice to make the Source countructor to be as dumb as possible
+        # so we could move _get_index_function inside extractor lambda
+        # but that way we get nicer error reporting
+        # e.g. we can print out module/function name and arguments (see .description)
+        # it's kinda justified in the sense that an error with the Source itself is a bit different
+        # from the error coming from one of the visits within a source
+        self.ff: PreExtractor = _get_index_function(ff)
         self.args = args
         self.kwargs = kwargs
+        self.extractor: Extractor = lambda: self.ff(*self.args, **self.kwargs)
         if src is not None:
             warnings.warn("'src' argument is deprecated, please use 'name' instead", DeprecationWarning)
         try:
@@ -299,12 +321,16 @@ class Source:
         except:
             # todo warn?
             name_guess = ''
-        self.src = name or src or name_guess
+        self.name = name or src or name_guess
 
     @property
-    def name(self) -> str:
-        # todo deprecate src..
-        return self.src
+    def description(self) -> str:
+        return f'{getattr(self.ff, "__module__", None)}:{getattr(self.ff, "__name__", None)} {self.args} {self.kwargs}'
+
+    @property
+    def src(self) -> str:
+        # TODO deprecated!
+        return self.name
 
 # TODO deprecated
 Indexer = Source
