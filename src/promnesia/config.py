@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from types import ModuleType
 from typing import List, Optional, Union, NamedTuple, Iterable, Callable
 import importlib
 import importlib.util
@@ -11,9 +12,19 @@ from .common import Res, Source, DbVisit
 
 HookT = Callable[[Res[DbVisit]], Iterable[Res[DbVisit]]]
 
+
+from typing import Any
+
+
+ModuleName = str
+
+# something that can be converted into a proper Source
+ConfigSource = Union[Source, ModuleName, ModuleType]
+
+
 class Config(NamedTuple):
     # TODO remove default from sources once migrated
-    SOURCES: List = []
+    SOURCES: List[ConfigSource] = []
 
     # if not specified, uses user data dir
     OUTPUT_DIR: Optional[PathIsh] = None
@@ -25,8 +36,9 @@ class Config(NamedTuple):
 
     #
     # NOTE: INDEXERS is deprecated, use SOURCES instead
-    INDEXERS: List = []
+    INDEXERS: List[ConfigSource] = []
     #MIME_HANDLER: Optional[str] = None # TODO
+
     @property
     def sources(self) -> Iterable[Res[Source]]:
         idx = self.INDEXERS
@@ -39,20 +51,20 @@ class Config(NamedTuple):
         if len(raw) == 0:
             raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup for more information")
 
-
         for r in raw:
-            if isinstance(r, str):
-                # must be a raw module name?
+            if isinstance(r, ModuleName):
                 try:
                     r = importlib.import_module(r)
                 except ModuleNotFoundError as e:
+                    # todo better error reporting?
                     yield e
                     continue
 
             if isinstance(r, Source):
                 yield r
             else:
-                # kind of last resort measure..
+                # otherwise Source object can take care of the module we passed
+                # (see SourceIsh)
                 yield Source(r)
 
     @property

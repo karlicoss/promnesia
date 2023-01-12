@@ -53,12 +53,19 @@ SOURCES = [
 
     # I guess this is as simple as it possibly gets...
     'promnesia.sources.demo',
+
+    # just in case, test lambdas
+    # with list
+    lambda: list(demo.index()),
+
+    # with generator
+    lambda: iter(list(demo.index())),
 ]
     ''')
 
     srcs = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
 
-    [s1, s2, s3, s4, s5, s55, s6] = srcs
+    [s1, s2, s3, s4, s5, s55, s6, s7, s77] = srcs
 
     assert s1.name == 'explicit name'
     assert s2.name == 'another name'
@@ -67,6 +74,10 @@ SOURCES = [
     assert s5.name == 'demo'
     assert s55.name == 'demo'
     assert s6.name == 'demo'
+
+    # can't say 'cfg' as name is intended here but anyway
+    assert s7.name  == 'cfg'
+    assert s77.name == 'cfg'
 
     index(cfg)
     # TODO assert on results count?

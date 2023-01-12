@@ -6,7 +6,8 @@ from typing import Union, List
 
 import pytest
 
-from promnesia.common import Visit, Indexer, Loc, Res, DbVisit, _is_windows
+from promnesia.common import Visit, Source, Loc, Res, DbVisit, _is_windows
+from promnesia.extract import extract_visits
 
 from common import tdata, reset_hpi_modules
 from config_tests import with_config
@@ -17,21 +18,19 @@ from config_tests import with_config
 skip = pytest.mark.skip
 
 
-def W(*args, **kwargs):
+def W(*args, **kwargs) -> Source:
     if 'src' not in kwargs:
         kwargs['src'] = 'whatever'
-    return Indexer(*args, **kwargs)
+    return Source(*args, **kwargs)
 
 
-def as_visits(*args, **kwargs) -> List[Res[DbVisit]]:
-    from promnesia.extract import extract_visits
-    kwargs['src'] = 'whatever'
-    return list(extract_visits(*args, **kwargs))
+def as_visits(source: Source) -> List[Res[DbVisit]]:
+    return list(extract_visits(source=source, src='whatever'))
 
 
-def as_ok_visits(*args, **kwargs) -> List[DbVisit]:
+def as_ok_visits(source: Source) -> List[DbVisit]:
     r: List[DbVisit] = []
-    for v in as_visits(*args, **kwargs):
+    for v in as_visits(source=source):
         if isinstance(v, Exception):
             raise v
         r.append(v)
@@ -98,7 +97,7 @@ def test_with_error() -> None:
                     dt=datetime.utcfromtimestamp(0),
                     locator=Loc.make('whatever'),
                 )
-    [v1, e, v2] = as_visits(lambda: err_ex())
+    [v1, e, v2] = as_visits(W(lambda: err_ex()))
     assert isinstance(v1, DbVisit)
     assert isinstance(e, Exception)
     assert isinstance(v2, DbVisit)
@@ -134,7 +133,7 @@ def test_takeout_zip(adhoc_config) -> None:
     from my.core.cachew import disabled_cachew
     with disabled_cachew():
         import promnesia.sources.takeout as tex
-        visits = as_ok_visits(tex.index)
+        visits = as_ok_visits(W(tex.index))
     assert len(visits) == 3
     [vis] = [v for v in visits if v.norm_url == 'takeout.google.com/settings/takeout']
 
