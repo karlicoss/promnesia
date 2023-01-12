@@ -7,17 +7,15 @@ from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping, List
 
 import pytest
 
-from common import tdir, under_ci, DATA, GIT_ROOT, promnesia_bin
+from common import under_ci, DATA, GIT_ROOT, promnesia_bin
 
-from promnesia.common import _is_windows
+from promnesia.common import _is_windows, DbVisit
+from promnesia.read_db import get_all_db_visits
 
 
 def run_index(cfg: Path, *, update=False) -> None:
     from promnesia.__main__ import do_index
     do_index(cfg, overwrite_db=not update)
-
-
-index = run_index # legacy name
 
 
 def test_example_config(tmp_path: Path) -> None:
@@ -28,28 +26,8 @@ def test_example_config(tmp_path: Path) -> None:
     ex = read_example_config()
     cfg = tmp_path / 'test_config.py'
     cfg.write_text(ex)
-    index(cfg)
+    run_index(cfg)
 
-
-from sqlalchemy import create_engine, MetaData, exists # type: ignore
-from sqlalchemy import Column, Table # type: ignore
-from cachew import NTBinder
-from promnesia.common import DbVisit # TODO ugh. figure out pythonpath
-
-
-# todo reuse promnesia.server??
-def _get_stuff(outdir: Path):
-    db_path = outdir / 'promnesia.sqlite'
-    assert db_path.exists()
-
-    engine = create_engine(f'sqlite:///{db_path}')
-
-    binder = NTBinder.make(DbVisit)
-
-    meta = MetaData(engine)
-    table = Table('visits', meta, *binder.columns)
-
-    return engine, binder, table
 
 # TODO a bit shit... why did I make it dict at first??
 Urls = Union[
@@ -60,10 +38,10 @@ Urls = Union[
 def index_urls(urls: Urls, *, source_name: str='test'):
     uuu = list(urls.items()) if isinstance(urls, dict) else urls
 
-    def idx(tdir: Path):
-        cfg = tdir / 'test_config.py'
+    def idx(tmp_path: Path):
+        cfg = tmp_path / 'test_config.py'
         cfg.write_text(f"""
-OUTPUT_DIR = r'{tdir}'
+OUTPUT_DIR = r'{tmp_path}'
 
 from promnesia.common import Source, Visit, Loc
 from datetime import datetime, timedelta
@@ -80,18 +58,18 @@ indexer = Source(
 
 SOURCES = [indexer]
 """)
-        index(cfg)
+        run_index(cfg)
     return idx
 
 
-def index_hypothesis(tdir: Path) -> None:
+def index_hypothesis(tmp_path: Path) -> None:
     hypexport_path  = DATA / 'hypexport'
     hypothesis_data = hypexport_path / 'testdata'
 
-    cfg = tdir / 'test_config.py'
+    cfg = tmp_path / 'test_config.py'
     # TODO ok, need to simplify this...
     cfg.write_text(f"""
-OUTPUT_DIR = r'{tdir}'
+OUTPUT_DIR = r'{tmp_path}'
 
 from promnesia.common import Source
 
@@ -113,7 +91,7 @@ SOURCES = [
     Source(hyp_extractor, name='hyp'),
 ]
     """)
-    index(cfg)
+    run_index(cfg)
 
 
 def index_some_demo_visits(
@@ -149,17 +127,17 @@ def index_some_demo_visits(
     run_index(cfg_file, update=update)
 
 
-def index_local_chrome(tdir: Path) -> None:
+def index_local_chrome(tmp_path: Path) -> None:
     # TODO mm, would be good to keep that for proper end2end
     # inp = Path('/L/data/promnesia/testdata/chrome-history/History') # TODO make it accessible to the repository
-    # merged = tdir / 'chrome-merged.sqlite'
+    # merged = tmp_path / 'chrome-merged.sqlite'
     # populate_db.merge_from('chrome', from_=inp, to=merged)
 
     merged = Path('/L/data/promnesia/testdata/chrome.sqlite')
 
-    cfg = tdir / 'test_config.py'
+    cfg = tmp_path / 'test_config.py'
     cfg.write_text(f"""
-OUTPUT_DIR = r'{tdir}'
+OUTPUT_DIR = r'{tmp_path}'
 
 from promnesia.common import Indexer as I
 # TODO FIXME -- fix back
@@ -169,20 +147,12 @@ chrome_extractor = I(index, '{merged}', src='chrome')
 
 SOURCES = [chrome_extractor]
 """)
-    index(cfg)
+    run_index(cfg)
 
 
-def query_db_visits(tdir: Path) -> List[DbVisit]:
-    # TODO copy pasting from server; need to unify
-    engine, binder, table = _get_stuff(tdir)
-    query = table.select()
-    with engine.connect() as conn:
-        return [binder.from_row(row) for row in conn.execute(query)]
-
-
-def test_hypothesis(tdir: Path) -> None:
-    index_hypothesis(tdir)
-    visits = query_db_visits(tdir)
+def test_hypothesis(tmp_path: Path) -> None:
+    index_hypothesis(tmp_path)
+    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
     assert len(visits) > 100
 
     [vis] = [x for x in visits if 'fundamental fact of evolution' in (x.context or '')]
@@ -193,7 +163,7 @@ def test_hypothesis(tdir: Path) -> None:
     assert 'misconception about evolution is fueling misconception about AI' in (vis.context or '') # contains notes as well
 
 
-def test_comparison(tdir: Path) -> None:
+def test_comparison(tmp_path: Path) -> None:
     from promnesia.compare import compare_files
 
     idx = index_urls({
@@ -201,9 +171,9 @@ def test_comparison(tdir: Path) -> None:
         'https://en.wikipedia.org/wiki/Saturn_V': None,
         'https://plato.stanford.edu/entries/qualia': None,
     })
-    idx(tdir)
-    db     = tdir / 'promnesia.sqlite'
-    old_db = tdir / 'promnesia-old.sqlite'
+    idx(tmp_path)
+    db     = tmp_path / 'promnesia.sqlite'
+    old_db = tmp_path / 'promnesia-old.sqlite'
     import shutil
     shutil.move(str(db), str(old_db))
 
@@ -213,7 +183,7 @@ def test_comparison(tdir: Path) -> None:
         'https://en.wikipedia.org/wiki/Saturn_V': None,
         'https://plato.stanford.edu/entries/qualia': None,
     })
-    idx2(tdir)
+    idx2(tmp_path)
 
     # should not crash, as there are more links in the new database
     assert len(list(compare_files(old_db, db))) == 0
@@ -221,7 +191,7 @@ def test_comparison(tdir: Path) -> None:
     assert len(list(compare_files(db, old_db))) == 1
 
 
-def test_index_many(tdir: Path) -> None:
+def test_index_many(tmp_path: Path) -> None:
     # NOTE [20200521] experimenting with promnesia.dump._CHUNK_BY
     # inserting 100K visits
     # value=1000: 9 seconds
@@ -229,7 +199,7 @@ def test_index_many(tdir: Path) -> None:
     # value=1   : 18 seconds
     # ok, I guess it's acceptable considering the alternative is crashing (too many sql variables on some systems)
     # kinda makes sense -- I guess most overhead is coming from creating temporary lists etc?
-    cfg = tdir / 'test_config.py'
+    cfg = tmp_path / 'test_config.py'
     cfg.write_text(f"""
 from datetime import datetime, timedelta
 from promnesia.common import Source, Visit, Loc
@@ -243,16 +213,16 @@ def index():
         )
 
 SOURCES = [Source(index)]
-OUTPUT_DIR = r'{tdir}'
+OUTPUT_DIR = r'{tmp_path}'
     """)
-    index(cfg)
-    visits = query_db_visits(tdir)
+    run_index(cfg)
+    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
 
     assert len(visits) == 100000
 
 
-def test_indexing_error(tdir: Path) -> None:
-    cfg = tdir / 'test_config.py'
+def test_indexing_error(tmp_path: Path) -> None:
+    cfg = tmp_path / 'test_config.py'
     cfg.write_text(f'''
 def bad_index():
     import bad_import
@@ -264,14 +234,14 @@ SOURCES = [
     bad_index,
     Source(demo, count=3),
 ]
-OUTPUT_DIR = r'{tdir}'
+OUTPUT_DIR = r'{tmp_path}'
 ''')
     with pytest.raises(SystemExit):
-        index(cfg)
+        run_index(cfg)
         # should exit(1)
 
     # yet save the database
-    visits = query_db_visits(tdir)
+    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
 
     [e, _, _, _] = visits
     assert e.src == 'error'
@@ -281,13 +251,13 @@ def test_indexing_update(tmp_path: Path) -> None:
     from collections import Counter
 
     index_hypothesis(tmp_path)
-    visits = query_db_visits(tmp_path)
+    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
     counter = Counter(v.src for v in visits)
     assert counter['hyp'] > 50, counter  # precondition
 
     dt = datetime.fromisoformat('2018-06-01T10:00:00.000000+01:00')
     index_some_demo_visits(tmp_path, count=1000, base_dt=dt, delta=timedelta(hours=1), update=True)
-    visits = query_db_visits(tmp_path)
+    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
     counter = Counter(v.src for v in visits)
     assert counter['demo'] == 1000, counter
     assert counter['hyp'] > 50, counter  # should keep the original visits too!
