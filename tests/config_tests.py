@@ -60,12 +60,16 @@ SOURCES = [
 
     # with generator
     lambda: iter(list(demo.index())),
+
+    # example of lazy source
+    # useful when arguments are somehow computed dynamically in config
+    Source(lambda: demo.index(count=10), name='lazy'),
 ]
     ''')
 
     srcs = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
 
-    [s1, s2, s3, s4, s5, s55, s6, s7, s77] = srcs
+    [s1, s2, s3, s4, s5, s55, s6, s7, s77, s777] = srcs
 
     assert s1.name == 'explicit name'
     assert s2.name == 'another name'
@@ -78,6 +82,7 @@ SOURCES = [
     # can't say 'cfg' as name is intended here but anyway
     assert s7.name  == 'cfg'
     assert s77.name == 'cfg'
+    assert s777.name == 'lazy'
 
     index(cfg)
     # TODO assert on results count?
