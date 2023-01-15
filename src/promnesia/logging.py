@@ -72,6 +72,7 @@ def setup_logger(logger: logging.Logger, level: LevelIsh) -> None:
         formatter = logging.Formatter(fmt=FORMAT_NOCOLOR, datefmt=DATEFMT)
         use_logzero = False
 
+    logger.addFilter(AddExceptionTraceback())
     if use_logzero and not COLLAPSE_DEBUG_LOGS: # all set, nothing to do
         # 'simple' setup
         logzero.setup_logger(logger.name, level=lvl, formatter=formatter)
@@ -102,6 +103,24 @@ class LazyLogger(logging.Logger):
             setattr(logger, _init_done, False) # will setup on the first call
             logger.isEnabledFor = isEnabledFor_lazyinit  # type: ignore[assignment]
         return cast(LazyLogger, logger)
+
+
+# by default, logging.exception isn't logging traceback
+# which is a bit annoying since we have to
+# also see https://stackoverflow.com/questions/75121925/why-doesnt-python-logging-exception-method-log-traceback-by-default
+# tod also amend by post about defensive error handling?
+class AddExceptionTraceback(logging.Filter):
+    def filter(self, record):
+        s = super().filter(record)
+        if s is False:
+            return False
+        if record.levelname == 'ERROR':
+            exc = record.msg
+            if isinstance(exc, BaseException):
+                if record.exc_info is None or record.exc_info == (None, None, None):
+                    exc_info = (type(exc), exc, exc.__traceback__)
+                    record.exc_info = exc_info
+        return s
 
 
 # todo also save full log in a file?
