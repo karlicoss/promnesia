@@ -101,6 +101,9 @@ jobs:
     - run: .ci/github-ci-compat
 
     - run: |
+        # work around for some breaking change in setuptools 66.0.0
+        # see https://github.com/pypa/setuptools/issues/3772#issuecomment-1384671296
+        python3 -m pip install --force setuptools==65.7.0
         python3 -m pip install .
         export PATH=.ci/fake-systemd:$PATH
         tests/install_and_run
