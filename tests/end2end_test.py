@@ -354,7 +354,7 @@ class Sidebar(NamedTuple):
     @contextmanager
     def ctx(self) -> Iterator[WebElement]:
         selector = (By.XPATH, '//iframe[contains(@id, "promnesia-frame")]')
-        wait = 2  # hmm, wait = 1 triggered with timeout on firefox at least once?
+        wait = 5  # if you want to decrease this, make sure test_sidebar_navigation isn't failing
         frame_element = Wait(self.driver, timeout=wait).until(
             EC.presence_of_element_located(selector),
         )
@@ -980,6 +980,10 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # seems broken on any local page -- only transparent sidebar frame is shown
         # the issue is that contentDocument.body is null -- no idea why
 
+    if driver.name == 'chrome':
+        pytest.skip("TODO need to split the test into version which isn's using back/forward. see https://bugs.chromium.org/p/chromedriver/issues/detail?id=4329")
+        # also need to extract a scenario for manual testing I guess
+
     with ExitStack() as stack:
         if base_url == 'LOCAL':
             local_addr = stack.enter_context(local_http_server(PYTHON_DOC_PATH, port=15454))
@@ -1001,11 +1005,11 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
 
         # TODO hmm so this bit is actually super fast, takes like 1.5 secs
         # need to speed up the preparation
-        helper.driver.get(url)
+        driver.get(url)
         assert not helper.sidebar.visible
         confirm("grey icon. sidebar shouldn't be visible")
 
-        helper.driver.get(tutorial)
+        driver.get(tutorial)
         assert not helper.sidebar.visible
         confirm("green icon. sidebar shouldn't be visible")
 
@@ -1018,9 +1022,9 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # switch between these in quick succession deliberately
         # previously it was triggering a bug when multiple sidebars would be injected due to race condition
         for i in range(100):
-            helper.driver.get(url)
+            driver.get(url)
             sleep_if_chrome()
-            helper.driver.get(tutorial)
+            driver.get(tutorial)
             sleep_if_chrome()
             if i % 10 == 0:
                 # huh, it's quite slow... to run it on single iteration
@@ -1033,16 +1037,21 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         helper.sidebar.open()
         confirm("green icon. sidebar should open and show one visit")
 
-        helper.driver.back()
+        driver.back()
         assert not helper.sidebar.visible
         confirm("grey/purple icon, sidebar shouldn't be visible")
 
         # again, stress test it to try to trigger weird bugs
         for i in range(100):
             sleep_if_chrome()
-            helper.driver.forward()
+            driver.forward()
+
+            # TODO ugh. still failing here sometimes under headless firefox??
+            # if i % 10 == 0:
+            #     assert helper.sidebar.visible
+
             sleep_if_chrome()
-            helper.driver.back()
+            driver.back()
             if i % 10 == 0:
                 # huh, it's quite slow... to run it on single iteration
                 # what it's really testing here is that there is only one promnesia frame/sidebar
@@ -1055,19 +1064,15 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # if you look in the page inspector console and click back/forward
         # weird that it tries to load it wrt the page??
         # Loading failed for the <script> with source “file:///usr/share/doc/python3/html/tutorial/anchorme.js”
-        helper.driver.forward()
+        driver.forward()
 
-        if False:
-            # so previously this worked somewhat by accident because of race conditions
-            # doesn't loook like the DOM is preserved during navigating back/forth
-            assert helper.sidebar.visible
-            confirm('green icon, sidebar visible')
+        # sidebar should be preserved between page transitions
+        assert helper.sidebar.visible
+        confirm('green icon, sidebar visible')
 
-            pytest.skip('TODO: we have an actual bug here, seems that sidebar stops closing')
-            # hmm ^ I think it's actually cause the sidebar we see is disfunctional and deatched from the 'current' context?
-
-            helper.sidebar.close()
-            confirm('green icon, sidebar is closed')
+        # check that still can interact with the sidebar
+        helper.sidebar.close()
+        confirm('green icon, sidebar is closed')
 
 
 @browsers()
