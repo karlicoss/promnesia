@@ -133,7 +133,7 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
                 cr_options.add_argument('--no-sandbox')
 
             # regular --headless doesn't support extensions for some reason
-            cr_options.add_argument('--headless=chrome')
+            cr_options.add_argument('--headless=new')
         cr_options.add_extension(str(ex))
         driver = webdriver.Chrome(options=cr_options)
     else:
