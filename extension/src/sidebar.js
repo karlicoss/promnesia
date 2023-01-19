@@ -202,6 +202,7 @@ class Sidebar {
             // TODO not sure if there is anything to reject?..
             sidebar.addEventListener('load', () => {resolve();}, {once: true});
         });
+        // todo add timeout to make it a bit easier to debug?
         await loadPromise;
 
         this.setupFrame(sidebar);
@@ -613,8 +614,7 @@ function requestVisits(): void {
 }
 
 
-// eslint-disable-next-line no-unused-vars
-chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) => {
+const onMessageListener = (msg: any, _: chrome$MessageSender) => {
     const method = msg.method
     if        (method == Methods.BIND_SIDEBAR_VISITS) {
         bindSidebarData(Visits.fromJObject(msg.data))
@@ -624,7 +624,23 @@ chrome.runtime.onMessage.addListener((msg: any, sender: chrome$MessageSender) =>
         sidebar().then(s => s.toggle())
     }
     // todo do I need to return anything?
-})
+}
+
+
+const doc_body = unwrap(document.body)
+
+
+// this is necessary because due to data races it's possible for sidebar.js to be injected twice in the page
+// NOTE: we can't use window. variables here, seems that their state isn't preserved under geckodriver
+// see https://github.com/mozilla/geckodriver/issues/2075
+// perhaps have a separate version for testing purposes only??
+if (doc_body.getAttribute('promnesia_haslistener') == null) {
+    doc_body.setAttribute('promnesia_haslistener', 'true')
+    console.debug(`[promnesia] [sidebar-${UUID}] registering callbacks`)
+    chrome.runtime.onMessage.addListener(onMessageListener)
+} else {
+    console.debug(`[promnesia] [sidebar-${UUID}] skipping callback registration, they are already present`)
+}
 
 // TODO make configurable? or resizable?
 
