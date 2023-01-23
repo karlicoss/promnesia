@@ -26,6 +26,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoAlertPresentException, NoSuchFrameException, TimeoutException
@@ -486,7 +487,6 @@ class TestHelper(NamedTuple):
         )
 
     def move_to(self, element) -> None:
-        from selenium.webdriver.common.action_chains import ActionChains
         ActionChains(self.driver).move_to_element(element).perform()
 
     def switch_to_sidebar(self, wait: Union[bool, int]=False, *, wait2: bool=True) -> None:
@@ -1197,6 +1197,32 @@ def test_duplicate_background_pages(tmp_path: Path, driver: Driver) -> None:
 
 
 @browsers()
+def test_showvisits_popup(tmp_path: Path, driver: Driver) -> None:
+    url = 'https://www.iana.org/'
+    indexer = index_urls([
+        ('https://www.iana.org/abuse', 'some comment'),
+    ])
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver, notify_contexts=True, show_dots=True) as helper:
+        driver.get(url)
+        # todo might need to wait until marks are shown?
+        link_with_popup = driver.find_elements(By.XPATH, '//a[@href = "/abuse"]')[0]
+
+        # wait till visited marks appear
+        Wait(driver, timeout=5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'promnesia-visited')),
+        )
+        helper.move_to(link_with_popup)  # hover over visited mark
+        # meh, but might need some time to render..
+        popup = Wait(driver, timeout=5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'context')),
+        )
+        sleep(3)  #  text might take some time to render too..
+        assert popup.text == 'some comment'
+
+        assert is_visible(driver, popup)
+
+
+@browsers()
 def test_multiple_page_updates(tmp_path: Path, driver: Driver) -> None:
     # on some pages, onUpdated is triggered multiple times (because of iframes or perhaps something else??)
     # which previously resulted in flickering sidebar/performance degradation etc, so it's a regression test against this
@@ -1222,22 +1248,12 @@ def test_multiple_page_updates(tmp_path: Path, driver: Driver) -> None:
         helper._sidebar.open()
         helper._sidebar.close()
 
-        xpath = '//a[@href = "https://github.com/karlicoss/promnesia"]'
+        xpath = '//a[@href = "/karlicoss/promnesia"]'
         links_to_mark = driver.find_elements(By.XPATH, xpath)
         assert len(links_to_mark) > 2  # sanity check
         for l in links_to_mark:
             assert 'promnesia-visited' in l.get_attribute('class')
             # TODO would be nice to test clicking on them...
-
-        # meh...
-        header_link = driver.find_elements(By.XPATH, '//a[text() = "promnesia" and @href = "/karlicoss/promnesia"]')[0]
-        # hmm a bit crap, but works!!
-        header_link.find_element(By.XPATH, './../..').find_element(By.CLASS_NAME, 'promnesia-visited-toggler').click()
-
-        popup = driver.find_element(By.CLASS_NAME, 'context')
-        assert popup.text == 'some comment'
-
-        assert is_visible(driver, popup)
 
 
 # TODO FIXME need to test racey conditions _while_ page is loading, results in this 'unexpected error occured'?
