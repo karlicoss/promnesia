@@ -20,6 +20,7 @@ var Cls = {
     POPUP      : 'promnesia-visited-popup'  ,
     POPUP_LINK : 'promnesia-visited-popup-link',
     TIPPY      : 'promnesia-tippy',
+    EYE        : 'promnesia-eye',
 }
 
 
@@ -170,24 +171,29 @@ function showMark(element) {
     const style = element.style
 
     style.oldOutlineColor = style.outlineColor
-    style.oldBackgroundImage = style.backgroundImage
-
     style.outlineColor = baseColorTr
 
-    // TODO shit. doing this via background sometimes may not work because child element might have its own background???
-    // https://developer.mozilla.org/en-US/docs/Web/HTML e.g. on this page
-    // you can even see it here
-    // even monospace doesn't help?
-    // style='fill: color' on svg text doesn't help either
-    // https://www.compart.com/en/unicode/U+1F441
-    const eyeIcon = `url("data:image/svg+xml;utf8,
+
+    if (style.backgroundImage == '') {
+        // otherwise do not add eye icon -- this may cause weird artifacts
+        // TODO note sure if it's super reliable, e.g. it might have not backgroundImage but somthing else...
+
+        element.classList.add(Cls.EYE)
+        // TODO shit. doing this via background sometimes may not work because child element might have its own background???
+        // https://developer.mozilla.org/en-US/docs/Web/HTML e.g. on this page
+        // you can even see it here
+        // even monospace doesn't help?
+        // style='fill: color' on svg text doesn't help either
+        // https://www.compart.com/en/unicode/U+1F441
+        const eyeIcon = `url("data:image/svg+xml;utf8,
 <svg xmlns='http://www.w3.org/2000/svg'
  fill='${baseColor.replace('#', '%23')}'
  width='10'
  height='10'>
 <text font-size='10' x='0' y='10'>👁</text>
 </svg>")`.replaceAll('\n', '')
-    style.backgroundImage = eyeIcon
+        style.backgroundImage = eyeIcon
+    }
 }
 
 /*
@@ -201,7 +207,11 @@ function hideMark(element) {
 
     const style = element.style
     style.outlineColor = style.oldOutlineColor
-    style.backgroundImage = style.oldBackgroundImage
+
+    if (element.classList.contains(Cls.EYE)) {
+        element.classList.remove(Cls.EYE)
+        style.backgroundImage = ''
+    }
 
     try {
         element._tippy.destroy()
