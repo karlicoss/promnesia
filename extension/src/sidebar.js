@@ -310,6 +310,13 @@ function _highlight(text: string, idx: number, v: Visit) {
             continue
         }
 
+        if (target.classList.contains('promnesia-visited-popup-link')) {
+            // prevent highlight from being shown in tooltips
+            // hmm a bit crap, ideally would target promnesia-visited-popup
+            // but not sure how to get classes including parent classes??
+            continue
+        }
+
         // TODO why doesn't flow warn about this??
         // target.name === 'body'
         if (target === doc.body) {
