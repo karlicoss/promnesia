@@ -37,12 +37,13 @@
 }
 
 
-.promnesia-visited {
+/* TODO not really sure about !important...  */
+.promnesia-visited.promnesia-eye {
     /* note: outline is defined in sidebar.css */
-    background-repeat: no-repeat; /* repeats by default */
-    background-position-x: right; /* left by default */
+    background-repeat: no-repeat !important; /* repeats by default */
+    background-position-x: right !important; /* left by default */
 
     /* same as text size, we just want a small icon */
     /* using rem to prevent it from scaling too much on navigation elements etc */
-    background-size: '1rem';
+    background-size: '1rem' !important;
 }
