@@ -1,19 +1,14 @@
 /* TODO use variables */
 
-.promnesia-tippy .tippy-box  {
-    background-color: initial;
-    color: initial;
-    border-radius: initial;
-    line-height: initial;
-}
-
 /* actual popup with the metadata */
 .promnesia-visited-popup {
     display: block; /* otherwise border etc don't work? */
     white-space: pre-wrap; /* keep whitespace intact */
 
-    outline: solid 1px;
     background: #e6e6e6fa; /* same color as in sidebar */
+    color: black; /* to prevent it inheriting white text colour in dark mode */
+
+    outline: solid 1px;
     padding: 2px;
     /* not sure about initial?? */
     font-weight: initial;

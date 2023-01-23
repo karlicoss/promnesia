@@ -265,24 +265,6 @@ const options = {
           loader: 'html-loader',
           exclude: /node_modules/
       },
-      {
-          // https://github.com/atomiks/tippyjs/issues/1041#issuecomment-1399631809
-          // fixup writes to innerHTML to prevent webext lint from complaining
-          test: /tippy.*js$/,
-          loader: path.join(__dirname, 'old/patcher.js'),
-          options: {
-            patches: [
-              {
-                code: /return 'innerHTML';/,
-                newCode: 'throw Error("Should not be used!");',
-              },
-              {
-                code: /dangerouslySetInnerHTML.content, ''.;/,
-                newCode: "if (content.innerHTML != '') { dangerouslySetInnerHTML(content, '') };",
-              }
-            ],
-          },
-      },
     ]
   },
   plugins: [

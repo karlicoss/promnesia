@@ -1,7 +1,10 @@
 // hmm. for some reason esm version isn't properly working with CSS??
 // but umd bundle does???
 // import tippy from '../node_modules/tippy.js/dist/tippy.esm.js'
-import tippy from '../node_modules/tippy.js/dist/tippy-bundle.umd.js'
+// import tippy from '../node_modules/tippy.js/dist/tippy-bundle.umd.js'
+// OK, headless is better because it doesn't inject extra CSS
+// also not causing issues with unsafe HTML assignment
+import tippy from '../node_modules/tippy.js/headless/dist/tippy-headless.esm.js'
 
 // 'API': take
 // - link_element: list of <a> DOM elements on the page
@@ -106,21 +109,30 @@ function showMark(element) {
 
     const popup = formatVisit(v)
     // TODO try async import??
-    const tip = tippy(element, {
-        allowHTML: false,
-        content: popup,
-        sticky: true,
-        maxWidth: "none",  /* default makes it wrap over */
-        interactive: true,  // so it's not hiding on hover
-        // TODO placement https://tippyjs.bootcss.com/#placement
+    try {
+        tippy(element, {
+            render(instance) {
+                const popper = document.createElement('div')
+                popper.classList.add(Cls.TIPPY)
+                const box = document.createElement('div')
+                popper.appendChild(box)
+                box.appendChild(instance.props.content)
+                return {popper}
+            },
+            content: popup,
+            maxWidth: "none",  /* default makes it wrap over */
+            interactive: true,  // so it's not hiding on hover
+            // TODO placement https://tippyjs.bootcss.com/#placement
 
-        /* useful for debugging */
-        // trigger: "manual",
-        // showOnCreate: true,
-        // hideOnClick: false,
-    })
-    tip.popper.classList.add(Cls.TIPPY)
-
+            /* useful for debugging */
+            // trigger: "manual",
+            // showOnCreate: true,
+            // hideOnClick: false,
+        })
+    } catch (e) {
+        console.error('[promnesia]: error while adding tooltip to %o', element)
+        console.error(e)
+    }
 
     /* 'boring' link -- mere visit, e.g. from the browser history
     * 'interesting' -- have contexts or something like that
@@ -190,6 +202,13 @@ function hideMark(element) {
     const style = element.style
     style.outlineColor = style.oldOutlineColor
     style.backgroundImage = style.oldBackgroundImage
+
+    try {
+        element._tippy.destroy()
+    } catch (e) {
+        console.error('[promnesia]: error while removing tooltip from %o', element)
+        console.error(e)
+    }
 }
 
 
