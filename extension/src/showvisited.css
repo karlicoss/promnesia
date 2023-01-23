@@ -1,25 +1,17 @@
-/* TODO non-selectable? should probably be from the parent.. */
-
 /* TODO use variables */
 
-/* the mark that shows near the link */
-.promnesia-visited-eye {
-
-    /* absolute relative to the parent wrapper that forces zero space */
-    position: absolute;
-
-    /* display slightly above the text */
-    bottom: 1em;
+.promnesia-tippy .tippy-box  {
+    background-color: initial;
+    color: initial;
+    border-radius: initial;
+    line-height: initial;
 }
-
-/* invisible area taking 25% of the link and lets you click and pin the popup */
-.promnesia-visited-toggler {
-    cursor: crosshair;
-}
-
 
 /* actual popup with the metadata */
 .promnesia-visited-popup {
+    display: block; /* otherwise border etc don't work? */
+    white-space: pre-wrap; /* keep whitespace intact */
+
     outline: solid 1px;
     background: #e6e6e6fa; /* same color as in sidebar */
     padding: 2px;
@@ -42,29 +34,20 @@
     margin: 2px;
 }
 
+/* TODO need to use these styles in tippy */
 .promnesia-visited-popup .datetime {
     display: inline-block;
     float: right;
     padding-left: 0.5em;
 }
 
-/* close buton within the popup */
-.promnesia-visited-popup-close {
-    display: inline-block;
-    min-width: 1.5em;
-    min-height: 1.5em;
-    text-align: center;
-    font-weight: bold;
-    float: right;
-    color: red;
-    cursor: pointer;
-}
 
-.promnesia-visited-popup-help {
-    display: inline-block;
-    min-width: 1.5em;
-    min-height: 1.5em;
-    text-align: center;
-    font-weight: bold;
-    float: right;
+.promnesia-visited {
+    /* note: outline is defined in sidebar.css */
+    background-repeat: no-repeat; /* repeats by default */
+    background-position-x: right; /* left by default */
+
+    /* same as text size, we just want a small icon */
+    /* using rem to prevent it from scaling too much on navigation elements etc */
+    background-size: '1rem';
 }

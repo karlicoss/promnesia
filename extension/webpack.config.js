@@ -225,6 +225,9 @@ const options = {
         type: "window", /* 'sets' library to window. variable... all the other types didn't work :( */
       },
     },
+    showvisited: {
+      import: path.join(__dirname, './src/showvisited'),
+    },
   },
   output: {
     // hmm. according to https://stackoverflow.com/a/64715069
@@ -262,6 +265,24 @@ const options = {
           loader: 'html-loader',
           exclude: /node_modules/
       },
+      {
+          // https://github.com/atomiks/tippyjs/issues/1041#issuecomment-1399631809
+          // fixup writes to innerHTML to prevent webext lint from complaining
+          test: /tippy.*js$/,
+          loader: path.join(__dirname, 'old/patcher.js'),
+          options: {
+            patches: [
+              {
+                code: /return 'innerHTML';/,
+                newCode: 'throw Error("Should not be used!");',
+              },
+              {
+                code: /dangerouslySetInnerHTML.content, ''.;/,
+                newCode: "if (content.innerHTML != '') { dangerouslySetInnerHTML(content, '') };",
+              }
+            ],
+          },
+      },
     ]
   },
   plugins: [
@@ -276,7 +297,6 @@ const options = {
         // these js files aren't entrypoints so need copying too
         // not sure if it's the right way, but I guess webpack can't guess otherwise
         { context: 'src', from: 'toastify.js'   },  // TODO my version is tweaked, right?
-        { context: 'src', from: 'showvisited.js'},
         { context: 'src', from: 'selenium_bridge.js' },
         { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.js' },
        ]

@@ -37,6 +37,7 @@
     "@codemirror/lang-javascript": "^6.1.2",
     "anchorme": "github:karlicoss/anchorme.js#promnesia",
     "codemirror": "^6.0.1",
+    "tippy.js": "^6.3.7",
     "webext-options-sync": "^4.0.0"
   },
   "devDependencies": {
