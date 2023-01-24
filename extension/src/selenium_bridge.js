@@ -1,6 +1,4 @@
-// see background.js::initBackground for explanation
-chrome.runtime.sendMessage({method: "INJECT_BACKGROUND_CALLBACKS"})
-
+// only used during tests
 
 // hack to hook into the extension... https://stackoverflow.com/a/38554438/706389
 for (const x of [

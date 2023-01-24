@@ -96,7 +96,17 @@ const manifestExtra = {
         "anchorme.js",
         // TODO however, seems that web_accessible_resources works without sidebar.js and sidebar.css?? odd
     ],
-};
+}
+
+// this is only needed during testing
+if (!publish) {
+  manifestExtra.content_scripts = [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["selenium_bridge.js"],
+    },
+  ]
+}
 
 if (dev) {
     manifestExtra.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self'";
@@ -182,7 +192,6 @@ const options = {
       import: path.join(__dirname, './src/search'),
       dependOn: ['webext-options-sync'],
     },
-    background_injector     : path.join(__dirname, './src/background_injector'),
     'webext-options-sync': {
       import: "webext-options-sync",
     },
@@ -238,6 +247,7 @@ const options = {
         // not sure if it's the right way, but I guess webpack can't guess otherwise
         { context: 'src', from: 'toastify.js'   },  // TODO my version is tweaked, right?
         { context: 'src', from: 'showvisited.js'},
+        { context: 'src', from: 'selenium_bridge.js' },
         { from: 'node_modules/webextension-polyfill/dist/browser-polyfill.js' },
        ]
     }),

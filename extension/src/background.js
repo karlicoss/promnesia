@@ -924,22 +924,10 @@ const TOGGLES: Array<MenuToggle> = [
     },
 ]
 
-/*
-  Right, that's a hack for some nasty bug/behaviour that happens both in firefox and chrome.
-  Basically, if you have tabs open for html pages within the extensions (e.g. moz-extensions://<id>/search.html ), each of them ends up with a copy of background page.
-  That results it multiple responses for commands, messages etc.
-  Only relevantinformation I could found about that is https://stackoverflow.com/questions/30856001/why-does-chrome-tabs-create-create-2-tabs , but that didn't really help
-  This behaviour is tested by test_duplicate_background_pages to prevent regressions
-*/
 
-
-var backgroundInitialised = false; // should be synchronous hopefully?
 function initBackground() {
     // NOTE: callback registering needs to be synchronous
     // otherwise doesn't work well with background page suspension
-
-    /* better set early to minimize the potential for races? */
-    backgroundInitialised = true;
 
     // $FlowFixMe
     chrome.runtime.onMessage.addListener(onMessageCallback)
@@ -1013,12 +1001,8 @@ function initBackground() {
 }
 
 
-/*
-  The idea is that each page pokes background.
-  If background happens to be extensions' background, it's ignored; otherwise we're trying to register callbacks.
- */
-chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) => {
-    // see background_injector.js
+chrome.runtime.onMessage.addListener((info: any, _: chrome$MessageSender) => {
+    // see selenium_bridge.js
     if (info === 'selenium-bridge-activate') {
         handleToggleSidebar()
     }
@@ -1028,29 +1012,6 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
     if (info === 'selenium-bridge-search') {
         handleOpenSearch()
     }
-    if (info.method != "INJECT_BACKGROUND_CALLBACKS") {
-        console.debug("ignoring %o %o; %s", info, sender, backgroundInitialised);
-        return;
-    }
-
-    console.log("onmessage %o %o", info, sender);
-    const aurl = sender.tab == null ? null : sender.tab.url;
-
-    if (backgroundInitialised) {
-        console.debug("background already initialised");
-        return;
-    }
-
-    // TODO elaborate
-    if (aurl && isSpecialProtocol(aurl)) {
-        console.warn("Suppressing special background page %s", aurl)
-        return;
-    }
-
-    console.info("Registering background page callbacks in tab %s", aurl);
-
-    // TODO get rid of this callback -- it shouldn't be needed anymore I think
-    // initBackground();
 })
 
 initBackground()
