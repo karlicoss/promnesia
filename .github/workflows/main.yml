@@ -151,24 +151,25 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '18'
+
     - run: extension/.ci/build --lint # debug version
     - run: extension/.ci/build --lint --release
 
     # TODO ugh. can't share github actions artifacts publicly...
     # TODO for fuck's sake... why does it end up named as .zip.zip ????
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: '${{ env.name }}-chrome-debug-latest.zip'
         path: 'extension/dist/artifacts/chrome/${{ env.name }}_dev_-*.zip'
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
-        name : '${{ env.name }}-chrome-release-latest.zip'
+        name: '${{ env.name }}-chrome-release-latest.zip'
         path: 'extension/dist/artifacts/chrome/${{ env.name }}-*.zip'
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
-        name : '${{ env.name }}-firefox-debug-latest.zip'
+        name: '${{ env.name }}-firefox-debug-latest.zip'
         path: 'extension/dist/artifacts/firefox/${{ env.name }}_dev_-*.zip'
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
-        name : '${{ env.name }}-firefox-release-latest.zip'
+        name: '${{ env.name }}-firefox-release-latest.zip'
         path: 'extension/dist/artifacts/firefox/${{ env.name }}-*.zip'
