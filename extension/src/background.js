@@ -8,11 +8,9 @@ import {Visit, Visits, Blacklisted, unwrap, Methods, uuid} from './common'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
 
-import {defensify, notifications, Notify} from './notifications'
+import {defensify, notifications, Notify, notifyError} from './notifications'
 import {Filterlist} from './filterlist'
-import {isAndroid, allsources} from './sources'
-
-const isMobile = isAndroid;
+import {isAndroid as isMobile, allsources} from './sources'
 
 
 // useful for debugging
@@ -20,18 +18,29 @@ const UUID = uuid()
 console.info('[promnesia]: running background page with UUID %s', UUID)
 
 
-async function actions(): Promise<Array<chrome$browserAction | chrome$pageAction>> {
-    const res = [chrome.browserAction];
 
-    const android = await isAndroid();
-    if (android) {
-        res.push(chrome.pageAction);
-    }
+function actions(): Array<chrome$browserAction | chrome$pageAction> {
     // eh, on mobile neither pageAction nor browserAction have setIcon
     // but we can use pageAction to show at least some (default) icon in some circumstances
 
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
-    return res;
+    const res = [chrome.browserAction]
+
+    // need to be defensive, it's only for mobile firefox
+    if (chrome.pageAction) {
+        res.push(chrome.pageAction)
+    } else {
+        // this is a bit backwards because we need to register callbacks synchronously
+        // otherwise isn't not working well after background page unloads
+        // callbacks don't trigger loading background if they are registered in async
+        // see https://developer.chrome.com/docs/extensions/mv2/background_pages/#listeners
+        isMobile().then(mobile => {
+            if (mobile) {
+                notifyError("Expected pageAction to be present!")
+            }
+        })
+    }
+    return res
 }
 
 
@@ -182,7 +191,7 @@ async function updateState(tab: TabUrl): Promise<void> {
 
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
     // TODO not sure if can benefit from setPopup?
-    for (const action of (await actions())) {
+    for (const action of actions()) {
         // ugh, some of these only present in browserAction..
         if (action.setTitle) {
             // $FlowFixMe
@@ -651,11 +660,11 @@ export async function handleToggleSidebar() {
    popup is available for pageAction?? can use it for blacklisting/search?
 */
 // note: this is user click callback
-async function registerActions() {
+function registerActions() {
     // NOTE: on mobile, this sets action for both icon (if it's displayed) and in the menu
-    for (const action of (await actions())) {
+    for (const action of actions()) {
         // $FlowFixMe
-        action.onClicked.addListener(defensify(toggleSidebarOnTab, 'action.onClicked'));
+        action.onClicked.addListener(defensify(toggleSidebarOnTab, 'action.onClicked'))
     }
 }
 
@@ -923,27 +932,44 @@ const TOGGLES: Array<MenuToggle> = [
   This behaviour is tested by test_duplicate_background_pages to prevent regressions
 */
 
-// TODO maybe this is what needs to be persisted?
+
 var backgroundInitialised = false; // should be synchronous hopefully?
 function initBackground() {
+    // NOTE: callback registering needs to be synchronous
+    // otherwise doesn't work well with background page suspension
+
     /* better set early to minimize the potential for races? */
     backgroundInitialised = true;
 
     // $FlowFixMe
-    chrome.runtime.onMessage.addListener(onMessageCallback);
+    chrome.runtime.onMessage.addListener(onMessageCallback)
 
-    registerActions();
+    registerActions()
 
-    // TODO make it defensive in case of error tabs? if it fails then can be conservative and ignore menu etc anyway
-    isAndroid().then(android => {
-        if (android) {
-            return;
-        }
-
+    // need to be defensive since commands API isn't available under mobile browser
+    if (chrome.commands) {
         //  $FlowFixMe // err, complains at Promise but nevertheless works
-        chrome.commands.onCommand.addListener(onCommandCallback);
+        chrome.commands.onCommand.addListener(onCommandCallback)
+    } else {
+        isMobile().then(mobile => {
+            if (!mobile) {
+                notifyError("error: chrome.commands should be available")
+            }
+        })
+    }
 
-        // TODO?? Unchecked runtime.lastError: Cannot create item with duplicate id blacklist-domain on Chrome
+    // not sure why but context menus need to be created in onInstalled?
+    // https://stackoverflow.com/a/19578984/706389
+    chrome.runtime.onInstalled.addListener(() => {
+        // need to be defensive since contextMenus API isn't available under mobile browser
+        if (chrome.contextMenus == undefined) {
+            isMobile().then(mobile => {
+                if (!mobile) {
+                    notifyError("error: chrome.contextMenus should be available")
+                }
+            })
+            return
+        }
         for (const {id: id, title: title, parentId: parentId, contexts: contexts} of MENUS) {
             chrome.contextMenus.create({
                 id: id,
@@ -952,7 +978,10 @@ function initBackground() {
                 contexts: contexts || DEFAULT_CONTEXTS,
             })
         }
-        setTimeout(() => getOptions().then((opts) => {
+        // TODO crap -- we need to refresh these menus when options update??
+        // it's broken in prod though so can live without it for a bit
+        // also cover with a test
+        getOptions().then((opts) => {
             for (const {id: id, title: title, parentId: parentId, checker: checker, contexts: contexts} of TOGGLES) {
                 chrome.contextMenus.create({
                     id: id,
@@ -963,7 +992,7 @@ function initBackground() {
                     checked: checker(opts),
                 })
             }
-        }))
+        })
 
         const onMenuClickedCallback = defensify(async (info: MenuInfo, tab: chrome$Tab) => {
             const mid = info.menuItemId
@@ -979,7 +1008,7 @@ function initBackground() {
         }, 'onMenuClicked');
 
         //  $FlowFixMe // err, complains at Promise but nevertheless works
-        chrome.contextMenus.onClicked.addListener(onMenuClickedCallback);
+        chrome.contextMenus.onClicked.addListener(onMenuClickedCallback)
     })
 }
 
@@ -1020,6 +1049,17 @@ chrome.runtime.onMessage.addListener((info: any, sender: chrome$MessageSender) =
 
     console.info("Registering background page callbacks in tab %s", aurl);
 
-    /* TODO not sure if ok or not to await? it shouldn't be blocking right? */
-    initBackground();
-});
+    // TODO get rid of this callback -- it shouldn't be needed anymore I think
+    // initBackground();
+})
+
+initBackground()
+
+
+// for debugging
+/*
+browser.runtime.onSuspend.addListener(() => {
+    console.error("SUSPENDING BACKGROUND PAGE!!")
+    notifyError("SUSPENDING BACKGROUND!!")
+})
+*/

@@ -12,7 +12,7 @@
             "webext-options-sync.js",
             "background.js"
         ],
-        "persistent": true
+        "persistent": false
     },
     "content_scripts": [{
         "matches": ["<all_urls>"],
