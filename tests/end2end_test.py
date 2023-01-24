@@ -336,7 +336,7 @@ def trigger_command(driver: Driver, cmd: str) -> None:
             Command.MARK_VISITED: 'selenium-bridge-mark-visited',
             Command.SEARCH      : 'selenium-bridge-search',
         }[cmd]
-        # see background-injector.js
+        # see selenium_bridge.js
         driver.execute_script(f"""
         var event = document.createEvent('HTMLEvents');
         event.initEvent('{ccc}', true, true);
