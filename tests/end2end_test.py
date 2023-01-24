@@ -411,6 +411,11 @@ class Sidebar(NamedTuple):
         outer = self.driver.find_element(By.ID, 'promnesia-sidebar-filters')
         return outer.find_elements(By.CLASS_NAME, 'src')
 
+
+    @property
+    def visits(self) -> list[WebElement]:
+        return self.driver.find_elements(By.XPATH, '//*[@id="visits"]/li')
+
     def trigger_search(self) -> None:
         # this should be the window with extension
         cur_window_handles = self.driver.window_handles
@@ -896,7 +901,8 @@ def test_sidebar_basic(tmp_path: Path, driver: Driver, url: str) -> None:
         pytest.skip('TODO udemy tests are very timing out. Perhaps because of cloudflare protection?')
 
     visited = {
-        url : 'whatever',
+        # this also tests org-mode style link highlighting (custom anchorme version)
+        url : 'whatever\nalso [[https://wiki.openhumans.org/wiki/Personal_Science_Wiki][Personal Science Wiki]]\nmore text',
     }
     src = "ælso test unicode 💩"
     indexer = index_urls(visited, source_name=src)
@@ -923,6 +929,16 @@ def test_sidebar_basic(tmp_path: Path, driver: Driver, url: str) -> None:
 
             assert 'all' in _all.get_attribute('class').split()
             assert sanitized in tag.get_attribute('class').split()
+
+            visits = helper._sidebar.visits
+            assert len(visits) == 1, visits
+            [v] = visits
+
+            assert v.find_element(By.CLASS_NAME, 'src').text == sanitized
+            ctx_el = v.find_element(By.CLASS_NAME, 'context')
+            assert ctx_el.text == visited[url]
+            # make sure linkifying works
+            assert ctx_el.find_element(By.TAG_NAME, 'a').get_attribute('href') == 'https://wiki.openhumans.org/wiki/Personal_Science_Wiki'
 
         confirm("You should see green icon, also one visit in sidebar. Make sure the unicode is displayed correctly.")
 
