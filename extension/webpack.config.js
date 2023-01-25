@@ -73,22 +73,48 @@ const action = {
 };
 
 
-const permissionsExtra = [];
+const hostPermissions = [
+  // these are necessary for webNavigation to work
+  // otherwise we get "Cannot access contents of the page. Extension manifest must request permission to access the respective host."
+  "file:///*",
+  "https://*/*",
+  "http://*/*",
 
+  /* also note that if we have host permissions, we don't need tabs/activeTab permission to inject css/code
+   * this is necessary to call insertCss and executeScript
+   * note that just activeTab isn't enough because things aren't necessarily happening after user interaction like action
+   * e.g. sidebar/icon state is updating after webNavigation callback
+   * */
+]
 
-// NOTE: these aren't available on mobile
-permissionsExtra.push(
-    'contextMenus',
-    'history',
-);
+const permissions = [
+  ...hostPermissions,
+
+  'storage',
+
+  'webNavigation',
+  'contextMenus',
+
+  // todo could be optional?
+  'notifications',
+
+  // todo could be optional?
+  'bookmarks',   // NOTE: isn't available on mobile
+
+  // todo could be optional?
+  'history',  // NOTE: isn't available on mobile
+]
 
 
 const manifestExtra = {
     name: name,
     version: pkg.version,
-    // TODO description??
+    description: "Indicates whether and when the page was visited (and more!)",
+    icons: {
+        "48": "images/ic_not_visited_48.png",
+    },
     browser_action: action,
-    permissions: permissionsExtra,
+    permissions: permissions,
     options_ui: {},
     web_accessible_resources: [
         "sidebar.css", /* injected in the sidebar */

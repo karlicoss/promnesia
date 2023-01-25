@@ -1,7 +1,4 @@
 {
-    "name": "<webpack managed>",
-    "version": "<webpack managed>",
-    "description": "Indicates whether and when the page was visited (and more!)",
     "background": {
         "scripts": [
             "browser-polyfill.js",
@@ -12,24 +9,6 @@
     },
     "options_ui": {
         "page": "options_page.html"
-    },
-
-    "permissions": [
-        "file:///*",
-        "https://*/*",
-        "http://*/*",
-
-        "bookmarks",
-        "storage",
-
-        "tabs",
-        "activeTab",
-        "webNavigation",
-
-        "notifications"
-    ],
-    "icons": {
-        "48": "images/ic_not_visited_48.png"
     },
     "manifest_version": 2
 }
