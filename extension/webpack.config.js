@@ -92,7 +92,6 @@ const manifestExtra = {
     options_ui: {},
     web_accessible_resources: [
         "sidebar.css", /* injected in the sidebar */
-        "anchorme.js", /* imported in the sidebar */
     ],
 }
 

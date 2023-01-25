@@ -162,15 +162,20 @@ export class Binder {
             let handle_plain = do_simple
 
             if (this.options.sidebar_detect_urls) {
+                // ugh. this method triggers this issue during web-ext lint
+                // presumably because web-ext doesn't like querying chrome.runtime.getURL
+                // reported here https://github.com/mozilla/addons-linter/issues/4686
                 // NOTE: import might fail on some pages, e.g. twitter.com. so needs to be defensive
-                try {
-                    // $FlowFixMe[unsupported-syntax]
-                    await import (/* webpackIgnore: true */ chrome.runtime.getURL('anchorme.js'))
-                    // this sets window.promnesia_anchorme -- see webpack.config.js
-                } catch (err) {
-                    console.error(err)
-                    console.warn("[promnesia] couldn't import anchorme. Fallback on plaintext")
-                }
+                // upd: actually not sure if import on twitter page is really an issue anymore? seems to work...
+                // try {
+                //     // NOTE: anchorme.js needs to be in web_accessible_resources for this to work
+                //     // $FlowFixMe[unsupported-syntax]
+                //     await import (/* webpackIgnore: true */ chrome.runtime.getURL('anchorme.js'))
+                //     // this sets window.promnesia_anchorme -- see webpack.config.js
+                // } catch (err) {
+                //     console.error(err)
+                //     console.warn("[promnesia] couldn't import anchorme. Fallback on plaintext")
+                // }
                 // note: performance is OK
                 // 339 iterations passed, took  200  ms -- and it's counting other DOM operations as well
                 if (window.promnesia_anchorme != null) {

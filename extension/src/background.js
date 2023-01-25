@@ -143,7 +143,11 @@ async function updateState(tab: TabUrl): Promise<void> {
         await browser.tabs.insertCSS    (tabId, {code: opts.position_css  })
         await browser.tabs.executeScript(tabId, {file: 'browser-polyfill.js'})
         await browser.tabs.executeScript(tabId, {file: 'webext-options-sync.js'})
-        await browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
+        await browser.tabs.executeScript(tabId, {file: 'anchorme.js'})
+        if (opts.sidebar_detect_urls) {
+            // meh
+            await browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
+        }
         proceed = true // successful code injection
     } catch (error) {
         const msg = error.message
