@@ -2,10 +2,6 @@
     "name": "<webpack managed>",
     "version": "<webpack managed>",
     "description": "Indicates whether and when the page was visited (and more!)",
-    "web_accessible_resources": [
-        "sidebar.js",
-        "sidebar.css"
-    ],
     "background": {
         "scripts": [
             "browser-polyfill.js",
@@ -14,10 +10,6 @@
         ],
         "persistent": false
     },
-    "content_scripts": [{
-        "matches": ["<all_urls>"],
-        "js": ["anchorme.js"]
-    }],
     "options_ui": {
         "page": "options_page.html"
     },

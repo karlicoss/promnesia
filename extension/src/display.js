@@ -162,22 +162,19 @@ export class Binder {
             let handle_plain = do_simple
 
             if (this.options.sidebar_detect_urls) {
-                let anchorme = null
                 // NOTE: import might fail on some pages, e.g. twitter.com. so needs to be defensive
                 try {
-                    // note: performance is OK
-                    // 339 iterations passed, took  200  ms -- and it's counting other DOM operations as well
-                    const {default: anchorme_} = await import(
-                        /* webpackChunkName: "anchorme" */
-                        // $FlowFixMe
-                        'anchorme/dist/browser/anchorme.js' // TODO use min.js? slightly smaller
-                    )
-                    anchorme = anchorme_ // ugh. scope works odd..
+                    // $FlowFixMe[unsupported-syntax]
+                    await import (/* webpackIgnore: true */ chrome.runtime.getURL('anchorme.js'))
+                    // this sets window.promnesia_anchorme -- see webpack.config.js
                 } catch (err) {
                     console.error(err)
-                    console.warn("promnesia: couldn't import anchorme. Fallback on plaintext")
+                    console.warn("[promnesia] couldn't import anchorme. Fallback on plaintext")
                 }
-                if (anchorme != null) {
+                // note: performance is OK
+                // 339 iterations passed, took  200  ms -- and it's counting other DOM operations as well
+                if (window.promnesia_anchorme != null) {
+                    const anchorme = window.promnesia_anchorme.default
                     handle_plain = (text: string) => {
                         try {
                             const res = unwrap(anchorme)(text)
