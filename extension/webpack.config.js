@@ -91,10 +91,8 @@ const manifestExtra = {
     permissions: permissionsExtra,
     options_ui: {},
     web_accessible_resources: [
-        // wtf?? it says that content scripts don't need to be listed... but doesn't work otherwise..
-        // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/web_accessible_resources#Description
-        "anchorme.js",
-        // TODO however, seems that web_accessible_resources works without sidebar.js and sidebar.css?? odd
+        "sidebar.css", /* injected in the sidebar */
+        "anchorme.js", /* imported in the sidebar */
     ],
 }
 
@@ -194,6 +192,13 @@ const options = {
     },
     'webext-options-sync': {
       import: "webext-options-sync",
+    },
+    anchorme: {
+      import: 'anchorme',
+      library: {
+        name: 'promnesia_anchorme',
+        type: "window", /* 'sets' library to window. variable... all the other types didn't work :( */
+      },
     },
   },
   output: {

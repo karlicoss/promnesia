@@ -1076,10 +1076,6 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
         # checks it's still possible to interact with the sidebar
         assert not helper.sidebar.visible
 
-        # FIXME hmm failing here to load anchorme here?
-        # if you look in the page inspector console and click back/forward
-        # weird that it tries to load it wrt the page??
-        # Loading failed for the <script> with source “file:///usr/share/doc/python3/html/tutorial/anchorme.js”
         driver.forward()
 
         # sidebar should be preserved between page transitions
