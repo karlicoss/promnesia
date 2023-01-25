@@ -158,6 +158,10 @@ async function updateState(tab: TabUrl): Promise<void> {
             // this seems to happen if we started injecting the code, but URL changed during that
             // e.g. if you click on links in quick succession or press backward/forward quickly (esp. with hotkeys)
             // should be covered by test_sidebar_navigation
+
+            // NOTE: actually a bit misleading -- on firefox we are always getting this when we don't have host permissions
+            // whereas in chrome we're getting
+            // "Cannot access contents of the page. Extension manifest must request permission to access the respective host"
             proceed = false
         } else {
             throw error

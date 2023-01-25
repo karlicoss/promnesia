@@ -35,28 +35,23 @@ For the maximum privacy you can use the [[file:GUIDE.org#excludelist][excludelis
 
 
 * Extension permissions
-- =activeTab=: getting current tab info and adding the sidebar
-- =webNavigation=: receiving page status updates so extension knows when to load data
+- =file/http/https=: the extension is meant to work on any page, hence such a broad scope
+  this is necessary for webNavigation callbacks to work properly and update icon/sidebar
+
 - =storage=: for settings
-- =contextMenus=: context menu
-- =notifications=: showing notifications
-# NOTE: not used for now
-# - =webNavigation=: watching page state changes (to trigger the extension on page load)
+- =webNavigation=: receiving page status updates so extension kicks in on page loading
+- =contextMenus=: context menu actions
 
 There permissions are required at the moment, but there is an [[https://github.com/karlicoss/promnesia/issues/97][issue]] for work on possibly making them optional.
 
-- =tabs=: making the extension work without an explicit user action (the extension is meant to be a passive assistant)
+- =notifications=: showing notifications
 
-  The extension is still useful even with explicit action only, so worth making opt-in.
 - =history=: to use local browsing history
 
   Local history isn't strictly required, so we could omit this if people prefer.
 - =bookmarks=: used as one of the sources
 
   It can already be toggled in the settings, so the permission could be dynamic too
-- =file/http/https=: the extension is meant to work on any page, hence such a broad scope.
-
-  Might be optional in the future, and requested on demand if people feel it's worth it
 
 * Security
 While I have some reasonable understanding of security, I'm no expert, so would be very grateful if you flag potential issues or [[https://github.com/karlicoss/promnesia/issues/14][go through the code]] (especially extension).
