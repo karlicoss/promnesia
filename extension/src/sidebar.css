@@ -34,7 +34,8 @@
 }
 
 a.promnesia-visited {
-    outline: 0.5em solid;
+    /* hmm without important isn't working on some sites, e.g. google.com search results */
+    outline: 0.5em solid !important;
 }
 
 #promnesia-sidebar {

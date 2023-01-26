@@ -88,6 +88,29 @@ function formatVisit(v) {
 }
 
 
+
+// see https://github.com/karlicoss/promnesia/issues/341#issuecomment-1404338206
+// also possibly relevant issue (not merged in popper 2.0 which tippyjs is using though)
+// https://github.com/floating-ui/floating-ui/issues/1918
+function getGoodTippyParent(element) {
+    // contain: layout in the ancestor might cause tooltip boundaries to clip
+    // so we want to find the closest parent that doesn't have that as its ancestor
+    // ugh I'm pretty sure it will break on some sites...
+    // you can see that happening on google.com search page
+    let cur = element
+    let last = cur
+    while (cur != null) {
+        const contain = cur.style.contain
+        if (contain.includes("layout")) {
+            last = cur
+        }
+        cur = cur.parentElement
+    }
+    // todo assert last is not none?
+    return last
+}
+
+
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 /*
  * So, there are a few requirements from the marks we're trying to achieve here
@@ -111,7 +134,8 @@ function showMark(element) {
     const popup = formatVisit(v)
     // TODO try async import??
     try {
-        tippy(element, {
+        const reference = getGoodTippyParent(element)
+        const tip = tippy(reference, {
             render(instance) {
                 const popper = document.createElement('div')
                 popper.classList.add(Cls.TIPPY)
@@ -123,13 +147,16 @@ function showMark(element) {
             content: popup,
             maxWidth: "none",  /* default makes it wrap over */
             interactive: true,  // so it's not hiding on hover
-            // TODO placement https://tippyjs.bootcss.com/#placement
 
             /* useful for debugging */
             // trigger: "manual",
             // showOnCreate: true,
             // hideOnClick: false,
         })
+
+        // normally tippy sets it itself, but in this case we might attach tippy to one of parents
+        // so this is to make sure it hides properly in hideMark
+        element._tippy = tip
     } catch (e) {
         console.error('[promnesia]: error while adding tooltip to %o', element)
         console.error(e)
@@ -171,7 +198,8 @@ function showMark(element) {
     const style = element.style
 
     style.oldOutlineColor = style.outlineColor
-    style.outlineColor = baseColorTr
+    // !important is necessary, otherwise sometimes not working, e.g. google.com search results
+    style.setProperty('outline-color',  baseColorTr, 'important')
 
 
     if (style.backgroundImage == '') {
