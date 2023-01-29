@@ -1,11 +1,10 @@
 from pathlib import Path
 import shutil
-from typing import Dict, List, Tuple, Set, Iterable
+from typing import  List, Set, Iterable
 
 from more_itertools import chunked
 
-from sqlalchemy import create_engine, MetaData, event # type: ignore
-from sqlalchemy import Column, Table # type: ignore
+from sqlalchemy import create_engine, MetaData, Table, event, text
 
 from cachew import NTBinder
 
@@ -62,30 +61,34 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List
 
     # using WAL keeps database readable while we're writing in it
     # this is tested by test_query_while_indexing
-    def enable_wal(dbapi_con, con_record):
+    def enable_wal(dbapi_con, con_record) -> None:
         dbapi_con.execute('PRAGMA journal_mode = WAL')
     event.listen(engine, 'connect', enable_wal)
 
     binder = NTBinder.make(DbVisit)
-    meta = MetaData(engine)
+    meta = MetaData()
     table = Table('visits', meta, *binder.columns)
-    meta.create_all()
 
     cleared: Set[str] = set()
     ncleared = 0
     with engine.begin() as conn:
+        table.create(conn, checkfirst=True)
+
         for chunk in chunked(vit_ok(), n=_CHUNK_BY):
             srcs = set(v.src or '' for v in chunk)
             new = srcs.difference(cleared)
 
             for src in new:
                 conn.execute(table.delete().where(table.c.src == src))
-                ncleared += conn.execute("SELECT changes()").fetchone()[0]
+                cursor = conn.execute(text("SELECT changes()")).fetchone()
+                assert cursor is not None
+                ncleared += cursor[0]
                 cleared.add(src)
 
             bound = [binder.to_row(x) for x in chunk]
             # pylint: disable=no-value-for-parameter
             conn.execute(table.insert().values(bound))
+    engine.dispose()
 
     if overwrite_db:
         shutil.move(str(tpath), str(db_path))

@@ -25,7 +25,7 @@ def get_db_stuff(db_path: Path) -> DbStuff:
 
     binder = NTBinder.make(DbVisit)
 
-    meta = MetaData(engine)
+    meta = MetaData()
     table = Table('visits', meta, *binder.columns)
 
     idx = Index('index_norm_url', table.c.norm_url)

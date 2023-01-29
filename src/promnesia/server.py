@@ -9,7 +9,7 @@ from datetime import timedelta
 from pathlib import Path
 import logging
 from functools import lru_cache
-from typing import List, NamedTuple, Dict, Optional, Any, Tuple, Callable
+from typing import List, NamedTuple, Dict, Optional, Any, Tuple
 
 
 import pytz
@@ -17,9 +17,9 @@ from pytz import BaseTzInfo
 
 import fastapi
 
-from sqlalchemy import create_engine, MetaData, exists, literal, between, or_, and_, exc, select
+from sqlalchemy import MetaData, exists, literal, between, or_, and_, exc, select
 from sqlalchemy import Column, Table, func, types
-from sqlalchemy.sql.elements import ClauseElement
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql import text
 
 
@@ -136,7 +136,7 @@ def get_stuff(db_path: Optional[Path]=None) -> DbStuff: # TODO better name
 
 def db_stats(db_path: Path) -> Json:
     engine, binder, table = get_stuff(db_path)
-    query = select([func.count()]).select_from(table)
+    query = select(func.count()).select_from(table)
     with engine.connect() as conn:
         total = list(conn.execute(query))[0][0]
     return {
@@ -145,7 +145,7 @@ def db_stats(db_path: Path) -> Json:
 
 
 class Where(Protocol):
-    def __call__(self, table: Table, url: str) -> ClauseElement:
+    def __call__(self, table: Table, url: str) -> ColumnElement[bool]:
         ...
 
 @dataclass
