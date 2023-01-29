@@ -88,6 +88,30 @@ function formatVisit(v) {
 }
 
 
+const pinOnDoubleClick = {
+  name: 'pinOnDoubleClick',
+  defaultValue: true,
+  fn(instance) {
+    return {
+      onCreate() {
+        instance.popper.addEventListener('dblclick', _ => {
+          if (instance.props.trigger != 'manual') {
+            instance.setProps({trigger: 'manual'})
+          } else { // second double click should restore the default behaviour
+            instance.setProps({trigger: 'mouseenter focus'})  // meh, not sure how to restore 'default' otherwise
+          }
+
+          // seems like the easiest way to refresh triggers is to hide and show again
+          // cause otherwise have to trick tippyjs into thinking it was opened manually/with a click in the first place
+          instance.hide()
+          instance.show()
+        })
+      }
+    }
+  }
+}
+
+
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 /*
  * So, there are a few requirements from the marks we're trying to achieve here
@@ -123,6 +147,7 @@ function showMark(element) {
             content: popup,
             maxWidth: "none",  /* default makes it wrap over */
             interactive: true,  // so it's not hiding on hover
+            plugins: [pinOnDoubleClick],
 
             // todo could make configurable? it might break accessibility https://github.com/atomiks/tippyjs/blob/master/MIGRATION_GUIDE.md#props-1
             appendTo: document.body,
