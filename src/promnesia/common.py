@@ -293,10 +293,10 @@ def _guess_name(thing: PreSource) -> str:
 def _get_index_function(sourceish: PreSource) -> PreExtractor:
     # see config_tests
     res: PreExtractor
-    if hasattr(sourceish, 'index'):
+    if hasattr(sourceish, 'index'):  # must be a module
         res = getattr(sourceish, 'index')
     else:
-        res = sourceish
+        res = sourceish  # type: ignore[assignment]
     return res
 
 

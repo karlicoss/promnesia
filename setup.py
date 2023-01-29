@@ -63,8 +63,6 @@ def main() -> None:
 
                 'mypy',
                 'lxml', # for coverage reports
-
-                'sqlalchemy-stubs',
             ],
             **{k[0]: v for k, v in DEPS_SOURCES.items()},
             'all': list(chain.from_iterable(DEPS_SOURCES.values())),

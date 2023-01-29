@@ -181,13 +181,32 @@ def test_visits_hier(tdir):
         assert {v['context'] for v in response['visits']} == {'parent url', 'Some context'}
 
 
-def test_status(tdir):
+def test_status_ok(tmp_path: Path) -> None:
+    dt_extra = pytz.timezone('Europe/London').localize(datetime.fromisoformat('2018-06-01T10:00:00.000000'))
+    index_some_demo_visits(tmp_path, count=10, base_dt=dt_extra, delta=timedelta(hours=1), update=False)
+
+    db_path = tmp_path / 'promnesia.sqlite'
+    with wserver(db=db_path) as helper:
+        response = post(f'http://localhost:{helper.port}/status')
+
+        version = response['version']
+        assert version is not None
+        assert len(version.split('.')) >= 2  # random check..
+
+        assert response['db'] == str(db_path)
+
+        assert response['stats'] == {'total_visits': 10}
+
+
+def test_status_error(tmp_path: Path) -> None:
     with wserver(db='/does/not/exist') as helper:
         response = post(f'http://localhost:{helper.port}/status')
-        assert 'ERROR' in response['db'] # defensive, it doesn't exist
+
         version = response['version']
         assert version is not None
         assert len(version.split('.')) >= 2 # random check..
+
+        assert 'ERROR' in response['db'] # defensive, it doesn't exist
 
 
 def test_basic(tmp_path: Path) -> None:
