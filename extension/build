@@ -17,12 +17,12 @@ TARGETS = [
     'firefox',
 ]
 
-def main():
+def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument('--release', action='store_true', help="Use release flavor of build")
     p.add_argument('--watch'  , action='store_true')
     p.add_argument('--lint'   , action='store_true')
-    p.add_argument('--publish', action='store_true', help="Publish on chrome web store/addons.mozilla.org")
+    p.add_argument('--publish', choices=['listed', 'unlisted'], help="Publish on chrome web store/addons.mozilla.org")
 
     tg = p.add_mutually_exclusive_group(required=True)
     tg.add_argument('--target', type=str, choices=TARGETS)
@@ -37,7 +37,7 @@ def main():
     ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks
     # sadly no way to specify zip name in the regex..
     artifacts_dir = (base_ext_dir / 'artifacts' / target).resolve()
-    def webext(*args, **kwargs):
+    def webext(*args, **kwargs) -> None:
         check_call([
             'npm', 'run', 'web-ext',
             '--',
@@ -49,7 +49,7 @@ def main():
     env = {
         'TARGET' : target,
         'RELEASE': 'YES' if args.release else 'NO',
-        'PUBLISH': 'YES' if args.publish else 'NO',
+        'PUBLISH': 'YES' if args.publish is not None else 'NO',
         'EXT_ID' : IDS[target],
         **os.environ,
     }
@@ -86,17 +86,19 @@ def main():
             '--id'           , IDS[target],
         ]
 
-    if args.publish:
+    if args.publish is not None:
+        assert args.lint
         assert args.release
         if 'firefox' in target:
             check_call([
                 'npm', 'run', 'release:amo',
                 '--',
-                '--channel', 'listed',
+                '--channel', args.publish,
                 '--source-dir', str(ext_dir),
                 *firefox_release_args(),
             ])
         elif target == 'chrome':
+            assert args.publish == 'listed'  # no notion of unlisted on chrome store?
             from chrome_dev_secrets import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
             check_call([
                 'npm', 'run', 'release:cws',

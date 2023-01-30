@@ -52,7 +52,7 @@ I'm not against it, but with limited time resources full-scale tests give better
    : ./build --firefox # you can also use --chrome
    :         --lint    # [optional], run webext linter
    :         --release # [optional], build in the release mode (with optimizations)
-   :         --publish # [optional], release to the Chrome Web Store/Mozilla addons
+   :         --publish listed # [optional], release to the Chrome Web Store/Mozilla addons
 
    You'll find the result in =dist/=. After that, you can load it in your browser and develop.
 
