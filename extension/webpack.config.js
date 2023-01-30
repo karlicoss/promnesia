@@ -118,6 +118,7 @@ const manifestExtra = {
     options_ui: {},
     web_accessible_resources: [
         "sidebar.css", /* injected in the sidebar */
+        "*.js.map",  // debugging symbols
     ],
 }
 
