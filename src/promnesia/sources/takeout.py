@@ -48,12 +48,35 @@ def index() -> Results:
                 # e.g. https://www.google.com/url?q=https://en.wikipedia.org/wiki/Clapham
                 # note: also title usually starts with 'Visited ', in such case but perhaps fine to keep it
                 url = removeprefix(url, "https://www.google.com/url?q=")
+                title = e.title
 
+                if e.header == 'Chrome':
+                    # title contains 'Visited <page title>' in this case
+                    context = None
+                    title = removeprefix(title, 'Visited ')
+                elif e.header in _CLEAR_CONTEXT_FOR_HEADERS:
+                    # todo perhaps could add to some sort of metadata?
+                    # only useful for debugging really
+                    context = None
+                elif e.header in url:
+                    # stuff like News only has domain name in the header -- completely useless for promnesia
+                    context = None
+                elif e.title == f'Used {e.header}':
+                    # app usage tracking -- using app name as context is useless here
+                    context = None
+                elif e.products == ['Android']:
+                    # seems to be coming from in-app browser, header contains app name in this case
+                    context = None
+                elif e.products == ['Ads']:
+                    # header contains some weird internal ad id in this case
+                    context = None
+                # NOTE: at this point seems that context always ends up as None (at least for @karlicoss as of 20230131)
+                # so alternatively could just force it to be None instead of manual dispatching :shrug:
                 yield Visit(
                     url=url,
                     dt=e.time,
-                    context=e.header,
-                    locator=Loc(title=e.title, href=url),
+                    context=context,
+                    locator=Loc(title=title, href=url),
                 )
             for s in e.subtitles:
                 surl = s[1]
@@ -73,6 +96,8 @@ def index() -> Results:
                 locator=Loc(title=e.title, href=e.url),
             )
         elif isinstance(e, LikedYoutubeVideo):
+            # TODO not sure if desc makes sense here since it's not user produced data
+            # it's just a part of video meta?
             yield Visit(
                 url=e.link, dt=e.dt, context=e.desc, locator=Loc(title=e.title, href=e.link)
             )
@@ -85,3 +110,40 @@ def index() -> Results:
                 )
         else:
             yield from warn_once_if_not_seen(e)
+
+
+_CLEAR_CONTEXT_FOR_HEADERS = {
+    'Google Cloud',
+    'Travel',
+    'Google Arts & Culture',
+    'Drive',
+    'Calendar',
+    'Google Store',
+    'Shopping',
+    'News',
+    'Help',
+    'Books',
+    'Google My Business',
+    'Google Play Movies & TV',
+    'Developers',
+    'YouTube',
+    'Gmail',
+    'Video Search',
+    'Google Apps',
+    'Google Translate',
+    'Ads',
+    'Image Search',
+    'Assistant',
+    'Google Play Store',
+    'Android',
+    'Maps',
+    'Search',
+    'Google App',
+    'in_app_display_context_client',
+    'Play Music',
+    'Maps - Navigate & Explore',
+    'Google Maps',
+    'google.com',
+    'Google Play Books',
+    'Maps - Navigation & Transit',
+}
