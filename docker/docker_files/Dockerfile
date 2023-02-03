@@ -1,7 +1,7 @@
 FROM python:3
 
 RUN mkdir /user_data \
-    mkdir /usr/src/promnisia
+    mkdir /usr/src/promnesia
 
 WORKDIR /usr/src/promnesia
 COPY src/ .
