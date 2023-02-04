@@ -193,9 +193,19 @@ class Sidebar {
             return frame;
         }
 
-        const sidebar = doc.createElement('iframe'); this.body.appendChild(sidebar);
-        sidebar.src = '';
-
+        const sidebar = doc.createElement('iframe')
+        const isFirefox = window.navigator.userAgent.indexOf('Firefox') != -1
+        if (isFirefox) {
+            // under firefox, if src is set after appendChild, it ceases to be bfcache friendly for some reason
+            // i.e. sidebar doesn't persist back/fwd navigation
+            // however, it only reproduced under regular firefox -- doesn't matter under webdriver. odd
+            sidebar.src = ''
+            this.body.appendChild(sidebar)
+        } else {
+            // BUT: under chrome if src is set before appendChild, it just doesn't display anything?? ugh
+            this.body.appendChild(sidebar)
+            sidebar.src = ''
+        }
 
         // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..
         const loadPromise = new Promise((resolve, /*reject*/) => {
