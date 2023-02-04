@@ -11,7 +11,7 @@ COPY setup.py /usr/src/
 
 RUN pip install --no-cache-dir more_itertools pytz sqlalchemy cachew \
                 appdirs urlextract python-magic \
-                tzlocal hug \
+                tzlocal \
                 logzero HPI beautifulsoup4 lxml mistletoe orgparse dataset fastapi uvicorn
 
 ENV PPATH=/usr/src/promnesia:${PPATH}
