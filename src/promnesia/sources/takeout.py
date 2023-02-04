@@ -13,7 +13,7 @@ def index() -> Results:
 
     try:
         from my.google.takeout.parser import events
-        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory, PlayStoreAppInstall, Location
+        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory, PlayStoreAppInstall, Location, PlaceVisit
     except ModuleNotFoundError as ex:
         logger.exception(ex)
         yield ex
@@ -27,6 +27,7 @@ def index() -> Results:
     _seen: Set[Type] = {
         # these are definitely not useful for promnesia
         Location,
+        PlaceVisit,
         PlayStoreAppInstall,
     }
     def warn_once_if_not_seen(e) -> Iterable[Exception]:
