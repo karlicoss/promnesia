@@ -115,6 +115,9 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
     if browser.name == 'firefox':
         ff_options = webdriver.FirefoxOptions()
         ff_options.set_preference('profile', str(tdir))
+        # todo remove when webdriver is updated
+        # see https://github.com/mozilla/geckodriver/issues/2075
+        ff_options.set_preference('fission.autostart', True)
         ff_options.headless = browser.headless
         # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
         driver = webdriver.Firefox(options=ff_options)
@@ -412,7 +415,6 @@ class Sidebar(NamedTuple):
         outer = self.driver.find_element(By.ID, 'promnesia-sidebar-filters')
         return outer.find_elements(By.CLASS_NAME, 'src')
 
-
     @property
     def visits(self) -> list[WebElement]:
         return self.driver.find_elements(By.XPATH, '//*[@id="visits"]/li')
@@ -421,9 +423,16 @@ class Sidebar(NamedTuple):
         # this should be the window with extension
         cur_window_handles = self.driver.window_handles
         with self.ctx():
-            search_button = self.driver.find_element(By.ID, 'button-search')
-            search_button.click()
+            self.driver.find_element(By.ID, 'button-search').click()
             self.helper.wait_for_search_tab(cur_window_handles)
+
+    def trigger_mark_visited(self) -> None:
+        with self.ctx():
+            self.driver.find_element(By.ID, 'button-mark').click()
+
+    def trigger_close(self) -> None:
+        with self.ctx():
+            self.driver.find_element(By.ID, 'button-close').click()
 
 
 class OptionsPage(NamedTuple):
@@ -870,6 +879,8 @@ def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
     with run_server(tmp_path=tmp_path, indexer=index_urls(visited), driver=driver, show_dots=False) as helper:
         driver.get(test_url)
+
+        sleep(2)  # hmm not sure why it's necessary, but often fails headless firefox otherwise
         helper.mark_visited()
         sleep(1)  # marks are async, wait till it marks
 
