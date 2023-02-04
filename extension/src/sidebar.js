@@ -644,15 +644,9 @@ const onMessageListener = (msg: any, _: chrome$MessageSender) => {
 }
 
 
-const doc_body = unwrap(document.body)
-
-
 // this is necessary because due to data races it's possible for sidebar.js to be injected twice in the page
-// NOTE: we can't use window. variables here, seems that their state isn't preserved under geckodriver
-// see https://github.com/mozilla/geckodriver/issues/2075
-// perhaps have a separate version for testing purposes only??
-if (doc_body.getAttribute('promnesia_haslistener') == null) {
-    doc_body.setAttribute('promnesia_haslistener', 'true')
+if (window.promnesia_haslistener == null) {
+    window.promnesia_haslistener = true
     console.debug(`[promnesia] [sidebar-${UUID}] registering callbacks`)
     chrome.runtime.onMessage.addListener(onMessageListener)
 } else {
