@@ -194,6 +194,7 @@ class Sidebar {
         }
 
         const sidebar = doc.createElement('iframe')
+        sidebar.style.display = 'none' // prevent flickering while iframe is being initialised
         const isFirefox = window.navigator.userAgent.indexOf('Firefox') != -1
         if (isFirefox) {
             // under firefox, if src is set after appendChild, it ceases to be bfcache friendly for some reason
