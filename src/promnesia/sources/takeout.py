@@ -1,7 +1,7 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
 '''
-from typing import Iterable, Set, Type
+from typing import Iterable, Set, Any
 import warnings
 
 from ..common import Visit, Loc, Results, logger
@@ -13,7 +13,7 @@ def index() -> Results:
 
     try:
         from my.google.takeout.parser import events
-        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory, PlayStoreAppInstall, Location
+        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory
     except ModuleNotFoundError as ex:
         logger.exception(ex)
         yield ex
@@ -24,17 +24,18 @@ def index() -> Results:
         yield from takeout_legacy.index()
         return
 
-    _seen: Set[Type] = {
+    _seen: Set[str] = {
         # these are definitely not useful for promnesia
-        Location,
-        PlayStoreAppInstall,
+        'Location',
+        'PlaceVisit',
+        'PlayStoreAppInstall',
     }
-    def warn_once_if_not_seen(e) -> Iterable[Exception]:
-        et = type(e)
-        if et in _seen:
+    def warn_once_if_not_seen(e: Any) -> Iterable[Exception]:
+        et_name = type(e).__name__
+        if et_name in _seen:
             return
-        _seen.add(et)
-        yield RuntimeError(f"Unhandled event {et}: {e}")
+        _seen.add(et_name)
+        yield RuntimeError(f"Unhandled event {repr(type(e))}: {e}")
 
     for e in events():
         if isinstance(e, Exception):
