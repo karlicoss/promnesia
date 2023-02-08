@@ -6,9 +6,11 @@ import logging
 import textwrap
 from os import PathLike
 from pathlib import Path
+import sqlite3
 from typing import Iterable, Optional
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, join_tags
+from ..sqlite import sqlite_connection
 
 
 logger = logging.getLogger(__name__)
@@ -35,17 +37,6 @@ def index(
     for db_path in _get_files(db_path):
         assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file? {db_path}"
         yield from _harvest_db(db_path, msgs_query, locator_schema)
-
-
-# TODO move to common?
-def _dataset_readonly(db: Path):
-    # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
-    import sqlite3
-
-    import dataset  # type: ignore
-
-    creator = lambda: sqlite3.connect(f"file:{db}?immutable=1", uri=True)
-    return dataset.connect("sqlite:///", engine_kwargs={"creator": creator})
 
 
 def messages_query(http_only: Optional[bool]) -> str:
@@ -118,7 +109,7 @@ def messages_query(http_only: Optional[bool]) -> str:
     )
 
 
-def _handle_row(row: dict, db_path: PathLike, locator_schema: str) -> Results:
+def _handle_row(row: sqlite3.Row, db_path: PathLike, locator_schema: str) -> Results:
     text = row["text"]
     urls = extract_urls(text)
     if not urls:
@@ -173,8 +164,8 @@ def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str) -> Resul
     # but it's safer for debugging resolved.
     db_path = Path(db_path).resolve()
 
-    with _dataset_readonly(db_path) as db:
-        for row in db.query(msgs_query):
+    with sqlite_connection(db_path, immutable=True, row_factory='row') as db:
+        for row in db.execute(msgs_query):
             try:
                 yield from _handle_row(row, db_path, locator_schema)
             except Exception as ex:
