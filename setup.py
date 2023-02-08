@@ -106,7 +106,7 @@ DEPS_SOURCES = {
         'orgparse>=0.3.0',
     ],
     ('telegram', 'dependencies for sources.telegram'): [
-        'dataset',
+        # used to depend on 'dataset', keeping for backwards compatibility
     ],
 }
 

@@ -3,11 +3,13 @@ Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]]
 '''
 
 from pathlib import Path
+import sqlite3
 from textwrap import dedent
-from typing import Optional, Union, TypeVar
+from typing import Union, TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
 from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, Results, echain
+from ..sqlite import sqlite_connection
 
 # TODO potentially, belongs to my. package
 
@@ -21,15 +23,6 @@ def unwrap(res: Union[T, Exception]) -> T:
         return res
 
 
-# TODO move to common?
-def dataset_readonly(db: Path):
-    import dataset # type: ignore
-    # see https://github.com/pudo/dataset/issues/136#issuecomment-128693122
-    import sqlite3
-    creator = lambda: sqlite3.connect(f'file:{db}?immutable=1', uri=True)
-    return dataset.connect('sqlite:///' , engine_kwargs={'creator': creator})
-
-
 def index(database: PathIsh, *, http_only: bool=False) -> Results:
     """
     :param database:
@@ -40,7 +33,7 @@ def index(database: PathIsh, *, http_only: bool=False) -> Results:
     logger = get_logger()
 
     path = Path(database)
-    assert path.is_file(), path # TODO could check is_file inside `dataset_readonly()`
+    assert path.is_file(), path
 
     def make_query(text_query: str) -> str:
         extra_criteria = "AND (M.has_media == 1 OR text LIKE '%http%')" if http_only else ""
@@ -77,28 +70,26 @@ def index(database: PathIsh, *, http_only: bool=False) -> Results:
             ORDER BY time;
             """)
 
-    # TODO context manager?
-    with dataset_readonly(path) as db:
-
+    with sqlite_connection(path, immutable=True, row_factory='row') as db:
         # TODO yield error if chatname or chat or smth else is null?
-        for row in db.query(make_query('M.text')):
+        for row in db.execute(make_query('M.text')):
             try:
                 yield from _handle_row(row)
             except Exception as ex:
                 yield echain(RuntimeError(f'While handling {row}'), ex)
-                # , None, sys.exc_info()[2]
-                # TODO hmm. traceback isn't preserved; wonder if that's because it's too heavy to attach to every single exception object..
 
         # old (also 'stable') version doesn't have 'json' column yet...
-        if 'json' in db['messages'].columns:
-            for row in db.query(make_query("json_extract(json, '$.media.webpage.description')")):
+        messages_columns = [d[0] for d in db.execute('SELECT * FROM messages').description]
+        # todo hmm what is 'markup_json'??
+        if 'json' in messages_columns:
+            for row in db.execute(make_query("json_extract(json, '$.media.webpage.description')")):
                 try:
                     yield from _handle_row(row)
                 except Exception as ex:
                     yield echain(RuntimeError(f'While handling {row}'), ex)
 
 
-def _handle_row(row) -> Results:
+def _handle_row(row: sqlite3.Row) -> Results:
     text = row['text']
     if text is None:
         return
