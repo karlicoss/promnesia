@@ -69,3 +69,16 @@ else:
     else:
         # todo could also use NamedTuple?
         Protocol = object
+
+
+if sys.version_info[:2] >= (3, 8):
+    from typing import Literal
+else:
+    if TYPE_CHECKING:
+        from typing_extensions import Literal
+    else:
+        # erm.. I guess as long as it's not crashing, whatever...
+        class _Literal:
+            def __getitem__(self, args):
+                pass
+        Literal = _Literal()
