@@ -586,3 +586,11 @@ def measure(tag: str='', *, logger, unit: str='ms'):
     mult = {'s': 1, 'ms': 10**3, 'us': 10**6}[unit]
     xx = secs * mult
     logger.debug(f'[{tag}]: {xx:.1f}{unit} elapsed')
+
+
+def is_sqlite_db(x: Path) -> bool:
+    return x.is_file() and mime(x) in {
+        'application/x-sqlite3',
+        'application/vnd.sqlite3',
+        # TODO this mime can also match wal files/journals, not sure
+    }

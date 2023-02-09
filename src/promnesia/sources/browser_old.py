@@ -6,31 +6,21 @@ from typing import List, Set
 
 import pytz
 
-from ..common import PathIsh, Results, Visit, Loc, get_logger, Second, mime
+from ..common import PathIsh, Results, Visit, Loc, logger, Second, is_sqlite_db
 from .. import config
 
 # todo mcachew?
 from cachew import cachew
-
-logger = get_logger()
 
 
 def index(p: PathIsh) -> Results:
     pp = Path(p)
     assert pp.exists(), pp # just in case of broken symlinks
 
-    # is_file check because it also returns dirs
-    # TODO hmm, not sure what I meant here -- which dirs? behind symlinks?
-    is_db = lambda x: x.is_file() and mime(x) in {
-        'application/x-sqlite3',
-        'application/vnd.sqlite3',
-        # TODO this mime can also match wal files/journals, not sure
-    }
-
     # todo warn if filtered out too many?
     # todo wonder how quickly mimes can be computed?
     # todo ugh, dunno, maybe this really belongs to hpi?? need get_files etc...
-    dbs = [p for p in sorted(pp.rglob('*')) if is_db(p)]
+    dbs = [p for p in sorted(pp.rglob('*')) if is_sqlite_db(p)]
 
     assert len(dbs) > 0, pp
     logger.info('processing %d databases', len(dbs))
