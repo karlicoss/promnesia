@@ -580,6 +580,7 @@ manual = Interactive() if has_x() else Headless()
 
 
 # TODO deprecate this in favor of run_server
+# still used in demos.py..
 @contextmanager
 def _test_helper(tmp_path: Path, indexer: Callable[[Path], None], test_url: Optional[str], browser: Browser, **kwargs) -> Iterator[TestHelper]:
     tdir = Path(tmp_path)
@@ -859,12 +860,12 @@ def test_search_around(tmp_path: Path, driver: Driver) -> None:
 
 # TODO skip if not my hostname
 @uses_x
-@browsers(FF, CH)
+@browsers()
 def test_chrome_visits(tmp_path: Path, browser: Browser) -> None:
     pytest.skip('TODO hmm seems that this file is gone now? not sure if a good test anyway')
     test_url = "https://en.wikipedia.org/wiki/Amplituhedron"
     test_url = "https://en.wikipedia.org/wiki/Symplectic_vector_space"
-    with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:
+    with _test_helper(tmp_path, index_local_chrome, test_url, browser=browser) as helper:  # type: ignore
         trigger_command(helper.driver, Command.ACTIVATE)
         confirm("You shoud see chrome visits now; with time spent")
 
@@ -970,14 +971,12 @@ def test_search_command(tmp_path: Path, driver: Driver) -> None:
 
 
 @browsers()
-def test_new_background_tab(tmp_path: Path, browser: Browser) -> None:
+def test_new_background_tab(tmp_path: Path, driver: Driver) -> None:
     start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
-    with _test_helper(
-            tmp_path, index_hypothesis, start_url, browser=browser,
-            notify_contexts=True,
-    ) as helper:
+    with run_server(tmp_path=tmp_path, indexer=index_hypothesis, driver=driver, notify_contexts=True) as helper:
+        driver.get(start_url)
         manual.confirm('you should see notification about contexts')
         page_logo = helper.driver.find_element(By.XPATH, '//a[@class="page-logo"]')
         page_logo.send_keys(Keys.CONTROL + Keys.ENTER) # ctrl+click -- opens the link in new background tab
@@ -1099,35 +1098,40 @@ def test_sidebar_navigation(tmp_path: Path, driver: Driver, base_url: str) -> No
 
 
 @browsers()
-def test_unreachable(tmp_path: Path, browser: Browser) -> None:
+def test_unreachable(tmp_path: Path, driver: Driver) -> None:
+    pytest.skip("NOTE: broken at the moment because webNavigation.onCompleted isn't working for unreachable pages")
+
     url = 'https://somenonexist1ngurl.com'
     urls = {
         url: 'some context',
     }
-    with _test_helper(
-            tmp_path, index_urls(urls), 'about:blank', browser=browser,
+    indexer = index_urls(urls)
+    with run_server(
+            tmp_path=tmp_path, indexer=indexer, driver=driver,
             notify_contexts=True,
             verbose_errors=False,
     ) as helper:
         try:
-            helper.driver.get(url)
+            driver.get(url)
         except:
             # results in exception because it's unreachable
             pass
-        # TODO maybe in this case it could instead open the sidebar in a separate tab?
         manual.confirm('green icon, no errors, desktop notification with contexts')
 
 
 @browsers()
-def test_stress(tmp_path: Path, browser: Browser) -> None:
+def test_stress(tmp_path: Path, driver: Driver) -> None:
     url = 'https://www.reddit.com/'
     urls = [
         (f'{url}/subpath/{i}.html', f'context {i}' if i > 10000 else None) for i in range(50000)
     ]
-    with _test_helper(tmp_path, index_urls(urls), url, browser=browser) as helper:
-        if has_x():
-            helper.activate()
+    indexer = index_urls(urls)
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver) as helper:
+        driver.get(url)
 
+        helper.activate()
+
+        # todo I guess it's kinda tricky to test in headless webdriver
         manual.confirm('''
 Is performance reasonable?
 The sidebar should show up, and update gradually.
@@ -1135,22 +1139,17 @@ You should be able to scroll the page, trigger tooltips, etc., without any lags.
 '''.strip())
 
     
-@browsers(FF, CH)
-def test_fuzz(tmp_path: Path, browser: Browser) -> None:
+@browsers()
+def test_fuzz(tmp_path: Path, driver: Driver) -> None:
     # TODO ugh. this still results in 'tab permissions' pages, but perhaps because of closed tabs?
     # dunno if it's worth fixing..
     urls = {
         'https://www.iana.org/domains/reserved': 'IANA',
         'iana.org/domains/reserved': 'IANA2',
     }
-    with _test_helper(
-            tmp_path,
-            index_urls(urls),
-            'https://example.com',
-            browser=browser,
-            notify_contexts=True,
-    ) as helper:
-        driver = helper.driver
+    indexer = index_urls(urls)
+    with run_server(tmp_path=tmp_path, indexer=indexer, driver=driver, notify_contexts=True) as helper:
+        driver.get('https://example.com')
         tabs = 30
         for _ in range(tabs):
             driver.find_element(By.TAG_NAME, 'a').send_keys(Keys.CONTROL + Keys.RETURN)
@@ -1160,6 +1159,9 @@ def test_fuzz(tmp_path: Path, browser: Browser) -> None:
             driver.close()
             sleep(0.1)
             driver.switch_to.window(driver.window_handles[0])
+
+        if is_headless(driver):
+            pytest.skip("Rest of this test uses send_key to restore tab and it's not working under headless webdriver :(")
 
         def cb():
             for _ in range(10):
