@@ -1,6 +1,5 @@
 '''
-Uses [[https://github.com/karlicoss/HPI][HPI]] dogsheep module to import
-Hacker News items.
+Uses [[https://github.com/karlicoss/HPI][HPI]] dogsheep module to import HackerNews items.
 '''
 
 import textwrap
