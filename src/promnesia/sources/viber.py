@@ -1,5 +1,5 @@
 """
-Adapted from `telegram.py` to read from `~/.ViberPC/XYZ123/viber.db`
+Collects visits from Viber desktop app (e.g. `~/.ViberPC/XYZ123/viber.db`)
 """
 
 import logging

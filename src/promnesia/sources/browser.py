@@ -1,3 +1,7 @@
+'''
+Uses [[https://github.com/karlicoss/HPI][HPI]] for visits from web browsers.
+'''
+
 import re
 from typing import Optional, Iterator, Any, TYPE_CHECKING
 import warnings

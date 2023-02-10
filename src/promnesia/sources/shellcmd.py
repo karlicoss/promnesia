@@ -1,3 +1,7 @@
+"""
+Greps out URLs from an arbitrary shell command results.
+"""
+
 from datetime import datetime
 import os
 import re

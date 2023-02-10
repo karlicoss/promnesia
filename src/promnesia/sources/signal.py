@@ -1,12 +1,13 @@
 """
-Harvest visits from Signal Desktop's chiphered SQLIite db(s).
-
-Functions get their defaults from module-data.
-
-* Open-ciphered-db adapted from:
-  https://github.com/carderne/signal-export/commit/2284c8f4
-* Copyright (c) 2019 Chris Arderne, 2020 Kostis Anagnostopoulos
+Collects visits from Signal Desktop's encrypted SQLIite db(s).
 """
+
+# Functions get their defaults from module-data.
+#
+# * Open-ciphered-db adapted from:
+#   https://github.com/carderne/signal-export/commit/2284c8f4
+# * Copyright (c) 2019 Chris Arderne, 2020 Kostis Anagnostopoulos
+
 
 import json
 import logging

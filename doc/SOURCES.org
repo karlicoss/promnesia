@@ -10,9 +10,11 @@ import setup
 for (name, description), vals in setup.DEPS_SOURCES.items():
     # fuck org-ruby. promnesia[name] should be in quotes, but then it doesn't render as code. ugh.
     # https://github.com/wallyqs/org-ruby/issues/45
+    vals = [v.split('>')[0] for v in vals]
+    if len(vals) == 0:
+        continue
     print(f"- ~pip3 install --user promnesia[{name}]~")
     print(f'   ')
-    vals = [v.split('>')[0] for v in vals]
     print(f'   {description}: {", ".join(vals)}')
 #+end_src
 
@@ -35,9 +37,6 @@ for (name, description), vals in setup.DEPS_SOURCES.items():
 - ~pip3 install --user promnesia[org]~
 
    dependencies for sources.org: orgparse
-- ~pip3 install --user promnesia[telegram]~
-
-   dependencies for sources.telegram: dataset
 :end:
 
 Alternatively, you can just install all of them in bulk: ~pip3 install --user promnesia[all]~.
@@ -47,44 +46,41 @@ Alternatively, you can just install all of them in bulk: ~pip3 install --user pr
 
 These are included with the current Promnesia distribution:
 
-#+begin_src python :python "with_my python3" :dir ../src :exports output :results output drawer
+#+begin_src python :dir ../src :exports output :results output drawer
 print('\n') # fix github org-mode issue with drawers
 
+import ast
 from pathlib import Path
-import pkgutil
-import importlib
-import inspect
+import os
 
 indent = lambda s: ''.join('  ' + l for l in s.splitlines(keepends=True))
 
 git_root = Path('.').absolute().parent
 
-from promnesia.common import Results
+src = git_root / 'src'
 
-import promnesia.sources as pkg
-for importer, name, ispkg in sorted(pkgutil.walk_packages(
-        path=pkg.__path__,
-        prefix=pkg.__name__+'.'
-), key=lambda x: x[1]):
-    if name in {
-            # TODO damn, these modules need depednencies...
-            'promnesia.sources.browser',
-            'promnesia.sources.markdown',
-            'promnesia.sources.org',
-            'promnesia.sources.plaintext',
+for f in sorted((src / 'promnesia/sources').rglob('*.py')):
+    mp = f.relative_to(src)
+    module_name = str(mp.with_suffix('')).replace(os.sep, '.')
+    if module_name in {
+            'promnesia.sources.browser_old',  # deprecated
+            'promnesia.sources.takeout_legacy',  # deprecated
+            'promnesia.sources.guess',
+            'promnesia.sources.demo',
     }:
         continue
-    m = importlib.import_module(name)
-    public = [(k, v) for k, v in inspect.getmembers(m) if not k.startswith('_')]
-    indexers = [(k, v) for k, v in public if getattr(v, '__annotations__', {}).get('return') == Results]
-    assert len(indexers) > 0, name
-    for k, i in indexers:
-        # print(inspect.signature(i))
-        link = '../' + str(Path(m.__file__).relative_to(git_root))
-        print(f'- [[file:{link}][{name}]]')
-        d = m.__doc__
-        if d is not None:
-            print(indent(d))
+    a: ast.Module = ast.parse(f.read_text())
+    has_index = False
+    for x in a.body:
+        if isinstance(x, ast.FunctionDef) and x.name == 'index':
+            has_index = True
+    if not has_index:
+        continue
+    link = '../' + str(f.relative_to(git_root))
+    print(f'- [[file:{link}][{module_name}]]')
+    doc = ast.get_docstring(a, clean=False)
+    if doc is not None:
+        print(indent(doc))
 #+end_src
 
 #+RESULTS:
@@ -98,7 +94,11 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
   - can index most of plaintext files, including source code!
   - autodetects Obsidian vault and adds `obsidian://` app protocol support [[file:../src/promnesia/sources/obsidian.py][promnesia.sources.obsidian]]
   - autodetects Logseq graph and adds `logseq://` app protocol support [[file:../src/promnesia/sources/logseq.py][promnesia.sources.logseq]]
-  
+
+- [[file:../src/promnesia/sources/browser.py][promnesia.sources.browser]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for visits from web browsers.
+
 - [[file:../src/promnesia/sources/fbmessenger.py][promnesia.sources.fbmessenger]]
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
@@ -107,10 +107,9 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] github module
 
-- [[file:../src/promnesia/sources/guess.py][promnesia.sources.guess]]
-- [[file:../src/promnesia/sources/html.py][promnesia.sources.html]]
+- [[file:../src/promnesia/sources/hackernews.py][promnesia.sources.hackernews]]
 
-  Extracts links from HTML files
+  Uses [[https://github.com/karlicoss/HPI][HPI]] dogsheep module to import HackerNews items.
 
 - [[file:../src/promnesia/sources/hypothesis.py][promnesia.sources.hypothesis]]
 
@@ -133,11 +132,24 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
   Uses [[https://github.com/karlicoss/HPI][HPI]] for Roam Research data
 
 - [[file:../src/promnesia/sources/rss.py][promnesia.sources.rss]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for RSS data.
+
 - [[file:../src/promnesia/sources/shellcmd.py][promnesia.sources.shellcmd]]
+
+  Greps out URLs from an arbitrary shell command results.
+
+- [[file:../src/promnesia/sources/signal.py][promnesia.sources.signal]]
+
+  Collects visits from Signal Desktop's encrypted SQLIite db(s).
 
 - [[file:../src/promnesia/sources/smscalls.py][promnesia.sources.smscalls]]
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] smscalls module
+
+- [[file:../src/promnesia/sources/stackexchange.py][promnesia.sources.stackexchange]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for Stackexchange data.
 
 - [[file:../src/promnesia/sources/takeout.py][promnesia.sources.takeout]]
 
@@ -147,16 +159,6 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
 
-- [[file:../src/promnesia/sources/viber.py][promnesia.sources.viber]]
-
-  Uses all local SQLite files found in your Viber Desktop configurations:
-  usually in =~/.ViberPC/**/viber.db= (one directory for each telephone number).
-
-- [[file:../src/promnesia/sources/signal.py][promnesia.sources.signal]]
-
-  When path(s) given, uses the SQLite inside Signal-Desktop's configuration directory
-  (see the sources for more parameters & location of the db-file for each platform)
-
 - [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
 
   Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
@@ -165,9 +167,17 @@ for importer, name, ispkg in sorted(pkgutil.walk_packages(
 
   Clones & indexes Git repositories (via sources.auto)
 
+- [[file:../src/promnesia/sources/viber.py][promnesia.sources.viber]]
+
+  Collects visits from Viber desktop app (e.g. `~/.ViberPC/XYZ123/viber.db`)
+
 - [[file:../src/promnesia/sources/website.py][promnesia.sources.website]]
 
   Clones a website with wget and indexes via sources.auto
+
+- [[file:../src/promnesia/sources/zulip.py][promnesia.sources.zulip]]
+
+  Uses [[https://github.com/karlicoss/HPI][HPI]] for Zulip data.
 
 :end:
 
