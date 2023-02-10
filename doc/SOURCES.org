@@ -1,5 +1,7 @@
 This file is an overview of available sources along with descriptions and some guidance.
 
+* See [[#instructions][instructions]] below for additional information.
+
 * Extra dependencies
 Some sources require additional dependencies, which you can install if needed.
 
@@ -181,7 +183,56 @@ for f in sorted((src / 'promnesia/sources').rglob('*.py')):
 
 :end:
 
+* Instructions
+** browser
 
+The browser source here uses [[https://github.com/karlicoss/HPI][HPI]], which uses
+[[https://github.com/seanbreckenridge/browserexport][browserexport]] to
+save/parse browser history. Since browsers remove old history after your
+history has grown to a certain size, this saves the raw database files to
+a directory you specify. =browserexport= supports many browsers, including any
+Chromium/Firefox based browsers (e.g. Brave, Vivaldi, Waterfox). For more
+instructions on backing up databases, see
+[[https://github.com/seanbreckenridge/browserexport#usage][here]], but as
+a quickstart, after setting up =HPI=, run:
+#+BEGIN_SRC sh
+hpi module install my.browser.export
+#+END_SRC
+
+Then, to save your browser history, run a command like:
+#+BEGIN_SRC sh
+$ browserexport save -b firefox --to ~/data/browser_history
+$ browserexport save -b chrome --to ~/data/browser_history
+$ browserexport save -b safari --to ~/data/browser_history
+#+END_SRC
+
+This will save your browser history to a directory, which you can then point
+HPI at, in your
+[[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mybrowser][=HPI
+config=]]:
+#+BEGIN_SRC python
+class browser:
+    class export:
+        # path[s]/glob to your backed up browser history sqlite files
+        export_path: Paths = "~/data/browsing/*.sqlite"
+
+    class active_browser:
+        # paths to sqlite database files which you use actively
+        # to read from. For example:
+        # from browserexport.browsers.all import Firefox
+        # export_path = Firefox.locate_database()
+        export_path: Paths
+#+END_SRC
+
+Finally, you can add the browser source to =promnesia=, in your =config.py=:
+#+BEGIN_SRC python
+from promnesia.sources import browser
+
+SOURCES = [
+    browser,
+    ...
+]
+#+END_SRC
 * Extending
 Adding your own data sources is very easy!
 One day I'll add some proper documentation, but the easiest at the moment is to use existing simple modules as a reference, for example:
