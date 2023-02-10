@@ -1,6 +1,6 @@
 This file is an overview of available sources along with descriptions and some guidance.
 
-* See [[#instructions][instructions]] below for additional information.
+See [[#instructions][instructions]] below for additional information.
 
 * Extra dependencies
 Some sources require additional dependencies, which you can install if needed.
@@ -201,15 +201,15 @@ hpi module install my.browser.export
 
 Then, to save your browser history, run a command like:
 #+BEGIN_SRC sh
-$ browserexport save -b firefox --to ~/data/browser_history
-$ browserexport save -b chrome --to ~/data/browser_history
-$ browserexport save -b safari --to ~/data/browser_history
+browserexport save -b firefox --to ~/data/browser_history
+browserexport save -b chrome --to ~/data/browser_history
+browserexport save -b safari --to ~/data/browser_history
 #+END_SRC
 
 This will save your browser history to a directory, which you can then point
 HPI at, in your
-[[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mybrowser][=HPI
-config=]]:
+[[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mybrowser][HPI
+config]]:
 #+BEGIN_SRC python
 class browser:
     class export:
