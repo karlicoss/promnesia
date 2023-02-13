@@ -1,4 +1,24 @@
-To build the addon (expects Ubuntu 20.04/jammy at the moment):
+Sometimes extension is flagged for review and you're asked to provide unminifed source code and build instructions.
+
+To provide the source code, run: =git archive master:extension --output=promnesia-source.zip=
+
+Also can point them at https://github.com/karlicoss/promnesia/tree/master/extension
+
+
+* Building addon
+
+To build you need Ubuntu 22.04/Jammy. The easiest way to build cleanly would be a Docker container:
+
+#+begin_src
+# run the container
+docker run -it ubuntu:jammy /bin/bash
+
+# inside the container
+$ apt update && apt install -y sudo
+
+#+end_src
+
+After that build the addon (run these commands inside the container if you choose to do it with Docker):
 
 #+begin_src
 $ sudo apt update && sudo apt install -y git curl
@@ -10,20 +30,7 @@ $ npm install
 $ ./build --firefox --release --lint
 #+end_src
 
-# TODO: how to keep the instructions consistent with the CI?
-
 The final artifact will be in =extension/dist/artifacts/firefox/promnesia-<version>.zip=
 
-NOTE: the easiest ways to test the above instructions in Docker would be
-
-#+begin_src
-# run the container
-docker run -it ubuntu:jammy /bin/bash
-
-# inside the container
-$ sudo apt update && sudo apt install -y sudo
-
-# and after that run the same commands as above.
-
-#+end_src
+# TODO: how to keep the instructions consistent with the CI?
 
