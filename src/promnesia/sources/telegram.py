@@ -58,7 +58,7 @@ def index(database: PathIsh, *, http_only: bool=False) -> Results:
                 , snd.display_name AS sender
                 , M.time           AS time
                 , {text_query}     AS text
-                , M.id             AS mid
+                , M.message_id     AS mid
             FROM messages AS M
                                                                                 /* chat types are 'dialog' (1-1), 'group' and 'supergroup' */
                                                                                 /* this is abit hacky way to handle all groups in one go */
