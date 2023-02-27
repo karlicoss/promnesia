@@ -1,19 +1,22 @@
 Sometimes extension is flagged for review and you're asked to provide unminifed source code and build instructions.
 
-To provide the source code, run: =git archive master:extension --output=promnesia-source.zip=
+To provide the source code, run: =git archive master --output=promnesia-source.zip=
 
 Also can point them at https://github.com/karlicoss/promnesia/tree/master/extension
 
 
 * Building addon
 
-To build you need Ubuntu 22.04/Jammy. The easiest way to build cleanly would be a Docker container:
+To build you need *Ubuntu 22.04/Jammy* and *Node 18*. The easiest way to build cleanly would be a Docker container:
 
 #+begin_src
-# run the container
-docker run -it ubuntu:jammy /bin/bash
+# on the HOST system: run the container
+docker run --name promnesia_build -it ubuntu:jammy /bin/bash
 
-# inside the container
+# on the HOST system: put the sources into the container
+docker cp promnesia-source.zip promnesia_build:/promnesia-source.zip
+
+# INSIDE the container
 $ apt update && apt install -y sudo
 
 #+end_src
@@ -21,16 +24,16 @@ $ apt update && apt install -y sudo
 After that build the addon (run these commands inside the container if you choose to do it with Docker):
 
 #+begin_src
-$ sudo apt update && sudo apt install -y git curl
+$ sudo apt update && sudo apt install -y git curl unzip
 $ curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 $ sudo apt install -y nodejs
-$ git clone https://github.com/karlicoss/promnesia.git
+# unzip promnesia-source.zip -d promnesia
 $ cd promnesia/extension/
 $ npm install
 $ ./build --firefox --release --lint
 #+end_src
 
-The final artifact will be in =extension/dist/artifacts/firefox/promnesia-<version>.zip=
+The final artifact will be in =/promnesia/extension/dist/artifacts/firefox/promnesia-<version>.zip=
 
 # TODO: how to keep the instructions consistent with the CI?
 
