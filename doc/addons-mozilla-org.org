@@ -10,6 +10,9 @@ Also can point them at https://github.com/karlicoss/promnesia/tree/master/extens
 To build you need *Ubuntu 22.04/Jammy* and *Node 18*. The easiest way to build cleanly would be a Docker container:
 
 #+begin_src
+# on the HOST system: cleanup previous container -- if it didn't exist in the first, it will show an error, ignore it
+docker rm -f promnesia_build
+
 # on the HOST system: run the container
 docker run --name promnesia_build -it ubuntu:jammy /bin/bash
 
