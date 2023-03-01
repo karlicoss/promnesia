@@ -4,6 +4,9 @@ To provide the source code, run: =git archive master --output=promnesia-source.z
 
 Also can point them at https://github.com/karlicoss/promnesia/tree/master/extension
 
+The build instruction assume that the zip file with source code is in =/path/to/promnesia-source.zip= (on the HOST system).
+*Make sure to replace it with the actual path to the source code zip file.*
+
 
 * Building addon
 
@@ -13,30 +16,41 @@ To build you need *Ubuntu 22.04/Jammy* and *Node 18*. The easiest way to build c
 # on the HOST system: cleanup previous container -- if it didn't exist in the first, it will show an error, ignore it
 docker rm -f promnesia_build
 
-# on the HOST system: run the container
-docker run --name promnesia_build -it ubuntu:jammy /bin/bash
+# on the HOST system: create the container
+docker create --name promnesia_build -it ubuntu:jammy /bin/bash
 
 # on the HOST system: put the sources into the container
-docker cp promnesia-source.zip promnesia_build:/promnesia-source.zip
+docker cp /path/to/promnesia-source.zip promnesia_build:/promnesia.zip
+
+# on the HOST system: start the container
+docker start -i promnesia_build
 
 # INSIDE the container
 $ apt update && apt install -y sudo
 
 #+end_src
 
-After that build the addon (run these commands inside the container if you choose to do it with Docker):
+After that build the addon (run these commands INSIDE the container if you choose to do it with Docker):
 
 #+begin_src
 $ sudo apt update && sudo apt install -y git curl unzip
 $ curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 $ sudo apt install -y nodejs
-# unzip promnesia-source.zip -d promnesia
+$ unzip promnesia.zip -d promnesia
 $ cd promnesia/extension/
 $ npm install
 $ ./build --firefox --release --lint
 #+end_src
 
-The final artifact will be in =/promnesia/extension/dist/artifacts/firefox/promnesia-<version>.zip=
+The final artifact will be in =/promnesia/extension/dist/artifacts/firefox/promnesia-<version>.zip= (INSIDE the container).
+
+If you need to get it back onto the HOST system (e.g. to test in the browser), run on the HOST system (e.g. in a separate terminal):
+
+#+begin_src
+docker cp promnesia_build:/promnesia/extension/dist/artifacts/firefox/promnesia-<version>.zip .
+#+end_src
+
+This will copy it into the current directory on the HOST system.
 
 # TODO: how to keep the instructions consistent with the CI?
 
