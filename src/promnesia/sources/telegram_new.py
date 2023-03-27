@@ -1,19 +1,25 @@
+from typing import Dict, Any
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
 from promnesia.common import Results, logger, extract_urls, Visit, Loc
 
 
-def index()  -> Results:
+def index(*, http_only: bool=False, with_extra_media_info: bool=False)  -> Results:
     from . import hpi
     from my.telegram.telegram_backup import messages
 
-    # TODO port from old module
-    # TODO - http_only
-    # TODO - text_query and handling json column
-    for i, m in enumerate(messages()):
+    extra_where = "(has_media == 1 OR text LIKE '%http%')" if http_only else None
+    for i, m in enumerate(messages(
+            with_extra_media_info=with_extra_media_info,
+            extra_where=extra_where,
+    )):
         text = m.text
 
         urls = extract_urls(text)
+        extra_media_info = m.extra_media_info
+        if extra_media_info is not None:
+            urls.extend(extract_urls(extra_media_info))
+
         if len(urls) == 0:
             continue
 
