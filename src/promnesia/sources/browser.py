@@ -17,28 +17,30 @@ def index(p: Optional[PathIsh]=None) -> Results:
         yield from _index_new(history())
         return
 
-    warnings.warn('Passing paths to promnesia.sources.browser is deprecated. You should switch to HPI for that. See https://github.com/seanbreckenridge/browserexport#hpi')
-
-    # even if the used doesn't have HPI config for my.browser set up,
+    warnings.warn(
+        f'Passing paths to promnesia.sources.browser is deprecated, you should setup my.browser.export instead. '
+        f'See https://github.com/seanbreckenridge/browserexport#hpi .'
+        f'Will try to hack path to browser databases {p} into HPI config.'
+    )
     try:
         yield from _index_new_with_adhoc_config(path=p)
+        return
     except Exception as e:
         logger.exception(e)
-        warnings.warn("Setting my.config.browser.export didn't work. You probably need to update HPI.")
-    else:
-        return
+        warnings.warn("Hacking my.config.browser.export didn't work. You probably need to update HPI.")
 
-    logger.warning("Falling back onto legacy promnesia.sources.browser_old")
-    raise RuntimeError
+    logger.warning("Falling back onto legacy promnesia.sources.browser_legacy module")
     yield from _index_old(path=p)
 
 
 def _index_old(*, path: PathIsh) -> Results:
-    from . import browser_old
-    yield from browser_old.index(path)
+    from . import browser_legacy
+    yield from browser_legacy.index(path)
 
 
 def _index_new_with_adhoc_config(*, path: PathIsh) -> Results:
+    from . import hpi
+
     ## previously, it was possible to index be called with multiple different db search paths
     ## this would result in each subsequent call to my.browser.export.history to invalidate cache every time
     ## so we hack cachew path so it's different for each call
@@ -58,7 +60,6 @@ def _index_new_with_adhoc_config(*, path: PathIsh) -> Results:
                 @classproperty
                 def export_path(cls) -> Paths:
                     return tuple([f for f in get_files(path, glob='**/*') if is_sqlite_db(f)])
-
 
     from my.core.cfg import tmp_config
     with tmp_config(modules='my.browser.export|my.core.core_config', config=config):
