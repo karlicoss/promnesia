@@ -11,8 +11,6 @@ from urllib.parse import unquote # TODO mm, make it easier to rememember to use.
 from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, Results, echain
 from ..sqlite import sqlite_connection
 
-# TODO potentially, belongs to my. package
-
 T = TypeVar("T")
 
 
