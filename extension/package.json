@@ -1,7 +1,7 @@
 {
   "name": "promnesia",
-  "version": "1.2.2",
-  "version_name": "released on 2023.02.10",
+  "version": "1.2.3",
+  "version_name": "released on 2023.04.01",
   "description": "Recall what you already visited, why and in which context",
   "main": "dist/background.js",
   "scripts": {
