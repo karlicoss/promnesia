@@ -406,7 +406,7 @@ The best support for me would be if you contribute to this or my other projects.
 
 I don't need money, but I understand it's often easier to give away than time, so here are some of projects that I donate to:
 
-- [[https://orgmode.org/worg/donate.html][org-mode]]
+- [[https://liberapay.com/org-mode][org-mode]]
 - [[https://archive.org/donate][Internet Archive]]
 - [[https://web.hypothes.is/donate][Hypothes.is]]
 - [[https://github.com/hlissner/doom-emacs#contribute][Doom Emacs]]
