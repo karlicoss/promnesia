@@ -1,5 +1,5 @@
 /* @flow */
-import {getBrowser} from './common'
+import {getBrowser, Methods} from './common'
 
 /* NOTE: options can only be renamed in-between store releases */
 /* maybe later will bother with migrations for consistent naming, but that would require tests first */
@@ -284,20 +284,29 @@ export async function getOptions(): Promise<Options> {
 }
 
 
+async function notifyOptionsUpdated(): Promise<void> {
+    const options = await getOptions() // meh
+    browser.runtime.sendMessage({method: Methods.OPTIONS_UPDATED, options: options})
+}
+
+
 // TODO would be nice to accept a substructure of Options??
 export async function setOptions(opts: StoredOptions) {
     const os = await optSync()
     await os.set(opts)
+    notifyOptionsUpdated()
 }
 
 export async function setOption(opt: Opt1 | Opt2): Promise<void> {
     const os = await optSync()
     await os.set(opt)
+    notifyOptionsUpdated()
 }
 
 export async function resetOptions(): Promise<void> {
     const os = await optSync()
     await os.setAll({})
+    notifyOptionsUpdated()
 }
 
 type ToggleOptionRes = () => Promise<void>
