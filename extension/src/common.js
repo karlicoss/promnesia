@@ -197,6 +197,7 @@ export const Methods = {
     MARK_VISITED        : 'markVisited',
     OPEN_SEARCH         : 'openSearch',
     SIDEBAR_TOGGLE      : 'sidebarToggle',
+    OPTIONS_UPDATED     : 'optionsUpdated',
     // TODO not used
     SIDEBAR_SHOW        : 'sidebarShow',
     ZAPPER_EXCLUDELIST  : 'zapperExcludelist',

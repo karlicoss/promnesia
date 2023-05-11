@@ -170,6 +170,13 @@ type browser$webNavigation = {
   onDOMContentLoaded       : browser$WebNavigationX,
 }
 
+type browser$contextMenus = {
+  removeAll(callback?: () => void): void,
+  onClicked: {
+    ...chrome$Event,
+    addListener(callback: $contextMenus$OnClick): void
+  }
+}
 
 declare var browser: {
   bookmarks    : browser$bookmarks,
@@ -180,6 +187,7 @@ declare var browser: {
   scripting    : browser$scripting,
   runtime      : browser$runtime,
   webNavigation: browser$webNavigation,
+  contextMenus : browser$contextMenus,
 }
 
 
@@ -192,4 +200,5 @@ declare module "webextension-polyfill" {
   declare var scripting    : browser$scripting;
   declare var runtime      : browser$runtime;
   declare var webNavigation: browser$webNavigation;
+  declare var contextMenus : browser$contextMenus;
 }
