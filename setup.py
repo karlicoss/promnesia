@@ -52,6 +52,7 @@ def main() -> None:
 
                  'psutil',
 
+                 'requests<2.30.0',  # temporary, see https://github.com/psf/requests/issues/6443
                  'httpie',   # nicer http requests (replace with curl?)
                  'selenium', # browser automations
                  'click',    # confirmations for end2end test (might remove dependency)
