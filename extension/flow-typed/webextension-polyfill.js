@@ -171,7 +171,7 @@ type browser$webNavigation = {
 }
 
 type browser$contextMenus = {
-  removeAll(callback?: () => void): void,
+  removeAll(): Promise<void>,
   onClicked: {
     ...chrome$Event,
     addListener(callback: $contextMenus$OnClick): void
