@@ -10,7 +10,7 @@ import os
 import shutil
 from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence, Union
+from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence, Union, Dict, Any
 
 import pytest # type: ignore
 
@@ -139,7 +139,25 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
             # regular --headless doesn't support extensions for some reason
             cr_options.add_argument('--headless=new')
         cr_options.add_extension(str(ex))
-        driver = webdriver.Chrome(options=cr_options)
+
+        # right, so recent chrome/chromium have this regression https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
+        # which breaks tons of tests due to iframe use
+        use_custom_chromium = True
+        mexepath: Dict[str, Any] = {}
+        if use_custom_chromium:
+            # see setup in end2end_tests.Dockerfile
+            user_data_dir = tdir / 'udir'
+            user_data_dir.mkdir()
+            # seems necessary, otherwise it somehow falls back onto snap chromium and gets stuck?
+            cr_options.add_argument('--user-data-dir=' + str(user_data_dir))
+            # ugh. sadly somehow if you add these chrome dirs to PATH, it doesn't work it still tries to use system binary?
+
+            cr_options.binary_location = '/tmp/chrome/chrome-linux/chrome'
+            driver_path = Path('/tmp/chrome/chromedriver_linux64/chromedriver')
+            assert driver_path.exists()
+            mexepath['executable_path'] = str(driver_path)
+        driver = webdriver.Chrome(options=cr_options, **mexepath)
+        logger.info(f"using webdriver: {driver.capabilities['browserVersion']} {driver.capabilities['chrome']['chromedriverVersion']}")
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
     return driver
