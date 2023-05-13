@@ -5,10 +5,10 @@ Clones & indexes Git repositories (via sources.auto)
 
 from pathlib import Path
 import re
+from subprocess import check_call
 from typing import Iterable
 
 from ..common import Extraction, PathIsh, get_tmpdir, slugify
-from ..compat import check_call
 
 
 def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:

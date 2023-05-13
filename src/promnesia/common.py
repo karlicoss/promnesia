@@ -1,19 +1,21 @@
-from collections.abc import Sized
+from __future__ import annotations
+
 from contextlib import contextmanager
 from datetime import datetime, date
-import os
-from typing import NamedTuple, Set, Iterable, Dict, TypeVar, Callable, List, Optional, Union, Any, Collection, Sequence, Tuple, TypeVar, TYPE_CHECKING
-from pathlib import Path
+from functools import lru_cache
 from glob import glob
 import itertools
-from more_itertools import intersperse
 import logging
-from functools import lru_cache
+import os
+from pathlib import Path
 import shutil
+from subprocess import run, PIPE, Popen
 from timeit import default_timer as timer
 from types import ModuleType
+from typing import NamedTuple, Iterable, TypeVar, Callable, List, Optional, Union, TypeVar
 import warnings
 
+from more_itertools import intersperse
 import pytz
 
 from .cannon import canonify
@@ -77,7 +79,6 @@ class Loc(NamedTuple):
 @lru_cache(1)
 def _detect_mime_handler() -> str:
     def exists(what: str) -> bool:
-        from .compat import run, PIPE
         try:
             r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE)
         except FileNotFoundError:
@@ -491,7 +492,6 @@ def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable
             yield from (Path(r) / f for f in files if f not in ignore)
         return
 
-    from .compat import Popen, PIPE
     cmd = ['find', *find_args(root, follow=follow, ignore=ignore)]
     # try to use fd.. it cooperates well with gitignore etc, also faster than find
     for x in ('fd', 'fd-find', 'fdfind'): # has different names on different dists..

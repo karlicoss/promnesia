@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import argparse
-import logging
+import ast
+import importlib
 import inspect
-import sys
-from typing import List, Tuple, Optional, Dict, Sequence, Iterable, Iterator, Union
 from pathlib import Path
-from datetime import datetime
-from .compat import check_call, register_argparse_extend_action_in_pre_py38
+import shutil
+from subprocess import run, check_call, Popen
+import sys
 from tempfile import TemporaryDirectory
+from typing import List, Optional, Sequence, Iterable, Iterator, Union
 
 
 from . import config
@@ -15,7 +18,7 @@ from .misc import install_server
 from .common import PathIsh, logger, get_tmpdir, DbVisit, Res
 from .common import Source, get_system_tz, user_config_file, default_config_path
 from .dump import visits_to_sqlite
-from .extract import extract_visits, make_filter
+from .extract import extract_visits
 
 
 def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Res[DbVisit]]:
@@ -116,13 +119,11 @@ def demo_sources():
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
         def inner(*args, **kwargs):
             from . import sources
-            import importlib
             module = importlib.import_module('promnesia.sources' + '.' + name)
             return getattr(module, 'index')
         return inner
 
     res = {}
-    import ast
     import promnesia.sources
     for p in promnesia.sources.__path__: # type: ignore[attr-defined] # should be present
         for x in sorted(Path(p).glob('*.py')):
@@ -144,7 +145,6 @@ def do_demo(
         sources_subset: Iterable[Union[str, int]]=(),
         overwrite_db: bool=False,
     ) -> None:
-    from pprint import pprint
     with TemporaryDirectory() as tdir:
         outdir = Path(tdir)
 
@@ -185,7 +185,6 @@ def do_demo(
 
 
 def read_example_config() -> str:
-    import inspect
     from .misc import config_example
     return inspect.getsource(config_example)
 
@@ -214,8 +213,6 @@ def config_check(args: argparse.Namespace) -> None:
 
 
 def _config_check(cfg: Path) -> Iterable[Exception]:
-    from .compat import run
-
     logger.info('config: %s', cfg)
 
     def check(cmd) -> Iterable[Exception]:
@@ -265,13 +262,11 @@ def cli_doctor_db(args: argparse.Namespace) -> None:
     check_call(cmd)
 
     bro = 'sqlitebrowser'
-    import shutil
     if not shutil.which(bro):
         logger.error(f'Install {bro} to inspect the database!')
         sys.exit(1)
     cmd = [bro, str(db)]
     logger.debug(f'Running {cmd}')
-    from .compat import Popen
     Popen(cmd)
 
 
@@ -301,7 +296,6 @@ def main() -> None:
         :param default_config_path:
             if not given, all :func:`demo_sources()` are run
         """
-        register_argparse_extend_action_in_pre_py38(parser)
         parser.add_argument('--config', type=Path, default=default_config_path, help='Config path')
         parser.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
         parser.add_argument(

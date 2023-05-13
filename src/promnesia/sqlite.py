@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 import sqlite3
-from typing import Callable, Optional, Any, Iterator, Union
+from typing import Callable, Optional, Any, Iterator, Union, Literal
 
 from .common import PathIsh
-from .compat import Literal
 
 # NOTE: copy pasted from HPI
 

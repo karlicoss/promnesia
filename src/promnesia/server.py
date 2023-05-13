@@ -1,15 +1,17 @@
 #!/usr/bin/python3
+from __future__ import annotations
+
 __package__ = 'promnesia'  # ugh. hacky way to make wsgi runner work properly...
 
 import argparse
 from dataclasses import dataclass
-import os
-import json
 from datetime import timedelta
-from pathlib import Path
-import logging
 from functools import lru_cache
-from typing import List, NamedTuple, Dict, Optional, Any, Tuple
+import json
+import logging
+import os
+from pathlib import Path
+from typing import List, NamedTuple, Dict, Optional, Any, Tuple, Protocol
 
 
 import pytz
@@ -24,7 +26,6 @@ from sqlalchemy.sql import text
 
 
 from .common import PathWithMtime, DbVisit, Url, setup_logger, default_output_dir, get_system_tz
-from .compat import Protocol
 from .cannon import canonify
 
 

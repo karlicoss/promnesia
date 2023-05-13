@@ -5,10 +5,10 @@ Greps out URLs from an arbitrary shell command results.
 from datetime import datetime
 import os
 import re
-from typing import Optional, Union, Sequence
+from subprocess import run, PIPE
+from typing import Union, Sequence
 import warnings
 
-from ..compat import run, PIPE
 from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows, PathIsh
 from .plaintext import _has_grep
 
