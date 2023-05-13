@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 import os
 import sys
@@ -50,7 +52,7 @@ LAUNCHD_TEMPLATE = '''
 '''
 
 
-def systemd(*args, method=check_call):
+def systemd(*args: str | Path, method=check_call) -> None:
     method([
         'systemctl', '--no-pager', '--user', *args,
     ])

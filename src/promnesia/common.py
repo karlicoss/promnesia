@@ -192,7 +192,7 @@ def get_logger() -> logging.Logger:
 import tempfile
 # kinda singleton
 @lru_cache(1)
-def get_tmpdir() -> tempfile.TemporaryDirectory:
+def get_tmpdir() -> tempfile.TemporaryDirectory[str]:
     # todo use appdirs?
     tdir = tempfile.TemporaryDirectory(suffix="promnesia")
     return tdir
@@ -578,7 +578,7 @@ def default_config_path() -> Path:
 
 
 @contextmanager
-def measure(tag: str='', *, logger, unit: str='ms'):
+def measure(tag: str='', *, logger: logging.Logger, unit: str='ms'):
     before = timer()
     yield lambda: timer() - before
     after = timer()

@@ -9,13 +9,13 @@ import shutil
 from subprocess import run, check_call, Popen
 import sys
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Sequence, Iterable, Iterator, Union
+from typing import Callable, Sequence, Iterable, Iterator, Union
 
 
 from . import config
 from . import server
 from .misc import install_server
-from .common import PathIsh, logger, get_tmpdir, DbVisit, Res
+from .common import Extractor, PathIsh, logger, get_tmpdir, DbVisit, Res
 from .common import Source, get_system_tz, user_config_file, default_config_path
 from .dump import visits_to_sqlite
 from .extract import extract_visits
@@ -39,7 +39,7 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
 
     for i, source in enumerate(sources):
         # TODO why would it not be present??
-        name = getattr(source, "name", None)
+        name: str | None = getattr(source, "name", None)
         if name and is_subset_sources:
             matched = name in sources_subset or i in sources_subset
             if matched:
@@ -75,7 +75,7 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
 
 def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), overwrite_db: bool=False) -> Iterable[Exception]:
     # also keep & return errors for further display
-    errors: List[Exception] = []
+    errors: list[Exception] = []
     def it() -> Iterable[Res[DbVisit]]:
         for v in iter_all_visits(sources_subset):
             if isinstance(v, Exception):
@@ -114,18 +114,19 @@ def do_index(
         sys.exit(1)
 
 
-def demo_sources():
-    def lazy(name: str):
+def demo_sources() -> dict[str, Callable[[], Extractor]]:
+    def lazy(name: str) -> Callable[[], Extractor]:
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
-        def inner(*args, **kwargs):
+        def inner() -> Extractor:
             from . import sources
-            module = importlib.import_module('promnesia.sources' + '.' + name)
+            module = importlib.import_module(f'promnesia.sources.{name}')
             return getattr(module, 'index')
         return inner
 
     res = {}
     import promnesia.sources
-    for p in promnesia.sources.__path__: # type: ignore[attr-defined] # should be present
+    path: list[str] = getattr(promnesia.sources, '__path__')  # should be present
+    for p in path:
         for x in sorted(Path(p).glob('*.py')):
             a = ast.parse(x.read_text())
             candidates = [c for c in a.body if getattr(c, 'name', None) == 'index']
@@ -138,8 +139,8 @@ def do_demo(
         *,
         index_as: str,
         params: Sequence[str],
-        port: Optional[str],
-        config_file: Optional[Path],
+        port: str | None,
+        config_file: Path | None,
         dry: bool=False,
         name: str='demo',
         sources_subset: Iterable[Union[str, int]]=(),
@@ -215,14 +216,14 @@ def config_check(args: argparse.Namespace) -> None:
 def _config_check(cfg: Path) -> Iterable[Exception]:
     logger.info('config: %s', cfg)
 
-    def check(cmd) -> Iterable[Exception]:
+    def check(cmd: list[str | Path]) -> Iterable[Exception]:
         logger.debug(' '.join(map(str, cmd)))
         res = run(cmd)
         if res.returncode > 0:
             yield Exception()
 
     logger.info('Checking syntax...')
-    cmd = [sys.executable, '-m', 'compileall', cfg]
+    cmd: list[str | Path] = [sys.executable, '-m', 'compileall', cfg]
     yield from check(cmd)
 
     # todo not sure if should be more defensive than check_call here
@@ -271,7 +272,7 @@ def cli_doctor_db(args: argparse.Namespace) -> None:
 
 
 def cli_doctor_server(args: argparse.Namespace) -> None:
-    port = args.port
+    port: str = args.port
     endpoint = f'http://localhost:{port}/status'
     cmd = ['curl', endpoint]
     logger.info(f'Running {cmd}')
@@ -291,7 +292,7 @@ def _ordinal_or_name(s: str) -> Union[str, int]:
 def main() -> None:
     # TODO longer, literate description?
 
-    def add_index_args(parser: argparse.ArgumentParser, default_config_path: Optional[PathIsh]=None) -> None:
+    def add_index_args(parser: argparse.ArgumentParser, default_config_path: PathIsh | None = None) -> None:
         """
         :param default_config_path:
             if not given, all :func:`demo_sources()` are run
@@ -372,8 +373,9 @@ def main() -> None:
 
     args = p.parse_args()
 
+    mode: str | None = args.mode
     # TODO is there a way to print full help? i.e. for all subparsers
-    if args.mode is None:
+    if mode is None:
         print('ERROR: Please specify a mode', file=sys.stderr)
         p.print_help(sys.stderr)
         sys.exit(1)
@@ -385,16 +387,16 @@ def main() -> None:
     # worst case -- could use database?
 
     with get_tmpdir() as tdir: # TODO??
-        if args.mode == 'index':
+        if mode == 'index':
             do_index(
                 config_file=args.config,
                 dry=args.dry,
                 sources_subset=args.sources,
                 overwrite_db=args.overwrite,
             )
-        elif args.mode == 'serve':
+        elif mode == 'serve':
             server.run(args)
-        elif args.mode == 'demo':
+        elif mode == 'demo':
             # TODO not sure if 'as' is that useful
             # something like Telegram/Takeout is too hard to setup to justify adhoc mode like this?
             do_demo(
@@ -407,14 +409,14 @@ def main() -> None:
                 sources_subset=args.sources,
                 overwrite_db=args.overwrite,
                 )
-        elif args.mode == 'install-server': # todo rename to 'autostart' or something?
+        elif mode == 'install-server': # todo rename to 'autostart' or something?
             install_server.install(args)
-        elif args.mode == 'config':
+        elif mode == 'config':
             args.func(args)
-        elif args.mode == 'doctor':
+        elif mode == 'doctor':
             args.func(args)
         else:
-            raise AssertionError(f'unexpected mode {args.mode}')
+            raise AssertionError(f'unexpected mode {mode}')
 
 if __name__ == '__main__':
     main()
