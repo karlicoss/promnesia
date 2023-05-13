@@ -10,6 +10,14 @@ RUN apt-get update        \
  && apt-get install -y wget \
  && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
  && apt-get install --yes ./google-chrome-stable_current_amd64.deb \
+ ## install chromium (sadly chrome has a bug with iframes atm)
+ ## this installs last revision that was actually working (1110897), see https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
+ && apt-get install -y unzip \
+ && mkdir /tmp/chrome \
+ && wget 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F1110897%2Fchrome-linux.zip?generation=1677589092014487&alt=media'         -O /tmp/chrome/chrome-linux.zip          \
+ && wget 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F1110897%2Fchromedriver_linux64.zip?generation=1677589097630198&alt=media' -O /tmp/chrome/chromedriver_linux64.zip  \
+ && unzip /tmp/chrome/chrome-linux.zip         -d /tmp/chrome \
+ && unzip /tmp/chrome/chromedriver_linux64.zip -d /tmp/chrome \
  ##
  ## install firefox
  # install add-apt-repository command
