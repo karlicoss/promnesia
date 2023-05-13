@@ -18,19 +18,15 @@ jobs:
       # fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         exclude: [
-            # windows runners are pretty scarce, so let's only run one of them..
-            # also 3.7 on windows is a bit broken due to the WindowsPath bug
-            {platform: windows-latest, python-version: '3.7'},
+            # windows runners are pretty scarce, so let's only run lowest and highest python version
             {platform: windows-latest, python-version: '3.9'},
-            # 3.11 on windows has this bug, lxml setup fails
-            #https://bugs.launchpad.net/lxml/+bug/1977998
-            {platform: windows-latest, python-version: '3.11'},
+            {platform: windows-latest, python-version: '3.10'},
 
-            # perhaps no need to run all macos versions -- it's a bit too slow and ubuntu covers python quirks well
-            {platform: macos-latest  , python-version: '3.8' },
+            # same, macos is a bit too slow and ubuntu covers python quirks well
             {platform: macos-latest  , python-version: '3.9' },
+            {platform: macos-latest  , python-version: '3.10' },
         ]
 
     runs-on: ${{ matrix.platform }}
