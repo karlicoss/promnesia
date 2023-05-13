@@ -55,7 +55,7 @@ function* search2visits(it: Iterable<browser$HistoryItem>): Iterator<Visit> {
             continue
         }
         const t = new Date(ts)
-        if (now - t <= delay) {
+        if (now.getDate() - t.getDate() <= delay) {
             continue // filter it out
         }
         yield new Visit(
@@ -93,8 +93,8 @@ export const thisbrowser: VisitsSource = {
         // NOTE: visitTime returns UTC epoch,
         const times: Array<Date> = results
             .map(r => new Date(r['visitTime'] || 0.0))
-            .filter(dt => now - dt > delay)
-        const visits = times.map(t => new Visit(
+            .filter(dt => now.getTime() - dt.getTime() > delay)
+        const visits: Array<Visit | Error> = times.map(t => new Visit(
             url,
             nurl,
             ((t: any): AwareDate),
@@ -112,7 +112,7 @@ export const thisbrowser: VisitsSource = {
         }
         const nurl = normalise_url(url)
         const results = await browser.history.search({text: url})
-        const visits = Array.from(search2visits(results))
+        const visits: Array<Visit | Error> = Array.from(search2visits(results))
         return new Visits(url, nurl, visits)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
@@ -137,7 +137,7 @@ export const thisbrowser: VisitsSource = {
         // right. this only returns history items with lastVisitTime
         // (see https://developer.chrome.com/extensions/history#type-HistoryItem)
         // so we need another pass to collec the 'correct' visit times
-        const visits = []
+        const visits: Array<Visit | Error> = []
         for (const r of results) {
             const u = r.url
             if (u == null) {
@@ -218,7 +218,7 @@ function* bookmarksContaining(
 
 
 // todo take in from_, to?
-function* bookmarks2visits(bit: Iterable<Bres>) {
+function* bookmarks2visits(bit: Iterable<Bres>): Iterator<Visit> {
     for (const {bm: r, nurl: nu, path: path} of bit) {
         const u = r.url
         if (u == null) {
@@ -254,7 +254,7 @@ export const bookmarks: VisitsSource = {
         const nurl = normalise_url(url)
         const root = (await browser.bookmarks.getTree())[0]
         const all = bookmarksContaining(nurl, root, null)
-        const visits = Array.from(bookmarks2visits(all))
+        const visits: Array<Visit | Error> = Array.from(bookmarks2visits(all))
         return new Visits(url, nurl, visits)
     },
 
@@ -276,7 +276,7 @@ export const bookmarks: VisitsSource = {
         // same in visited method actually
         const back  = new Date((utc_timestamp_s - DELTA_BACK_S ) * 1000)
         const front = new Date((utc_timestamp_s + DELTA_FRONT_S) * 1000)
-        const visits = []
+        const visits: Array<Visit | Error> = []
         for (const v of bookmarks2visits(all)) {
             if (back <= v.time && v.time <= front) {
                 visits.push(v)
@@ -287,7 +287,7 @@ export const bookmarks: VisitsSource = {
 
     visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         if (await isAndroid()) {
-            const res = new Array(urls.length)
+            const res = new Array<?Visit>(urls.length)
             res.fill(null)
             return res
         }
@@ -395,7 +395,7 @@ export class MultiSource implements VisitsSource {
 
     static async get(): Promise<MultiSource> {
         const opts = await getOptions()
-        const srcs = []
+        const srcs: Array<VisitsSource> = []
         if (opts.host != '') {
             srcs.push(backend)
         }

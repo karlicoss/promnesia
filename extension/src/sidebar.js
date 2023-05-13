@@ -1,6 +1,6 @@
 /* @flow */
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle, Ids, uuid, getOrDefault} from './common'
-import type {Second} from './common'
+import type {Second, Src} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
 import {Binder, _fmt, asClass} from './display';
@@ -283,7 +283,7 @@ function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> 
 
 // TODO potentially not very efficient; replace with something existing (Hypothesis??)
 function _highlight(text: string, idx: number, v: Visit) {
-    const lines = new Set()
+    const lines = new Set<string>()
     for (const line of text.split('\n')) {
         let sline = line.trim()
         if (sline.length == 0) {
@@ -439,8 +439,8 @@ async function* _bindSidebarData(response: Visits) {
         if (fr != sr) {
             return (sr ? 1 : 0) - (fr ? 1 : 0);
         }
-        return s.time - f.time;
-    });
+        return s.time.getTime() - f.time.getTime()
+    })
 
     // move visits with contexts on top
     const with_ctx = [];
@@ -455,7 +455,7 @@ async function* _bindSidebarData(response: Visits) {
 
     // TODO instead, use checkboxes and get checked values
     // TODO not sure if should ignore things without contexts here... how to fit everything?
-    const all_tags = new Map();
+    const all_tags = new Map<Src, number>()
     for (const v of with_ctx) {
         for (const t of v.tags) {
             // $FlowFixMe
@@ -546,7 +546,7 @@ async function* _bindSidebarData(response: Visits) {
         let group = [];
         for (const v of no_ctx) {
             const last = group.length == 0 ? v : group[group.length - 1];
-            const diff = last.time - v.time
+            const diff = last.time.getTime() - v.time.getTime()
             if (diff > delta_ms) {
                 if (group.length > 0) {
                     yield group;
@@ -574,7 +574,7 @@ async function* _bindSidebarData(response: Visits) {
         const [ldates, ltimes] = visit_date_time(last)
         const dates = ldates;
         const times = ltimes == ftimes ? ltimes : ltimes + "-" + ftimes;
-        const tset = new Set();
+        const tset = new Set<Src>();
         let total_dur: ?Second = null;
         for (const v of group) {
             if (v.duration !== null) {

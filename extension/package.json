@@ -52,7 +52,7 @@
     "css-loader": "^6.7.3",
     "eslint": "^8.31.0",
     "eslint-plugin-flowtype": "^8.0.3",
-    "flow-bin": "^0.196.3",
+    "flow-bin": "^0.206.0",
     "flow-interfaces-chrome": "^0.7.0",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",

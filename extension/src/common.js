@@ -149,7 +149,7 @@ export class Visits {
         Object.assign(o, this)
         // $FlowFixMe[prop-missing]
         // $FlowFixMe[incompatible-use]
-        o.visits = o.visits.map(v => {
+        o.visits = o.visits.map((v: Visit | Error) => {
             return (v instanceof Visit)
                 ? v.toJObject()
                 // $FlowFixMe
@@ -252,7 +252,7 @@ export function safeSetInnerHTML(element: HTMLElement, html: string): void {
 // https://github.com/facebook/flow/issues/4825
 
 export type JsonArray = Array<Json>
-export type JsonObject = $Shape<{ [string]: any }>
+export type JsonObject = Partial<{ [string]: any }>
 export type Json = JsonArray | JsonObject
 
 
@@ -321,7 +321,7 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
     const cached_resp = await fetch_typed(url, {cache: 'force-cache'}).then(rejectIfHttpError)
     const expires = cached_resp.headers.get('expires')
     // not sure if it's possible not to have 'expires'
-    const stale_ms = new Date() - new Date(expires == null ? 0 : expires)
+    const stale_ms = new Date().getTime() - new Date(expires == null ? 0 : expires).getTime()
     const max_stale_ms = max_stale * 1000
     if (stale_ms < max_stale_ms) {
         return cached_resp
