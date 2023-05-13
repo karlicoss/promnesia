@@ -965,7 +965,7 @@ function initContextMenus(): void {
     and will fail to set checks on non yet existing menu itmes.
     So seems the easiest to just remove all menus and init them again :shrug:
     */
-    browser.contextMenus.removeAll(() => {
+    browser.contextMenus.removeAll().then(() => {
         for (const {id: id, title: title, parentId: parentId, contexts: contexts} of MENUS) {
             chrome.contextMenus.create({
                 id: id,
