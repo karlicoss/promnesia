@@ -37,11 +37,11 @@ RUN apt-get update        \
  && sed -i '/usr.share.doc/d' /etc/dpkg/dpkg.cfg.d/excludes \
  && apt-get install --yes python3-doc \
  # https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions
- && (curl -sL https://deb.nodesource.com/setup_16.x | bash - ) \
+ && (curl -sL https://deb.nodesource.com/setup_18.x | bash - ) \
  && apt-get install --yes nodejs \
  && apt-get clean \
  # geckodriver isn't available in ubuntu repos anymore because of snap
- && curl -L https://github.com/mozilla/geckodriver/releases/download/v0.32.0/geckodriver-v0.32.0-linux64.tar.gz | tar xz -C /usr/local/bin
+ && curl -L https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz | tar xz -C /usr/local/bin
 
 
 # ugh. so
