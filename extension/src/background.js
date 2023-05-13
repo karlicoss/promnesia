@@ -18,13 +18,15 @@ const UUID = uuid()
 console.info('[promnesia]: running background page with UUID %s', UUID)
 
 
+type Action = chrome$browserAction | chrome$pageAction
 
-function actions(): Array<chrome$browserAction | chrome$pageAction> {
+
+function actions(): Array<Action> {
     // eh, on mobile neither pageAction nor browserAction have setIcon
     // but we can use pageAction to show at least some (default) icon in some circumstances
 
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
-    const res = [chrome.browserAction]
+    const res: Array<Action> = [chrome.browserAction]
 
     // need to be defensive, it's only for mobile firefox
     if (chrome.pageAction) {
@@ -906,7 +908,8 @@ const MENUS: Array<MenuEntry> = [
     },
 ]
 
-type MenuToggle = MenuEntry & {
+type MenuToggle = {
+    ...MenuEntry,
     checker: (opts: Options) => boolean,
 }
 

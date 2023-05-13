@@ -96,18 +96,18 @@ export function makeFakeVisits(count: number): Visits {
 
 export const backend = {
     visits: async function(url: Url): Promise<Visits | Error> {
-        return await queryBackendCommon<JsonObject>({url: url}, 'visits')
+        return await queryBackendCommon<VisitsResponse>({url: url}, 'visits')
               .then(rawToVisits)
               .catch((err: Error) => err)
         // todo not sure if this error handling should be here?
     },
     search: async function(url: Url): Promise<Visits | Error> {
-        return await queryBackendCommon<JsonObject>({url: url}, 'search')
+        return await queryBackendCommon<VisitsResponse>({url: url}, 'search')
               .then(rawToVisits)
               .catch((err: Error) => err)
     },
     searchAround: async function(utc_timestamp_s: number): Promise<Visits | Error> {
-        return await queryBackendCommon<JsonObject>({timestamp: utc_timestamp_s}, 'search_around')
+        return await queryBackendCommon<VisitsResponse>({timestamp: utc_timestamp_s}, 'search_around')
                .then(rawToVisits)
                .catch((err: Error) => err)
     },
@@ -160,7 +160,7 @@ function rawToVisits(vis: VisitsResponse | Error): Visits | Error {
     }
     // TODO filter errors? not sure.
     // TODO this could be more defensive too
-    const visits = vis['visits'].map(x => unwrap(rawToVisit(x)))
+    const visits: Array<Visit | Error> = vis['visits'].map(x => unwrap(rawToVisit(x)))
     return new Visits(
         vis['original_url'],
         vis['normalised_url'],

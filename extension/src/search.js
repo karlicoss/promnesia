@@ -62,7 +62,7 @@ async function* _doSearch(
         throw errres // will be handled above
     }
     const [visits, errors] = errres.partition()
-    visits.sort((f, s) => (s.time - f.time));
+    visits.sort((f, s) => (s.time.getTime() - f.time.getTime()))
     // TODO ugh, should do it via sort predicate...
 
     if (with_ctx_first) {
@@ -163,7 +163,7 @@ window.onload = async () => {
     addStyle(doc, opts.position_css);
 
     const url = new URL(window.location)
-    const params: SearchPageParams = Object.fromEntries(url.searchParams)
+    const params = ((Object.fromEntries(url.searchParams): any): SearchPageParams)
     if (Object.keys(params).length == 0) {
         return
     }
