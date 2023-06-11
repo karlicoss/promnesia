@@ -3,6 +3,7 @@ import argparse
 import os
 from subprocess import check_call
 from pathlib import Path
+from sys import platform
 
 # right, specifying id in manifest doesn't seem to work
 # AMO responds with: Server response: Duplicate add-on ID found. (status: 400)
@@ -16,6 +17,8 @@ TARGETS = [
     'chrome',
     'firefox',
 ]
+
+npm = "npm.cmd" if platform == "win32" else "npm"
 
 def main() -> None:
     p = argparse.ArgumentParser()
@@ -39,7 +42,7 @@ def main() -> None:
     artifacts_dir = (base_ext_dir / 'artifacts' / target).resolve()
     def webext(*args, **kwargs) -> None:
         check_call([
-            'npm', 'run', 'web-ext',
+            npm, 'run', 'web-ext',
             '--',
             '--source-dir'   , ext_dir,
             '--artifacts-dir', artifacts_dir,
@@ -56,13 +59,13 @@ def main() -> None:
 
     if args.watch:
         check_call([
-            'npm', 'run', 'watch',
+            npm, 'run', 'watch',
         ], env=env, cwd=str(Path(__file__).absolute().parent))
         # TODO exec instead?
         return
 
     check_call([
-        'npm', 'run', 'build',
+        npm, 'run', 'build',
     ], env=env, cwd=str(Path(__file__).absolute().parent))
 
     if args.lint:
@@ -91,7 +94,7 @@ def main() -> None:
         assert args.release
         if 'firefox' in target:
             check_call([
-                'npm', 'run', 'release:amo',
+                npm, 'run', 'release:amo',
                 '--',
                 '--channel', args.publish,
                 '--source-dir', str(ext_dir),
@@ -101,7 +104,7 @@ def main() -> None:
             assert args.publish == 'listed'  # no notion of unlisted on chrome store?
             from chrome_dev_secrets import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
             check_call([
-                'npm', 'run', 'release:cws',
+                npm, 'run', 'release:cws',
                 '--',
                 'upload',
                 # '--auto-publish',
