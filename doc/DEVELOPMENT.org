@@ -61,7 +61,7 @@ I'm not against it, but with limited time resources full-scale tests give better
 
 * Run end-to-end tests
 
-End-to-end test go thought the full cycle from indexing & backend to automated extension tests, and are very helpful to make sure you don't break things.
+End-to-end tests go through the full cycle from indexing & backend to automated extension tests, and are very helpful to make sure you don't break things.
 
 You need:
 
