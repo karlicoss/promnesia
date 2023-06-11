@@ -16,6 +16,7 @@ PPATH="$GIT_ROOT_DIR/src$PPATH"
 export DIRTY_RUN='YES' # ugh.
 
 if command -v python3 &> /dev/null; then
+    # Note: python3 in Windows used "py" in command line. So $PY_BIN should be just "py"
     PY_BIN="python3"
 else
     PY_BIN="python" # warn?
