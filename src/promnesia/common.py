@@ -81,7 +81,7 @@ def _detect_mime_handler() -> str:
     def exists(what: str) -> bool:
         try:
             r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE)
-        except FileNotFoundError:
+        except (FileNotFoundError, NotADirectoryError):  # ugh seems that osx might throw NotADirectory for some reason
             warnings.warn("No xdg-mime on your OS! If you're on OSX, perhaps you can help me! https://github.com/karlicoss/open-in-editor/issues/1")
             return False
         if r.returncode > 0:
