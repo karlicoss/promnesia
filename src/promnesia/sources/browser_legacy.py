@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote
 import sqlite3
-from typing import List, Set
+from typing import List, Set, Optional
 
 import pytz
 
@@ -43,7 +43,7 @@ def _index_dbs(dbs: List[Path], cachew_name: str):
 # todo wow, stack traces are ridiculous here...
 # todo hmm, feels like it should be a class or something?
 @cachew(lambda cp, dbs, emitted: cp, depends_on=lambda cp, dbs, emitted: dbs) # , logger=logger)
-def _index_dbs_aux(cache_path: Path, dbs: List[Path], emitted: Set) -> Results:
+def _index_dbs_aux(cache_path: Optional[Path], dbs: List[Path], emitted: Set) -> Results:
     if len(dbs) == 0:
         return
 
@@ -58,7 +58,7 @@ def _index_dbs_aux(cache_path: Path, dbs: List[Path], emitted: Set) -> Results:
             xs_was_cached = True
             logger.debug('seems that %d first items were previously cached', len(xs))
         if xs_was_cached:
-            key = (r.url, r.dt)
+            key = str(r) if isinstance(r, Exception) else (r.url, r.dt)
             assert key not in emitted, key # todo not sure if this assert is necessary?
             # hmm ok it might happen if we messed up with indexing individual db?
             # alternatively, could abuse it to avoid messing with 'emitted' in _index_db?

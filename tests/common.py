@@ -2,7 +2,7 @@ import os
 import sys
 from functools import wraps
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional, TypeVar
 
 from promnesia.common import _is_windows
 
@@ -98,3 +98,10 @@ def local_http_server(path: Path, *, port: int) -> Iterator[str]:
     address = '127.0.0.1'
     with tmp_popen([sys.executable, '-m', 'http.server', '--directory', path, '--bind', address, str(port)]) as popen:
         yield f'http://{address}:{port}'
+
+
+T = TypeVar('T')
+
+def notnone(x: Optional[T]) -> T:
+    assert x is not None
+    return x
