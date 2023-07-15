@@ -12,7 +12,7 @@ from subprocess import check_call, check_output
 from time import sleep
 from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence, Union, Dict, Any
 
-import pytest # type: ignore
+import pytest
 
 if __name__ == '__main__':
     # TODO ugh need to figure out PATH
@@ -32,7 +32,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoAlertPresentException, NoSuchFrameException, TimeoutException
 
 
-from common import under_ci, uses_x, has_x, local_http_server
+from common import under_ci, uses_x, has_x, local_http_server, notnone
 from integration_test import index_hypothesis, index_local_chrome, index_urls
 from server_test import wserver
 from browser_helper import open_extension_page, get_cmd_hotkey
@@ -906,7 +906,7 @@ def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
         slg = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
         assert len(slg) > 0
         for s in slg:
-            assert 'promnesia-visited' in s.get_attribute('class')
+            assert 'promnesia-visited' in notnone(s.get_attribute('class'))
 
         confirm("You should see visited marks near special linear group, Unitary group, Transpose")
 
@@ -957,8 +957,8 @@ def test_sidebar_basic(tmp_path: Path, driver: Driver, url: str) -> None:
             assert 'all'     in _all.text
             assert sanitized in tag.text
 
-            assert 'all' in _all.get_attribute('class').split()
-            assert sanitized in tag.get_attribute('class').split()
+            assert 'all'     in notnone(_all.get_attribute('class')).split()
+            assert sanitized in notnone(tag .get_attribute('class')).split()
 
             visits = helper._sidebar.visits
             assert len(visits) == 1, visits
@@ -1283,7 +1283,7 @@ def test_multiple_page_updates(tmp_path: Path, driver: Driver) -> None:
         links_to_mark = driver.find_elements(By.XPATH, xpath)
         assert len(links_to_mark) > 2  # sanity check
         for l in links_to_mark:
-            assert 'promnesia-visited' in l.get_attribute('class')
+            assert 'promnesia-visited' in notnone(l.get_attribute('class'))
             # TODO would be nice to test clicking on them...
 
 
