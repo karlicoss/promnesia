@@ -156,7 +156,9 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
             driver_path = Path('/tmp/chrome/chromedriver_linux64/chromedriver')
             assert driver_path.exists()
             mexepath['executable_path'] = str(driver_path)
-        driver = webdriver.Chrome(options=cr_options, **mexepath)
+        from selenium.webdriver.chrome.service import Service
+        service = Service(**mexepath)
+        driver = webdriver.Chrome(service=service, options=cr_options)
         logger.info(f"using webdriver: {driver.capabilities['browserVersion']} {driver.capabilities['chrome']['chromedriverVersion']}")
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
