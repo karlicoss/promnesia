@@ -151,8 +151,8 @@ class Where(Protocol):
 
 @dataclass
 class VisitsResponse:
-    original_url: Url
-    normalised_url: Url
+    original_url: str
+    normalised_url: str
     visits: Any
 
 
@@ -244,7 +244,7 @@ def status() -> Json:
 from dataclasses import dataclass
 @dataclass
 class VisitsRequest:
-    url: Url
+    url: str
 
 @app.get ('/visits', response_model=VisitsResponse)
 @app.post('/visits', response_model=VisitsResponse)
@@ -263,7 +263,7 @@ def visits(request: VisitsRequest) -> VisitsResponse:
 
 @dataclass
 class SearchRequest:
-    url: Url
+    url: str
 
 @app.get ('/search', response_model=VisitsResponse)
 @app.post('/search', response_model=VisitsResponse)
