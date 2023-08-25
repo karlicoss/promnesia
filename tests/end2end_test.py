@@ -516,7 +516,8 @@ class TestHelper(NamedTuple):
         )
 
     def move_to(self, element) -> None:
-        ActionChains(self.driver).move_to_element(element).perform()
+        # remove type ignore later https://github.com/SeleniumHQ/selenium/pull/12477
+        ActionChains(self.driver).move_to_element(element).perform()  # type: ignore[arg-type]
 
     def switch_to_sidebar(self, wait: Union[bool, int]=False, *, wait2: bool=True) -> None:
         raise RuntimeError('not used anymore, use with helper.sidebar instead!')
@@ -803,7 +804,8 @@ def test_add_to_blacklist_context_menu(tmp_path: Path, browser: Browser) -> None
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://example.com')
-        chain = webdriver.ActionChains(driver)
+        # remove type ignore later https://github.com/SeleniumHQ/selenium/pull/12477
+        chain = webdriver.ActionChains(driver)  # type: ignore[arg-type]
         chain.move_to_element(driver.find_element(By.TAG_NAME, 'h1')).context_click().perform()
 
         # looks like selenium can't interact with browser context menu...

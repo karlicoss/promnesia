@@ -22,7 +22,10 @@ def frame_context(driver: Driver, frame) -> Iterator[Optional[WebElement]]:
         new_frame = get_current_frame(driver)
         yield new_frame
     finally:
-        driver.switch_to.frame(current)
+        # hmm mypy says it can't be None
+        # but pretty sure it worked when current frame is None?
+        # see https://github.com/SeleniumHQ/selenium/blob/trunk/py/selenium/webdriver/remote/switch_to.py
+        driver.switch_to.frame(current)  # type: ignore[arg-type]
 
 
 @contextmanager
