@@ -76,13 +76,26 @@ class Loc(NamedTuple):
     # but generally, it will be
     # (url|file)(linenumber|json_path|anchor)
 
+
+@lru_cache(None)
+def warn_once(message: str) -> None:
+    # you'd think that warnings module already logs warnings only once per line..
+    # but sadly it's not the case
+    # see https://github.com/karlicoss/python_duplicate_warnings_investigation/blob/master/test.py
+    warnings.warn(message, stacklevel=2)
+
+
+def _warn_no_xdg_mime() -> None:
+    warn_once("No xdg-mime on your OS! If you're on OSX, perhaps you can help me! https://github.com/karlicoss/open-in-editor/issues/1")
+
+
 @lru_cache(1)
 def _detect_mime_handler() -> str:
     def exists(what: str) -> bool:
         try:
             r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE)
         except (FileNotFoundError, NotADirectoryError):  # ugh seems that osx might throw NotADirectory for some reason
-            warnings.warn("No xdg-mime on your OS! If you're on OSX, perhaps you can help me! https://github.com/karlicoss/open-in-editor/issues/1")
+            _warn_no_xdg_mime()
             return False
         if r.returncode > 0:
             warnings.warn('xdg-mime failed') # hopefully rest is in stderr
@@ -102,6 +115,7 @@ def _detect_mime_handler() -> str:
         result = 'emacs:'
 
     # 2. now try to use newer editor:// thing
+    # TODO flip order here? should rely on editor:// first?
 
     # TODO would be nice to collect warnings and display at the end
     if not exists('editor'):
