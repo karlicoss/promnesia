@@ -98,8 +98,10 @@ def extract_from_path(path: PathIsh) -> Command:
                 '.gz',
                 '.zip',
         )):
-            logger.info(f"Extracting from compressed file {path}")
+            # todo should be debug?
+            # or should delete it completely, feels like unpacking archives here is a bit too much
             raise RuntimeError(f"Archives aren't supported yet: {path}")
+            logger.info(f"Extracting from compressed file {path}")
             import lzma
             from tempfile import NamedTemporaryFile
             # TODO hopefully, no collisions

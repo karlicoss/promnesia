@@ -22,6 +22,7 @@ import warnings
 import pytz
 
 from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Result, Results, mime, traverse, file_mtime, echain, logger
+from ..common import warn_once
 from ..config import use_cores
 
 
@@ -167,7 +168,7 @@ for t in CODE:
 Replacer = Optional[Callable[[str, str], str]]
 
 def index(
-        *paths: Union[PathIsh],
+        *paths: PathIsh,
         ignored: Union[Sequence[str], str]=(),
         follow: bool=True,
         replacer: Replacer=None,
@@ -282,6 +283,8 @@ def by_path(pp: Path) -> Tuple[Optional[Ex], Optional[Mime]]:
 
 def _index_file(pp: Path, opts: Options) -> Results:
     logger = get_logger()
+    # TODO need to keep debug logs here...
+    # logger.info(f"indexing {pp}")
     # TODO use kompress?
     # TODO not even sure if it's used...
     suf = pp.suffix.lower()
@@ -307,10 +310,9 @@ def _index_file(pp: Path, opts: Options) -> Results:
 
     ip, pm = by_path(pp)
     if ip is None:
-        # TODO use warning (with mime/ext as key?)
-        # TODO only log once? # hmm..
+        # todo not really sure about using warnings vs yielding error here?
         msg = f'No extractor for suffix {suf}, mime {pm}'
-        warnings.warn(msg)
+        warn_once(msg)
         yield echain(ex, RuntimeError(msg))
         return
 
