@@ -118,7 +118,8 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
         # todo remove when webdriver is updated
         # see https://github.com/mozilla/geckodriver/issues/2075
         ff_options.set_preference('fission.autostart', True)
-        ff_options.headless = browser.headless
+        if browser.headless:
+            ff_options.add_argument('--headless')
         # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
         driver = webdriver.Firefox(options=ff_options)
         # todo pass firefox-dev binary?
