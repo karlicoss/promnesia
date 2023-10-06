@@ -255,8 +255,10 @@ def visits(request: VisitsRequest) -> VisitsResponse:
         url=url,
         # odd, doesn't work just with: x or (y and z)
         where=lambda table, url: or_(
-            table.c.norm_url == url,  # exact match
-            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True)) # + child visits, but only 'interesting' ones
+            # exact match
+            table.c.norm_url == url,
+            # + child visits, but only 'interesting' ones
+            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True))  # noqa: E711
         ),
     )
 

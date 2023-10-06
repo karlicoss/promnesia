@@ -9,24 +9,32 @@ on:
   pull_request: # needed to trigger on others' PRs
   # Note that people who fork it need to go to "Actions" tab on their fork and click "I understand my workflows, go ahead and enable them".
   workflow_dispatch: # needed to trigger workflows manually
+    # todo cron?
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 
 
 jobs:
   build:
     strategy:
-      # useful to quickly debug all versions, otherwise a bit wasteful
-      # fail-fast: false
+      fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
+        # TODO 3.12 isn't working yet due to uvloop issue
+        # see https://github.com/MagicStack/uvloop/issues/567
         exclude: [
             # windows runners are pretty scarce, so let's only run lowest and highest python version
-            {platform: windows-latest, python-version: '3.9'},
+            {platform: windows-latest, python-version: '3.9' },
             {platform: windows-latest, python-version: '3.10'},
 
             # same, macos is a bit too slow and ubuntu covers python quirks well
             {platform: macos-latest  , python-version: '3.9' },
-            {platform: macos-latest  , python-version: '3.10' },
+            {platform: macos-latest  , python-version: '3.10'},
         ]
 
     runs-on: ${{ matrix.platform }}
@@ -36,9 +44,6 @@ jobs:
     steps:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-    - if: ${{ matrix.platform == 'macos-latest' && matrix.python-version == '3.11' }}
-      # hmm somehow only seems necessary for 3.11 on osx??
-      run: echo "$HOME/Library/Python/${{ matrix.python-version }}/bin" >> $GITHUB_PATH
 
     - uses: actions/setup-python@v4
       with:
@@ -47,9 +52,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+        fetch-depth: 0  # nicer to have all git history when debugging/for tests
    
-    # uncomment for SSH debugging
-    # - uses: mxschmitt/action-tmate@v3
+    - uses: mxschmitt/action-tmate@v3
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
     # explicit bash command is necessary for Windows CI runner, otherwise it thinks it's cmd...
     - run: bash .ci/run
@@ -128,8 +134,7 @@ jobs:
       if: github.event_name != 'pull_request' && github.event.ref == 'refs/heads/master'
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
-      run: pip3 install --user wheel twine && .ci/release --test
-      # TODO run pip install just to test?
+      run: pip3 install --user --upgrade build twine && .ci/release
 
     - name: 'release to pypi'
       # always deploy tags to release pypi
@@ -137,7 +142,7 @@ jobs:
       if: github.event_name != 'pull_request' && startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-      run: pip3 install --user wheel twine && .ci/release
+      run: pip3 install --user --upgrade build twine && .ci/release
 
   ###
   build_extension:

@@ -58,12 +58,11 @@ def main() -> None:
                  'click',    # confirmations for end2end test (might remove dependency)
 
                  'pyautogui', # for keyboard automation during end2end tests
-            ],
-            'linting': [
-                'pytest',
 
-                'mypy',
-                'lxml', # for coverage reports
+                 'ruff',
+
+                 'mypy',
+                 'lxml', # for coverage reports
             ],
             **{k[0]: v for k, v in DEPS_SOURCES.items()},
             'all': list(chain.from_iterable(DEPS_SOURCES.values())),

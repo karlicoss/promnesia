@@ -26,14 +26,14 @@ from ..common import warn_once
 from ..config import use_cores
 
 
-from .filetypes import EUrl
+from .filetypes import EUrl, Ctx
 from .auto_obsidian import obsidian_replacer
 from .auto_logseq import logseq_replacer
 
 
 def _collect(thing, path: List[str], result: List[EUrl]) -> None:
     if isinstance(thing, str):
-        ctx: Ctx = tuple(path) # type: ignore
+        ctx: Ctx = tuple(path)
         result.extend([EUrl(url=u, ctx=ctx) for u in extract_urls(thing)])
     elif isinstance(thing, list):
         path.append('[]')

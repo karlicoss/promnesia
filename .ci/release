@@ -19,9 +19,7 @@ from pathlib import Path
 from subprocess import check_call
 import shutil
 
-
 is_ci = os.environ.get('CI') is not None
-
 
 def main() -> None:
     import argparse
@@ -31,7 +29,7 @@ def main() -> None:
 
     extra = []
     if args.test:
-        extra.extend(['--repository-url', 'https://test.pypi.org/legacy/'])
+        extra.extend(['--repository', 'testpypi'])
 
     root = Path(__file__).absolute().parent.parent
     os.chdir(root) # just in case
@@ -44,7 +42,7 @@ def main() -> None:
     if dist.exists():
         shutil.rmtree(dist)
 
-    check_call('python3 setup.py sdist bdist_wheel', shell=True)
+    check_call(['python3', '-m', 'build'])
 
     TP = 'TWINE_PASSWORD'
     password = os.environ.get(TP)

@@ -1,0 +1,25 @@
+ignore = [
+### too opinionated style checks
+    "E501",  # too long lines
+    "E702",  # Multiple statements on one line (semicolon)
+    "E731",  # assigning lambda instead of using def
+    "E741",  # Ambiguous variable name: `l`
+    "E742",  # Ambiguous class name: `O
+    "E401",  # Multiple imports on one line
+    "F403",  # import *` used; unable to detect undefined names
+###
+
+###
+    "E722",  # Do not use bare `except` ## Sometimes it's useful for defensive imports and that sort of thing..
+    "F811",  # Redefinition of unused  # this gets in the way of pytest fixtures (e.g. in cachew)
+
+## might be nice .. but later and I don't wanna make it strict
+    "E402",  # Module level import not at top of file
+
+### maybe consider these soon
+# sometimes it's useful to give a variable a name even if we don't use it as a documentation
+# on the other hand, often is a sign of error
+    "F841",  # Local variable `count` is assigned to but never used
+    "F401",  # imported but unused
+###
+]

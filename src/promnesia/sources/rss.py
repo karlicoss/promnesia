@@ -23,6 +23,6 @@ def index() -> Results:
         yield Visit(
             url=feed.url,
             dt=feed.created_at or default_datetime,
-            context=f'RSS subscription', # TODO use 'provider', etc?
+            context='RSS subscription', # TODO use 'provider', etc?
             locator=locator,
         )
