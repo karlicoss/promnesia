@@ -95,7 +95,7 @@ class RedditRenderer:
 
     def _from_upvote(self, i: 'Upvote') -> Results:
         locator = Loc.make(
-            title=f'Reddit upvote',
+            title='Reddit upvote',
             href=i.url,
         )
         yield from self._from_common(i, locator=locator)

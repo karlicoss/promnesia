@@ -74,6 +74,7 @@ Example of running a test:
 
 You can also run them via tox:
 
+# TODO https://github.com/tox-dev/tox/discussions/2681
 : TOX_TESTENV_PASSENV='DISPLAY HOME' tox -e end2end -- -s -k 'test_blacklist_custom[firefox]'
 
 - it's useful to pass =--pdb= to pytest, so you don't have to restart webdriver all over

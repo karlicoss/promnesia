@@ -310,8 +310,8 @@ def connect_db(
             sql_cmds.extend(
                 [
                     f"ATTACH DATABASE '{decrypted_file}' AS plaintext KEY '';",
-                    f"SELECT sqlcipher_export('plaintext');",
-                    f"DETACH DATABASE plaintext;",
+                    "SELECT sqlcipher_export('plaintext');",
+                    "DETACH DATABASE plaintext;",
                 ]
             )
             sql = "\n".join(sql_cmds)

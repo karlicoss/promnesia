@@ -45,4 +45,4 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 "$PY_BIN" -m pip install --user tox
-"$PY_BIN" -m tox
+"$PY_BIN" -m tox --parallel --parallel-live "$@"
