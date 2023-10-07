@@ -115,6 +115,11 @@ TYPE2IDX.update({
     '.vcf' : ignore,
     'message/rfc822': ignore, # ??
 
+    # todo ignore all fonts?
+    'font/woff2': ignore,
+    'font/woff': ignore,
+    'text/x-Algol68': ignore,  # ugh some license file had this?? maybe always index text/ as text?
+
     # TODO not sure what to do about these..
     'application/octet-stream': handle_later,
     'application/zip'         : handle_later,
