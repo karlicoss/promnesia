@@ -7,6 +7,7 @@ import sys
 import time
 from pathlib import Path
 import platform
+import shutil
 from subprocess import check_call, run
 from typing import List
 
@@ -118,9 +119,7 @@ def install(args: argparse.Namespace) -> None:
     if os.environ.get('DIRTY_RUN') is not None:
         launcher = str(root() / 'scripts/promnesia')
     else:
-        # must be installed, so available in PATH
-        import distutils.spawn
-        exe = distutils.spawn.find_executable('promnesia'); assert exe is not None
+        exe = shutil.which('promnesia'); assert exe is not None
         launcher = exe # older systemd wants absolute paths..
 
     db = args.db
