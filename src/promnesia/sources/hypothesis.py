@@ -8,7 +8,7 @@ def index() -> Results:
     from . import hpi
     import my.hypothesis as hyp
 
-    for h in hyp.get_highlights():
+    for h in hyp.highlights():
         if isinstance(h, Exception):
             yield h
             continue
