@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 from __future__ import annotations
 
-__package__ = 'promnesia'  # ugh. hacky way to make wsgi runner work properly...
-
 import argparse
 from dataclasses import dataclass
 from datetime import timedelta
 from functools import lru_cache
+import importlib.metadata
 import json
 import logging
 import os
@@ -51,8 +50,7 @@ def get_logger() -> logging.Logger:
 
 
 def get_version() -> str:
-    from pkg_resources import get_distribution
-    return get_distribution(__package__).version
+    return importlib.metadata.version(__package__)
 
 
 class ServerConfig(NamedTuple):
@@ -232,6 +230,7 @@ def status() -> Json:
     try:
         version = get_version()
     except Exception as e:
+        logger.exception(e)
         version = None
 
     return {
@@ -241,7 +240,6 @@ def status() -> Json:
     }
 
 
-from dataclasses import dataclass
 @dataclass
 class VisitsRequest:
     url: str
