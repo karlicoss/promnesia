@@ -19,6 +19,7 @@ from more_itertools import intersperse
 import pytz
 
 from .cannon import canonify
+from .compat import removeprefix
 
 
 _is_windows = os.name == 'nt'
@@ -299,9 +300,10 @@ def _guess_name(thing: PreSource) -> str:
         guess = thing.__module__
 
     dflt = 'promnesia.sources.'
-    if guess.startswith(dflt):
-        # meh
-        guess = guess[len(dflt):]
+    guess = removeprefix(guess, prefix=dflt)
+    if guess == 'config':
+        # this happens when we define a lambda in config or something without properly wrapping in Source
+        logger.warning(f'Inferred source name "config" for {thing}. This might be misleading TODO')
     return guess
 
 
@@ -331,12 +333,17 @@ class Source:
         self.extractor: Extractor = lambda: self.ff(*self.args, **self.kwargs)
         if src is not None:
             warnings.warn("'src' argument is deprecated, please use 'name' instead", DeprecationWarning)
-        try:
-            name_guess = _guess_name(ff)
-        except:
-            # todo warn?
-            name_guess = ''
-        self.name = name or src or name_guess
+        if name != '':
+            self.name = name
+        elif src != '':
+            self.name = src
+        else:
+            try:
+                name_guess = _guess_name(ff)
+            except:
+                # todo warn?
+                name_guess = ''
+            self.name = name_guess
 
     @property
     def description(self) -> str:
