@@ -1,14 +1,32 @@
 from pathlib import Path
 import shutil
-from typing import  List, Set, Iterable
+import sqlite3
+from typing import Dict, Iterable, List, Optional, Set
 
 from more_itertools import chunked
 
-from sqlalchemy import create_engine, MetaData, Table, event, text
+from sqlalchemy import (
+    Engine,
+    MetaData,
+    Table,
+    create_engine,
+    event,
+    exc,
+    func,
+    select,
+)
 
-from cachew import NTBinder
+from cachew import NTBinder  # TODO need to get rid of this
 
-from .common import get_logger, DbVisit, get_tmpdir, Res, now_tz, Loc
+from .common import (
+    DbVisit,
+    Loc,
+    Res,
+    SourceName,
+    get_logger,
+    get_tmpdir,
+    now_tz,
+)
 from . import config
 
 
@@ -21,56 +39,86 @@ _CHUNK_BY = 10
 # I guess 1 hour is definitely enough
 _CONNECTION_TIMEOUT_SECONDS = 3600
 
+SRC_ERROR = 'error'
+
+
+# using WAL keeps database readable while we're writing in it
+# this is tested by test_query_while_indexing
+def enable_wal(dbapi_con, con_record) -> None:
+    dbapi_con.execute('PRAGMA journal_mode = WAL')
+
+
+Stats = Dict[Optional[SourceName], int]
+
+
 # returns critical warnings
 def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List[Exception]:
     logger = get_logger()
     db_path = config.get().db
 
     now = now_tz()
-    ok = 0
-    errors = 0
+
+    index_stats: Stats = {}
+
     def vit_ok() -> Iterable[DbVisit]:
-        nonlocal errors, ok
         for v in vit:
+            ev: DbVisit
             if isinstance(v, DbVisit):
-                ok += 1
-                yield v
+                ev = v
             else:
-                errors += 1
                 # conform to the schema and dump. can't hurt anyway
                 ev = DbVisit(
                     norm_url='<error>',
                     orig_url='<error>',
                     dt=now,
                     locator=Loc.make('<errror>'),
-                    src='error',
+                    src=SRC_ERROR,
                     # todo attach backtrace?
                     context=repr(v),
                 )
-                yield ev
+            index_stats[ev.src] = index_stats.get(ev.src, 0) + 1
+            yield ev
+
+    binder = NTBinder.make(DbVisit)
+    meta = MetaData()
+    # TODO is it ok to reuse meta/table??
+    table = Table('visits', meta, *binder.columns)
+
+    def query_total_stats(conn) -> Stats:
+        query = select(table.c.src, func.count(table.c.src)).select_from(table).group_by(table.c.src)
+        return {src: cnt for (src, cnt) in conn.execute(query).all()}
+
+    def get_engine(*args, **kwargs) -> Engine:
+        e = create_engine(*args, **kwargs)
+        event.listen(e, 'connect', enable_wal)
+        return e
+
+    ### use readonly database just to get stats
+    pengine = get_engine('sqlite://', creator=lambda: sqlite3.connect(f"file:{db_path}?mode=ro", uri=True))
+    stats_before: Stats
+    try:
+        with pengine.begin() as conn:
+            stats_before = query_total_stats(conn)
+    except exc.OperationalError as oe:
+        if oe.code == 'e3q8':
+            # db doesn't exist yet
+            stats_before = {}
+        else:
+            raise oe
+    pengine.dispose()
+    ###
 
     tpath = Path(get_tmpdir().name) / 'promnesia.tmp.sqlite'
     if overwrite_db:
         # here we don't need timeout, since it's a brand new DB
-        engine = create_engine(f'sqlite:///{tpath}')
+        engine = get_engine(f'sqlite:///{tpath}')
     else:
         # here we need a timeout, othewise concurrent indexing might not work
         # (note that this also needs WAL mode)
         # see test_concurrent_indexing
-        engine = create_engine(f'sqlite:///{db_path}', connect_args={'timeout': _CONNECTION_TIMEOUT_SECONDS})
-
-    # using WAL keeps database readable while we're writing in it
-    # this is tested by test_query_while_indexing
-    def enable_wal(dbapi_con, con_record) -> None:
-        dbapi_con.execute('PRAGMA journal_mode = WAL')
-    event.listen(engine, 'connect', enable_wal)
-
-    binder = NTBinder.make(DbVisit)
-    meta = MetaData()
-    table = Table('visits', meta, *binder.columns)
+        engine = get_engine(f'sqlite:///{db_path}', connect_args={'timeout': _CONNECTION_TIMEOUT_SECONDS})
 
     cleared: Set[str] = set()
-    ncleared = 0
     with engine.begin() as conn:
         table.create(conn, checkfirst=True)
 
@@ -80,26 +128,42 @@ def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List
 
             for src in new:
                 conn.execute(table.delete().where(table.c.src == src))
-                cursor = conn.execute(text("SELECT changes()")).fetchone()
-                assert cursor is not None
-                ncleared += cursor[0]
                 cleared.add(src)
 
             bound = [binder.to_row(x) for x in chunk]
-            # pylint: disable=no-value-for-parameter
             conn.execute(table.insert().values(bound))
+
+        stats_after = query_total_stats(conn)
     engine.dispose()
 
     if overwrite_db:
         shutil.move(str(tpath), str(db_path))
 
-    errs = '' if errors == 0 else f', {errors} ERRORS'
-    total = ok + errors
-    what = 'overwritten' if overwrite_db else 'updated'
-    logger.info(
-        '%s database "%s". %d total (%d OK%s, %d cleared, +%d more)',
-        what, db_path, total, ok, errs, ncleared, ok - ncleared)
+    stats_changes = {}
+    # map str just in case some srcs are None
+    for k in sorted(map(str, {*stats_before.keys(), *stats_after.keys()})):
+        diff = stats_after.get(k, 0) - stats_before.get(k, 0)
+        if diff == 0:
+            continue
+        sdiff = ('+' if diff > 0 else '') + str(diff)
+        stats_changes[k] = sdiff
+
+    action = 'overwritten' if overwrite_db else 'updated'
+    total_indexed = sum(index_stats.values())
+    total_err = index_stats.get(SRC_ERROR, 0)
+    total_ok = total_indexed - total_err
+    logger.info(f'indexed (current run) : total: {total_indexed}, ok: {total_ok}, errors: {total_err} {index_stats}')
+    logger.info(f'database "{db_path}" : {action}')
+    logger.info(f'database stats before : {stats_before}')
+    logger.info(f'database stats after  : {stats_after}')
+
+    if len(stats_changes) == 0:
+        logger.info('database stats changes: no changes')
+    else:
+        for k, v in stats_changes.items():
+            logger.info(f'database stats changes: {k} {v}')
+
     res: List[Exception] = []
-    if total == 0:
+    if total_ok == 0:
         res.append(RuntimeError('No visits were indexed, something is probably wrong!'))
     return res
