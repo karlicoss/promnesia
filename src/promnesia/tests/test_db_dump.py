@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Iterable
@@ -9,12 +9,15 @@ from typing import Any, Iterable
 from hypothesis import settings, given
 from hypothesis.strategies import from_type
 # NOTE: pytest ... -s --hypothesis-verbosity=debug is useful for seeing what hypothesis is doing
+import pytest
 import pytz
 
 
 from ..common import DbVisit, Loc, Res
 from ..dump import visits_to_sqlite
 from ..sqlite import sqlite_connection
+
+from .common import gc_control, running_on_ci
 
 
 HSETTINGS: dict[str, Any] = dict(
@@ -106,3 +109,32 @@ def test_random_visit(visit: DbVisit) -> None:
         tmp_path = Path(tdir)
         _test_random_visit_aux(visit=visit, tmp_path=tmp_path)
 
+
+@pytest.mark.parametrize('count', [99, 100_000])
+@pytest.mark.parametrize('gc_on', [True, False], ids=['gc_on', 'gc_off'])
+def test_benchmark_visits_dumping(count: int, gc_control, tmp_path: Path) -> None:
+    if count > 99 and running_on_ci:
+        pytest.skip("test would be too slow on CI, only meant to run manually")
+
+    dt_naive = datetime.fromisoformat('2023-11-14T23:11:01')
+    dt_aware = pytz.timezone('America/New_York').localize(dt_naive)
+    visits = (
+        DbVisit(
+            norm_url=f'google.com/{i}',
+            orig_url=f'https://google.com/{i}',
+            dt=(dt_naive if i % 2 == 0 else dt_aware) + timedelta(seconds=i),
+            locator=Loc.make(title=f'title{i}', href=f'https://whatever.com/{i}'),
+            duration=i,
+            src='whatever',
+        )
+        for i in range(count)
+    )
+
+    db = tmp_path / 'db.sqlite'
+    errors = visits_to_sqlite(  # TODO maybe this method should return db stats? would make testing easier
+        vit=visits,
+        overwrite_db=True,
+        _db_path=db,
+    )
+    assert db.exists()
+    assert len(errors) == 0, errors
