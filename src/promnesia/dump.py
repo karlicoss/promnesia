@@ -52,9 +52,18 @@ Stats = Dict[Optional[SourceName], int]
 
 
 # returns critical warnings
-def visits_to_sqlite(vit: Iterable[Res[DbVisit]], *, overwrite_db: bool) -> List[Exception]:
+def visits_to_sqlite(
+        vit: Iterable[Res[DbVisit]],
+        *,
+        overwrite_db: bool,
+        _db_path: Optional[Path] = None,  # only used in tests
+) -> List[Exception]:
+    if _db_path is None:
+        db_path = config.get().db
+    else:
+        db_path = _db_path
+
     logger = get_logger()
-    db_path = config.get().db
 
     now = now_tz()
 
