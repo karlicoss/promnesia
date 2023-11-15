@@ -49,6 +49,7 @@ def main() -> None:
                  'pytest',
                  'pytest-timeout',
                  'pytest-xdist', # why??
+                 'hypothesis',
 
                  'psutil',
 
