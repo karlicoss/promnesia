@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 import sqlite3
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from more_itertools import chunked
 
@@ -15,6 +15,7 @@ from sqlalchemy import (
     func,
     select,
 )
+from sqlalchemy.dialects import sqlite as dialect_sqlite
 
 from cachew import NTBinder  # TODO need to get rid of this
 
@@ -93,11 +94,30 @@ def visits_to_sqlite(
     # TODO is it ok to reuse meta/table??
     table = Table('visits', meta, *binder.columns)
 
+    def db_visit_to_row(v: DbVisit) -> Tuple:
+        # ugh, very hacky...
+        # we want to make sure the resulting tuple only consists of simple types
+        # so we can use dbengine directly
+        dt = v.dt
+        dt_s = None if dt is None else dt.isoformat()
+        row = (
+            v.norm_url,
+            v.orig_url,
+            dt_s,
+            v.locator.title,
+            v.locator.href,
+            v.src,
+            v.context,
+            v.duration,
+        )
+        return row
+
     def query_total_stats(conn) -> Stats:
         query = select(table.c.src, func.count(table.c.src)).select_from(table).group_by(table.c.src)
         return {src: cnt for (src, cnt) in conn.execute(query).all()}
 
     def get_engine(*args, **kwargs) -> Engine:
+        # kwargs['echo'] = True  # useful for debugging
         e = create_engine(*args, **kwargs)
         event.listen(e, 'connect', enable_wal)
         return e
@@ -131,6 +151,11 @@ def visits_to_sqlite(
     with engine.begin() as conn:
         table.create(conn, checkfirst=True)
 
+        insert_stmt = table.insert()
+        # using raw statement gives a massive speedup for inserting visits
+        # see test_benchmark_visits_dumping
+        insert_stmt_raw = str(insert_stmt.compile(dialect=dialect_sqlite.dialect(paramstyle='qmark')))
+
         for chunk in chunked(vit_ok(), n=_CHUNK_BY):
             srcs = set(v.src or '' for v in chunk)
             new = srcs.difference(cleared)
@@ -139,8 +164,8 @@ def visits_to_sqlite(
                 conn.execute(table.delete().where(table.c.src == src))
                 cleared.add(src)
 
-            bound = [binder.to_row(x) for x in chunk]
-            conn.execute(table.insert().values(bound))
+            bound = [db_visit_to_row(v) for v in chunk]
+            conn.exec_driver_sql(insert_stmt_raw, bound)
 
         stats_after = query_total_stats(conn)
     engine.dispose()
