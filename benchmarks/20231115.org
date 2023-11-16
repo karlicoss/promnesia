@@ -1,9 +1,17 @@
 Running on @karlicoss desktop PC, =python3.10= (under docker)
 
-- dumping via cachew NTBinder
+- dumping via cachew NTBinder, using regular sqlalchemy insert statement
 
 #+begin_example
 $ python3 -m pytest --import-mode=importlib --pyargs promnesia.tests -s -k 'gc_off and benchmark and 100000'
 12.90s call     src/promnesia/tests/test_db_dump.py::test_benchmark_visits_dumping[gc_off-100000]
 PASSED src/promnesia/tests/test_db_dump.py::test_benchmark_visits_dumping[gc_off-100000]
+#+end_example
+
+
+- dumping via cachew NTBinder, using dbengine to insert directly -- massive speedup (added a test with 1M visits too)
+#+begin_example
+$ python3 -m pytest --import-mode=importlib --pyargs promnesia.tests -s -k 'gc_off and benchmark and 100000'
+0.85s call     src/promnesia/tests/test_db_dump.py::test_benchmark_visits_dumping[gc_off-100000]
+8.23s call     src/promnesia/tests/test_db_dump.py::test_benchmark_visits_dumping[gc_off-1000000]
 #+end_example

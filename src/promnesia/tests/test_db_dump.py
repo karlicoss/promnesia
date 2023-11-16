@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Iterable
@@ -15,6 +15,7 @@ import pytz
 
 from ..common import DbVisit, Loc, Res
 from ..dump import visits_to_sqlite
+from ..read_db import get_all_db_visits
 from ..sqlite import sqlite_connection
 
 from .common import gc_control, running_on_ci
@@ -75,7 +76,7 @@ def test_one_visit(tmp_path: Path) -> None:
         # NOTE: at the moment date is dumped like this because of cachew NTBinder
         # however it's not really necessary for promnesia (and possibly results in a bit of performance hit)
         # I think we could just convert to a format sqlite supports, just need to make it backwards compatible
-        'dt': '2023-11-14T23:11:01+01:00 Europe/Warsaw',
+        'dt': '2023-11-14T23:11:01+01:00',
         'duration': 123,
         'locator_href': 'https://whatever.com',
         'locator_title': 'title',
@@ -83,6 +84,55 @@ def test_one_visit(tmp_path: Path) -> None:
         'orig_url': 'https://google.com',
         'src': 'whatever',
     }
+
+    visits_in_db = get_all_db_visits(db)
+    assert visits_in_db == [visit]
+
+
+def test_read_db_visits(tmp_path: Path) -> None:
+    """
+    Deliberately test against "hardcoded" database to check for backwards compatibility
+    """
+    db = tmp_path / 'db.sqlite'
+    with sqlite_connection(db) as conn:
+        conn.execute(
+            '''
+CREATE TABLE visits (
+    norm_url VARCHAR,
+    orig_url VARCHAR,
+    dt VARCHAR,
+    locator_title VARCHAR,
+    locator_href VARCHAR,
+    src VARCHAR,
+    context VARCHAR,
+    duration INTEGER
+);
+'''
+        )
+        # this tz format might occur in databases that were created when promnesia was using cachew NTBinder
+        conn.execute(
+            '''
+INSERT INTO visits VALUES(
+    'i.redd.it/alala.jpg',
+    'https://i.redd.it/alala.jpg',
+    '2019-04-13T11:55:09-04:00 America/New_York',
+    'Reddit save',
+    'https://reddit.com/r/whatever',
+    'reddit',
+    '',
+    NULL
+);
+'''
+        )
+    [visit_in_db] = get_all_db_visits(db)
+    assert visit_in_db == DbVisit(
+        norm_url='i.redd.it/alala.jpg',
+        orig_url='https://i.redd.it/alala.jpg',
+        dt=datetime(2019, 4, 13, 11, 55, 9, tzinfo=timezone(timedelta(hours=-4))),
+        locator=Loc.make(title='Reddit save', href='https://reddit.com/r/whatever'),
+        src='reddit',
+        context='',
+    )
 
 
 def _test_random_visit_aux(visit: DbVisit, tmp_path: Path) -> None:
@@ -110,7 +160,7 @@ def test_random_visit(visit: DbVisit) -> None:
         _test_random_visit_aux(visit=visit, tmp_path=tmp_path)
 
 
-@pytest.mark.parametrize('count', [99, 100_000])
+@pytest.mark.parametrize('count', [99, 100_000, 1_000_000])
 @pytest.mark.parametrize('gc_on', [True, False], ids=['gc_on', 'gc_off'])
 def test_benchmark_visits_dumping(count: int, gc_control, tmp_path: Path) -> None:
     if count > 99 and running_on_ci:
