@@ -10,7 +10,7 @@ import pytest
 from common import under_ci, DATA, GIT_ROOT, promnesia_bin
 
 from promnesia.common import _is_windows, DbVisit
-from promnesia.read_db import get_all_db_visits
+from promnesia.database.load import get_all_db_visits
 
 
 def run_index(cfg: Path, *, update=False) -> None:

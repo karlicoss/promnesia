@@ -1,32 +1,29 @@
 from pathlib import Path
 from typing import Tuple, List
 
-from cachew import NTBinder
 from sqlalchemy import (
     create_engine,
     exc,
+    Engine,
     MetaData,
     Index,
     Table,
 )
-from sqlalchemy.engine import Engine
 
-from .common import DbVisit
+from .common import DbVisit, get_columns, row_to_db_visit
 
 
-DbStuff = Tuple[Engine, NTBinder, Table]
+DbStuff = Tuple[Engine, Table]
 
 
 def get_db_stuff(db_path: Path) -> DbStuff:
     assert db_path.exists(), db_path
     # todo how to open read only?
     # actually not sure if we can since we are creating an index here
-    engine = create_engine(f'sqlite:///{db_path}') # , echo=True)
-
-    binder = NTBinder.make(DbVisit)
+    engine = create_engine(f'sqlite:///{db_path}')  # , echo=True)
 
     meta = MetaData()
-    table = Table('visits', meta, *binder.columns)
+    table = Table('visits', meta, *get_columns())
 
     idx = Index('index_norm_url', table.c.norm_url)
     try:
@@ -39,13 +36,13 @@ def get_db_stuff(db_path: Path) -> DbStuff:
             raise e
 
     # NOTE: apparently it's ok to open connection on every request? at least my comparisons didn't show anything
-    return engine, binder, table
+    return engine, table
 
 
 def get_all_db_visits(db_path: Path) -> List[DbVisit]:
     # NOTE: this is pretty inefficient if the DB is huge
     # mostly intended for tests
-    engine, binder, table = get_db_stuff(db_path)
+    engine, table = get_db_stuff(db_path)
     query = table.select()
     with engine.connect() as conn:
-        return [binder.from_row(row) for row in conn.execute(query)]
+        return [row_to_db_visit(row) for row in conn.execute(query)]

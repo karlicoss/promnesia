@@ -69,6 +69,8 @@ class Config(NamedTuple):
 
     @property
     def cache_dir(self) -> Optional[Path]:
+        # TODO we used to use this for cachew, but it's best to rely on HPI modules etc to cofigure this
+        # keeping just in case for now
         cd = self.CACHE_DIR
         cpath: Optional[Path]
         if cd is None:

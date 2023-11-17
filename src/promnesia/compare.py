@@ -8,6 +8,7 @@ from typing import Dict, List, Any, NamedTuple, Optional, Iterator, Set, Tuple
 
 
 from .common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
+from .database.load import row_to_db_visit
 
 # TODO include latest too?
 # from cconfig import ignore, filtered
@@ -139,10 +140,10 @@ def compare_files(*files: Path, log=True) -> Iterator[Tuple[str, DbVisit]]:
         this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
 
         from promnesia.server import _get_stuff # TODO ugh
-        engine, binder, table = _get_stuff(PathWithMtime.make(f))
+        engine, table = _get_stuff(PathWithMtime.make(f))
 
         with engine.connect() as conn:
-            vis = [binder.from_row(row) for row in conn.execute(table.select())]  # type: ignore[var-annotated]
+            vis = [row_to_db_visit(row) for row in conn.execute(table.select())]  # type: ignore[var-annotated]
 
         if last is not None:
             between = f'{last_dts}:{this_dts}'
