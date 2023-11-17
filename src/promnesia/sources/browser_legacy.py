@@ -9,8 +9,14 @@ import pytz
 from ..common import PathIsh, Results, Visit, Loc, logger, Second, is_sqlite_db
 from .. import config
 
-# todo mcachew?
-from cachew import cachew
+try:
+    from cachew import cachew  # type: ignore[import-not-found]
+except ModuleNotFoundError as me:
+    if me.name != 'cachew':
+        raise me
+    # this module is legacy anyway, so just make it defensive
+    def cachew(*args, **kwargs):  # type: ignore[no-redef]
+        return lambda f: f
 
 
 def index(p: PathIsh) -> Results:

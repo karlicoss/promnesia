@@ -13,9 +13,10 @@ import pytest
 import pytz
 
 
-from ..common import DbVisit, Loc, Res
-from ..dump import visits_to_sqlite
-from ..read_db import get_all_db_visits
+from ..common import Loc, Res
+from ..database.common import DbVisit
+from ..database.dump import visits_to_sqlite
+from ..database.load import get_all_db_visits
 from ..sqlite import sqlite_connection
 
 from .common import gc_control, running_on_ci
@@ -73,9 +74,6 @@ def test_one_visit(tmp_path: Path) -> None:
 
     assert sqlite_visit == {
         'context': None,
-        # NOTE: at the moment date is dumped like this because of cachew NTBinder
-        # however it's not really necessary for promnesia (and possibly results in a bit of performance hit)
-        # I think we could just convert to a format sqlite supports, just need to make it backwards compatible
         'dt': '2023-11-14T23:11:01+01:00',
         'duration': 123,
         'locator_href': 'https://whatever.com',
@@ -109,7 +107,8 @@ CREATE TABLE visits (
 );
 '''
         )
-        # this tz format might occur in databases that were created when promnesia was using cachew NTBinder
+        # this dt format (zone name after iso timestap) might occur in legacy databases
+        # (that were created when promnesia was using cachew NTBinder)
         conn.execute(
             '''
 INSERT INTO visits VALUES(

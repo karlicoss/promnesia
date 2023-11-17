@@ -18,7 +18,7 @@ from . import server
 from .misc import install_server
 from .common import Extractor, PathIsh, logger, get_tmpdir, DbVisit, Res
 from .common import Source, get_system_tz, user_config_file, default_config_path
-from .dump import visits_to_sqlite
+from .database.dump import visits_to_sqlite
 from .extract import extract_visits
 
 

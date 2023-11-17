@@ -38,8 +38,7 @@ def main() -> None:
             'tzlocal',
             'more_itertools',
             'pytz',
-            'sqlalchemy', # DB api
-            'cachew>=0.8.0', # caching with type hints
+            'sqlalchemy>=2.0',  # DB api
 
             *DEPS_INDEXER,
             *DEPS_SERVER,
@@ -84,8 +83,6 @@ DEPS_SERVER = [
 ]
 
 DEPS_SOURCES = {
-    # TODO make cachew optional?
-    # althrough server uses it so not sure...
     ('optional', 'dependencies that bring some bells & whistles'): [
         'logzero', # pretty colored logging
         'python-magic', # better mimetype decetion

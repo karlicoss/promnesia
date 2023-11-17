@@ -34,7 +34,15 @@ from .. import config
 
 
 from more_itertools import unique_everseen
-from cachew import cachew
+
+try:
+    from cachew import cachew  # type: ignore[import-not-found]
+except ModuleNotFoundError as me:
+    if me.name != 'cachew':
+        raise me
+    # this module is legacy anyway, so just make it defensive
+    def cachew(*args, **kwargs):  # type: ignore[no-redef]
+        return lambda f: f
 
 
 # TODO use CPath? Could encapsulate a path within an archive *or* within a directory

@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 import sqlite3
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set
 
 from more_itertools import chunked
 
@@ -17,9 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects import sqlite as dialect_sqlite
 
-from cachew import NTBinder  # TODO need to get rid of this
-
-from .common import (
+from ..common import (
     DbVisit,
     Loc,
     Res,
@@ -28,7 +26,8 @@ from .common import (
     get_tmpdir,
     now_tz,
 )
-from . import config
+from .common import get_columns, db_visit_to_row
+from .. import config
 
 
 # NOTE: I guess the main performance benefit from this is not creating too many tmp lists and avoiding overhead
@@ -54,10 +53,10 @@ Stats = Dict[Optional[SourceName], int]
 
 # returns critical warnings
 def visits_to_sqlite(
-        vit: Iterable[Res[DbVisit]],
-        *,
-        overwrite_db: bool,
-        _db_path: Optional[Path] = None,  # only used in tests
+    vit: Iterable[Res[DbVisit]],
+    *,
+    overwrite_db: bool,
+    _db_path: Optional[Path] = None,  # only used in tests
 ) -> List[Exception]:
     if _db_path is None:
         db_path = config.get().db
@@ -89,28 +88,8 @@ def visits_to_sqlite(
             index_stats[ev.src] = index_stats.get(ev.src, 0) + 1
             yield ev
 
-    binder = NTBinder.make(DbVisit)
     meta = MetaData()
-    # TODO is it ok to reuse meta/table??
-    table = Table('visits', meta, *binder.columns)
-
-    def db_visit_to_row(v: DbVisit) -> Tuple:
-        # ugh, very hacky...
-        # we want to make sure the resulting tuple only consists of simple types
-        # so we can use dbengine directly
-        dt = v.dt
-        dt_s = None if dt is None else dt.isoformat()
-        row = (
-            v.norm_url,
-            v.orig_url,
-            dt_s,
-            v.locator.title,
-            v.locator.href,
-            v.src,
-            v.context,
-            v.duration,
-        )
-        return row
+    table = Table('visits', meta, *get_columns())
 
     def query_total_stats(conn) -> Stats:
         query = select(table.c.src, func.count(table.c.src)).select_from(table).group_by(table.c.src)

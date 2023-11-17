@@ -64,6 +64,7 @@ def wserver(db: Optional[PathIsh]=None): # TODO err not sure what type should it
 @contextmanager
 def _test_helper(tmp_path):
     tdir = Path(tmp_path)
+    # TODO probably don't need this anymore?
     cache_dir = tdir / 'cache'
     cache_dir.mkdir()
 

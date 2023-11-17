@@ -18,7 +18,7 @@ from pytz import BaseTzInfo
 
 import fastapi
 
-from sqlalchemy import MetaData, exists, literal, between, or_, and_, exc, select
+from sqlalchemy import literal, between, or_, and_, exc, select
 from sqlalchemy import Column, Table, func, types
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql import text
@@ -26,6 +26,7 @@ from sqlalchemy.sql import text
 
 from .common import PathWithMtime, DbVisit, Url, setup_logger, default_output_dir, get_system_tz
 from .cannon import canonify
+from .database.load import DbStuff, get_db_stuff, row_to_db_visit
 
 
 Json = Dict[str, Any]
@@ -117,8 +118,6 @@ def get_db_path(check: bool=True) -> Path:
     return db
 
 
-from .read_db import DbStuff, get_db_stuff
-
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime) -> DbStuff:
@@ -134,7 +133,7 @@ def get_stuff(db_path: Optional[Path]=None) -> DbStuff: # TODO better name
 
 
 def db_stats(db_path: Path) -> Json:
-    engine, binder, table = get_stuff(db_path)
+    engine, table = get_stuff(db_path)
     query = select(func.count()).select_from(table)
     with engine.connect() as conn:
         total = list(conn.execute(query))[0][0]
@@ -165,7 +164,7 @@ def search_common(url: str, where: Where) -> VisitsResponse:
         url = original_url
     logger.info('normalised url: %s', url)
 
-    engine, binder, table = get_stuff()
+    engine, table = get_stuff()
 
     query = table.select().where(where(table=table, url=url))
     logger.debug('query: %s', query)
@@ -173,7 +172,7 @@ def search_common(url: str, where: Where) -> VisitsResponse:
     with engine.connect() as conn:
         try:
             # TODO make more defensive here
-            visits: List[DbVisit] = [binder.from_row(row) for row in conn.execute(query)]
+            visits: List[DbVisit] = [row_to_db_visit(row) for row in conn.execute(query)]
         except exc.OperationalError as e:
             if getattr(e, 'msg', None) == 'no such table: visits':
                 logger.warn('you may have to run indexer first!')
@@ -361,7 +360,7 @@ def visited(request: VisitedRequest) -> VisitedResponse:
     if len(snurls) == 0:
         return []
 
-    engine, binder, table = get_stuff()
+    engine, table = get_stuff()
 
     # sqlalchemy doesn't seem to support SELECT FROM (VALUES (...)) in its api
     # also doesn't support array binding...
@@ -389,7 +388,7 @@ SELECT queried, visits.*
     # brings down large queries to 50ms...
     with engine.connect() as conn:
         res = list(conn.execute(query))
-        present: Dict[str, Any] = {row[0]: binder.from_row(row[1:]) for row in res}
+        present: Dict[str, Any] = {row[0]: row_to_db_visit(row[1:]) for row in res}
     results = []
     for nu in nurls:
         r = present.get(nu, None)
