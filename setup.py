@@ -57,12 +57,15 @@ def main() -> None:
                  'selenium', # browser automations
                  'click',    # confirmations for end2end test (might remove dependency)
 
-                 'pyautogui', # for keyboard automation during end2end tests
-
                  'ruff',
 
                  'mypy',
                  'lxml', # for coverage reports
+            ],
+            'testing-gui': [
+                # pyautogui seems problematic, wheels often fail to build under windows
+                # we don't use it in CI, so keep in a separate extras section
+                'pyautogui', # for keyboard automation during end2end tests
             ],
             **{k[0]: v for k, v in DEPS_SOURCES.items()},
             'all': list(chain.from_iterable(DEPS_SOURCES.values())),
