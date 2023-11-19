@@ -1,10 +1,50 @@
-import pytest
+from contextlib import contextmanager
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Union, List
+
+from ..common import Source
+from ..config import import_config, Config
+
+
 from more_itertools import ilen
-from typing import Union, Iterable, List
+import pytest
 
-from promnesia.common import Source
+from .common import throw
 
-from common import throw
+
+def make(body: str) -> Config:
+    with TemporaryDirectory() as td:
+        tdir = Path(td)
+        cp = tdir / 'cfg.py'
+        cp.write_text(body)
+        return import_config(cp)
+
+
+@contextmanager
+def with_config(cfg: Union[str, Config]):
+    from .. import config as C
+
+    assert not C.has()
+    cfg2: Config = make(cfg) if isinstance(cfg, str) else cfg
+    try:
+        C.instance = cfg2
+        assert C.has()
+        yield
+    finally:
+        C.reset()
+
+
+def index(cfg: Union[str, Config], check=True) -> List[Exception]:
+    from ..__main__ import _do_index
+
+    with with_config(cfg):
+        errors = list(_do_index())
+        if check:
+            assert len(errors) == 0, errors
+        # visits = cfg.output_dir / 'promnesia.sqlite'
+        # TODO query visit count too
+        return errors
 
 
 def test_minimal() -> None:
@@ -12,25 +52,28 @@ def test_minimal() -> None:
     Example of a smallest possible config, using a 'demo' source
     '''
     # import directly from promnesia, not promnesia.common
-    cfg = make('''
+    cfg = make(
+        '''
 from promnesia import Source
 from promnesia.sources import demo
 
 SOURCES = [
     Source(demo.index),
 ]
-''')
+'''
+    )
     assert ilen(cfg.sources) == 1
     assert all(isinstance(s, Source) for s in cfg.sources)
     # todo output dirs?
     index(cfg)
 
 
-def test_sources_style() -> None:
+def test_sources_style_1() -> None:
     '''
     Testing 'styles' of specifying sources
     '''
-    cfg = make('''
+    cfg = make(
+        '''
 from promnesia.common import Source
 from promnesia.sources import demo
 
@@ -65,12 +108,16 @@ SOURCES = [
     # useful when arguments are somehow computed dynamically in config
     Source(lambda: demo.index(count=10), name='lazy'),
 ]
-    ''')
+    '''
+    )
 
     srcs = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
 
     [s1, s2, s3, s4, s5, s55, s6, s7, s77, s777] = srcs
 
+    # just a quick check to make sure tests import promnesia package correctly
+    # (depends on conftests settings)
+    assert type(srcs[0]).__module__ == 'promnesia.common', srcs
     assert s1.name == 'explicit name'
     assert s2.name == 'another name'
     assert s3.name == 'demo'
@@ -80,7 +127,7 @@ SOURCES = [
     assert s6.name == 'demo'
 
     # can't say 'cfg' as name is intended here but anyway
-    assert s7.name  == 'cfg'
+    assert s7.name == 'cfg'
     assert s77.name == 'cfg'
     assert s777.name == 'lazy'
 
@@ -90,11 +137,12 @@ SOURCES = [
 
 # TODO ugh. allow not to have locator
 # ideally you can construct a visit with a link and that's it
-def test_sources_style_more():
+def test_sources_style_2() -> None:
     '''
     Now, sources are not magic -- they are just functions emitting visits
     '''
-    cfg = make('''
+    cfg = make(
+        '''
 from typing import Iterable
 from promnesia.common import Visit, Source, Loc
 
@@ -125,12 +173,13 @@ SOURCES.append(
     MyIndexer,
 )
 
-''')
+'''
+    )
     [s1, s2, s3] = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
 
-    assert s1.name == 'cfg' # TODO would be nice to guess 'my_indexer' instead...
+    assert s1.name == 'cfg'  # TODO would be nice to guess 'my_indexer' instead...
     assert s2.name == 'nice name'
-    assert s3.name == 'cfg' # TODO fix it, make MyIndexer?
+    assert s3.name == 'cfg'  # TODO fix it, make MyIndexer?
 
     index(cfg)
 
@@ -142,7 +191,8 @@ def test_sources_lazy():
     Lazy sources could be useful to do some conditional magic or make more defensive against imports, excra configuration. You'll know when you need it ;)
     '''
 
-    cfg = make('''
+    cfg = make(
+        '''
 from promnesia.common import Source
 
 def lazy():
@@ -153,13 +203,15 @@ def lazy():
 SOURCES = [
     lazy,
 ]
-    ''')
+    '''
+    )
     srcs = [s if isinstance(s, Source) else throw(s) for s in cfg.sources]
     [s] = srcs
 
-    assert s.name == 'cfg' # TODO this should be fixed... but not a big deal
+    assert s.name == 'cfg'  # TODO this should be fixed... but not a big deal
 
     index(cfg)
+
 
 # TODO later
 # or like that:
@@ -173,7 +225,8 @@ def test_sources_errors() -> None:
     '''
     Testing defensiveness of config against various errors
     '''
-    cfg = make('''
+    cfg = make(
+        '''
 SOURCES = [
     'non.existing.module',
 
@@ -181,7 +234,8 @@ SOURCES = [
 
     'promnesia.sources.demo',
 ]
-    ''')
+    '''
+    )
 
     # nothing fails so far! It's defensive!
     srcs = list(cfg.sources)
@@ -193,36 +247,40 @@ SOURCES = [
     assert isinstance(s2, Source)
 
     errors = index(cfg, check=False)
-    assert len(errors) == 2 # errors simply propagate
-  
+    assert len(errors) == 2  # errors simply propagate
 
 
-def test_no_sources():
-    cfg = make('''
-''')
+def test_no_sources() -> None:
+    cfg = make(
+        '''
+'''
+    )
     # raises because no SOURCES
     with pytest.raises(RuntimeError):
         list(cfg.sources)
 
 
-def test_empty_sources():
-    cfg = make('''
+def test_empty_sources() -> None:
+    cfg = make(
+        '''
 SOURCES = []
-    ''')
+    '''
+    )
     # raises because empty SOURCES
     with pytest.raises(RuntimeError):
         list(cfg.sources)
 
 
-
-def test_legacy():
-    cfg = make('''
+def test_legacy() -> None:
+    cfg = make(
+        '''
 from promnesia.common import Source
 from promnesia.sources import demo
 INDEXERS = [
     Source(demo.index, src='legacy name'),
 ]
-    ''')
+    '''
+    )
 
     [s1] = cfg.sources
     assert isinstance(s1, Source)
@@ -230,42 +288,3 @@ INDEXERS = [
     assert s1.name == 'legacy name'
 
     index(cfg)
-
-
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-from promnesia.config import import_config, Config
-
-
-def make(body: str) -> Config:
-    with TemporaryDirectory() as td:
-        tdir = Path(td)
-        cp = tdir / 'cfg.py'
-        cp.write_text(body)
-        return import_config(cp)
-
-
-from contextlib import contextmanager
-@contextmanager
-def with_config(cfg: Union[str, Config]):
-    import promnesia.config as C
-    assert not C.has()
-    cfg2: Config = make(cfg) if isinstance(cfg, str) else cfg
-    try:
-        C.instance = cfg2
-        assert C.has()
-        yield
-    finally:
-        C.reset()
-
-
-def index(cfg: Union[str, Config], check=True) -> List[Exception]:
-    from promnesia.__main__ import _do_index
-    with with_config(cfg):
-        errors = list(_do_index())
-        if check:
-            assert len(errors) == 0, errors
-        # visits = cfg.output_dir / 'promnesia.sqlite'
-        # TODO query visit count too
-        return errors

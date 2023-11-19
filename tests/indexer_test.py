@@ -8,9 +8,9 @@ import pytest
 
 from promnesia.common import Visit, Source, Loc, Res, DbVisit, _is_windows
 from promnesia.extract import extract_visits
+from promnesia.tests.test_config import with_config
 
 from common import tdata, reset_hpi_modules
-from config_tests import with_config
 
 
 # TODO need to expire dbcache in tests..

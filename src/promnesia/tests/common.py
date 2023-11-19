@@ -1,7 +1,15 @@
 import gc
 import os
+from typing import NoReturn
 
 import pytest
+
+
+def throw(x: Exception) -> NoReturn:
+    '''
+    like raise, but can be an expression...
+    '''
+    raise x
 
 
 @pytest.fixture
