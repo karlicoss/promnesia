@@ -1,64 +1,23 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 import json
-import os
 from pathlib import Path
 from shutil import copy
-import signal
 import sys
-from subprocess import check_output, check_call, PIPE
+from subprocess import check_output, check_call
 from textwrap import dedent
-import time
-from typing import NamedTuple, ContextManager, Optional
+from typing import NamedTuple
 
 import pytz
-import requests
-
-from promnesia.common import PathIsh, _is_windows
 
 from integration_test import index_hypothesis, index_urls, index_some_demo_visits
-from common import tdir, under_ci, tdata, tmp_popen, promnesia_bin
+from common import tdata, promnesia_bin, tdir
+
+from promnesia.tests.server_helper import run_server as wserver
 
 
 class Helper(NamedTuple):
     port: str
-
-
-# TODO use proper random port
-TEST_PORT = 16556
-
-
-def next_port():
-    global TEST_PORT
-    TEST_PORT += 1
-    return TEST_PORT
-
-
-@contextmanager
-def wserver(db: Optional[PathIsh]=None): # TODO err not sure what type should it be... -> ContextManager[Helper]:
-    port = str(next_port())
-    cmd = [
-        'serve',
-        '--quiet',
-        '--port', port,
-        *([] if db is None else ['--db'  , str(db)]),
-    ]
-    with tmp_popen(promnesia_bin(*cmd)) as server:
-        # wait till ready
-        st = f'http://localhost:{port}/status'
-        for a in range(50):
-            try:
-                requests.get(st).json()
-                break
-            except:
-                time.sleep(0.1)
-        else:
-            raise RuntimeError("Cooldn't connect to '{st}' after 50 attempts")
-        print("Started server up, db: {db}".format(db=db), file=sys.stderr)
-
-        yield Helper(port=port)
-
-        print("Done with the server", file=sys.stderr)
 
 
 @contextmanager
@@ -197,26 +156,6 @@ def test_status_ok(tmp_path: Path) -> None:
         assert response['db'] == str(db_path)
 
         assert response['stats'] == {'total_visits': 10}
-
-
-def test_status_error(tmp_path: Path) -> None:
-    with wserver(db='/does/not/exist') as helper:
-        response = post(f'http://localhost:{helper.port}/status')
-
-        version = response['version']
-        assert version is not None
-        assert len(version.split('.')) >= 2 # random check..
-
-        assert 'ERROR' in response['db'] # defensive, it doesn't exist
-
-
-def test_basic(tmp_path: Path) -> None:
-    cfg = tmp_path / 'config.py'
-    cfg.write_text("SOURCES = ['promnesia.sources.demo']")
-    check_call(promnesia_bin('index', '--config', cfg))
-    with wserver() as helper:
-        response = post(f'http://localhost:{helper.port}/visits', 'url=whatever')
-        assert response['visits'] == []
 
 
 def test_query_while_indexing(tmp_path: Path) -> None:

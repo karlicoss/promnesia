@@ -72,6 +72,6 @@ def promnesia_bin(*args):
         return [sys.executable, '-m', 'promnesia', *args]
     else:
         # use version from the repository
-        root = Path(__file__).parent.parent
+        root = Path(__file__).parent.parent.parent.parent
         pm = root / 'scripts/promnesia'
         return [pm, *args]
