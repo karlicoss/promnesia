@@ -24,6 +24,7 @@ from .common import gc_control, running_on_ci
 
 HSETTINGS: dict[str, Any] = dict(
     derandomize=True,
+    deadline=timedelta(seconds=2),  # sometimes slow on ci
 )
 
 
