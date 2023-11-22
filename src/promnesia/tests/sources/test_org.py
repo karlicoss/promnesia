@@ -1,11 +1,12 @@
 from typing import Optional
 
-from promnesia.common import Visit
-from promnesia.sources.org import extract_from_file
+from ...common import Visit
+from ...sources.org import extract_from_file
 
-from common import tdata, throw
+from ..common import get_testdata, throw
 
-def declrf(s: Optional[str]) -> Optional[str]:
+
+def delrf(s: Optional[str]) -> Optional[str]:
     if s is None:
         return None
     # meh.. not sure how ot handle this properly, ideally should be via pytest?
@@ -14,7 +15,7 @@ def declrf(s: Optional[str]) -> Optional[str]:
 
 
 def test_org_indexer() -> None:
-    [_, cpp, cozy] = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file.org'))]
+    [_, cpp, cozy] = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file.org'))]
 
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
     # TODO not sure about filetags?
@@ -24,13 +25,13 @@ xxx /r/cpp   :cpp:programming:
  https://www.youtube.com/watch?v=rHIkrotSwcc) very much.
 
 '''.lstrip()
-    assert declrf(cpp.context) == exp
+    assert delrf(cpp.context) == exp
 
     assert cozy.url == 'https://twitter.com/Mappletons/status/1255221220263563269'
 
 
 def test_org_indexer_2() -> None:
-    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file3.org'))]
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file3.org'))]
 
     assert len(items) == 6
     assert items[0].url == 'https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i'
@@ -41,7 +42,7 @@ def test_org_indexer_2() -> None:
 
 
 def test_heading() -> None:
-    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file2.org'))]
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file2.org'))]
     assert {i.url for i in items} == {
         'https://en.wikipedia.org/wiki/Computational_topology',
         'http://graphics.stanford.edu/courses/cs468-09-fall/',
@@ -51,7 +52,7 @@ def test_heading() -> None:
 
 
 def test_url_in_properties() -> None:
-    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(tdata('auto/orgs/file4.org'))]
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file4.org'))]
 
     assert len(items) == 2, items
     assert items[0].url == 'https://example.org/ref_example'

@@ -1,8 +1,8 @@
 from typing import cast
 
-import pytest # type: ignore
+import pytest
 
-from promnesia.cannon import canonify, CanonifyException
+from ..cannon import canonify, CanonifyException
 
 # TODO should actually understand 'sequences'?
 # e.g.
