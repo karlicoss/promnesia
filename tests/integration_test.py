@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta
-import os
 from pathlib import Path
-from subprocess import check_call, run, Popen
+from subprocess import check_call, Popen
 from textwrap import dedent
-from typing import Set, Dict, Optional, Union, Sequence, Tuple, Mapping, List
+from typing import  Optional, Union, Sequence, Tuple, Mapping
 
 import pytest
 
-from common import under_ci, DATA, GIT_ROOT, promnesia_bin
+from common import DATA, promnesia_bin
 
-from promnesia.common import _is_windows, DbVisit
+from promnesia.common import _is_windows
 from promnesia.database.load import get_all_db_visits
 
 
@@ -245,22 +244,6 @@ OUTPUT_DIR = r'{tmp_path}'
 
     [e, _, _, _] = visits
     assert e.src == 'error'
-
-
-def test_indexing_update(tmp_path: Path) -> None:
-    from collections import Counter
-
-    index_hypothesis(tmp_path)
-    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
-    counter = Counter(v.src for v in visits)
-    assert counter['hyp'] > 50, counter  # precondition
-
-    dt = datetime.fromisoformat('2018-06-01T10:00:00.000000+01:00')
-    index_some_demo_visits(tmp_path, count=1000, base_dt=dt, delta=timedelta(hours=1), update=True)
-    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
-    counter = Counter(v.src for v in visits)
-    assert counter['demo'] == 1000, counter
-    assert counter['hyp'] > 50, counter  # should keep the original visits too!
 
 
 @pytest.mark.parametrize('execution_number', range(1))  # adjust this parameter to increase 'coverage

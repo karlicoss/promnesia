@@ -150,6 +150,16 @@ def visits_to_sqlite(
     engine.dispose()
 
     if overwrite_db:
+        # remove all wal/shm files from the previous db
+        # otherwise we might end using new db with old wal
+        # FIXME this isn't great -- should just drop db via sql instead
+        db_files = sorted(db_path.parent.glob(db_path.name + '*'))
+        for db_file in db_files:
+            try:
+                # make defensive just in case
+                db_file.unlink()
+            except:
+                pass
         shutil.move(str(tpath), str(db_path))
 
     stats_changes = {}

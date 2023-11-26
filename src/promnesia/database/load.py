@@ -45,4 +45,6 @@ def get_all_db_visits(db_path: Path) -> List[DbVisit]:
     engine, table = get_db_stuff(db_path)
     query = table.select()
     with engine.connect() as conn:
-        return [row_to_db_visit(row) for row in conn.execute(query)]
+        res = [row_to_db_visit(row) for row in conn.execute(query)]
+    engine.dispose()
+    return res
