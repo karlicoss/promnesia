@@ -29,10 +29,9 @@ def test_basic(tmp_path: Path) -> None:
     cfg = tmp_path / 'config.py'
     # TODO simplify this, make sure it can just use default demo provider
     cfg.write_text("""
-from datetime import datetime, timedelta
 from promnesia.common import Source
 from promnesia.sources import demo
-SOURCES = [Source(demo.index, base_dt=datetime(2000, 1, 1), delta=timedelta(minutes=30))]
+SOURCES = [Source(demo.index, base_dt='2000-01-01', delta=30 * 60)]
     """)
     # TODO index directly here instead
     # FIXME need to make sure it works without --overwrite (by indexing into tmp path instead)
