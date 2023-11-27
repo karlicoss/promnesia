@@ -106,6 +106,7 @@ def do_index(
     try:
         errors = list(_do_index(dry=dry, sources_subset=sources_subset, overwrite_db=overwrite_db))
     finally:
+        # this reset is mainly for tests, so we don't end up reusing the same config by accident
         config.reset()
     if len(errors) > 0:
         logger.error('%d errors, printing them out:', len(errors))
