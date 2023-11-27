@@ -16,8 +16,17 @@ def get_stats(tmp_path: Path) -> Counter:
 
 @pytest.mark.parametrize('mode', ['update', 'overwrite'])
 def test_indexing_mode(tmp_path: Path, mode: str) -> None:
+    # ugh. we modify the config very fast during tests
+    # and pycache distinguishes identical filenames based on int mtime in seconds
+    # so best to use different names to prevent undesired caching
+    # https://github.com/python/cpython/blob/fb202af4470d6051a69bb9d2f44d7e8a1c99eb4f/Lib/importlib/_bootstrap_external.py#L714-L739
+    # TODO could probably get rid of that if we switch from importlib config loading to exec()?
+    config_count = 0
+
     def write_config(output: Path, gen) -> Path:
-        cfg_path = output / 'config.py'
+        nonlocal config_count
+        cfg_path = output / f'config{config_count}.py'
+        config_count += 1
         cfg_src = dedent('\n'.join(inspect.getsource(gen).splitlines()[1:])) + f"\nOUTPUT_DIR = r'{output}'"
         cfg_path.write_text(cfg_src)
         return cfg_path
@@ -28,13 +37,12 @@ def test_indexing_mode(tmp_path: Path, mode: str) -> None:
 
         SOURCES = [
             Source(demo.index, count=10, base_dt='2000-01-01', delta=30, name='demo1'),
-            # FIXME wtf -- if we remove the comment, the test isn't passing???
-            # must be some weird sort of caching??
             Source(demo.index, count=20, base_dt='2001-01-01', delta=30, name='demo2'),
         ]
 
     cfg = write_config(tmp_path, cfg1)
     do_index(cfg)
+
     stats = get_stats(tmp_path)
     assert stats == {'demo1': 10, 'demo2': 20}
 
