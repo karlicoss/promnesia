@@ -212,32 +212,6 @@ def test_normalise_weird() -> None:
     assert v2.context == 'right, so https://en.wikipedia.org/wiki/Dinic%27s_algorithm can be used for max flow'
 
 
-def test_filter() -> None:
-    import promnesia.sources.shellcmd as custom_gen
-    from promnesia.sources.plaintext import extract_from_path
-
-    # ugh... such a mess
-    @contextmanager
-    def reset_filters():
-        try:
-            E.filters.cache_clear()
-            yield
-        finally:
-            E.filters.cache_clear()
-
-    import promnesia.extract as E
-    with reset_filters(), with_config('''
-FILTERS = [
-    "some-weird-domain.xyz"
-]
-'''):
-        visits = as_visits(W(
-            custom_gen.index,
-            extract_from_path(tdata('custom')),
-        ))
-        assert len(visits) == 4
-
-
 @pytest.mark.skipif(_is_windows, reason="no grep on windows")
 def test_custom() -> None:
     import promnesia.sources.shellcmd as custom_gen

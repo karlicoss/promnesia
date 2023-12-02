@@ -6,7 +6,7 @@ from textwrap import dedent
 
 import pytest
 
-from .common import promnesia_bin
+from .common import get_testdata, promnesia_bin, reset_filters
 from ..__main__ import do_index
 from ..database.load import get_all_db_visits
 
@@ -16,9 +16,12 @@ def get_stats(tmp_path: Path) -> Counter:
     return Counter(v.src for v in visits)
 
 
-def write_config(path: Path, gen) -> None:
+def write_config(path: Path, gen, **kwargs) -> None:
     output_dir = path.parent
     cfg_src = dedent('\n'.join(inspect.getsource(gen).splitlines()[1:])) + f"\nOUTPUT_DIR = r'{output_dir}'"
+    for k, v in kwargs.items():
+        assert k in cfg_src, k
+        cfg_src = cfg_src.replace(k, repr(str(v)))  # meh
     path.write_text(cfg_src)
 
 
@@ -112,3 +115,29 @@ def test_concurrent_indexing(tmp_path: Path) -> None:
     # FIXME ok, need to uncomment this once proper concurrent indexing is supported
     # if not, slow indexer is too fast, so crank up the count in it
     # assert total_runs > 20
+
+
+def test_filter(tmp_path: Path, reset_filters) -> None:
+    domain_to_filter = 'some-weird-domain.xyz'
+    testdata = get_testdata('custom')
+    assert any(domain_to_filter in p.read_text() for p in testdata.glob('*.txt'))  # precondition
+
+    def cfg(testdata, domain_to_filter) -> None:
+        from promnesia.common import Source
+        from promnesia.sources import shellcmd
+        from promnesia.sources.plaintext import extract_from_path
+
+        FILTERS = [
+            domain_to_filter,
+        ]
+
+        SOURCES = [Source(shellcmd.index, extract_from_path(testdata))]
+
+    cfg_path = tmp_path / 'config.py'
+    write_config(cfg_path, cfg, testdata=testdata, domain_to_filter=domain_to_filter)
+    do_index(cfg_path)
+
+    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
+    urls = {v.orig_url for v in visits}
+    assert not any(domain_to_filter in u for u in urls), urls
+    assert len(visits) == 4  # just in case
