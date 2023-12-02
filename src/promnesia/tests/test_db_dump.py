@@ -202,7 +202,8 @@ def test_concurrent(tmp_path: Path, mode: str) -> None:
     _populate_db(db_path, overwrite_db=True, count=1)
     assert db_path.exists()  # just in case
 
-    parallel = 20  # 20 indexers
+    # this simply tests correctness by running many concurrent indexers
+    parallel = 100  # 100 indexers
     with ProcessPoolExecutor(max_workers=8) as pool:
         futures = []
         for _ in range(parallel):
@@ -210,3 +211,7 @@ def test_concurrent(tmp_path: Path, mode: str) -> None:
         for f in futures:
             f.result()
     assert db_path.exists()  # just in case
+
+
+# TODO test to make sure db is readable while we're indexing?
+# kinda nicer version of test_query_while_indexing
