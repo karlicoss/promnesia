@@ -1,6 +1,7 @@
 from pathlib import Path
 import shutil
 import sqlite3
+from tempfile import NamedTemporaryFile
 from typing import Dict, Iterable, List, Optional, Set
 
 from more_itertools import chunked
@@ -116,10 +117,13 @@ def visits_to_sqlite(
     pengine.dispose()
     ###
 
-    tpath = Path(get_tmpdir().name) / 'promnesia.tmp.sqlite'
+    tmp_dir = Path(get_tmpdir().name)
+    tfile = NamedTemporaryFile(suffix='promnesia.tmp.sqlite', dir=tmp_dir, delete=False)
+    tfile.close()  # we only need the unique filename
+    tmp_db_path = Path(tfile.name)
     if overwrite_db:
         # here we don't need timeout, since it's a brand new DB
-        engine = get_engine(f'sqlite:///{tpath}')
+        engine = get_engine(f'sqlite:///{tmp_db_path}')
     else:
         # here we need a timeout, othewise concurrent indexing might not work
         # (note that this also needs WAL mode)
@@ -160,7 +164,7 @@ def visits_to_sqlite(
                 db_file.unlink()
             except:
                 pass
-        shutil.move(str(tpath), str(db_path))
+        shutil.move(str(tmp_db_path), str(db_path))
 
     stats_changes = {}
     # map str just in case some srcs are None
