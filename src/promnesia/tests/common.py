@@ -75,3 +75,14 @@ def promnesia_bin(*args):
         root = Path(__file__).parent.parent.parent.parent
         pm = root / 'scripts/promnesia'
         return [pm, *args]
+
+
+# meh... not great
+@pytest.fixture
+def reset_filters():
+    from .. import extract
+    extract.filters.cache_clear()
+    try:
+        yield
+    finally:
+        extract.filters.cache_clear()
