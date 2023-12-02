@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -13,7 +14,7 @@ import pytest
 import pytz
 
 
-from ..common import Loc, Res
+from ..common import Loc
 from ..database.common import DbVisit
 from ..database.dump import visits_to_sqlite
 from ..database.load import get_all_db_visits
@@ -26,11 +27,6 @@ HSETTINGS: dict[str, Any] = dict(
     derandomize=True,
     deadline=timedelta(seconds=2),  # sometimes slow on ci
 )
-
-
-def make_visits(count: int) -> Iterable[Res[DbVisit]]:
-    assert count == 0
-    yield from []
 
 
 def test_no_visits(tmp_path: Path) -> None:
@@ -160,26 +156,27 @@ def test_random_visit(visit: DbVisit) -> None:
         _test_random_visit_aux(visit=visit, tmp_path=tmp_path)
 
 
+_dt_naive = datetime.fromisoformat('2023-11-14T23:11:01')
+_dt_aware = pytz.timezone('America/New_York').localize(_dt_naive)
+
+def make_testvisit(i: int) -> DbVisit:
+    return DbVisit(
+        norm_url=f'google.com/{i}',
+        orig_url=f'https://google.com/{i}',
+        dt=(_dt_naive if i % 2 == 0 else _dt_aware) + timedelta(seconds=i),
+        locator=Loc.make(title=f'title{i}', href=f'https://whatever.com/{i}'),
+        duration=i,
+        src='whatever',
+    )
+
+
 @pytest.mark.parametrize('count', [99, 100_000, 1_000_000])
 @pytest.mark.parametrize('gc_on', [True, False], ids=['gc_on', 'gc_off'])
 def test_benchmark_visits_dumping(count: int, gc_control, tmp_path: Path) -> None:
     if count > 99 and running_on_ci:
         pytest.skip("test would be too slow on CI, only meant to run manually")
 
-    dt_naive = datetime.fromisoformat('2023-11-14T23:11:01')
-    dt_aware = pytz.timezone('America/New_York').localize(dt_naive)
-    visits = (
-        DbVisit(
-            norm_url=f'google.com/{i}',
-            orig_url=f'https://google.com/{i}',
-            dt=(dt_naive if i % 2 == 0 else dt_aware) + timedelta(seconds=i),
-            locator=Loc.make(title=f'title{i}', href=f'https://whatever.com/{i}'),
-            duration=i,
-            src='whatever',
-        )
-        for i in range(count)
-    )
-
+    visits = (make_testvisit(i) for i in range(count))
     db = tmp_path / 'db.sqlite'
     errors = visits_to_sqlite(  # TODO maybe this method should return db stats? would make testing easier
         vit=visits,
@@ -188,3 +185,28 @@ def test_benchmark_visits_dumping(count: int, gc_control, tmp_path: Path) -> Non
     )
     assert db.exists()
     assert len(errors) == 0, errors
+
+
+def _populate_db(db_path: Path, *, overwrite_db: bool, count: int) -> None:
+    visits = [make_testvisit(i) for i in range(count)]
+    errors = visits_to_sqlite(visits, _db_path=db_path, overwrite_db=overwrite_db)
+    assert len(errors) == 0
+
+
+@pytest.mark.parametrize('mode', ['update', 'overwrite'])
+def test_concurrent(tmp_path: Path, mode: str) -> None:
+    overwrite_db = {'overwrite': True, 'update': False}[mode]
+
+    db_path = tmp_path / 'db.sqlite'
+    # do initial indexing to initialize the db
+    _populate_db(db_path, overwrite_db=True, count=1)
+    assert db_path.exists()  # just in case
+
+    parallel = 20  # 20 indexers
+    with ProcessPoolExecutor(max_workers=8) as pool:
+        futures = []
+        for _ in range(parallel):
+            futures.append(pool.submit(_populate_db, db_path, overwrite_db=overwrite_db, count=1_000))
+        for f in futures:
+            f.result()
+    assert db_path.exists()  # just in case
