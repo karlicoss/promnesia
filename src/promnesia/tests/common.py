@@ -3,11 +3,11 @@ import gc
 import os
 from pathlib import Path
 import sys
-from typing import NoReturn
+from typing import NoReturn, TypeVar
 
 import pytest
 
-from ..common import _is_windows
+from ..common import _is_windows, Res
 
 
 def under_ci() -> bool:
@@ -52,7 +52,7 @@ def get_testdata(path: str) -> Path:
 
 @contextmanager
 def tmp_popen(*args, **kwargs):
-    import psutil # type: ignore
+    import psutil  # type: ignore
     with psutil.Popen(*args, **kwargs) as p:
         try:
             yield p
@@ -61,6 +61,7 @@ def tmp_popen(*args, **kwargs):
                 c.kill()
             p.kill()
             p.wait()
+
 
 # meh
 def promnesia_bin(*args):
@@ -81,8 +82,17 @@ def promnesia_bin(*args):
 @pytest.fixture
 def reset_filters():
     from .. import extract
+
     extract.filters.cache_clear()
     try:
         yield
     finally:
         extract.filters.cache_clear()
+
+
+# TODO could be a TypeGuard from 3.10
+V = TypeVar('V')
+
+def unwrap(r: Res[V]) -> V:
+    assert not isinstance(r, Exception), r
+    return r

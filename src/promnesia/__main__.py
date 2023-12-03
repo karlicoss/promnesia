@@ -97,11 +97,11 @@ def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), ove
 
 
 def do_index(
-        config_file: Path,
-        dry: bool=False,
-        sources_subset: Iterable[Union[str, int]]=(),
-        overwrite_db: bool=False,
-    ) -> None:
+    config_file: Path,
+    dry: bool=False,
+    sources_subset: Iterable[Union[str, int]]=(),
+    overwrite_db: bool=False,
+) -> Sequence[Exception]:
     config.load_from(config_file) # meh.. should be cleaner
     try:
         errors = list(_do_index(dry=dry, sources_subset=sources_subset, overwrite_db=overwrite_db))
@@ -113,7 +113,7 @@ def do_index(
         for e in errors:
             logger.exception(e)
         logger.error('%d errors, exit code 1', len(errors))
-        sys.exit(1)
+    return errors
 
 
 def demo_sources() -> dict[str, Callable[[], Extractor]]:
@@ -398,12 +398,14 @@ def main() -> None:
 
     with get_tmpdir() as tdir: # TODO??
         if mode == 'index':
-            do_index(
+            errors = do_index(
                 config_file=args.config,
                 dry=args.dry,
                 sources_subset=args.sources,
                 overwrite_db=args.overwrite,
             )
+            if len(errors) > 0:
+                sys.exit(1)
         elif mode == 'serve':
             server.run(args)
         elif mode == 'demo':

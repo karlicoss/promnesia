@@ -28,6 +28,7 @@ DEFAULT_FILTERS = (
 )
 
 
+# TODO maybe move these to configs?
 @lru_cache(1) #meh, not sure what would happen under tests?
 def filters() -> Sequence[Filter]:
     from . import config
