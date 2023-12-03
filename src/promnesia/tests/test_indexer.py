@@ -4,11 +4,13 @@ from pathlib import Path
 from subprocess import check_call, Popen
 from textwrap import dedent
 
+from ..__main__ import do_index
+from ..common import DbVisit
+from ..database.load import get_all_db_visits
+
 import pytest
 
 from .common import get_testdata, promnesia_bin, reset_filters
-from ..__main__ import do_index
-from ..database.load import get_all_db_visits
 
 
 def get_stats(tmp_path: Path) -> Counter:
@@ -141,3 +143,100 @@ def test_filter(tmp_path: Path, reset_filters) -> None:
     urls = {v.orig_url for v in visits}
     assert not any(domain_to_filter in u for u in urls), urls
     assert len(visits) == 4  # just in case
+
+
+def test_weird_urls(tmp_path: Path) -> None:
+    # specifically test this here (rather than in cannon)
+    # to make sure it's not messed up when we insert/extract from sqlite
+
+    def cfg(testdata: str) -> None:
+        from promnesia.common import Source
+        from promnesia.sources import shellcmd
+        from promnesia.sources.plaintext import extract_from_path
+
+        SOURCES = [Source(shellcmd.index, extract_from_path(testdata))]
+
+    cfg_path = tmp_path / 'config.py'
+    write_config(cfg_path, cfg, testdata=get_testdata('weird.txt'))
+    do_index(cfg_path)
+
+    [v1, v2] = get_all_db_visits(tmp_path / 'promnesia.sqlite')
+
+    assert v1.norm_url == "urbandictionary.com/define.php?term=Belgian%20Whistle"
+
+    assert v2.norm_url == "en.wikipedia.org/wiki/Dinic%27s_algorithm"
+    assert v2.locator.title.endswith('weird.txt:2')
+    assert v2.context == 'right, so https://en.wikipedia.org/wiki/Dinic%27s_algorithm can be used for max flow'
+
+
+def test_errors_during_indexing(tmp_path: Path) -> None:
+    def cfg() -> None:
+        from promnesia.common import Source
+        from promnesia.sources import demo
+
+        def indexer1():
+            visits = list(demo.index(count=10))
+            yield from visits[:5]
+            yield RuntimeError("some error during visits extraction")
+            yield from visits[5:]
+
+        def indexer2():
+            raise RuntimeError("in this case indexer itself crashed")
+
+        SOURCES = [Source(indexer1), Source(indexer2)]
+
+    cfg_path = tmp_path / 'config.py'
+    write_config(cfg_path, cfg)
+    do_index(cfg_path)
+
+    stats = get_stats(tmp_path)
+    assert stats == {
+        'error': 2,
+        'config': 10,
+    }
+
+
+def test_hook(tmp_path: Path) -> None:
+    def cfg() -> None:
+        from promnesia.common import Source
+        from promnesia.sources import demo
+
+        SOURCES = [Source(demo.index, count=7, name='somename')]
+
+        from typing import cast, Iterator
+        from promnesia.common import DbVisit, Loc, Res
+        from promnesia.sources import demo
+
+        def HOOK(visit: Res[DbVisit]) -> Iterator[Res[DbVisit]]:
+            visit = cast(DbVisit, visit)
+
+            # NOTE: might be a good idea to check that the visit is an exception first and yield it intact?
+            nurl = visit.norm_url
+            if 'page1' in nurl:
+                yield visit._replace(norm_url='patched.com')
+            elif 'page2' in nurl:
+                raise Exception('boom')  # deliberately crash
+            elif 'page3' in nurl:
+                # just don't yield anything! it will be omitted
+                pass
+            elif 'page4' in nurl:
+                # can emit multiple!
+                yield visit
+                yield visit
+            elif 'page6' in nurl:
+                # patch locator
+                yield visit._replace(locator=Loc.make(title='some custom timte', href='/can/replace/original/path'))
+            else:
+                yield visit
+
+    cfg_path = tmp_path / 'config.py'
+    write_config(cfg_path, cfg)
+    do_index(cfg_path)
+
+    [p0, p1, e2, p41, p42, p5, p6] = get_all_db_visits(tmp_path / 'promnesia.sqlite')
+    assert p0.norm_url == 'demo.com/page0.html'
+    assert p1.norm_url == 'patched.com'
+    assert e2.norm_url == '<error>'
+    assert p41 == p42
+    assert isinstance(p6, DbVisit)
+    assert p6.locator is not None
