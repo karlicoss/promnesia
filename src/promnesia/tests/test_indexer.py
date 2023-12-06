@@ -1,8 +1,6 @@
 from collections import Counter
-import inspect
 from pathlib import Path
 from subprocess import check_call, Popen
-from textwrap import dedent
 
 from ..__main__ import do_index
 from ..common import DbVisit
@@ -10,21 +8,12 @@ from ..database.load import get_all_db_visits
 
 import pytest
 
-from .common import get_testdata, promnesia_bin, reset_filters
+from .common import get_testdata, promnesia_bin, reset_filters, write_config
 
 
 def get_stats(tmp_path: Path) -> Counter:
     visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
     return Counter(v.src for v in visits)
-
-
-def write_config(path: Path, gen, **kwargs) -> None:
-    output_dir = path.parent
-    cfg_src = dedent('\n'.join(inspect.getsource(gen).splitlines()[1:])) + f"\nOUTPUT_DIR = r'{output_dir}'"
-    for k, v in kwargs.items():
-        assert k in cfg_src, k
-        cfg_src = cfg_src.replace(k, repr(str(v)))  # meh
-    path.write_text(cfg_src)
 
 
 @pytest.mark.parametrize('mode', ['update', 'overwrite'])

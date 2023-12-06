@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta
 from pathlib import Path
-from textwrap import dedent
 from typing import  Optional, Union, Sequence, Tuple, Mapping
 
 import pytest
@@ -90,39 +88,6 @@ SOURCES = [
 ]
     """)
     run_index(cfg)
-
-
-def index_some_demo_visits(
-    tmp_path: Path,
-    *,
-    count: int,
-    base_dt: datetime,
-    delta: timedelta,
-    update: bool,
-) -> None:
-    cfg = dedent(f'''
-    OUTPUT_DIR = r'{tmp_path}'
-
-    # todo would be nice if it was possible without importing anything at all
-    def make_visits():
-        from datetime import timedelta, datetime
-        from promnesia.sources import demo
-
-        # todo hmm, a bit messy, would be nice to do it in a more straighforward manner..
-        yield from demo.index(
-            count={count},
-            base_dt=datetime.fromisoformat('{base_dt.isoformat()}'),
-            delta=timedelta(seconds={delta.total_seconds()}),
-        )
-
-    from promnesia.common import Source
-    SOURCES = [
-        Source(make_visits, name='demo'),
-    ]
-    ''')
-    cfg_file = tmp_path / 'test_config_extra.py'
-    cfg_file.write_text(cfg)
-    run_index(cfg_file, update=update)
 
 
 def index_local_chrome(tmp_path: Path) -> None:
