@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import sys
 import time
-from typing import Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional
 
 import requests
 
@@ -27,7 +27,7 @@ class Helper:
     def get(self, path: str, *args):
         return requests.get(f'http://localhost:{self.port}' + path)
 
-    def post(self, path: str, *, json: Optional[Dict[str, str]] = None):
+    def post(self, path: str, *, json: Optional[Dict[str, Any]] = None):
         return requests.post(f'http://localhost:{self.port}' + path, json=json)
 
 

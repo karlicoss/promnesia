@@ -1,8 +1,10 @@
 from contextlib import contextmanager
 import gc
+import inspect
 import os
 from pathlib import Path
 import sys
+from textwrap import dedent
 from typing import NoReturn, TypeVar
 
 import pytest
@@ -96,3 +98,12 @@ V = TypeVar('V')
 def unwrap(r: Res[V]) -> V:
     assert not isinstance(r, Exception), r
     return r
+
+
+def write_config(path: Path, gen, **kwargs) -> None:
+    output_dir = path.parent
+    cfg_src = dedent('\n'.join(inspect.getsource(gen).splitlines()[1:])) + f"\nOUTPUT_DIR = r'{output_dir}'"
+    for k, v in kwargs.items():
+        assert k in cfg_src, k
+        cfg_src = cfg_src.replace(k, repr(str(v)))  # meh
+    path.write_text(cfg_src)
