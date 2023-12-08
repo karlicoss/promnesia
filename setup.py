@@ -53,7 +53,6 @@ def main() -> None:
                  'psutil',
 
                  'requests',
-                 'httpie',   # nicer http requests (replace with curl?)
                  'selenium', # browser automations
                  'click',    # confirmations for end2end test (might remove dependency)
 
