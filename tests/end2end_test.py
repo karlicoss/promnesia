@@ -34,7 +34,7 @@ from selenium.common.exceptions import NoAlertPresentException, NoSuchFrameExcep
 
 from common import under_ci, uses_x, has_x, local_http_server, notnone
 from integration_test import index_hypothesis, index_local_chrome, index_urls
-from server_test import wserver
+from promnesia.tests.server_helper import run_server as wserver
 from browser_helper import open_extension_page, get_cmd_hotkey
 from webdriver_utils import frame_context, window_context, is_visible
 
