@@ -3,8 +3,6 @@ from typing import  Optional, Union, Sequence, Tuple, Mapping
 
 import pytest
 
-from common import DATA
-
 from promnesia.common import _is_windows
 from promnesia.database.load import get_all_db_visits
 
@@ -56,75 +54,6 @@ SOURCES = [indexer]
 """)
         run_index(cfg)
     return idx
-
-
-def index_hypothesis(tmp_path: Path) -> None:
-    hypexport_path  = DATA / 'hypexport'
-    hypothesis_data = hypexport_path / 'testdata'
-
-    cfg = tmp_path / 'test_config.py'
-    # TODO ok, need to simplify this...
-    cfg.write_text(f"""
-OUTPUT_DIR = r'{tmp_path}'
-
-from promnesia.common import Source
-
-def hyp_extractor():
-    import my.config
-    class user_config:
-        export_path = r'{str(hypothesis_data)}/netrights-dashboard-mockup/data/*.json'
-    my.config.hypothesis = user_config
-
-    # todo ideally would use virtualenv?
-    import sys
-    sys.path.insert(0, r"{str(hypexport_path / 'src')}")
-
-    import promnesia.sources.hypothesis as hypothesis
-    yield from hypothesis.index()
-
-# in addition, test for lazy indexers. useful for importing packages
-SOURCES = [
-    Source(hyp_extractor, name='hyp'),
-]
-    """)
-    run_index(cfg)
-
-
-def index_local_chrome(tmp_path: Path) -> None:
-    # TODO mm, would be good to keep that for proper end2end
-    # inp = Path('/L/data/promnesia/testdata/chrome-history/History') # TODO make it accessible to the repository
-    # merged = tmp_path / 'chrome-merged.sqlite'
-    # populate_db.merge_from('chrome', from_=inp, to=merged)
-
-    merged = Path('/L/data/promnesia/testdata/chrome.sqlite')
-
-    cfg = tmp_path / 'test_config.py'
-    cfg.write_text(f"""
-OUTPUT_DIR = r'{tmp_path}'
-
-from promnesia.common import Indexer as I
-# TODO FIXME -- fix back
-from promnesia.sources.browser import index
-
-chrome_extractor = I(index, '{merged}', src='chrome')
-
-SOURCES = [chrome_extractor]
-""")
-    run_index(cfg)
-
-
-# TODO this should be in hypothesis source tester?
-def test_hypothesis(tmp_path: Path) -> None:
-    index_hypothesis(tmp_path)
-    visits = get_all_db_visits(tmp_path / 'promnesia.sqlite')
-    assert len(visits) > 100
-
-    [vis] = [x for x in visits if 'fundamental fact of evolution' in (x.context or '')]
-
-    assert vis.norm_url == 'wired.com/2017/04/the-myth-of-a-superhuman-ai'
-    assert vis.orig_url == 'https://www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
-    assert vis.locator.href == 'https://hyp.is/_Z9ccmVZEeexBOO7mToqdg/www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
-    assert 'misconception about evolution is fueling misconception about AI' in (vis.context or '') # contains notes as well
 
 
 def test_comparison(tmp_path: Path) -> None:

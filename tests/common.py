@@ -30,21 +30,6 @@ def uses_x(f):
     return ff
 
 
-@pytest.fixture
-def tdir(tmp_path):
-    yield Path(tmp_path)
-
-
-GIT_ROOT = Path(__file__).parent.parent.absolute()
-DATA = GIT_ROOT / 'tests/testdata'
-
-
-# todo deprecate?
-def tdata(path: str) -> str:
-    assert DATA.is_dir(), DATA
-    return str(DATA / path)
-
-
 from contextlib import contextmanager
 @contextmanager
 def tmp_popen(*args, **kwargs):
@@ -71,14 +56,6 @@ def promnesia_bin(*args):
         root = Path(__file__).parent.parent
         pm = root / 'scripts/promnesia'
         return [pm, *args]
-
-
-from typing import Any, NoReturn
-def throw(x: Any) -> NoReturn:
-    '''
-    like raise, but can be an expression...
-    '''
-    raise RuntimeError(x)
 
 
 @contextmanager
