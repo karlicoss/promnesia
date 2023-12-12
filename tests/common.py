@@ -4,8 +4,6 @@ from functools import wraps
 from pathlib import Path
 from typing import Iterator, Optional, TypeVar
 
-from promnesia.common import _is_windows
-
 import pytest # type: ignore
 
 
@@ -42,20 +40,6 @@ def tmp_popen(*args, **kwargs):
                 c.kill()
             p.kill()
             p.wait()
-
-# meh
-def promnesia_bin(*args):
-    # not sure it's a good idea to diverge, but not sure if there's a better way either?
-    # ugh. on windows there is no bash so can't use the script
-    # whatever...
-    if under_ci() or _is_windows:
-        # should be able to use the installed version
-        return [sys.executable, '-m', 'promnesia', *args]
-    else:
-        # use version from the repository
-        root = Path(__file__).parent.parent
-        pm = root / 'scripts/promnesia'
-        return [pm, *args]
 
 
 @contextmanager

@@ -3,7 +3,10 @@ from datetime import datetime
 from ..common import Visit, DbVisit, Loc, Source
 from ..extract import extract_visits
 
-from .common import get_testdata, unwrap
+from .common import get_testdata, unwrap, running_on_ci, gc_control
+
+from more_itertools import ilen
+import pytest
 
 
 def test_with_error() -> None:
@@ -41,3 +44,18 @@ def test_urls_are_normalised() -> None:
         'youtube.com/watch?v=XXlZfc1TrD0',
         'youtube.com/watch?v=XXlZfc1Tr11',
     }
+
+
+@pytest.mark.parametrize('count', [99, 100_000, 1_000_000])
+@pytest.mark.parametrize('gc_on', [True, False], ids=['gc_on', 'gc_off'])
+def test_benchmark(count: int, gc_control) -> None:
+    # NOTE: at the moment most time is spent canonifying urls, so not much point optimizing this in isolation
+    # TODO maybe could specify custom cannonifying strategy that doesn't do anything to isolate benchmark
+    if count > 99 and running_on_ci:
+        pytest.skip("test would be too slow on CI, only meant to run manually")
+
+    from ..sources import demo
+    source = Source(demo.index, count=count)
+
+    total = ilen(extract_visits(source=source, src='whatever'))
+    assert total == count  # sanity check

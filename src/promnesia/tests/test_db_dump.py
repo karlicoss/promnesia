@@ -173,6 +173,12 @@ def make_testvisit(i: int) -> DbVisit:
 @pytest.mark.parametrize('count', [99, 100_000, 1_000_000])
 @pytest.mark.parametrize('gc_on', [True, False], ids=['gc_on', 'gc_off'])
 def test_benchmark_visits_dumping(count: int, gc_control, tmp_path: Path) -> None:
+    # [20231212] testing differernt CHUNK_BY values with 1_000_000 visits on @karlicoss desktop pc
+    # 1: 25s (perhaps most overhead is from temporary lists?)
+    # 10 (current default): 8s
+    # 100: 6s
+    # 1000: 6s
+    # TODO maybe consider changing default to 100?
     if count > 99 and running_on_ci:
         pytest.skip("test would be too slow on CI, only meant to run manually")
 

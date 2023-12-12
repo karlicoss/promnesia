@@ -2,8 +2,8 @@ from collections import Counter
 from pathlib import Path
 from subprocess import check_call, Popen
 
-from ..__main__ import do_index
-from ..common import DbVisit
+from ..__main__ import do_index, read_example_config
+from ..common import DbVisit, _is_windows
 from ..database.load import get_all_db_visits
 
 import pytest
@@ -229,3 +229,17 @@ def test_hook(tmp_path: Path) -> None:
     assert p41 == p42
     assert isinstance(p6, DbVisit)
     assert p6.locator is not None
+
+
+def test_example_config(tmp_path: Path) -> None:
+    if _is_windows:
+        pytest.skip("doesn't work on Windows: example config references /usr/include paths")
+
+    config = read_example_config() + '\n' + f'OUTPUT_DIR = "{str(tmp_path)}"'
+    cfg_path = tmp_path / 'example_config.py'
+    cfg_path.write_text(config)
+
+    do_index(cfg_path)
+
+    visits = [v for v in get_all_db_visits(tmp_path / 'promnesia.sqlite') if v.src != 'error']
+    assert len(visits) > 50  # random sanity check
