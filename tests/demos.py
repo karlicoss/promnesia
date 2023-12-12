@@ -5,10 +5,10 @@ from time import sleep
 from subprocess import check_call
 from typing import Optional
 
+from promnesia.tests.utils import index_urls
 
 from common import uses_x
 from end2end_test import FF, CH, browsers, _test_helper
-from integration_test import index_urls
 from end2end_test import confirm
 from end2end_test import configure, get_window_id
 
