@@ -305,6 +305,7 @@ dmypy.json
 
 **/node_modules
 .idea
+.coverage*
 
 
 ######### NOTE: stuff above is from .gitignore
@@ -312,4 +313,12 @@ dmypy.json
 .git
 .ci  # otherwise build context is invalidated over and over again
 
+.circleci
+.github
+benchmarks
+ci
+doc
+docker/user_data
+docker/docker_files/indexer-config.py.example
+extension
 extension/dist
