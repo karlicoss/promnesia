@@ -57,3 +57,9 @@ def test_url_in_properties() -> None:
     assert len(items) == 2, items
     assert items[0].url == 'https://example.org/ref_example'
     assert items[1].url == 'http://example.org/a_test'
+
+
+def test_5() -> None:
+    items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file5.org'))]
+
+    assert len(items) == 0  # shouldn't crash at least

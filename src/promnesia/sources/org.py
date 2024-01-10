@@ -57,8 +57,12 @@ def _parse_node(n: OrgNode) -> Parsed:
             # todo a bit hacky..
             heading = heading.replace(createds + ' ', '')
     if createds is not None:
-        [odt] = OrgDate.list_from_str(createds)
-        dt = odt.start
+        if '<%%' in createds:
+            # sexp date, not supported
+            dt = None
+        else:
+            [odt] = OrgDate.list_from_str(createds)
+            dt = odt.start
     else:
         dt = None
     return Parsed(dt=dt, heading=heading)

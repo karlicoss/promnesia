@@ -67,6 +67,7 @@ CODE = {
     'text/vnd.graphviz',
     'text/x-diff',  # patch files
     'text/x-php',
+    'text/x-lilypond',
 
     # these didn't have a mime type, or were mistyped?
     'css',

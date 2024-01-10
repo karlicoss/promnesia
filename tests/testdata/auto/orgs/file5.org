@@ -1,0 +1,4 @@
+* sexp in property
+:PROPERTIES:
+:CREATED: <%%(diary-date 03 25 2023)>
+:END:
