@@ -4,7 +4,8 @@ RUN mkdir /user_data && \
     mkdir /usr/src/promnesia
 
 WORKDIR /usr/src/promnesia
-COPY . .
+COPY setup.py ./
+COPY ./src ./src
 
 ARG VERSION=0
 RUN SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PROMNESIA=${VERSION}  pip install --no-cache-dir -e .[all]
