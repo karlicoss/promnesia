@@ -10,10 +10,12 @@ from ..compat import removeprefix
 
 def index() -> Results:
     from . import hpi
+    import json
 
     try:
         from my.google.takeout.parser import events
-        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory
+        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory, CSVYoutubeComment, CSVYoutubeLiveChat
+        from google_takeout_parser.parse_csv import reconstruct_comment_content, extract_comment_links
     except ModuleNotFoundError as ex:
         logger.exception(ex)
         yield ex
@@ -109,6 +111,42 @@ def index() -> Results:
                 yield Visit(
                     url=url, dt=e.dt, context=e.content, locator=Loc(title=e.content, href=url)
                 )
+        elif isinstance(e, CSVYoutubeComment):
+            contentJSON = json.loads(e.contentJSON)
+            content = reconstruct_comment_content(contentJSON, format='text')
+            if isinstance(content, Exception):
+                yield content
+                continue
+            links = extract_comment_links(contentJSON)
+            if isinstance(links, Exception):
+                yield links
+                continue
+            context = f"Commented on {e.video_url}"
+            for url in links:
+                yield Visit(
+                    url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url)
+                )
+            yield Visit(
+                url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url)
+            )
+        elif isinstance(e, CSVYoutubeLiveChat):
+            contentJSON = json.loads(e.contentJSON)
+            content = reconstruct_comment_content(contentJSON, format='text')
+            if isinstance(content, Exception):
+                yield content
+                continue
+            links = extract_comment_links(contentJSON)
+            if isinstance(links, Exception):
+                yield links
+                continue
+            context = f"Commented on livestream {e.video_url}"
+            for url in links:
+                yield Visit(
+                    url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url)
+                )
+            yield Visit(
+                url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url)
+            )
         else:
             yield from warn_once_if_not_seen(e)
 
