@@ -47,15 +47,15 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
-   
+
     - uses: mxschmitt/action-tmate@v3
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
@@ -63,12 +63,12 @@ jobs:
     - run: bash .ci/run
 
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: .coverage.mypy-core_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-core/
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-misc/
@@ -77,7 +77,7 @@ jobs:
   end2end_tests_chrome:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     # NOTE: dev/shm mount to prevent crashes during headless chrome
@@ -88,7 +88,7 @@ jobs:
   end2end_tests_firefox:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     # NOTE: dev/shm mount to prevent crashes during headless chrome
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -123,11 +123,11 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.8'
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -152,10 +152,10 @@ jobs:
       name: 'promnesia'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
         node-version: '18'
 
@@ -164,19 +164,19 @@ jobs:
 
     # TODO ugh. can't share github actions artifacts publicly...
     # TODO for fuck's sake... why does it end up named as .zip.zip ????
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: '${{ env.name }}-chrome-debug-latest.zip'
         path: 'extension/dist/artifacts/chrome/${{ env.name }}_dev_-*.zip'
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: '${{ env.name }}-chrome-release-latest.zip'
         path: 'extension/dist/artifacts/chrome/${{ env.name }}-*.zip'
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: '${{ env.name }}-firefox-debug-latest.zip'
         path: 'extension/dist/artifacts/firefox/${{ env.name }}_dev_-*.zip'
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: '${{ env.name }}-firefox-release-latest.zip'
         path: 'extension/dist/artifacts/firefox/${{ env.name }}-*.zip'
