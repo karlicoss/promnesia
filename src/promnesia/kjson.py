@@ -74,7 +74,7 @@ def test_json_processor():
     handled = []
     class Proc(JsonProcessor):
         def handle_dict(self, value: JDict, path):
-            if 'skipme' in self.kpath(path):
+            if 'skipme' in self.kpath(path):  # type: ignore[comparison-overlap]
                 return JsonProcessor.SKIP
 
         def handle_str(self, value: str, path):

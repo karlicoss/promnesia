@@ -16,8 +16,7 @@ from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
 
 
 def real_db():
-    from private import real_db_path, test_filter  # type: ignore[import,attr-defined]
-    from tempfile import TemporaryDirectory
+    from private import real_db_path, test_filter  # type: ignore[import-not-found]
     import shutil
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
@@ -50,7 +49,7 @@ class Annotator:
         self.l.append((now, text, length))
 
     def build(self, **extra):
-        from pysubs2 import SSAFile, SSAEvent, Color # type: ignore[import]
+        from pysubs2 import SSAFile, SSAEvent, Color # type: ignore[import-not-found]
         millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
             SSAEvent(
@@ -445,7 +444,7 @@ Clicking on 'context' will bring me straight to the original tweet.
         wait(8)
 
 
-from selenium import webdriver # type: ignore
+from selenium import webdriver
 
 
 def scroll_to_text(driver, text: str):
@@ -473,7 +472,7 @@ def test_demo_highlights(tmp_path, browser):
 
 
     def before(driver):
-        from private import instapaper_cookies  # type: ignore[import,attr-defined]
+        from private import instapaper_cookies
 
         # necessary to set cookies on instapaper..
         driver.get('http://instapaper.com')

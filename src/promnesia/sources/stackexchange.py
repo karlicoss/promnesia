@@ -2,12 +2,12 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Stackexchange data.
 '''
 
-from ..common import Results, Visit, Loc, extract_urls
+from ..common import Results, Visit, Loc
 
 
 def index() -> Results:
     from . import hpi
-    import my.stackexchange.gdpr as G # type: ignore[import] # TODO eh, not sure if should run against pypi or not...
+    import my.stackexchange.gdpr as G
     for v in G.votes():
         if isinstance(v, Exception):
             yield v

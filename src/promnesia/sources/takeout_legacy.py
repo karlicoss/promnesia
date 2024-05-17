@@ -36,7 +36,7 @@ from .. import config
 from more_itertools import unique_everseen
 
 try:
-    from cachew import cachew  # type: ignore[import-not-found]
+    from cachew import cachew
 except ModuleNotFoundError as me:
     if me.name != 'cachew':
         raise me

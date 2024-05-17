@@ -4,7 +4,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Iterator, Optional, TypeVar
 
-import pytest # type: ignore
+import pytest
 
 
 def has_x() -> bool:
@@ -31,7 +31,7 @@ def uses_x(f):
 from contextlib import contextmanager
 @contextmanager
 def tmp_popen(*args, **kwargs):
-    import psutil # type: ignore
+    import psutil
     with psutil.Popen(*args, **kwargs) as p:
         try:
             yield p

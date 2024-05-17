@@ -422,7 +422,7 @@ def canonify(url: str) -> str:
     qq = [(k, v) for i, k, v in sorted(iqq)]
     # TODO still not sure what we should do..
     # quote_plus replaces %20 with +, not sure if we want it...
-    query = urlencode(qq, quote_via=quote_via) # type: ignore[type-var]
+    query = urlencode(qq, quote_via=quote_via)
 
     path = _quote_path(path)
 
@@ -683,7 +683,7 @@ def domains(it): # pragma: no cover
         try:
             nurl = canonify(url)
         except CanonifyException as e:
-            print(f"ERROR while normalising! {nurl} {e}")
+            print(f"ERROR while normalising! {url} {e}")
             c['ERROR'] += 1
             continue
         else:
@@ -718,7 +718,7 @@ def groups(it, args): # pragma: no cover
         try:
             nurl = canonify(url)
         except CanonifyException as e:
-            print(f"ERROR while normalising! {nurl} {e}")
+            print(f"ERROR while normalising! {url} {e}")
             continue
         udom = nurl[:nurl.find('/')]
         usplit = udom.split('.')
@@ -818,7 +818,7 @@ def main() -> None: # pragma: no cover
 
 - running comparison
   sqlite3 promnesia.sqlite 'select distinct orig_url from visits where norm_url like "%twitter%" order by orig_url' | src/promnesia/cannon.py
-''', formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=100) # type: ignore
+''', formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=100)
     )
     p.add_argument('input', nargs='?')
     p.add_argument('--human', action='store_true')

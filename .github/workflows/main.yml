@@ -29,9 +29,7 @@ jobs:
             # windows runners are pretty scarce, so let's only run lowest and highest python version
             {platform: windows-latest, python-version: '3.9' },
             {platform: windows-latest, python-version: '3.10'},
-            # NOTE: some test packages (e.g. mouseinfo) have issues with building wheels on 3.12 windows
-            # perhaps try again later
-            {platform: windows-latest, python-version: '3.12'},
+            {platform: windows-latest, python-version: '3.11'},
 
             # same, macos is a bit too slow and ubuntu covers python quirks well
             {platform: macos-latest  , python-version: '3.9' },
@@ -125,7 +123,7 @@ jobs:
 
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
+        python-version: '3.10'
 
     - uses: actions/checkout@v4
       with:
@@ -155,9 +153,11 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0  # nicer to have all git history when debugging/for tests
+
     - uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
 
     - run: extension/.ci/build --lint # debug version
     - run: extension/.ci/build --lint --release

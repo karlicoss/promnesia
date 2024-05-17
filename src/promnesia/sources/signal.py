@@ -63,6 +63,8 @@ def index(
     logger.debug("Paths to harvest: %s", db_paths)
     if not http_only:
         sql_query = f"{messages_query}\nWHERE body LIKE '%http%'"
+    else:
+        sql_query = messages_query
 
     for db_path in resolved_db_paths:
         logger.info("Ciphered db to harvest %s", db_path)
@@ -188,8 +190,8 @@ def _expand_path(path_pattern: PathIsh) -> Iterable[Path]:
 
 def _expand_paths(paths: PathIshes) -> Iterable[Path]:
     if _is_pathish(paths):
-        paths = [paths]  # type: ignore[assignment,list-item]
-    return [pp.resolve() for p in paths for pp in _expand_path(p)]  # type: ignore[union-attr,list-item]
+        paths = [paths]  # type: ignore[list-item]
+    return [pp.resolve() for p in paths for pp in _expand_path(p)]  # type: ignore[union-attr]
 
 
 def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]:
@@ -236,7 +238,7 @@ def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]
             )
 
         if db_paths and append:
-            db_paths = [  # type: ignore[misc,assignment]
+            db_paths = [  # type: ignore[assignment]
                 *([db_paths] if _is_pathish(db_paths) else db_paths),
                 plat_paths,
             ]
@@ -320,7 +322,7 @@ def connect_db(
                 "Decrypting db '%s' with cmd: %s <<<EOF\n%s\nEOF", db_path, cmd, sql
             )
             try:
-                sbp.run(  # type: ignore[call-overload]
+                sbp.run(
                     cmd,
                     check=True,
                     input=sql,
@@ -335,7 +337,7 @@ def connect_db(
                 ) from None
             db = sqlite3.connect(f"file:{decrypted_file}?mode=ro", uri=True)
         else:
-            from sqlcipher3 import dbapi2  # type: ignore[import]
+            from sqlcipher3 import dbapi2  # type: ignore[import-not-found]
 
             db = dbapi2.connect(f"file:{db_path}?mode=ro", uri=True)
             # Param-binding doesn't work for pragmas, so use a direct string concat.
@@ -419,9 +421,9 @@ def _harvest_db(
 
     with connect_db(db_path, key, decrypt_db=decrypt_db, **decryption_pragmas) as db:
         for mid, tstamp, sender, cid, chatname, text in db.execute(messages_query):
+            tstamp = from_epoch(tstamp / 1000.0)
+            row = (mid, tstamp, sender, cid, chatname, text)
             try:
-                tstamp = from_epoch(tstamp / 1000.0)
-                row = (mid, tstamp, sender, cid, chatname, text)
                 yield from _handle_row(row, db_path, locator_schema)
             except Exception as ex:
                 # TODO: also insert errors in db

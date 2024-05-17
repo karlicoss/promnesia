@@ -31,7 +31,7 @@ def index(*, render_markdown: bool = False) -> Results:
         # if enabled, convert the (markdown) body to HTML
         context: Optional[str] = e.body
         if e.body is not None and render_markdown:
-            context = TextParser(e.body)._doc_ashtml()
+            context = TextParser(e.body)._doc_ashtml()  # type: ignore[possibly-undefined]
 
         # locator should link back to this event
         loc = Loc.make(title=e.summary, href=e.link)
@@ -74,7 +74,7 @@ def index(*, render_markdown: bool = False) -> Results:
         # extract from markdown links like [link text](https://...)
         # incase URLExtract missed any somehow
         if render_markdown:
-            for res in extract_from_text(e.body):
+            for res in extract_from_text(e.body):  # type: ignore[possibly-undefined]
                 if isinstance(res, Exception):
                     yield res
                     continue

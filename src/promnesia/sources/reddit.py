@@ -16,7 +16,7 @@ def index(*, render_markdown: bool = False, renderer: Optional[Type['RedditRende
         if "No module named 'my.reddit.all'" in str(e):
             import warnings
             warnings.warn("DEPRECATED/reddit: Using an old version of HPI, please update")
-            from my.reddit import submissions, comments, saved, upvoted  # type: ignore[no-redef]
+            from my.reddit import submissions, comments, saved, upvoted
         else:
             raise e
 

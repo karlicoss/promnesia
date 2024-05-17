@@ -1,4 +1,4 @@
-ignore = [
+lint.ignore = [
 ### too opinionated style checks
     "E501",  # too long lines
     "E702",  # Multiple statements on one line (semicolon)

@@ -11,7 +11,6 @@ SOURCES = [
     Source(
         auto.index,
         # just some arbitrary directory with plaintext files
-        '/usr/include/c++/',
-        '/usr/local/include/c++/', # on apple they are here apparently..
+        '/usr/share/vim/',
     )
 ]

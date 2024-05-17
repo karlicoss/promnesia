@@ -320,7 +320,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
 
     def indexer() -> Union[Urls, Results]:
         # eh, annoying.. need to make more generic..
-        idx = ip(pp) # type: ignore
+        idx = ip(pp)
         try:
             yield from idx
         except Exception as e:

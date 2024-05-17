@@ -327,14 +327,14 @@ def main() -> None:
         )
 
     F = lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=120)
-    p = argparse.ArgumentParser(formatter_class=F) # type: ignore
+    p = argparse.ArgumentParser(formatter_class=F)
     subp = p.add_subparsers(dest='mode', )
     ep = subp.add_parser('index', help='Create/update the link database', formatter_class=F)
     add_index_args(ep, default_config_path())
     # TODO use some way to override or provide config only via cmdline?
     ep.add_argument('--intermediate', required=False, help="Used for development, you don't need it")
 
-    sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F) # type: ignore
+    sp = subp.add_parser('serve', help='Serve a link database', formatter_class=F)
     server.setup_parser(sp)
 
     ap = subp.add_parser('demo', help='Demo mode: index and serve a directory in single command', formatter_class=F)

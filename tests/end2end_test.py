@@ -326,7 +326,7 @@ def send_key(key) -> None:
         key = key.split('+')
 
     print(f"sending hotkey! {key}")
-    import pyautogui # type: ignore
+    import pyautogui
     pyautogui.hotkey(*key)
 
 
@@ -477,7 +477,7 @@ class OptionsPage(NamedTuple):
         # count += 100  # just in case
         count = 3000 # meh
         # focus ends up at some random position, so need both backspace and delete
-        area.send_keys([Keys.BACKSPACE] * count + [Keys.DELETE] * count)
+        area.send_keys(*([Keys.BACKSPACE] * count + [Keys.DELETE] * count))
         assert contents() == ''
         area.send_keys(settings)
 
@@ -515,8 +515,7 @@ class TestHelper(NamedTuple):
         )
 
     def move_to(self, element) -> None:
-        # remove type ignore later https://github.com/SeleniumHQ/selenium/pull/12477
-        ActionChains(self.driver).move_to_element(element).perform()  # type: ignore[arg-type]
+        ActionChains(self.driver).move_to_element(element).perform()
 
     def switch_to_sidebar(self, wait: Union[bool, int]=False, *, wait2: bool=True) -> None:
         raise RuntimeError('not used anymore, use with helper.sidebar instead!')
@@ -573,7 +572,7 @@ def confirm(what: str) -> None:
         Headless().confirm(what)
         return
 
-    import click # type: ignore
+    import click
     click.confirm(click.style(what, blink=True, fg='yellow'), abort=True)
 
 
@@ -803,12 +802,11 @@ def test_add_to_blacklist_context_menu(tmp_path: Path, browser: Browser) -> None
     with get_webdriver(browser=browser) as driver:
         configure_extension(driver, port='12345')
         driver.get('https://example.com')
-        # remove type ignore later https://github.com/SeleniumHQ/selenium/pull/12477
-        chain = webdriver.ActionChains(driver)  # type: ignore[arg-type]
+        chain = webdriver.ActionChains(driver)
         chain.move_to_element(driver.find_element(By.TAG_NAME, 'h1')).context_click().perform()
 
         # looks like selenium can't interact with browser context menu...
-        import pyautogui # type: ignore
+        import pyautogui
 
         if driver.name == 'chrome':
             offset = 2 # Inspect, View page source
