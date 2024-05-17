@@ -84,7 +84,7 @@ def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Res[Tuple[Parsed, OrgN
             parsed = parsed._replace(dt=dt)
         else:
             dt = parsed.dt
-    yield parsed, node
+        yield parsed, node
 
     for c in node.children:
         yield from walk_node(node=c, dt=dt)

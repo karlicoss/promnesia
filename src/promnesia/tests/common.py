@@ -54,7 +54,7 @@ def get_testdata(path: str) -> Path:
 
 @contextmanager
 def tmp_popen(*args, **kwargs):
-    import psutil  # type: ignore
+    import psutil
     with psutil.Popen(*args, **kwargs) as p:
         try:
             yield p

@@ -90,6 +90,8 @@ def index() -> Results:
                 elif e.products == ['Ads']:
                     # header contains some weird internal ad id in this case
                     context = None
+                else:
+                    context = None
                 # NOTE: at this point seems that context always ends up as None (at least for @karlicoss as of 20230131)
                 # so alternatively could just force it to be None instead of manual dispatching :shrug:
                 yield Visit(

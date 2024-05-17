@@ -6,7 +6,7 @@ import importlib
 import importlib.util
 import warnings
 
-from .common import PathIsh, get_tmpdir, appdirs, default_output_dir, default_cache_dir, user_config_file
+from .common import PathIsh, default_output_dir, default_cache_dir
 from .common import Res, Source, DbVisit
 
 
@@ -129,7 +129,7 @@ def import_config(config_file: PathIsh) -> Config:
     spec = importlib.util.spec_from_file_location(name, p); assert spec is not None
     mod = importlib.util.module_from_spec(spec); assert mod is not None
     loader = spec.loader; assert loader is not None
-    loader.exec_module(mod) # type: ignore[attr-defined]
+    loader.exec_module(mod)
 
     d = {}
     for f in Config._fields:

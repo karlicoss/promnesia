@@ -143,7 +143,7 @@ def compare_files(*files: Path, log=True) -> Iterator[Tuple[str, DbVisit]]:
         engine, table = _get_stuff(PathWithMtime.make(f))
 
         with engine.connect() as conn:
-            vis = [row_to_db_visit(row) for row in conn.execute(table.select())]  # type: ignore[var-annotated]
+            vis = [row_to_db_visit(row) for row in conn.execute(table.select())]
 
         if last is not None:
             between = f'{last_dts}:{this_dts}'

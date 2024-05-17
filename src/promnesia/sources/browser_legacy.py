@@ -10,7 +10,7 @@ from ..common import PathIsh, Results, Visit, Loc, logger, Second, is_sqlite_db
 from .. import config
 
 try:
-    from cachew import cachew  # type: ignore[import-not-found]
+    from cachew import cachew
 except ModuleNotFoundError as me:
     if me.name != 'cachew':
         raise me

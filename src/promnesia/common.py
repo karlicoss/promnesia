@@ -313,7 +313,7 @@ def _get_index_function(sourceish: PreSource) -> PreExtractor:
     if hasattr(sourceish, 'index'):  # must be a module
         res = getattr(sourceish, 'index')
     else:
-        res = sourceish  # type: ignore[assignment]
+        res = sourceish
     return res
 
 
@@ -392,7 +392,7 @@ def appdirs():
     under_test = os.environ.get('PYTEST_CURRENT_TEST') is not None
     # todo actually use test name?
     name = 'promnesia-test' if under_test else 'promnesia'
-    import appdirs as ad # type: ignore[import]
+    import appdirs as ad # type: ignore[import-untyped]
     return ad.AppDirs(appname=name)
 
 
@@ -482,13 +482,13 @@ def fdfind_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
     ignore_args = []
     if ignore:
         # Add a statement that excludes the folder
-        ignore_args = [['--exclude', f'{n}'] for n in ignore]
+        _ignore_args = [['--exclude', f'{n}'] for n in ignore]
         # Flatten the list of lists
-        ignore_args_l = list(itertools.chain(*ignore_args))
+        ignore_args = list(itertools.chain(*_ignore_args))
 
     return [
         *extra_fd_args(),
-        *ignore_args_l,
+        *ignore_args,
         *(['--follow'] if follow else []),
         '--type', 'f',
         '.',
@@ -537,17 +537,7 @@ def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable
 def get_system_zone() -> str:
     try:
         import tzlocal
-        # note: tzlocal mypy stubs aren't aware of api change yet (see https://github.com/python/typeshed/issues/6038)
-        try:
-            # 4.0 way
-            return tzlocal.get_localzone_name() # type: ignore[attr-defined]
-        except AttributeError as e:
-            # 2.0 way
-            zone = tzlocal.get_localzone().zone  # type: ignore[attr-defined]
-            # see https://github.com/python/typeshed/blame/968fd6d01d23470e0c8368e7ee7c43f54aaedc0e/stubs/pytz/pytz/tzinfo.pyi#L6
-            # it says all concrete instances should not be None
-            assert zone is not None
-            return zone
+        return tzlocal.get_localzone_name()
     except Exception as e:
         logger.exception(e)
         logger.error("Couldn't determine system timezone. Falling back to UTC. Please report this as a bug!")
