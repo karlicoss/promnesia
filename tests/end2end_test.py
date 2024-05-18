@@ -202,7 +202,7 @@ LOCALHOST = 'http://localhost'
 def configure_extension(
         driver: Driver,
         *,
-        host: Optional[str]=LOCALHOST,
+        host: Optional[str]=None,
         port: Optional[str]=None,
         show_dots: bool=True,
         highlights: Optional[bool]=None,
@@ -228,7 +228,8 @@ def configure_extension(
     page = addon.options_page
     page.open()
 
-    page.set_endpoint(host=host, port=port)
+    if host is not None or port is not None:
+        page.set_endpoint(host=host, port=port)
 
     if show_dots is not None:
         set_checkbox('mark_visited_always_id', show_dots)
@@ -485,13 +486,23 @@ class Addon:
     def options_page(self) -> OptionsPage:
         return OptionsPage(helper=self.helper)
 
+    def open_search_page(self, query: str = "") -> None:
+        self.helper.open_page('search.html' + query)
+
+        Wait(self.helper.driver, timeout=10).until(
+            EC.presence_of_element_located((By.ID, 'visits')),
+        )
+
     @property
     def sidebar(self) -> Sidebar:
         return Sidebar(driver=self.helper.driver, helper=AddonHelperX(self.helper))  # type: ignore[arg-type]
 
     def activate(self) -> None:
         # TODO the activate command could be extracted from manifest too?
-        return self.helper.trigger_command(Command.ACTIVATE)
+        self.helper.trigger_command(Command.ACTIVATE)
+
+    def mark_visited(self):
+        self.helper.trigger_command(Command.MARK_VISITED)
 
     def configure(self, **kwargs) -> None:
         configure_extension(driver=self.helper.driver, **kwargs)
@@ -518,13 +529,6 @@ class TestHelper(NamedTuple):
     def open_page(self, page: str) -> None:
         open_extension_page(self.driver, page)
 
-    def open_search_page(self, query: str="") -> None:
-        self.open_page('search.html' + query)
-
-        Wait(self.driver, timeout=10).until(
-            EC.presence_of_element_located((By.ID, 'visits')),
-        )
-
     def move_to(self, element) -> None:
         ActionChains(self.driver).move_to_element(element).perform()
 
@@ -545,9 +549,6 @@ class TestHelper(NamedTuple):
 
     def activate(self) -> None:
         self.command(Command.ACTIVATE)
-
-    def mark_visited(self) -> None:
-        self.command(Command.MARK_VISITED)
 
     def search(self) -> None:
         cur_window_handles = self.driver.window_handles
@@ -634,7 +635,7 @@ def run_server(tmp_path: Path, indexer: Callable[[Path], None], driver: Driver, 
     with wserver(db=tmp_path / 'promnesia.sqlite') as srv:
         # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
         port = srv.port
-        configure_extension(driver, port=port, **kwargs)
+        configure_extension(driver, host=LOCALHOST, port=port, **kwargs)
         driver.get('about:blank')  # not sure if necessary
         yield TestHelper(driver=driver)
 
@@ -709,7 +710,7 @@ def test_settings(addon: Addon, driver: Driver) -> None:
     hh = driver.find_element(By.ID, 'host_id')
     assert hh.get_attribute('value') == 'http://localhost:13131'  # default
 
-    configure_extension(driver, port='12345', show_dots=False)
+    addon.configure(host=LOCALHOST, port='12345', show_dots=False)
     driver.get('about:blank')
 
     addon.options_page.open()
@@ -823,83 +824,114 @@ def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver) -> None:
     confirm('page should be blacklisted (black icon)')
 
 
+@dataclass
+class Backend:
+    # directory with database and configs
+    backend_dir: Path
+
+
+@pytest.fixture
+def backend(tmp_path: Path, addon: Addon) -> Iterator[Backend]:
+    backend_dir = tmp_path
+    # TODO ideally should index in a separate thread? and perhaps start server too
+    with wserver(db=backend_dir / 'promnesia.sqlite') as srv:
+        # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
+        addon.configure(host=LOCALHOST, port=srv.port)
+        addon.helper.driver.get('about:blank')  # not sure if necessary
+        yield Backend(backend_dir=backend_dir)
+
+
 # todo might be nice to run soft asserts for this test?
 @browsers()
-def test_visits(tmp_path: Path, driver: Driver) -> None:
+def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
     from promnesia.tests.sources.test_hypothesis import index_hypothesis
+
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
-    # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # TODO ??
-    with run_server(tmp_path=tmp_path, indexer=index_hypothesis, driver=driver) as helper:
-        driver.get(test_url)
-        confirm("sidebar: shouldn't be visible")
+    # test_url = "file:///usr/share/doc/python3/html/library/contextlib.html" # todo ??
 
-        with helper._sidebar.ctx():
-            # hmm not sure how come it returns anything at all.. but whatever
-            srcs = driver.find_elements(By.CLASS_NAME, 'src')
-            for s in srcs:
-                # elements should be bound to the sidebar, but aren't displayed yet
-                assert not is_visible(driver, s), s
-            assert len(srcs) >= 8, srcs
-            # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
+    index_hypothesis(backend.backend_dir)
 
-        helper._sidebar.open()
-        confirm('sidebar: you should see hypothesis contexts')
+    driver.get(test_url)
+    confirm("sidebar: shouldn't be visible")
 
-        with helper._sidebar.ctx():
-            # sleep(1)
-            link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
-            assert is_visible(driver, link), link
+    with addon.sidebar.ctx():
+        # hmm not sure how come it returns anything at all.. but whatever
+        srcs = driver.find_elements(By.CLASS_NAME, 'src')
+        for s in srcs:
+            # elements should be bound to the sidebar, but aren't displayed yet
+            assert not is_visible(driver, s), s
+        assert len(srcs) >= 8, srcs
+        # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
 
-            contexts = helper.driver.find_elements(By.CLASS_NAME, 'context')
-            for c in contexts:
-                assert is_visible(driver, c), c
-            assert len(contexts) == 8
+    addon.sidebar.open()
+    confirm('sidebar: you should see hypothesis contexts')
 
-        helper._sidebar.close()
-        confirm("sidebar: shouldn't be visible")
+    with addon.sidebar.ctx():
+        # sleep(1)
+        link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
+        assert is_visible(driver, link), link
+
+        contexts = driver.find_elements(By.CLASS_NAME, 'context')
+        for c in contexts:
+            assert is_visible(driver, c), c
+        assert len(contexts) == 8
+
+    addon.sidebar.close()
+    confirm("sidebar: shouldn't be visible")
 
 
 @browsers()
-def test_search_around(tmp_path: Path, driver: Driver) -> None:
+def test_search_around(addon: Addon, driver: Driver, backend: Backend) -> None:
     from promnesia.tests.sources.test_hypothesis import index_hypothesis
+
     # TODO hmm. dunno if we want to highlight only result with the same timestamp, or the results that are 'near'??
     ts = int(datetime.strptime("2017-05-22T10:59:12.082375+00:00", '%Y-%m-%dT%H:%M:%S.%f%z').timestamp())
-    with run_server(tmp_path=tmp_path, indexer=index_hypothesis, driver=driver) as helper:
-        helper.open_search_page(f'?utc_timestamp_s={ts}')
 
-        visits = driver.find_element(By.ID, 'visits')
-        sleep(1)  # wait till server responds and renders results
-        results = visits.find_elements(By.CSS_SELECTOR, 'li')
-        assert len(results) == 9
+    index_hypothesis(backend.backend_dir)
 
-        hl = visits.find_element(By.CLASS_NAME, 'highlight')
-        assert 'anthrocidal' in hl.text
+    addon.open_search_page(f'?utc_timestamp_s={ts}')
 
-        manual.confirm('you should see search results, "anthrocidal" should be highlighted red')
-        # FIXME test clicking search around in actual search page.. it didn't work, seemingly because of initBackground() handling??
+    visits = driver.find_element(By.ID, 'visits')
+    sleep(1)  # wait till server responds and renders results
+    results = visits.find_elements(By.CSS_SELECTOR, 'li')
+    assert len(results) == 9
+
+    hl = visits.find_element(By.CLASS_NAME, 'highlight')
+    assert 'anthrocidal' in hl.text
+
+    manual.confirm('you should see search results, "anthrocidal" should be highlighted red')
+    # FIXME test clicking search around in actual search page.. it didn't work, seemingly because of initBackground() handling??
 
 
 @browsers()
-def test_show_visited_marks(tmp_path: Path, driver: Driver) -> None:
+def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> None:
+    # fmt: off
     visited = {
-        'https://en.wikipedia.org/wiki/Special_linear_group': None,
+        'https://en.wikipedia.org/wiki/Special_linear_group': 'some note about linear groups',
         'http://en.wikipedia.org/wiki/Unitary_group'        : None,
         'en.wikipedia.org/wiki/Transpose'                   : None,
     }
+    # fmt: on
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
-    with run_server(tmp_path=tmp_path, indexer=index_urls(visited), driver=driver, show_dots=False) as helper:
-        driver.get(test_url)
 
-        sleep(2)  # hmm not sure why it's necessary, but often fails headless firefox otherwise
-        helper.mark_visited()
-        sleep(1)  # marks are async, wait till it marks
+    index_urls(visited)(backend.backend_dir)
 
-        slg = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
-        assert len(slg) > 0
-        for s in slg:
-            assert 'promnesia-visited' in notnone(s.get_attribute('class'))
+    addon.configure(show_dots=False)
 
-        confirm("You should see visited marks near special linear group, Unitary group, Transpose")
+    driver.get(test_url)
+
+    sleep(2)  # hmm not sure why it's necessary, but often fails headless firefox otherwise
+    addon.mark_visited()
+    sleep(1)  # marks are async, wait till it marks
+
+    slg = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
+    assert len(slg) > 0
+    for s in slg:
+        assert 'promnesia-visited' in notnone(s.get_attribute('class'))
+
+    confirm(
+        "You should see visited marks near 'Special linear group', 'Unitary group', 'Transpose'. 'Special linear group' should be green."
+    )
 
 
 @browsers()
