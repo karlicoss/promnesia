@@ -2,21 +2,30 @@ from dataclasses import dataclass
 from functools import cached_property
 import json
 from pathlib import Path
-import subprocess
 import re
+import subprocess
+from typing import Any
 
-
+from loguru import logger
 import psutil
 from selenium import webdriver
+
+from webdriver_utils import is_headless
 
 
 @dataclass
 class AddonHelper:
     driver: webdriver.Remote
+    addon_source: Path
 
     @cached_property
     def addon_id(self) -> str:
         return get_addon_id(driver=self.driver)
+
+    @cached_property
+    def manifest(self) -> Any:
+        # ugh. sadly (at least in Firefox) there doesn't seem a way to read actual manifest loaded in browser?
+        return json.loads((self.addon_source / 'manifest.json').read_text())
 
     @property
     def extension_prefix(self) -> str:
@@ -28,6 +37,42 @@ class AddonHelper:
 
     def open_page(self, path: str) -> None:
         self.driver.get(self.extension_prefix + '/' + path)
+
+    @property
+    def options_page_name(self) -> str:
+        return self.manifest['options_ui']['page']
+
+    @property
+    def headless(self) -> bool:
+        return is_headless(self.driver)
+
+    def trigger_command(self, command: str) -> None:
+        commands = self.manifest['commands']
+        assert command in commands, (command, commands)
+
+        if self.headless:
+            # see selenium_bridge.js
+            ccc = f'selenium-bridge-{command}'
+            self.driver.execute_script(
+                f"""
+            var event = document.createEvent('HTMLEvents');
+            event.initEvent('{ccc}', true, true);
+            document.dispatchEvent(event);
+            """
+            )
+        else:
+            hotkey = commands[command]['suggested_key']['default']
+            self.trigger_hotkey(hotkey)
+
+    def trigger_hotkey(self, key: str) -> None:
+        assert not self.headless  # just in case
+        lkey = key.lower().split('+')
+        logger.debug(f'sending hotkey {lkey}')
+
+        import pyautogui
+
+        focus_browser_window(self.driver)
+        pyautogui.hotkey(*lkey)
 
 
 # NOTE looks like it used to be posssible in webdriver api?
@@ -114,6 +159,6 @@ def get_wid_by_pid(pid: str) -> str:
 
 
 def focus_browser_window(driver: webdriver.Remote) -> None:
-    # FIXME assert not is_headless(driver)  # just in case
+    assert not is_headless(driver)  # just in case
     wid = get_window_id(driver)
     subprocess.check_call(['xdotool', 'windowactivate', '--sync', wid])

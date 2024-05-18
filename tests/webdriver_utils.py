@@ -44,3 +44,13 @@ def is_visible(driver: Driver, element: WebElement) -> bool:
     # (returning true for elements that aren't displayed)
     # it seems to even differ between browsers
     return driver.execute_script('return arguments[0].checkVisibility()', element)
+
+
+def is_headless(driver: Driver) -> bool:
+    if driver.name == 'firefox':
+        return driver.capabilities.get('moz:headless', False)
+    elif driver.name == 'chrome':
+        # https://antoinevastel.com/bot%20detection/2018/01/17/detect-chrome-headless-v2.html
+        return driver.execute_script("return navigator.webdriver") is True
+    else:
+        raise RuntimeError(driver.name)

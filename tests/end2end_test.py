@@ -38,7 +38,7 @@ from promnesia.logging import LazyLogger
 
 from common import under_ci, has_x, local_http_server, notnone
 from browser_helper import open_extension_page, get_cmd_hotkey
-from webdriver_utils import frame_context, window_context, is_visible
+from webdriver_utils import frame_context, is_visible, is_headless
 from addon_helper import AddonHelper, focus_browser_window, get_window_id
 
 
@@ -222,7 +222,9 @@ def configure_extension(
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
-    addon = Addon(helper=AddonHelper(driver=driver))
+    addon_source = get_addon_path(kind=driver.name)
+    helper = AddonHelper(driver=driver, addon_source=addon_source)
+    addon = Addon(helper=helper)
     page = addon.options_page
     page.open()
 
@@ -288,16 +290,6 @@ def send_key(key) -> None:
     pyautogui.hotkey(*key)
 
 
-def is_headless(driver: Driver) -> bool:
-    if driver.name == 'firefox':
-        return driver.capabilities.get('moz:headless', False)
-    elif driver.name == 'chrome':
-        # https://antoinevastel.com/bot%20detection/2018/01/17/detect-chrome-headless-v2.html
-        return driver.execute_script("return navigator.webdriver") is True
-    else:
-        raise RuntimeError(driver.name)
-
-
 # TODO move to common or something
 def trigger_hotkey(driver: Driver, hotkey: str) -> None:
     headless = is_headless(driver)
@@ -313,8 +305,8 @@ def trigger_hotkey(driver: Driver, hotkey: str) -> None:
 def trigger_command(driver: Driver, cmd: str) -> None:
     if is_headless(driver):
         ccc = {
-            Command.ACTIVATE    : 'selenium-bridge-activate',
-            Command.MARK_VISITED: 'selenium-bridge-mark-visited',
+            Command.ACTIVATE    : 'selenium-bridge-_execute_browser_action',
+            Command.MARK_VISITED: 'selenium-bridge-mark_visited',
             Command.SEARCH      : 'selenium-bridge-search',
         }[cmd]
         # see selenium_bridge.js
@@ -460,10 +452,7 @@ class OptionsPage2:
     helper: AddonHelper
 
     def open(self) -> None:
-        # TODO extract from manifest -> options_id -> options.html
-        # seems like addon just links to the actual manifest on filesystem, so will need to read from that
-        page_name = 'options_page.html'
-        self.helper.open_page(page_name)
+        self.helper.open_page(self.helper.options_page_name)
 
         # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
         Wait(self.helper.driver, timeout=5).until(
@@ -497,8 +486,9 @@ class AddonHelperX:
 
     delegate: AddonHelper
 
+    # can remove later, this is just hack for Addon.sidebar
     def activate(self) -> None:
-        trigger_command(self.delegate.driver, Command.ACTIVATE)
+        self.delegate.trigger_command(Command.ACTIVATE)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.delegate, name)
@@ -701,7 +691,8 @@ def driver(browser: Browser) -> Iterator[Driver]:
 
 @pytest.fixture
 def addon(driver: Driver) -> Iterator[Addon]:
-    helper = AddonHelper(driver)
+    addon_source = get_addon_path(kind=driver.name)
+    helper = AddonHelper(driver=driver, addon_source=addon_source)
     yield Addon(helper=helper)
 
 

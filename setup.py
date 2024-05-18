@@ -60,6 +60,8 @@ def main() -> None:
 
                  'mypy',
                  'lxml', # for coverage reports
+
+                 'loguru',
             ],
             'testing-gui': [
                 # pyautogui seems problematic, wheels often fail to build under windows
