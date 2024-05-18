@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
-from typing import Any
+from typing import Any, List
 
 from loguru import logger
 import psutil
@@ -73,6 +73,14 @@ class AddonHelper:
 
         focus_browser_window(self.driver)
         pyautogui.hotkey(*lkey)
+
+    def gui_typewrite(self, *args, **kwargs) -> None:
+        assert not self.headless
+
+        import pyautogui
+
+        focus_browser_window(self.driver)
+        pyautogui.typewrite(*args, **kwargs)  # select first item
 
 
 # NOTE looks like it used to be posssible in webdriver api?
