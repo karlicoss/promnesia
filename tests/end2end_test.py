@@ -404,12 +404,25 @@ class Sidebar(NamedTuple):
             self.driver.find_element(By.ID, 'button-close').click()
 
 
-class OptionsPage(NamedTuple):
-    driver: Driver
-    helper: 'TestHelper'
+@dataclass
+class OptionsPage:
+    helper: AddonHelper
 
-    def set_position(self, settings: str) -> None:
-        field = self.driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
+    def open(self) -> None:
+        self.helper.open_page(self.helper.options_page_name)
+
+        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
+        Wait(self.helper.driver, timeout=5).until(
+            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
+        )
+
+    def save(self) -> None:
+        se = self.helper.driver.find_element(By.ID, 'save_id')
+        se.click()
+        _switch_to_alert(self.helper.driver).accept()
+
+    def set_position(self, settings: str):
+        field = self.helper.driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
 
         area = field.find_element(By.CLASS_NAME, 'cm-content')
         area.click()
@@ -418,7 +431,7 @@ class OptionsPage(NamedTuple):
         # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
 
         def contents() -> str:
-            return self.driver.execute_script('return arguments[0].cmView.view.state.doc.toString()', area)
+            return self.helper.driver.execute_script('return arguments[0].cmView.view.state.doc.toString()', area)
 
         # TODO FFS. these don't seem to work??
         # count = len(area.get_attribute('value'))
@@ -433,37 +446,6 @@ class OptionsPage(NamedTuple):
 
         # just in case, also need to remove spaces to workaround indentation
         assert [l.strip() for l in contents().splitlines()] == [l.strip() for l in settings.splitlines()]
-
-    def open(self) -> None:
-        self.helper.open_page('options_page.html')
-        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
-        Wait(self.driver, timeout=5).until(
-            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
-        )
-
-    def save(self) -> None:
-        se = self.driver.find_element(By.ID, 'save_id')
-        se.click()
-        _switch_to_alert(self.driver).accept()
-
-
-@dataclass
-class OptionsPage2:
-    helper: AddonHelper
-
-    def open(self) -> None:
-        self.helper.open_page(self.helper.options_page_name)
-
-        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
-        Wait(self.helper.driver, timeout=5).until(
-            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
-        )
-
-    def save(self) -> None:
-        OptionsPage(driver=self.helper.driver, helper=None).save()  # type: ignore[arg-type]
-
-    def set_position(self, settings: str):
-        OptionsPage(driver=self.helper.driver, helper=None).set_position(settings=settings)  # type: ignore[arg-type]
 
     def set_endpoint(self, *, host: Optional[str], port: Optional[str]) -> None:
         # todo rename to 'backend_id'?
@@ -500,12 +482,34 @@ class Addon:
     helper: AddonHelper
 
     @property
-    def options_page(self) -> OptionsPage2:
-        return OptionsPage2(helper=self.helper)
+    def options_page(self) -> OptionsPage:
+        return OptionsPage(helper=self.helper)
 
     @property
     def sidebar(self) -> Sidebar:
         return Sidebar(driver=self.helper.driver, helper=AddonHelperX(self.helper))  # type: ignore[arg-type]
+
+    def activate(self) -> None:
+        # TODO the activate command could be extracted from manifest too?
+        return self.helper.trigger_command(Command.ACTIVATE)
+
+    def configure(self, **kwargs) -> None:
+        configure_extension(driver=self.helper.driver, **kwargs)
+
+    def open_context_menu(self) -> None:
+        # looks like selenium can't interact with browser context menu...
+        assert not self.helper.headless
+        driver = self.helper.driver
+
+        chain = webdriver.ActionChains(driver)
+        chain.move_to_element(driver.find_element(By.TAG_NAME, 'h1')).context_click().perform()
+
+        if driver.name == 'chrome':
+            offset = 2  # Inspect, View page source
+        else:
+            offset = 0
+
+        self.helper.gui_typewrite(['up'] + ['up'] * offset + ['enter'], interval=0.5)
 
 
 class TestHelper(NamedTuple):
@@ -513,10 +517,6 @@ class TestHelper(NamedTuple):
 
     def open_page(self, page: str) -> None:
         open_extension_page(self.driver, page)
-
-    def open_options_page(self) -> None:
-        self.options_page.open()
-        self.open_page('options_page.html')
 
     def open_search_page(self, query: str="") -> None:
         self.open_page('search.html' + query)
@@ -539,10 +539,6 @@ class TestHelper(NamedTuple):
     def _sidebar(self) -> Sidebar:
         # legacy method
         return self.sidebar
-
-    @property
-    def options_page(self) -> OptionsPage:
-        return OptionsPage(driver=self.driver, helper=self)
 
     def command(self, cmd) -> None:
         trigger_command(self.driver, cmd)
@@ -770,72 +766,61 @@ def test_sidebar_position(addon: Addon, driver: Driver) -> None:
 
 
 @browsers()
-def test_blacklist_custom(driver: Driver) -> None:
-    helper = TestHelper(driver)
-    configure_extension(driver, port='12345', blacklist=('stackoverflow.com',))
+def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
+    addon.configure(port='12345', blacklist=('stackoverflow.com',))
     driver.get('https://stackoverflow.com/questions/27215462')
 
-    helper.activate()
+    addon.activate()
     manual.confirm('page should be blacklisted (black icon), you should see an error notification')
     # make sure there is not even the frame for blacklisted page
-    assert not helper._sidebar.available
+    assert not addon.sidebar.available
 
     # reset blacklist
     # also running without backend here, so need to set host to none as well
-    configure_extension(driver, host=None, blacklist=())
+    addon.configure(host=None, blacklist=())
     driver.back()
     driver.refresh()
 
-    helper._sidebar.open()
+    addon.sidebar.open()
     manual.confirm('sidebar: should be visible')
 
 
 @browsers()
-def test_blacklist_builtin(driver: Driver) -> None:
-    helper = TestHelper(driver)
-    configure_extension(driver, port='12345')
+def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
+    addon.configure(port='12345')
     driver.get('https://www.hsbc.co.uk/mortgages/')
 
-    helper.activate()
+    addon.activate()
     manual.confirm('page should be blacklisted (black icon), your should see an error notification')
     # make sure there is not even the frame for blacklisted page
-    assert not helper._sidebar.available
+    assert not addon.sidebar.available
 
     # reset blacklist
     # also running without backend here, so need to set host to none as well
-    configure_extension(driver, host=None, excludelists=())
+    addon.configure(host=None, excludelists=())
     driver.back()
     driver.refresh()
 
-    helper._sidebar.open()
+    addon.sidebar.open()
     manual.confirm('sidebar: should be visible')
 
 
 @browsers(FF, CH)
-def test_add_to_blacklist_context_menu(tmp_path: Path, browser: Browser) -> None:
+def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver) -> None:
     # doesn't work on headless because not sure how to interact with context menu.
-    with get_webdriver(browser=browser) as driver:
-        configure_extension(driver, port='12345')
-        driver.get('https://example.com')
-        chain = webdriver.ActionChains(driver)
-        chain.move_to_element(driver.find_element(By.TAG_NAME, 'h1')).context_click().perform()
+    addon.configure(port='12345')
+    driver.get('https://example.com')
 
-        # looks like selenium can't interact with browser context menu...
-        import pyautogui
+    addon.open_context_menu()
+    addon.helper.gui_typewrite(['enter'])  # select first item
 
-        if driver.name == 'chrome':
-            offset = 2 # Inspect, View page source
-        else:
-            offset = 0
-        pyautogui.typewrite(['up'] + ['up'] * offset + ['enter'] + ['enter'], interval=0.5)
+    confirm('shows prompt with alert to enter pattern to block?')
+    _switch_to_alert(driver).accept()
+    # ugh, seems necessary to guard with sleep; otherwise racey
+    sleep(0.5)
 
-        confirm('shows prompt with alert to enter pattern to block?')
-        _switch_to_alert(driver).accept()
-        # ugh, seems necessary to guard with sleep; otherwise racey
-        sleep(0.5)
-
-        driver.get(driver.current_url)
-        confirm('page should be blacklisted (black icon)')
+    driver.get(driver.current_url)
+    confirm('page should be blacklisted (black icon)')
 
 
 # todo might be nice to run soft asserts for this test?
