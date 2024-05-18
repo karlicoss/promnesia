@@ -4,6 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager, ExitStack
 import json
 from pathlib import Path
+from dataclasses import dataclass
 from datetime import datetime
 from tempfile import TemporaryDirectory
 import os
@@ -38,6 +39,7 @@ from promnesia.logging import LazyLogger
 from common import under_ci, has_x, local_http_server, notnone
 from browser_helper import open_extension_page, get_cmd_hotkey
 from webdriver_utils import frame_context, window_context, is_visible
+from addon_helper import AddonHelper, focus_browser_window, get_window_id
 
 
 logger = LazyLogger('promnesia-tests', level='debug')
@@ -158,6 +160,7 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
         from selenium.webdriver.chrome.service import Service
         service = Service(**mexepath)
         driver = webdriver.Chrome(service=service, options=cr_options)
+        # TODO ad this to common helper
         logger.info(f"using webdriver: {driver.capabilities['browserVersion']} {driver.capabilities['chrome']['chromedriverVersion']}")
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
@@ -176,19 +179,7 @@ def get_webdriver(browser: Browser, extension=True) -> Iterator[Driver]:
             driver.quit()
 
 
-def set_host(*, driver: Driver, host: Optional[str], port: Optional[str]) -> None:
-    # todo rename to 'backend_id'?
-    ep = driver.find_element(By.ID, 'host_id')
-    ep.clear()
-    # sanity check -- make sure there are no race conditions with async operations
-    assert ep.get_attribute('value') == ''
-    if host is None:
-        return
-    assert port is not None
-    ep.send_keys(f'{host}:{port}')
-    assert ep.get_attribute('value') == f'{host}:{port}'
-
-
+# TODO move to webdriver_utils?
 def _switch_to_alert(driver: Driver) -> Alert:
     """
     Alert is often shown as a result of async operations, so this is to prevent race conditions
@@ -231,11 +222,11 @@ def configure_extension(
     # TODO log properly
     print(f"Setting: port {port}, show_dots {show_dots}")
 
-    helper = TestHelper(driver)
-    page = helper.options_page
+    addon = Addon(helper=AddonHelper(driver=driver))
+    page = addon.options_page
     page.open()
 
-    set_host(driver=driver, host=host, port=port)
+    page.set_endpoint(host=host, port=port)
 
     if show_dots is not None:
         set_checkbox('mark_visited_always_id', show_dots)
@@ -281,39 +272,6 @@ def configure_extension(
         bla.send_keys(excludelists_json)
 
     page.save()
-
-
-# legacy name
-configure = configure_extension
-
-
-def get_window_id(driver: Driver) -> str:
-    if driver.name == 'firefox':
-        pid = str(driver.capabilities['moz:processID'])
-    else:
-        # ugh nothing in capabilities...
-        pid = check_output(['pgrep', '-f', 'chrome.*enable-automation']).decode('utf8').strip()
-    # https://askubuntu.com/a/385037/427470
-    return get_wid_by_pid(pid)
-
-
-def get_wid_by_pid(pid: str) -> str:
-    wids = check_output(['xdotool', 'search', '--pid', pid]).decode('utf8').splitlines()
-    wids = [w.strip() for w in wids if len(w.strip()) > 0]
-
-    def has_wm_desktop(wid: str) -> bool:
-        # TODO no idea why is that important. found out experimentally
-        out = check_output(['xprop', '-id', wid, '_NET_WM_DESKTOP']).decode('utf8')
-        return 'not found' not in out
-
-    [wid] = filter(has_wm_desktop, wids)
-    return wid
-
-
-def focus_browser_window(driver: Driver) -> None:
-    assert not is_headless(driver)  # just in case
-    wid = get_window_id(driver)
-    check_call(['xdotool', 'windowactivate', '--sync', wid])
 
 
 def trigger_callback(driver: Driver, callback) -> None:
@@ -497,6 +455,69 @@ class OptionsPage(NamedTuple):
         _switch_to_alert(self.driver).accept()
 
 
+@dataclass
+class OptionsPage2:
+    helper: AddonHelper
+
+    def open(self) -> None:
+        # TODO extract from manifest -> options_id -> options.html
+        # seems like addon just links to the actual manifest on filesystem, so will need to read from that
+        page_name = 'options_page.html'
+        self.helper.open_page(page_name)
+
+        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
+        Wait(self.helper.driver, timeout=5).until(
+            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
+        )
+
+    def save(self) -> None:
+        OptionsPage(driver=self.helper.driver, helper=None).save()  # type: ignore[arg-type]
+
+    def set_position(self, settings: str):
+        OptionsPage(driver=self.helper.driver, helper=None).set_position(settings=settings)  # type: ignore[arg-type]
+
+    def set_endpoint(self, *, host: Optional[str], port: Optional[str]) -> None:
+        # todo rename to 'backend_id'?
+        ep = self.helper.driver.find_element(By.ID, 'host_id')
+        ep.clear()
+        # sanity check -- make sure there are no race conditions with async operations
+        assert ep.get_attribute('value') == ''
+        if host is None:
+            return
+        assert port is not None
+        ep.send_keys(f'{host}:{port}')
+        assert ep.get_attribute('value') == f'{host}:{port}'
+
+
+@dataclass
+class AddonHelperX:
+    """
+    This should be gradually moved into AddonHelper
+    """
+
+    delegate: AddonHelper
+
+    def activate(self) -> None:
+        trigger_command(self.delegate.driver, Command.ACTIVATE)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.delegate, name)
+
+
+# TODO gradually replace TestHelper and other older stuff
+@dataclass
+class Addon:
+    helper: AddonHelper
+
+    @property
+    def options_page(self) -> OptionsPage2:
+        return OptionsPage2(helper=self.helper)
+
+    @property
+    def sidebar(self) -> Sidebar:
+        return Sidebar(driver=self.helper.driver, helper=AddonHelperX(self.helper))  # type: ignore[arg-type]
+
+
 class TestHelper(NamedTuple):
     driver: Driver
 
@@ -678,40 +699,44 @@ def driver(browser: Browser) -> Iterator[Driver]:
         yield d
 
 
+@pytest.fixture
+def addon(driver: Driver) -> Iterator[Addon]:
+    helper = AddonHelper(driver)
+    yield Addon(helper=helper)
+
+
 @browsers()
-def test_installs(tmp_path: Path, driver: Driver) -> None:
+def test_installs(addon: Addon) -> None:
     """
     Even loading the extension into webdriver is pretty elaborate, so the test just checks it works
     """
-    pass
+    assert addon.helper.addon_id is not None
 
 
 @browsers()
-def test_settings(tmp_path: Path, driver: Driver) -> None:
+def test_settings(addon: Addon, driver: Driver) -> None:
     """
     Just a basic test for opening options page and making sure it loads options
     """
-    helper = TestHelper(driver)
-    helper.open_options_page()
+    addon.options_page.open()
     hh = driver.find_element(By.ID, 'host_id')
     assert hh.get_attribute('value') == 'http://localhost:13131'  # default
 
     configure_extension(driver, port='12345', show_dots=False)
     driver.get('about:blank')
 
-    helper.open_options_page()
+    addon.options_page.open()
     hh = driver.find_element(By.ID, 'host_id')
     assert hh.get_attribute('value') == 'http://localhost:12345'
 
 
 @browsers()
-def test_backend_status(tmp_path: Path, driver: Driver) -> None:
+def test_backend_status(addon: Addon, driver: Driver) -> None:
     """
     We should get an alert if backend is unavailable on the status check
     """
-    helper = TestHelper(driver)
-    helper.open_options_page()
-    set_host(driver=driver, host='https://nosuchhost.com', port='1234')
+    addon.options_page.open()
+    addon.options_page.set_endpoint(host='https://nosuchhost.com', port='1234')
 
     driver.find_element(By.ID, 'backend_status_id').click()
 
@@ -723,22 +748,21 @@ def test_backend_status(tmp_path: Path, driver: Driver) -> None:
 
 
 @browsers()
-def test_sidebar_position(driver: Driver) -> None:
+def test_sidebar_position(addon: Addon, driver: Driver) -> None:
     """
     Checks that default sidebar position is on the right, and that changing it to --bottom: 1 works
     """
-    helper = TestHelper(driver)
-    options_page = helper.options_page
+    options_page = addon.options_page
     options_page.open()
     # TODO WTF; if we don't open extension page once, we can't read out hotkeys from the chrome extension settings file
     # (so e.g. trigger_command isn't working???)
+    options_page.set_endpoint(host=None, port=None)  # we don't need backend here
 
-    # TODO hmm maybe need to disable backend here... otherwise it connects to the default backend and might be a bit slow
     driver.get('https://example.com')
 
-    helper._sidebar.open()
+    addon.sidebar.open()
     confirm("sidebar: should be displayed on the right (default)")
-    helper._sidebar.close()
+    addon.sidebar.close()
 
     options_page.open()
     settings = """
@@ -746,11 +770,11 @@ def test_sidebar_position(driver: Driver) -> None:
   --bottom: 1;
   --size: 20%;
 }""".strip()
-    helper.options_page.set_position(settings)
+    options_page.set_position(settings)
     options_page.save()
 
     driver.get('https://example.com')
-    helper._sidebar.open()
+    addon.sidebar.open()
     confirm("sidebar: should be displayed below")
 
 

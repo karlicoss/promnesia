@@ -10,7 +10,8 @@ from promnesia.tests.utils import index_urls
 from common import uses_x
 from end2end_test import FF, CH, browsers, _test_helper
 from end2end_test import confirm
-from end2end_test import configure, get_window_id
+from end2end_test import configure_extension
+from addon_helper import get_window_id
 
 from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
 
@@ -129,7 +130,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
         if 'highlights' not in extras:
             extras['highlights'] = False
 
-        configure(
+        configure_extension(
             driver,
             host=None, port=None, # TODO meh
             notify_contexts=False,
