@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from contextlib import contextmanager, ExitStack
-import json
-from pathlib import Path
+from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
-from tempfile import TemporaryDirectory
 import os
+from pathlib import Path
 import shutil
-from subprocess import check_call, check_output
 from time import sleep
-from typing import NamedTuple, Optional, Iterator, TypeVar, Callable, Sequence, Union, Dict, Any
+from typing import Iterator, TypeVar, Callable, Dict, Any
 
 import pytest
 
@@ -23,43 +20,31 @@ if __name__ == '__main__':
 
 from selenium import webdriver
 from selenium.webdriver import Remote as Driver
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.alert import Alert
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoAlertPresentException, NoSuchFrameException, TimeoutException
 
 from promnesia.tests.utils import index_urls
 from promnesia.tests.server_helper import run_server as wserver
 from promnesia.logging import LazyLogger
 
 from common import under_ci, has_x, local_http_server, notnone
-from browser_helper import open_extension_page, get_cmd_hotkey
-from webdriver_utils import frame_context, is_visible, is_headless
-from addon_helper import AddonHelper, focus_browser_window, get_window_id
+from webdriver_utils import is_visible, wait_for_alert
+from addon import get_addon_source, Addon, LOCALHOST, addon
 
 
 logger = LazyLogger('promnesia-tests', level='debug')
 
 
-from promnesia.common import measure as measure_orig
-@contextmanager
-def measure(*args, **kwargs):
-    kwargs['logger'] = logger
-    with measure_orig(*args, **kwargs) as m:
-        yield m
-
-
-class Browser(NamedTuple):
+@dataclass
+class Browser:
     dist: str
     headless: bool
 
     @property
     def name(self) -> str:
-        return self.dist.split('-')[0] # TODO meh
+        return self.dist.split('-')[0]  # TODO meh
 
     def skip_ci_x(self) -> None:
         if under_ci() and not self.headless:
@@ -88,29 +73,8 @@ def browser_(driver: Driver) -> Browser:
         raise AssertionError(driver)
 
 
-def get_addon_path(kind: str) -> Path:
-    # TODO compile first?
-    addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / kind).absolute()
-    assert addon_path.exists()
-    assert (addon_path / 'manifest.json').exists()
-    return addon_path
-
-
-def get_hotkey(driver: Driver, cmd: str) -> str:
-    cmd_map = None
-    if driver.name == 'firefox':
-        # TODO remove hardcoding somehow...
-        # perhaps should be extracted somewhere..
-        cmd_map = {
-            Command.MARK_VISITED     : 'Ctrl+Alt+v',
-            '_execute_browser_action': 'Ctrl+Alt+e',
-            'search'                 : 'Ctrl+Alt+h',
-        }
-    return get_cmd_hotkey(driver, cmd=cmd, cmd_map=cmd_map)
-
-
-def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver:
-    addon = get_addon_path(kind=browser.dist)
+def _get_webdriver(tdir: Path, browser: Browser, extension: bool = True) -> Driver:
+    addon = get_addon_source(kind=browser.dist)
     driver: Driver
     if browser.name == 'firefox':
         ff_options = webdriver.FirefoxOptions()
@@ -167,410 +131,6 @@ def _get_webdriver(tdir: Path, browser: Browser, extension: bool=True) -> Driver
     return driver
 
 
-# TODO copy paste from grasp
-@contextmanager
-def get_webdriver(browser: Browser, extension=True) -> Iterator[Driver]:
-    with TemporaryDirectory() as td:
-        tdir = Path(td)
-        driver = _get_webdriver(tdir, browser=browser, extension=extension)
-        try:
-            yield driver
-        finally:
-            driver.quit()
-
-
-# TODO move to webdriver_utils?
-def _switch_to_alert(driver: Driver) -> Alert:
-    """
-    Alert is often shown as a result of async operations, so this is to prevent race conditions
-    """
-    e: Optional[Exception] = None
-    for _ in range(100 * 10): # wait 10 secs max
-        try:
-            return driver.switch_to.alert
-        except NoAlertPresentException as ex:
-            e = ex
-            sleep(0.01)
-            continue
-    assert e is not None
-    raise e
-
-
-LOCALHOST = 'http://localhost'
-
-
-def configure_extension(
-        driver: Driver,
-        *,
-        host: Optional[str]=None,
-        port: Optional[str]=None,
-        show_dots: bool=True,
-        highlights: Optional[bool]=None,
-        blacklist: Optional[Sequence[str]]=None,
-        excludelists: Optional[Sequence[str]]=None,
-        notify_contexts: Optional[bool]=None,
-        position: Optional[str]=None,
-        verbose_errors: bool=True,
-) -> None:
-    def set_checkbox(cid: str, value: bool) -> None:
-        cb = driver.find_element(By.ID, cid)
-        selected = cb.is_selected()
-        if selected != value:
-            cb.click()
-
-
-    # TODO log properly
-    print(f"Setting: port {port}, show_dots {show_dots}")
-
-    addon_source = get_addon_path(kind=driver.name)
-    helper = AddonHelper(driver=driver, addon_source=addon_source)
-    addon = Addon(helper=helper)
-    page = addon.options_page
-    page.open()
-
-    if host is not None or port is not None:
-        page.set_endpoint(host=host, port=port)
-
-    if show_dots is not None:
-        set_checkbox('mark_visited_always_id', show_dots)
-
-    # TODO not sure, should be False for demos?
-    set_checkbox('verbose_errors_id', verbose_errors)
-
-    if highlights is not None:
-        set_checkbox('highlight_id', highlights)
-
-    if notify_contexts is not None:
-        set_checkbox('contexts_popup_id', notify_contexts)
-
-    if position is not None:
-        page.set_position(position)
-
-    if blacklist is not None:
-        bl = driver.find_element(By.ID, 'global_excludelist_id') # .find_element_by_tag_name('textarea')
-        bl.click()
-        # ugh, that's hacky. presumably due to using Codemirror?
-        bla = driver.switch_to.active_element
-        # ugh. doesn't work, .text always returns 0...
-        # if len(bla.text) > 0:
-        # for some reason bla.clear() isn't working...
-        # results in ElementNotInteractableException: Element <textarea> could not be scrolled into view
-        bla.send_keys(Keys.CONTROL + 'a')
-        bla.send_keys(Keys.BACKSPACE)
-        bla.send_keys('\n'.join(blacklist))
-
-    if excludelists is not None:
-        excludelists_json = json.dumps(excludelists)
-
-        bl = driver.find_element(By.ID, 'global_excludelists_ext_id') # .find_element_by_tag_name('textarea')
-        bl.click()
-        # ugh, that's hacky. presumably due to using Codemirror?
-        bla = driver.switch_to.active_element
-        # ugh. doesn't work, .text always returns 0...
-        # if len(bla.text) > 0:
-        # for some reason bla.clear() isn't working...
-        # results in ElementNotInteractableException: Element <textarea> could not be scrolled into view
-        bla.send_keys(Keys.CONTROL + 'a')
-        bla.send_keys(Keys.BACKSPACE)
-        bla.send_keys(excludelists_json)
-
-    page.save()
-
-
-def trigger_callback(driver: Driver, callback) -> None:
-    focus_browser_window(driver)
-    callback()
-
-
-def send_key(key) -> None:
-    if isinstance(key, str):
-        key = key.split('+')
-
-    print(f"sending hotkey! {key}")
-    import pyautogui
-    pyautogui.hotkey(*key)
-
-
-# TODO move to common or something
-def trigger_hotkey(driver: Driver, hotkey: str) -> None:
-    headless = is_headless(driver)
-    try:
-        trigger_callback(driver, lambda: send_key(hotkey))
-    except Exception as e:
-        if headless:
-            raise RuntimeError("Likely failed because the browser is headless") from e
-        else:
-            raise e
-
-
-def trigger_command(driver: Driver, cmd: str) -> None:
-    if is_headless(driver):
-        ccc = {
-            Command.ACTIVATE    : 'selenium-bridge-_execute_browser_action',
-            Command.MARK_VISITED: 'selenium-bridge-mark_visited',
-            Command.SEARCH      : 'selenium-bridge-search',
-        }[cmd]
-        # see selenium_bridge.js
-        driver.execute_script(f"""
-        var event = document.createEvent('HTMLEvents');
-        event.initEvent('{ccc}', true, true);
-        document.dispatchEvent(event);
-        """)
-    else:
-        trigger_hotkey(driver, get_hotkey(driver, cmd))
-
-
-PROMNESIA_SIDEBAR_ID = 'promnesia-sidebar'
-class Sidebar(NamedTuple):
-    driver: Driver
-    helper: 'TestHelper'
-
-    @contextmanager
-    def ctx(self) -> Iterator[WebElement]:
-        selector = (By.XPATH, '//iframe[contains(@id, "promnesia-frame")]')
-        wait = 5  # if you want to decrease this, make sure test_sidebar_navigation isn't failing
-        frame_element = Wait(self.driver, timeout=wait).until(
-            EC.presence_of_element_located(selector),
-        )
-
-        frames = self.driver.find_elements(*selector)
-        # TODO uncomment it later when sidebar is injected gracefully...
-        # assert len(frames) == 1, frames  # just in case
-
-        frame_id = frame_element.get_attribute('id')
-        with frame_context(self.driver, frame_id) as frame:
-            assert frame is not None
-            yield frame
-
-    @property
-    def available(self) -> bool:
-        try:
-            with self.ctx():
-                return True
-        except TimeoutException:
-            return False
-
-    @property
-    def visible(self) -> bool:
-        loc = (By.ID, PROMNESIA_SIDEBAR_ID)
-        with self.ctx():
-            Wait(self.driver, timeout=5).until(
-                EC.presence_of_element_located(loc)
-            )
-            # NOTE: document in JS here is in the context of iframe
-            return is_visible(self.driver, self.driver.find_element(*loc))
-
-    def open(self) -> None:
-        assert not self.visible
-        self.helper.activate()
-
-        with measure('Sidebar.open') as m:
-            while not self.visible:
-                assert m() <= 10, 'timeout'
-                sleep(0.001)
-
-    def close(self) -> None:
-        assert self.visible
-        self.helper.activate()
-        with measure('Sidebar.close') as m:
-            while self.visible:
-                assert m() <= 10, 'timeout'
-                sleep(0.001)
-
-    @property
-    def filters(self) -> list[WebElement]:
-        # TODO hmm this only works within sidebar frame context
-        # but if we add with self.ctx() here, it seems unhappy with enterinng the context twice
-        # do something about it later..
-        outer = self.driver.find_element(By.ID, 'promnesia-sidebar-filters')
-        return outer.find_elements(By.CLASS_NAME, 'src')
-
-    @property
-    def visits(self) -> list[WebElement]:
-        return self.driver.find_elements(By.XPATH, '//*[@id="visits"]/li')
-
-    def trigger_search(self) -> None:
-        # this should be the window with extension
-        cur_window_handles = self.driver.window_handles
-        with self.ctx():
-            self.driver.find_element(By.ID, 'button-search').click()
-            self.helper.wait_for_search_tab(cur_window_handles)  # type: ignore[attr-defined]
-
-    def trigger_mark_visited(self) -> None:
-        with self.ctx():
-            self.driver.find_element(By.ID, 'button-mark').click()
-
-    def trigger_close(self) -> None:
-        with self.ctx():
-            self.driver.find_element(By.ID, 'button-close').click()
-
-
-@dataclass
-class OptionsPage:
-    helper: AddonHelper
-
-    def open(self) -> None:
-        self.helper.open_page(self.helper.options_page_name)
-
-        # make sure settings are loaded first -- otherwise we might get race conditions when we try to set them in tests
-        Wait(self.helper.driver, timeout=5).until(
-            EC.presence_of_element_located((By.ID, 'promnesia-settings-loaded'))
-        )
-
-    def save(self) -> None:
-        se = self.helper.driver.find_element(By.ID, 'save_id')
-        se.click()
-        _switch_to_alert(self.helper.driver).accept()
-
-    def set_position(self, settings: str):
-        field = self.helper.driver.find_element(By.XPATH, '//*[@id="position_css_id"]')
-
-        area = field.find_element(By.CLASS_NAME, 'cm-content')
-        area.click()
-
-        # for some reason area.clear() caused
-        # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
-
-        def contents() -> str:
-            return self.helper.driver.execute_script('return arguments[0].cmView.view.state.doc.toString()', area)
-
-        # TODO FFS. these don't seem to work??
-        # count = len(area.get_attribute('value'))
-        # and this only returns visible porition of the text??? so only 700 characters or something
-        # count = len(field.text)
-        # count += 100  # just in case
-        count = 3000 # meh
-        # focus ends up at some random position, so need both backspace and delete
-        area.send_keys(*([Keys.BACKSPACE] * count + [Keys.DELETE] * count))
-        assert contents() == ''
-        area.send_keys(settings)
-
-        # just in case, also need to remove spaces to workaround indentation
-        assert [l.strip() for l in contents().splitlines()] == [l.strip() for l in settings.splitlines()]
-
-    def set_endpoint(self, *, host: Optional[str], port: Optional[str]) -> None:
-        # todo rename to 'backend_id'?
-        ep = self.helper.driver.find_element(By.ID, 'host_id')
-        ep.clear()
-        # sanity check -- make sure there are no race conditions with async operations
-        assert ep.get_attribute('value') == ''
-        if host is None:
-            return
-        assert port is not None
-        ep.send_keys(f'{host}:{port}')
-        assert ep.get_attribute('value') == f'{host}:{port}'
-
-
-@dataclass
-class AddonHelperX:
-    """
-    This should be gradually moved into AddonHelper
-    """
-
-    delegate: AddonHelper
-
-    ## can remove later, these are just hack for Addon.sidebar
-    def activate(self) -> None:
-        self.delegate.trigger_command(Command.ACTIVATE)
-
-    def wait_for_search_tab(self, cur_window_handles) -> None:
-        driver = self.delegate.driver
-        # for some reason the webdriver's context stays the same even when new tab is opened
-        # ugh. not sure why it's so elaborate, but that's what stackoverflow suggested
-        Wait(driver, timeout=5).until(EC.number_of_windows_to_be(len(cur_window_handles) + 1))
-        new_windows = set(driver.window_handles) - set(cur_window_handles)
-        assert len(new_windows) == 1, new_windows
-        [new_window] = new_windows
-        driver.switch_to.window(new_window)
-        Wait(driver, timeout=5).until(EC.presence_of_element_located((By.ID, 'promnesia-search')))
-    ##
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.delegate, name)
-
-
-# TODO gradually replace TestHelper and other older stuff
-@dataclass
-class Addon:
-    helper: AddonHelper
-
-    @property
-    def options_page(self) -> OptionsPage:
-        return OptionsPage(helper=self.helper)
-
-    def open_search_page(self, query: str = "") -> None:
-        self.helper.open_page('search.html' + query)
-
-        Wait(self.helper.driver, timeout=10).until(
-            EC.presence_of_element_located((By.ID, 'visits')),
-        )
-
-    @property
-    def sidebar(self) -> Sidebar:
-        return Sidebar(driver=self.helper.driver, helper=AddonHelperX(self.helper))  # type: ignore[arg-type]
-
-    def activate(self) -> None:
-        # TODO the activate command could be extracted from manifest too?
-        self.helper.trigger_command(Command.ACTIVATE)
-
-    def mark_visited(self) -> None:
-        self.helper.trigger_command(Command.MARK_VISITED)
-
-    def search(self) -> None:
-        # cur_window_handles = self.driver.window_handles
-        self.helper.trigger_command(Command.SEARCH)
-        # self.wait_for_search_tab(cur_window_handles)
-
-    def configure(self, **kwargs) -> None:
-        configure_extension(driver=self.helper.driver, **kwargs)
-
-    def open_context_menu(self) -> None:
-        # looks like selenium can't interact with browser context menu...
-        assert not self.helper.headless
-        driver = self.helper.driver
-
-        chain = webdriver.ActionChains(driver)
-        chain.move_to_element(driver.find_element(By.TAG_NAME, 'h1')).context_click().perform()
-
-        if driver.name == 'chrome':
-            offset = 2  # Inspect, View page source
-        else:
-            offset = 0
-
-        self.helper.gui_typewrite(['up'] + ['up'] * offset + ['enter'], interval=0.5)
-
-    # TODO this doesn't belong to this class really, think about it
-    def move_to(self, element) -> None:
-        ActionChains(self.helper.driver).move_to_element(element).perform()
-
-
-class TestHelper(NamedTuple):
-    driver: Driver
-
-    def open_page(self, page: str) -> None:
-        open_extension_page(self.driver, page)
-
-    def move_to(self, element) -> None:
-        ActionChains(self.driver).move_to_element(element).perform()
-
-    @property
-    def sidebar(self) -> Sidebar:
-        return Sidebar(driver=self.driver, helper=self)
-
-    def command(self, cmd) -> None:
-        trigger_command(self.driver, cmd)
-
-    def activate(self) -> None:
-        self.command(Command.ACTIVATE)
-
-    def wid(self) -> str:
-        return get_window_id(self.driver)
-
-    def screenshot(self, path: Path) -> None:
-        # ugh, webdriver's save_screenshot doesn't behave well with frames
-        check_call(['import', '-window', self.wid(), path])
-
-
 def confirm(what: str) -> None:
     is_headless = 'headless' in os.environ.get('PYTEST_CURRENT_TEST', '')
     if is_headless:
@@ -603,47 +163,6 @@ Helper for tests that are not yet fully automated and require a human to check..
   of course it's not very robust, but at least we're testing some codepaths then
 '''
 manual = Interactive() if has_x() else Headless()
-
-
-# TODO deprecate this in favor of run_server
-# still used in demos.py..
-@contextmanager
-def _test_helper(tmp_path: Path, indexer: Callable[[Path], None], test_url: Optional[str], browser: Browser, **kwargs) -> Iterator[TestHelper]:
-    tdir = Path(tmp_path)
-
-    indexer(tdir)
-    with wserver(db=tdir / 'promnesia.sqlite') as srv, get_webdriver(browser=browser) as driver:
-        port = srv.port
-        configure_extension(driver, port=port, **kwargs)
-        sleep(0.5)
-
-        if test_url is not None:
-            driver.get(test_url)
-            # TODO meh, it's really crap
-            sleep(3) # todo use some condition...
-        else:
-            driver.get('about:blank')
-
-        yield TestHelper(driver=driver)
-
-
-@contextmanager
-def run_server(tmp_path: Path, indexer: Callable[[Path], None], driver: Driver, **kwargs) -> Iterator[TestHelper]:
-    # TODO ideally should index in a separate thread? and perhaps start server too
-    indexer(tmp_path)
-    with wserver(db=tmp_path / 'promnesia.sqlite') as srv:
-        # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
-        port = srv.port
-        configure_extension(driver, host=LOCALHOST, port=port, **kwargs)
-        driver.get('about:blank')  # not sure if necessary
-        yield TestHelper(driver=driver)
-
-
-class Command:
-    MARK_VISITED = 'mark_visited'
-    ACTIVATE  = '_execute_browser_action'
-    SEARCH    = 'search'
-# TODO assert this against manifest?
 
 
 WITH_BROWSER_TESTS = 'WITH_BROWSER_TESTS'
@@ -680,16 +199,29 @@ def browsers(*br: Browser) -> IdType:
 
 
 @pytest.fixture
-def driver(browser: Browser) -> Iterator[Driver]:
-    with get_webdriver(browser=browser) as d:
-        yield d
+def driver(tmp_path: Path, browser: Browser) -> Iterator[Driver]:
+    driver = _get_webdriver(tmp_path, browser=browser, extension=True)
+    try:
+        yield driver
+    finally:
+        driver.quit()
+
+
+@dataclass
+class Backend:
+    # directory with database and configs
+    backend_dir: Path
 
 
 @pytest.fixture
-def addon(driver: Driver) -> Iterator[Addon]:
-    addon_source = get_addon_path(kind=driver.name)
-    helper = AddonHelper(driver=driver, addon_source=addon_source)
-    yield Addon(helper=helper)
+def backend(tmp_path: Path, addon: Addon) -> Iterator[Backend]:
+    backend_dir = tmp_path
+    # TODO ideally should index in a separate thread? and perhaps start server too
+    with wserver(db=backend_dir / 'promnesia.sqlite') as srv:
+        # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
+        addon.configure(host=LOCALHOST, port=srv.port)
+        addon.helper.driver.get('about:blank')  # not sure if necessary
+        yield Backend(backend_dir=backend_dir)
 
 
 @browsers()
@@ -723,11 +255,11 @@ def test_backend_status(addon: Addon, driver: Driver) -> None:
     We should get an alert if backend is unavailable on the status check
     """
     addon.options_page.open()
-    addon.options_page.set_endpoint(host='https://nosuchhost.com', port='1234')
+    addon.options_page._set_endpoint(host='https://nosuchhost.com', port='1234')
 
     driver.find_element(By.ID, 'backend_status_id').click()
 
-    alert = _switch_to_alert(driver)
+    alert = wait_for_alert(driver)
     assert 'ERROR' in alert.text
     alert.accept()
 
@@ -743,7 +275,7 @@ def test_sidebar_position(addon: Addon, driver: Driver) -> None:
     options_page.open()
     # TODO WTF; if we don't open extension page once, we can't read out hotkeys from the chrome extension settings file
     # (so e.g. trigger_command isn't working???)
-    options_page.set_endpoint(host=None, port=None)  # we don't need backend here
+    options_page._set_endpoint(host=None, port=None)  # we don't need backend here
 
     driver.get('https://example.com')
 
@@ -757,8 +289,8 @@ def test_sidebar_position(addon: Addon, driver: Driver) -> None:
   --bottom: 1;
   --size: 20%;
 }""".strip()
-    options_page.set_position(settings)
-    options_page.save()
+    options_page._set_position(settings)
+    options_page._save()
 
     driver.get('https://example.com')
     addon.sidebar.open()
@@ -815,29 +347,12 @@ def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver) -> None:
     addon.helper.gui_typewrite(['enter'])  # select first item
 
     confirm('shows prompt with alert to enter pattern to block?')
-    _switch_to_alert(driver).accept()
+    wait_for_alert(driver).accept()
     # ugh, seems necessary to guard with sleep; otherwise racey
     sleep(0.5)
 
     driver.get(driver.current_url)
     confirm('page should be blacklisted (black icon)')
-
-
-@dataclass
-class Backend:
-    # directory with database and configs
-    backend_dir: Path
-
-
-@pytest.fixture
-def backend(tmp_path: Path, addon: Addon) -> Iterator[Backend]:
-    backend_dir = tmp_path
-    # TODO ideally should index in a separate thread? and perhaps start server too
-    with wserver(db=backend_dir / 'promnesia.sqlite') as srv:
-        # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
-        addon.configure(host=LOCALHOST, port=srv.port)
-        addon.helper.driver.get('about:blank')  # not sure if necessary
-        yield Backend(backend_dir=backend_dir)
 
 
 # todo might be nice to run soft asserts for this test?
