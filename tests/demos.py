@@ -8,9 +8,9 @@ from typing import Optional
 from promnesia.tests.utils import index_urls
 
 from common import uses_x
-from end2end_test import FF, CH, browsers, _test_helper
+from end2end_test import FF, CH, browsers, _test_helper  # type: ignore[attr-defined]
 from end2end_test import confirm
-from end2end_test import configure_extension
+from end2end_test import configure_extension  # type: ignore[attr-defined]
 from addon_helper import get_window_id
 
 from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
@@ -462,7 +462,7 @@ def scroll_to_text(driver, text: str):
     # TODO a bit of wait??
    
 
-from end2end_test import get_webdriver
+from end2end_test import get_webdriver  # type: ignore[attr-defined]
 
 
 @uses_x
@@ -542,6 +542,9 @@ Highlights are displayed within the original page!
         helper.activate()
         wait(2)
 
+        # TODO this used to be used for screenshots
+        # # ugh, webdriver's save_screenshot doesn't behave well with frames
+        # check_call(['import', '-window', self.wid(), path])
         helper.screenshot(path.with_suffix('.png'))
 
         annotate('''

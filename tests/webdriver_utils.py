@@ -1,9 +1,11 @@
-#!/usr/bin/env python3
 from contextlib import contextmanager
+from time import sleep
 from typing import Optional, Iterator
 
 
+from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
+from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
 
 
@@ -54,3 +56,19 @@ def is_headless(driver: Driver) -> bool:
         return driver.execute_script("return navigator.webdriver") is True
     else:
         raise RuntimeError(driver.name)
+
+
+def wait_for_alert(driver: Driver) -> Alert:
+    """
+    Alert is often shown as a result of async operations, so this is to prevent race conditions
+    """
+    e: Optional[Exception] = None
+    for _ in range(100 * 10):  # wait 10 secs max
+        try:
+            return driver.switch_to.alert
+        except NoAlertPresentException as ex:
+            e = ex
+            sleep(0.01)
+            continue
+    assert e is not None
+    raise e

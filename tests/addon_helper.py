@@ -47,6 +47,7 @@ class AddonHelper:
         return is_headless(self.driver)
 
     def trigger_command(self, command: str) -> None:
+        # note: also for chrome possible to extract from prefs['extensions']['commands'] if necessary
         commands = self.manifest['commands']
         assert command in commands, (command, commands)
 
