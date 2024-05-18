@@ -1048,10 +1048,10 @@ function initBackground(): void {
 
 chrome.runtime.onMessage.addListener((info: any, _: chrome$MessageSender) => {
     // see selenium_bridge.js
-    if (info === 'selenium-bridge-activate') {
+    if (info === 'selenium-bridge-_execute_browser_action') {
         handleToggleSidebar()
     }
-    if (info === 'selenium-bridge-mark-visited') {
+    if (info === 'selenium-bridge-mark_visited') {
         handleToggleMarkVisited()
     }
     if (info === 'selenium-bridge-search') {
