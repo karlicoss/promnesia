@@ -462,7 +462,7 @@ def scroll_to_text(driver, text: str):
     # TODO a bit of wait??
    
 
-from end2end_test import get_webdriver  # type: ignore[attr-defined]
+from end2end_test import get_webdriver
 
 
 @uses_x
@@ -509,7 +509,7 @@ I'm using Instapaper to read and highlight articles while I'm offline on my phon
         # TODO go to div class="source" -> a class="original"
         # driver without the extension
         ORIG = 'http://nautil.us/issue/66/clockwork/haunted-by-his-brother-he-revolutionized-physics-rp'
-        with get_webdriver(browser, extension=False) as driver2:
+        with get_webdriver(browser, extension=False) as driver2:  # type: ignore[misc,call-arg]
             driver2.get(ORIG)
 
             # TODO maybe, have annotation 'start' and 'interrupt'?

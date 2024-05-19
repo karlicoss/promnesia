@@ -2,9 +2,6 @@ FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# used in end2end tests
-ENV UNDER_DOCKER=true
-
 RUN apt-get update        \
  ## install chrome
  && apt-get install -y wget \
@@ -18,6 +15,9 @@ RUN apt-get update        \
  && wget 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F1110897%2Fchromedriver_linux64.zip?generation=1677589097630198&alt=media' -O /tmp/chrome/chromedriver_linux64.zip  \
  && unzip /tmp/chrome/chrome-linux.zip         -d /tmp/chrome \
  && unzip /tmp/chrome/chromedriver_linux64.zip -d /tmp/chrome \
+ && ln -sf /tmp/chrome/chrome-linux/chrome /usr/bin/google-chrome \
+ && ln -sf /tmp/chrome/chromedriver_linux64/chromedriver /usr/bin/chromedriver \
+ ## TODO don't install chrome above? just install necessary deps
  ##
  ## install firefox
  # install add-apt-repository command
@@ -42,6 +42,7 @@ RUN apt-get update        \
  && apt-get clean \
  # geckodriver isn't available in ubuntu repos anymore because of snap
  && curl -L https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz | tar xz -C /usr/local/bin
+ ## TODO don't need geckodriver anymore since selenium manages to download it itself?
 
 
 # ugh. so
