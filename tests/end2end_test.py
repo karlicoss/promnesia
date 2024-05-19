@@ -6,9 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 import os
 from pathlib import Path
-import shutil
 from time import sleep
-from typing import Iterator, TypeVar, Callable, Dict, Any
+from typing import Iterator, TypeVar, Callable
 
 import pytest
 
@@ -18,7 +17,6 @@ if __name__ == '__main__':
     pytest.main(['-s', __file__])
 
 
-from selenium import webdriver
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -30,7 +28,7 @@ from promnesia.tests.server_helper import run_server as wserver
 from promnesia.logging import LazyLogger
 
 from common import under_ci, has_x, local_http_server, notnone
-from webdriver_utils import is_visible, wait_for_alert
+from webdriver_utils import is_visible, wait_for_alert, get_webdriver
 from addon import get_addon_source, Addon, LOCALHOST, addon
 
 
@@ -71,64 +69,6 @@ def browser_(driver: Driver) -> Browser:
         return CH
     else:
         raise AssertionError(driver)
-
-
-def _get_webdriver(tdir: Path, browser: Browser, extension: bool = True) -> Driver:
-    addon = get_addon_source(kind=browser.dist)
-    driver: Driver
-    if browser.name == 'firefox':
-        ff_options = webdriver.FirefoxOptions()
-        ff_options.set_preference('profile', str(tdir))
-        # todo remove when webdriver is updated
-        # see https://github.com/mozilla/geckodriver/issues/2075
-        ff_options.set_preference('fission.autostart', True)
-        if browser.headless:
-            ff_options.add_argument('--headless')
-        # use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
-        driver = webdriver.Firefox(options=ff_options)
-        # todo pass firefox-dev binary?
-        if extension:
-            driver.install_addon(str(addon), temporary=True)
-    elif browser.name == 'chrome':
-        # TODO ugh. very hacky...
-        assert extension, "TODO add support for extension arg"
-        ex = tdir / 'extension.zip'
-        shutil.make_archive(str(ex.with_suffix('')), format='zip', root_dir=addon)
-        # looks like chrome uses temporary dir for data anyway
-        cr_options = webdriver.ChromeOptions()
-        if browser.headless:
-            if 'UNDER_DOCKER' in os.environ:
-                # docker runs as root and chrome refuses to use headless in that case
-                cr_options.add_argument('--no-sandbox')
-
-            # regular --headless doesn't support extensions for some reason
-            cr_options.add_argument('--headless=new')
-        cr_options.add_extension(str(ex))
-
-        # right, so recent chrome/chromium have this regression https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
-        # which breaks tons of tests due to iframe use
-        use_custom_chromium = True
-        mexepath: Dict[str, Any] = {}
-        if use_custom_chromium:
-            # see setup in end2end_tests.Dockerfile
-            user_data_dir = tdir / 'udir'
-            user_data_dir.mkdir()
-            # seems necessary, otherwise it somehow falls back onto snap chromium and gets stuck?
-            cr_options.add_argument('--user-data-dir=' + str(user_data_dir))
-            # ugh. sadly somehow if you add these chrome dirs to PATH, it doesn't work it still tries to use system binary?
-
-            cr_options.binary_location = '/tmp/chrome/chrome-linux/chrome'
-            driver_path = Path('/tmp/chrome/chromedriver_linux64/chromedriver')
-            assert driver_path.exists()
-            mexepath['executable_path'] = str(driver_path)
-        from selenium.webdriver.chrome.service import Service
-        service = Service(**mexepath)
-        driver = webdriver.Chrome(service=service, options=cr_options)
-        # TODO ad this to common helper
-        logger.info(f"using webdriver: {driver.capabilities['browserVersion']} {driver.capabilities['chrome']['chromedriverVersion']}")
-    else:
-        raise RuntimeError(f'Unexpected browser {browser}')
-    return driver
 
 
 def confirm(what: str) -> None:
@@ -200,11 +140,18 @@ def browsers(*br: Browser) -> IdType:
 
 @pytest.fixture
 def driver(tmp_path: Path, browser: Browser) -> Iterator[Driver]:
-    driver = _get_webdriver(tmp_path, browser=browser, extension=True)
+    profile_dir = tmp_path / 'browser_profile'
+    res = get_webdriver(
+        profile_dir=profile_dir,
+        addon_source=get_addon_source(kind=browser.dist),
+        browser=browser.name,
+        headless=browser.headless,
+        logger=logger,
+    )
     try:
-        yield driver
+        yield res
     finally:
-        driver.quit()
+        res.quit()
 
 
 @dataclass
