@@ -1,10 +1,12 @@
-import os
-import sys
 from functools import wraps
+import os
 from pathlib import Path
+import sys
+import time
 from typing import Iterator, Optional, TypeVar
 
 import pytest
+import requests
 
 
 def has_x() -> bool:
@@ -46,7 +48,18 @@ def tmp_popen(*args, **kwargs):
 def local_http_server(path: Path, *, port: int) -> Iterator[str]:
     address = '127.0.0.1'
     with tmp_popen([sys.executable, '-m', 'http.server', '--directory', path, '--bind', address, str(port)]) as popen:
-        yield f'http://{address}:{port}'
+        endpoint = f'http://{address}:{port}'
+
+        # meh.. but not sure if there is a better way to find out whether it's ready to serve requests
+        for attempt in range(50):
+            try:
+                requests.get(endpoint)
+            except:
+                time.sleep(0.05)
+                continue
+            else:
+                break
+        yield endpoint
 
 
 T = TypeVar('T')
