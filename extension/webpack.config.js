@@ -262,6 +262,11 @@ const options = {
           exclude: /node_modules/,
       },
       {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+      },
+      {
           test: /\.css$/i,  // todo why case independent??
           use: ['style-loader', 'css-loader'],
           // hmm, if we add the exclude, codemirror.css loading isn't working???
@@ -273,6 +278,10 @@ const options = {
           exclude: /node_modules/
       },
     ]
+  },
+  resolve: {
+      // this is necessary to import .ts files
+      extensions: ['.tsx', '.ts', '.js'],
   },
   plugins: [
     new CleanWebpackPlugin(), // ok, respects symlinks
