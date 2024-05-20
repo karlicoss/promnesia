@@ -77,7 +77,8 @@ module.exports = {
 
   // A map from regular expressions to module names that allow to stub out resources with a single module
   moduleNameMapper: {
-      '.*dom.form.serializer.*':  '<rootDir>/__mocks__/dom-form-serializer.js',
+      '.*dom.form.serializer.*': '<rootDir>/__mocks__/dom-form-serializer.js',
+      '^webextension-polyfill$': '<rootDir>/__mocks__/browser.js',
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
