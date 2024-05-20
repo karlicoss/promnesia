@@ -60,7 +60,8 @@ class Sidebar {
         const cdoc = frame.contentDocument;
         const head = unwrap(cdoc.head);
 
-        const sidebar_css = chrome.runtime.getURL("sidebar.css")
+        // $FlowFixMe
+        const sidebar_css = browser.runtime.getURL("sidebar.css")
         const link = cdoc.createElement("link");
         link.href = sidebar_css;
         link.type = "text/css";
@@ -651,7 +652,8 @@ const onMessageListener = (msg: any, _: chrome$MessageSender) => {
 if (window.promnesia_haslistener == null) {
     window.promnesia_haslistener = true
     console.debug(`[promnesia] [sidebar-${UUID}] registering callbacks`)
-    chrome.runtime.onMessage.addListener(onMessageListener)
+    // $FlowFixMe
+    browser.runtime.onMessage.addListener(onMessageListener)
 } else {
     console.debug(`[promnesia] [sidebar-${UUID}] skipping callback registration, they are already present`)
 }

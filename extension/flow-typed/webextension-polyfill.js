@@ -192,6 +192,8 @@ declare var browser: {
 
 
 declare module "webextension-polyfill" {
+  declare var browserAction: chrome$browserAction;
+  declare var pageAction   : chrome$pageAction;
   declare var bookmarks    : browser$bookmarks;
   declare var history      : browser$history;
   declare var storage      : browser$storage;
