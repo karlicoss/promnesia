@@ -80,10 +80,7 @@ jobs:
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-    # NOTE: dev/shm mount to prevent crashes during headless chrome
-    - run: |
-        docker build -f .ci/end2end_tests.Dockerfile . -t promnesia_end2end_tests
-        docker run -v /dev/shm:/dev/shm -e CI promnesia_end2end_tests -- -k chrome
+    - run: .ci/end2end/build_and_run.sh -k chrome
 
   end2end_tests_firefox:
     runs-on: ubuntu-latest
@@ -93,10 +90,7 @@ jobs:
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-    # NOTE: dev/shm mount to prevent crashes during headless chrome
-    - run: |
-        docker build -f .ci/end2end_tests.Dockerfile . -t promnesia_end2end_tests
-        docker run -v /dev/shm:/dev/shm -e CI promnesia_end2end_tests -- -k firefox
+    - run: .ci/end2end/build_and_run.sh -k firefox
 
   install_and_run_test:
     # todo use setup-python thing?
