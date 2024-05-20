@@ -1,4 +1,7 @@
 /* @flow */
+
+import browser from "webextension-polyfill"
+
 import {getBrowser, Methods} from './common'
 
 /* NOTE: options can only be renamed in-between store releases */

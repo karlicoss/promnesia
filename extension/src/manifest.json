@@ -1,7 +1,6 @@
 {
     "background": {
         "scripts": [
-            "browser-polyfill.js",
             "webext-options-sync.js",
             "background.js"
         ],

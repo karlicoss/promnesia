@@ -1,4 +1,5 @@
 /* @flow */
+import browser from "webextension-polyfill"
 
 /*
  * In addition to sources indexed on the backend, some stuff lives inside the browser, e.g. local history + bookmarks
