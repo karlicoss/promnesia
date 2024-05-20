@@ -26,6 +26,8 @@ def main() -> None:
     p.add_argument('--watch'  , action='store_true')
     p.add_argument('--lint'   , action='store_true')
     p.add_argument('--publish', choices=['listed', 'unlisted'], help="Publish on chrome web store/addons.mozilla.org")
+    p.add_argument('--v3', action='store_const', const='3', dest='manifest')
+    p.add_argument('--v2', action='store_const', const='2', dest='manifest')
 
     tg = p.add_mutually_exclusive_group(required=True)
     tg.add_argument('--target', type=str, choices=TARGETS)
@@ -35,6 +37,8 @@ def main() -> None:
     target = args.target
 
     assert target is not None
+
+    manifest = args.manifest or '2'  # FIXME change default to 3 later
 
     base_ext_dir = Path(__file__).absolute().parent / 'dist'
     ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks
@@ -53,6 +57,7 @@ def main() -> None:
         'TARGET' : target,
         'RELEASE': 'YES' if args.release else 'NO',
         'PUBLISH': 'YES' if args.publish is not None else 'NO',
+        'MANIFEST': manifest,
         'EXT_ID' : IDS[target],
         **os.environ,
     }
