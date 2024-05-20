@@ -1,4 +1,6 @@
 /* @flow */
+import browser from "webextension-polyfill"
+
 import type {Url, Src, Locator} from './common';
 import {Methods, unwrap, safeSetInnerHTML} from './common';
 import type {Options} from './options'
@@ -140,7 +142,8 @@ export class Binder {
         dt_c.onclick = () => {
             // TODO not sure about floor...
             const utc_timestamp_s = Math.floor(timestamp.getTime() / 1000);
-            chrome.runtime.sendMessage({
+            // $FlowFixMe
+            browser.runtime.sendMessage({
                 method   : Methods.SEARCH_VISITS_AROUND,
                 utc_timestamp_s: utc_timestamp_s,
             });

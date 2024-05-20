@@ -10,6 +10,21 @@ const mockBrowser = {
   bookmarks: {
     getTree: jest.fn(),
   },
+  storage: {
+    sync: {
+      // meh.
+      get: (name, res) => {
+        res({'options': {
+          host: 'http://badhost:43210', // some random port, to cause it fail
+        }})
+      }
+    },
+  },
+  runtime: {
+    lastError: null,
+    getManifest    : () => { return {version: 'whatever'} },
+    getPlatformInfo: async () => {},
+  },
 }
 
 export default mockBrowser

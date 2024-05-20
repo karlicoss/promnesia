@@ -7,23 +7,8 @@
 
 import {setOptions, getOptions} from '../src/options'
 
-global.chrome = {
-    storage: {
-        sync: {
-            // meh.
-            get: (name, res) => {
-                res({'options': {
-                    host: 'http://badhost:43210', // some random port, to cause it fail
-                }})
-            }
-        },
-    },
-    runtime: {
-        lastError: null,
-        getManifest    : () => { return {version: 'whatever'} },
-    },
-}
-
+import mockBrowser from "../__mocks__/browser"
+global.chrome = mockBrowser
 
 test('options', async () => {
     // shouldn't crash at least..
@@ -49,8 +34,6 @@ test('visits', async() => {
 
 
 import {allsources} from '../src/sources'
-
-import mockBrowser from "../__mocks__/browser"
 
 // meh.
 mockBrowser.history.getVisits.mockImplementation(async (obj) => [])

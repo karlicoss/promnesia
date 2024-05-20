@@ -27,11 +27,11 @@ function actions(): Array<Action> {
     // but we can use pageAction to show at least some (default) icon in some circumstances
 
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
-    const res: Array<Action> = [chrome.browserAction]
+    const res: Array<Action> = [browser.browserAction]
 
     // need to be defensive, it's only for mobile firefox
-    if (chrome.pageAction) {
-        res.push(chrome.pageAction)
+    if (browser.pageAction) {
+        res.push(browser.pageAction)
     } else {
         // this is a bit backwards because we need to register callbacks synchronously
         // otherwise isn't not working well after background page unloads
@@ -233,7 +233,7 @@ async function updateState(tab: TabUrl): Promise<void> {
      *    otherwise, we're relying on 'mobile_sidebar_injector' to open the sidebar
      */
     if (await isMobile()) {
-        const action = chrome.pageAction;
+        const action = browser.pageAction;
         const interesting = [
             'images/ic_visited_48.png',
             'images/ic_relatives_48.png',
@@ -295,7 +295,8 @@ async function updateState(tab: TabUrl): Promise<void> {
 
 function sendSidebarMessage(tabId: number, message: any) {
     // ugh.. just so I don't shoot myself in the foot again with using runtime.sendMessage...
-    chrome.tabs.sendMessage(tabId, message)
+    // $FlowFixMe
+    browser.tabs.sendMessage(tabId, message)
 }
 
 
@@ -601,8 +602,10 @@ async function handleOpenSearch(p: SearchPageParams = {}) {
         params.append(k, v)
     }
     const ps = params.toString()
-    const search_url = chrome.runtime.getURL('search.html') + (ps.length == 0 ? '' : '?' + ps)
-    chrome.tabs.create({url: search_url})
+    // $FlowFixMe
+    const search_url = browser.runtime.getURL('search.html') + (ps.length == 0 ? '' : '?' + ps)
+    // $FlowFixMe
+    browser.tabs.create({url: search_url})
     // TODO get current tab url and pass as get parameter?
 }
 
@@ -967,7 +970,8 @@ function initContextMenus(): void {
     */
     browser.contextMenus.removeAll().then(() => {
         for (const {id: id, title: title, parentId: parentId, contexts: contexts} of MENUS) {
-            chrome.contextMenus.create({
+            // $FlowFixMe
+            browser.contextMenus.create({
                 id: id,
                 parentId: parentId,
                 title: title,
@@ -976,7 +980,8 @@ function initContextMenus(): void {
         }
 
         for (const {id: id, title: title, parentId: parentId, contexts: contexts} of TOGGLES) {
-            chrome.contextMenus.create({
+            // $FlowFixMe
+            browser.contextMenus.create({
                 id: id,
                 parentId: parentId,
                 title: title,
@@ -1013,7 +1018,8 @@ function updateContextMenus(opts: Options): void {
         return
     }
     for (const {id: id, checker: checker} of TOGGLES) {
-        chrome.contextMenus.update(
+        // $FlowFixMe
+        browser.contextMenus.update(
             id,
             {checked: checker(opts)},
         )
@@ -1026,14 +1032,15 @@ function initBackground(): void {
     // otherwise doesn't work well with background page suspension
 
     // $FlowFixMe
-    chrome.runtime.onMessage.addListener(onMessageCallback)
+    browser.runtime.onMessage.addListener(onMessageCallback)
 
     registerActions()
 
     // need to be defensive since commands API isn't available under mobile browser
-    if (chrome.commands) {
+    // $FlowFixMe
+    if (browser.commands) {
         //  $FlowFixMe // err, complains at Promise but nevertheless works
-        chrome.commands.onCommand.addListener(onCommandCallback)
+        browser.commands.onCommand.addListener(onCommandCallback)
     } else {
         isMobile().then(mobile => {
             if (!mobile) {
@@ -1046,7 +1053,8 @@ function initBackground(): void {
 }
 
 
-chrome.runtime.onMessage.addListener((info: any, _: chrome$MessageSender) => {
+// $FlowFixMe
+browser.runtime.onMessage.addListener((info: any, _: chrome$MessageSender) => {
     // see selenium_bridge.js
     if (info === 'selenium-bridge-_execute_browser_action') {
         handleToggleSidebar()

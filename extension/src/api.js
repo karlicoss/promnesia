@@ -1,4 +1,5 @@
 /* @flow */
+import browser from "webextension-polyfill"
 
 /*
  * Communication with backend
@@ -50,7 +51,8 @@ export async function queryBackendCommon<R>(params: any, endp: string): Promise<
     }
 
     const endpoint = `${opts.host}/${endp}`
-    params['client_version'] = chrome.runtime.getManifest().version
+    // $FlowFixMe
+    params['client_version'] = browser.runtime.getManifest().version
 
     function with_stack(e: Error): Error {
         const stack = []
