@@ -7,13 +7,19 @@ const webpack = require('webpack'),
 const T = {
     CHROME  : 'chrome',
     FIREFOX: 'firefox',
-};
+}
+
 
 const env = {
     TARGET : process.env.TARGET,
     RELEASE: process.env.RELEASE,
     PUBLISH: process.env.PUBLISH,
+    MANIFEST: process.env.MANIFEST,
 }
+
+// TODO will be conditional on T.CHROME at some point
+const v3 = process.env.MANIFEST === '3'
+
 const ext_id = process.env.EXT_ID
 
 const pkg = require('./package.json');
