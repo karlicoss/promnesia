@@ -2,6 +2,7 @@
 
 // provided by the manifest
 // import * as browser from "webextension-polyfill"
+import browser from "webextension-polyfill"
 
 import type {Url, SearchPageParams} from './common';
 import {Visit, Visits, Blacklisted, unwrap, Methods, uuid} from './common'
@@ -143,7 +144,6 @@ async function updateState(tab: TabUrl): Promise<void> {
         await browser.tabs.insertCSS    (tabId, {file: 'sidebar-outer.css'})
         await browser.tabs.insertCSS    (tabId, {file: 'sidebar.css'      })
         await browser.tabs.insertCSS    (tabId, {code: opts.position_css  })
-        await browser.tabs.executeScript(tabId, {file: 'browser-polyfill.js'})
         await browser.tabs.executeScript(tabId, {file: 'webext-options-sync.js'})
         await browser.tabs.executeScript(tabId, {file: 'anchorme.js'})
         if (opts.sidebar_detect_urls) {

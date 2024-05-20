@@ -1,4 +1,6 @@
 /* @flow */
+import browser from "webextension-polyfill"
+
 import type {Url} from './common';
 import {Blacklisted} from './common';
 import {getOptions} from './options';

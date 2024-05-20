@@ -1,4 +1,6 @@
 /* @flow */
+import browser from "webextension-polyfill"
+
 import {Visits, Visit, unwrap, format_duration, Methods, addStyle, Ids, uuid, getOrDefault} from './common'
 import type {Second, Src} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
