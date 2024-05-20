@@ -24,13 +24,6 @@ global.chrome = {
     },
 }
 
-global.browser = {
-    runtime: {
-        lastError: null,
-        getPlatformInfo: async () => {},
-    },
-}
-
 
 test('options', async () => {
     // shouldn't crash at least..
@@ -57,20 +50,17 @@ test('visits', async() => {
 
 import {allsources} from '../src/sources'
 
+import mockBrowser from "../__mocks__/browser"
 
 // meh.
-global.browser.history = {
-    getVisits: async (obj) => [],
-    search   : async (obj) => [],
-}
-global.browser.bookmarks = {
-    getTree: async () => [{
-        children: [{
-            url: 'http://whatever.com/',
-            dateAdded: 16 * 10 ** 8 * 1000,
-        }],
+mockBrowser.history.getVisits.mockImplementation(async (obj) => [])
+mockBrowser.history.search   .mockImplementation(async (obj) => [])
+mockBrowser.bookmarks.getTree.mockImplementation(async () => [{
+    children: [{
+        url: 'http:whatever.com/',
+        dateAdded: 16 * 10 ** 8 * 1000,
     }],
-}
+}])
 
 test('visits_allsources', async() => {
     const vis = await allsources.visits('https://whatever.com/')
@@ -90,8 +80,8 @@ import {MultiSource, bookmarks, thisbrowser} from '../src/sources'
 
 test('search_defensive', async() => {
     // precondition: some error in processing history api, e.g. it's unavailable or something
-    global.browser.history.search    = async (q) => null
-    global.browser.bookmarks.getTree = async () => null
+    mockBrowser.history.search.mockImplementation(async (q) => null)
+    mockBrowser.bookmarks.getTree.mockImplementation(async () => null)
 
     // TODO wtf?? for some reason default order (backend, browser, bookmarks) causes
     // 'Promise rejection was handled asynchronously'
