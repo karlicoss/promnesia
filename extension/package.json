@@ -2,7 +2,7 @@
   "name": "promnesia",
   "version": "1.2.4",
   "version_name": "released on 2023.05.13",
-  "description": "Recall what you already visited, why and in which context",
+  "description": "Recall which pages you already visited, why and in which context",
   "main": "dist/background.js",
   "scripts": {
     "test": "jest",
@@ -66,8 +66,7 @@
     "webextension-polyfill": "^0.12.0",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4",
-    "webpack-extension-manifest-plugin": "^0.8.0"
+    "webpack-dev-server": "^5.0.4"
   },
   "private": "true"
 }
