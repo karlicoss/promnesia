@@ -1,5 +1,6 @@
-/* @flow */
 import browser from "webextension-polyfill"
+
+import type {Bookmarks, History} from "webextension-polyfill"
 
 /*
  * In addition to sources indexed on the backend, some stuff lives inside the browser, e.g. local history + bookmarks
@@ -35,7 +36,7 @@ const DELTA_FRONT_S = 2 * 60      // 2min
 
 
 // can be false, if no associated visits, otherwise true or an actual Visit if it's available
-type VisitedResult = Array<?Visit>
+type VisitedResult = Array<Visit | null>
 
 // TODO eh, confusing that we have backend sources.. and these which are also sources, at the same time
 interface VisitsSource {
@@ -46,7 +47,7 @@ interface VisitsSource {
 }
 
 
-function* search2visits(it: Iterable<browser$HistoryItem>): Iterator<Visit> {
+function* search2visits(it: Iterable<History.HistoryItem>): Generator<Visit> {
     const delay = getDelayMs()
     const now = new Date()
     for (const r of it) {
@@ -62,8 +63,8 @@ function* search2visits(it: Iterable<browser$HistoryItem>): Iterator<Visit> {
         yield new Visit(
             u,
             normalise_url(u),
-            ((t: any): AwareDate),
-            ((t: any): NaiveDate),
+            t as AwareDate,
+            t as NaiveDate,
             [THIS_BROWSER_TAG],
             // TODO need context?
         )
@@ -98,8 +99,8 @@ export const thisbrowser: VisitsSource = {
         const visits: Array<Visit | Error> = times.map(t => new Visit(
             url,
             nurl,
-            ((t: any): AwareDate),
-            ((t: any): NaiveDate), // there is no TZ info in history anyway, so not much else we can do
+            t as AwareDate,
+            t as NaiveDate, // there is no TZ info in history anyway, so not much else we can do
             [THIS_BROWSER_TAG],
         ))
         return new Visits(url, nurl, visits)
@@ -153,8 +154,8 @@ export const thisbrowser: VisitsSource = {
                     visits.push(new Visit(
                         u,
                         nu,
-                        ((t: any): AwareDate),
-                        ((t: any): NaiveDate),
+                        t as AwareDate,
+                        t as NaiveDate,
                         [THIS_BROWSER_TAG],
                     ))
                 }
@@ -183,7 +184,7 @@ export const thisbrowser: VisitsSource = {
 
 
 type Bres = {
-    bm: chrome$BookmarkTreeNode,
+    bm: Bookmarks.BookmarkTreeNode,
     nurl: Url,
     path: string,
 }
@@ -192,9 +193,9 @@ type Bres = {
 // TODO need to be careful with performance..
 function* bookmarksContaining(
     nurl: Url,
-    cur: chrome$BookmarkTreeNode,
-    path: ?string, // path in the bookmark tree
-): Iterator<Bres> {
+    cur: Bookmarks.BookmarkTreeNode,
+    path: string | null, // path in the bookmark tree
+): Generator<Bres> {
     const children = cur.children
     if (children == null) {
         return // shouldn't happen but makes flow happy anyway
@@ -219,7 +220,7 @@ function* bookmarksContaining(
 
 
 // todo take in from_, to?
-function* bookmarks2visits(bit: Iterable<Bres>): Iterator<Visit> {
+function* bookmarks2visits(bit: Iterable<Bres>): Generator<Visit> {
     for (const {bm: r, nurl: nu, path: path} of bit) {
         const u = r.url
         if (u == null) {
@@ -235,8 +236,8 @@ function* bookmarks2visits(bit: Iterable<Bres>): Iterator<Visit> {
         yield new Visit(
             u,
             nu,
-            ((t: any): AwareDate),
-            ((t: any): NaiveDate),
+            t as AwareDate,
+            t as NaiveDate,
             ['bookmark'],
             r.title,
             {title: path, href: null},
@@ -288,7 +289,7 @@ export const bookmarks: VisitsSource = {
 
     visited: async function(urls: Array<Url>): Promise<VisitedResult | Error> {
         if (await isAndroid()) {
-            const res = new Array<?Visit>(urls.length)
+            const res = new Array<Visit | null>(urls.length)
             res.fill(null)
             return res
         }
@@ -310,7 +311,7 @@ export const bookmarks: VisitsSource = {
 }
 
 
-async function _merge(url: ?string, ...args: Array<Promise<Visits | Error>>): Promise<Visits | Error> {
+async function _merge(url: string | null, ...args: Array<Promise<Visits | Error>>): Promise<Visits | Error> {
     let rurl  = null
     let rnurl = null
     const parts = []
@@ -341,6 +342,7 @@ async function _merge(url: ?string, ...args: Array<Promise<Visits | Error>>): Pr
     return new Visits(
         rurl,
         rnurl,
+        // @ts-expect-error
         [].concat(...parts),
     )
 }
@@ -368,7 +370,7 @@ export class MultiSource implements VisitsSource {
     async visited(urls: Array<Url>): Promise<VisitedResult | Error> {
         const pms = this.sources.map(s => s.visited(urls))
         const errors = []
-        let res: ?VisitedResult = null
+        let res: VisitedResult | null = null
         for (const p of pms) {
             const r = await p.catch((e: Error) => e)
             if (r instanceof Error) {

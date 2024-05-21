@@ -1,6 +1,4 @@
-/* @flow */
-
-import {unwrap, addStyle, chunkBy, Ids} from './common'
+import {addStyle, chunkBy, Ids} from './common'
 import type {Visits, Visit, SearchPageParams} from './common'
 import {getOptions} from './options'
 import {Binder, _fmt} from './display'
@@ -10,15 +8,15 @@ import {allsources} from './sources'
 const doc = document;
 
 function getInputElement(element_id: string): HTMLInputElement {
-    return ((doc.getElementById(element_id): any): HTMLInputElement);
+    return doc.getElementById(element_id) as HTMLInputElement
 }
 
 function getQuery(): HTMLInputElement {
-    return getInputElement('query_id');
+    return getInputElement('query_id')
 }
 
 function getResultsContainer(): HTMLElement {
-    return ((doc.getElementById(Ids.VISITS): any): HTMLElement);
+    return doc.getElementById(Ids.VISITS) as HTMLElement
 }
 
 
@@ -47,7 +45,7 @@ async function* _doSearch(
         highlight_if,
     }: {
         with_ctx_first: boolean,
-        highlight_if: ?((Visit) => boolean),
+        highlight_if: ((arg0: Visit) => boolean) | null,
     }
 ) {
     if (highlight_if == null) {
@@ -98,8 +96,6 @@ async function* _doSearch(
             locator       : v.locator,
             relative      : false,
         });
-        // hmm flow seems a bit dumb here
-        // $FlowFixMe[not-a-function]
         if (highlight_if(v)) {
             cc.classList.add('highlight');
         }
@@ -117,8 +113,9 @@ function showOrAlert(err: Error): void {
     }
 }
 
-// $FlowFixMe[missing-local-annot]
+// @ts-expect-error
 async function doSearch(...args) {
+    // @ts-expect-error
     const dom_updates = _doSearch(...args)
     async function consume_one() {
         // consume head
@@ -127,7 +124,7 @@ async function doSearch(...args) {
             res = await dom_updates.next()
         } catch (err) {
             console.error(err)
-            showOrAlert(err)
+            showOrAlert(err as Error)
         }
         if (res == null) {
             // early exit because of the error
@@ -142,8 +139,9 @@ async function doSearch(...args) {
 }
 
 
-unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event: Event) => {
+doc.getElementById('search_id')!.addEventListener('submit', async (event: Event) => {
     event.preventDefault();
+    // @ts-expect-error
     const url = new URL(window.location)
     url.searchParams.set('q', getQuery().value)
     window.history.pushState({}, '', url)
@@ -155,15 +153,16 @@ unwrap(doc.getElementById('search_id')).addEventListener('submit', async (event:
             highlight_if: null,
         },
     );
-});
+})
 
 
 window.onload = async () => {
     const opts = await getOptions()
     addStyle(doc, opts.position_css);
 
+    // @ts-expect-error
     const url = new URL(window.location)
-    const params = ((Object.fromEntries(url.searchParams): any): SearchPageParams)
+    const params = Object.fromEntries(url.searchParams) as SearchPageParams
     if (Object.keys(params).length == 0) {
         return
     }
@@ -184,7 +183,7 @@ window.onload = async () => {
     // todo need to be better tested, with various timezones etc
     const ts_param = params['utc_timestamp_s']
     if (ts_param != null) {
-        const timestamp = parseInt(unwrap(ts_param));
+        const timestamp = parseInt(ts_param!)
         await doSearch(
             allsources.searchAround(timestamp),
             {

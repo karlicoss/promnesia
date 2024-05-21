@@ -1,25 +1,14 @@
-/* @flow */
-
 export type Url = string;
 export type Src = string;
 export type Second = number;
 export type Locator = {
     title: string,
-    href: ?string,
-};
-export type VisitsMap = {[Url]: Visits};
-export type Dt = Date;
-
-export opaque type AwareDate: Date = Date;
-export opaque type NaiveDate: Date = Date;
-
-export function unwrap<T>(x: ?T): T {
-    if (x == null) {
-        console.trace("undefined or null")  // print trace as well, so it's easier to find out what was null
-        throw new Error("undefined or null!")
-    }
-    return x
+    href: string | null,
 }
+export type Dt = Date
+
+export type AwareDate = Date
+export type NaiveDate = Date
 
 
 export function format_duration(seconds: Second): string {
@@ -29,7 +18,7 @@ export function format_duration(seconds: Second): string {
     }
     // forget seconds otherwise and just use days/hours/minutes
     s = Math.floor(s / 60);
-    let parts = [];
+    const parts = []
     const hours = Math.floor(s / 60);
     s %= 60;
     if (hours > 0) {
@@ -50,12 +39,19 @@ export class Visit {
     dt_local: NaiveDate;
 
     tags: Array<Src>; // TODO need to rename tags to sources
-    context: ?string;
-    locator: ?Locator;
-    duration: ?Second;
+    context: string | null
+    locator: Locator | null
+    duration: Second | null
 
-
-    constructor(original_url: string, normalised_url: string, time: AwareDate, dt_local: NaiveDate, tags: Array<Src>, context: ?string=null, locator: ?Locator=null, duration: ?Second=null) {
+    constructor(
+        original_url: string,
+        normalised_url: string,
+        time: AwareDate,
+        dt_local: NaiveDate,
+        tags: Array<Src>, context: string | null=null,
+        locator: Locator | null=null,
+        duration: Second | null=null,
+    ) {
         this.original_url   = original_url;
         this.normalised_url = normalised_url;
         this.time     = time;
@@ -69,11 +65,10 @@ export class Visit {
     // ugh..
     toJObject(): any {
         const o = {}
-        // $FlowFixMe[prop-missing]
         Object.assign(o, this)
-        // $FlowFixMe
+        // @ts-expect-error
         o.time     = o.time    .getTime()
-        // $FlowFixMe
+        // @ts-expect-error
         o.dt_local = o.dt_local.getTime()
         return o
     }
@@ -81,9 +76,8 @@ export class Visit {
     static fromJObject(o: any): Visit {
         o.time     = new Date(o.time)
         o.dt_local = new Date(o.dt_local)
-        // $FlowFixMe
+        // @ts-expect-error
         const v = new Visit()
-        // $FlowFixMe[prop-missing]
         Object.assign(v, o)
         return v
     }
@@ -117,7 +111,7 @@ export class Visits {
         return [good, err]
     }
 
-    self_contexts(): Array<?Locator> {
+    self_contexts(): Array<Locator | null> {
         const locs = [];
         for (const visit of this.partition()[0]) {
             if (visit.context === null) {
@@ -129,7 +123,7 @@ export class Visits {
         }
         return locs;
     }
-    relative_contexts(): Array<?Locator> {
+    relative_contexts(): Array<Locator | null> {
         const locs = [];
         for (const visit of this.partition()[0]) {
             if (visit.context === null) {
@@ -145,22 +139,18 @@ export class Visits {
     // NOTE: JSON.stringify will use this method
     toJObject(): any {
         const o = {}
-        // $FlowFixMe[prop-missing]
         Object.assign(o, this)
-        // $FlowFixMe[prop-missing]
-        // $FlowFixMe[incompatible-use]
+        // @ts-expect-error
         o.visits = o.visits.map((v: Visit | Error) => {
             return (v instanceof Visit)
                 ? v.toJObject()
-                // $FlowFixMe
                 : {error: v.message, stack: v.stack}
         })
         return o
     }
 
     static fromJObject(o: any): Visits {
-        // $FlowFixMe[prop-missing]
-        o.visits = o.visits.map(x => {
+        o.visits = o.visits.map((x: any) => {
             const err = x.error
             if (err != null) {
                 const e = new Error(err)
@@ -171,10 +161,8 @@ export class Visits {
                 return Visit.fromJObject(x)
             }
         })
-        // $FlowFixMe[prop-missing]
-        // $FlowFixMe
+        // @ts-expect-error
         const r = new Visits()
-        // $FlowFixMe[prop-missing]
         Object.assign(r, o)
         return r
     }
@@ -215,13 +203,14 @@ export type SearchPageParams = {
     q?: string
 }
 
-// $FlowFixMe
 export function log(): void {
     const args = [];
-    for (var i = 1; i < arguments.length; i++) {
+    for (let i = 1; i < arguments.length; i++) {
+        // eslint-disable-next-line prefer-rest-params
         const arg = arguments[i];
         args.push(JSON.stringify(arg));
     }
+    // eslint-disable-next-line prefer-rest-params
     console.trace('[background] ' + arguments[0], ...args);
 }
 
@@ -233,7 +222,7 @@ export function asList(bl: string): Array<string> {
 export function addStyle(doc: Document, css: string): void {
     const st = doc.createElement('style');
     st.appendChild(doc.createTextNode(css));
-    unwrap(doc.head).appendChild(st);
+    doc.head!.appendChild(st);
 }
 
 export function safeSetInnerHTML(element: HTMLElement, html: string): void {
@@ -252,7 +241,7 @@ export function safeSetInnerHTML(element: HTMLElement, html: string): void {
 // https://github.com/facebook/flow/issues/4825
 
 export type JsonArray = Array<Json>
-export type JsonObject = Partial<{ [string]: any }>
+export type JsonObject = Partial<{ [key: string]: any }>
 export type Json = JsonArray | JsonObject
 
 
@@ -260,17 +249,19 @@ export function getBrowser(): string {
     // https://stackoverflow.com/questions/12489546/getting-a-browsers-name-client-side
     const agent = window.navigator.userAgent.toLowerCase()
     switch (true) {
+        // @ts-expect-error
         case agent.indexOf("chrome") > -1 && !! window.chrome: return "chrome";
         case agent.indexOf("firefox") > -1                   : return "firefox";
         case agent.indexOf("safari") > -1                    : return "safari";
         case agent.indexOf("edge") > -1                      : return "edge";
+        // @ts-expect-error
         case agent.indexOf("opr") > -1 && !!window.opr       : return "opera";
         case agent.indexOf("trident") > -1                   : return "ie";
         default: return "browser";
     }
 }
 
-export function* chunkBy<T>(it: Iterable<T>, count: number): Iterator<Array<T>> {
+export function* chunkBy<T>(it: Iterable<T>, count: number): Generator<Array<T>> {
     let group = []
     for (const i of it) {
         if (group.length == count) {
@@ -299,13 +290,6 @@ export function rejectIfHttpError(response: HttpResponse): HttpResponse {
     }
 }
 
-// todo ugh, need to use some proper type annotations?
-// $FlowFixMe[missing-local-annot]
-function fetch_typed(...args): Promise<HttpResponse> {
-    // $FlowFixMe
-    return fetch(...args)
-}
-
 export async function fetch_max_stale(url: string, {max_stale}: {max_stale: number}): Promise<HttpResponse> {
     /* In Firefox, Cache-Control allows max-stale param,
      * which forces the browser to return cached responses past max-age (controlled by server).
@@ -318,7 +302,7 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
 
     // if it's not cached, it will make a real request
     // anso works offline (returns cached response with no errors)
-    const cached_resp = await fetch_typed(url, {cache: 'force-cache'}).then(rejectIfHttpError)
+    const cached_resp = await fetch(url, {cache: 'force-cache'}).then(rejectIfHttpError)
     const expires = cached_resp.headers.get('expires')
     // not sure if it's possible not to have 'expires'
     const stale_ms = new Date().getTime() - new Date(expires == null ? 0 : expires).getTime()
@@ -327,7 +311,7 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
         return cached_resp
     } else {
         // do a regular request instead
-        return fetch_typed(url).then(rejectIfHttpError)
+        return fetch(url).then(rejectIfHttpError)
     }
 }
 
