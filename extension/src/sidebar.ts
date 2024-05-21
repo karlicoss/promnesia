@@ -1,7 +1,7 @@
-/* @flow */
 import browser from "webextension-polyfill"
+import type {Runtime} from "webextension-polyfill"
 
-import {Visits, Visit, unwrap, format_duration, Methods, addStyle, Ids, uuid, getOrDefault} from './common'
+import {Visits, Visit, format_duration, Methods, addStyle, Ids, uuid, getOrDefault} from './common'
 import type {Second, Src} from './common'
 import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
 import type {Options} from './options';
@@ -38,29 +38,28 @@ const doc = document;
 
 // TODO think about 'show dots' and 'search' icons -- maybe only show them for android?
 class Sidebar {
-    body: HTMLBodyElement;
-    opts: Options;
+    body: HTMLBodyElement
+    opts: Options
 
     constructor(opts: Options) {
-        this.body = unwrap(doc.body);
-        this.opts = opts;
+        this.body = doc.body! as HTMLBodyElement
+        this.opts = opts
     }
 
     async getFiltersEl(): Promise<HTMLElement> {
-        const frame = await this.ensureFrame();
-        return unwrap(frame.contentDocument.getElementById(FILTERS_ID));
+        const frame = await this.ensureFrame()
+        return frame.contentDocument!.getElementById(FILTERS_ID)!
     }
 
     async getContainer(): Promise<HTMLElement> {
-        const frame = await this.ensureFrame();
-        return unwrap(frame.contentDocument.getElementById(CONTAINER_ID));
+        const frame = await this.ensureFrame()
+        return frame.contentDocument!.getElementById(CONTAINER_ID)!
     }
 
     setupFrame(frame: HTMLIFrameElement): void {
-        const cdoc = frame.contentDocument;
-        const head = unwrap(cdoc.head);
+        const cdoc = frame.contentDocument!
+        const head = cdoc.head!
 
-        // $FlowFixMe
         const sidebar_css = browser.runtime.getURL("sidebar.css")
         const link = cdoc.createElement("link");
         link.href = sidebar_css;
@@ -83,7 +82,7 @@ class Sidebar {
         base.setAttribute('target', '_blank');
         head.appendChild(base);
 
-        const cbody = unwrap(cdoc.body);
+        const cbody = cdoc.body!
         cbody.classList.add(PROMNESIA_CLASS);
         // it's a bit hacky.. but stuff inside and outside iframe got different namespace, so ok to reuse id?
         // makes it much easier for settings
@@ -166,7 +165,7 @@ class Sidebar {
     }
 
     async shown(): Promise<boolean> {
-        const frame = await this.getFrame();
+        const frame = this.getFrame()
         if (frame == null) {
             return false;
         }
@@ -186,8 +185,8 @@ class Sidebar {
         frame.style.display = 'none';
     }
 
-    getFrame(): ?HTMLIFrameElement {
-        return ((doc.getElementById(PROMNESIA_FRAME_ID): any): ?HTMLIFrameElement);
+    getFrame(): HTMLIFrameElement | null {
+        return doc.getElementById(PROMNESIA_FRAME_ID) as (HTMLIFrameElement | null)
     }
 
     async ensureFrame(): Promise<HTMLIFrameElement> {
@@ -214,6 +213,7 @@ class Sidebar {
         // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..
         const loadPromise = new Promise((resolve, /*reject*/) => {
             // TODO not sure if there is anything to reject?..
+            // @ts-expect-error
             sidebar.addEventListener('load', () => {resolve();}, {once: true});
         });
         // todo add timeout to make it a bit easier to debug?
@@ -253,11 +253,11 @@ function _sanitize(text: string): string {
 }
 
 // yields all DOM nodes that matched against some of the lines
-function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> {
+function* findMatches(elem: Node, lines: Set<string>): Generator<[string, Node]> {
     // first try to highlight the most specific element possible
     const children = elem.childNodes || []
     let found = false
-    for (let c of children) {
+    for (const c of children) {
         for (const m of findMatches(c, lines)) {
             found = true
             yield m
@@ -269,7 +269,7 @@ function* findMatches(elem: Node, lines: Set<string>): Iterable<[string, Node]> 
     }
     // todo would be nice to cache it between highlight calls?
     // maybe just set on the element?
-    const stext = _sanitize(elem.textContent)
+    const stext = _sanitize(elem.textContent!)
     let matched = null
     for (const line of lines) {
         if (stext.includes(line)) {
@@ -302,10 +302,10 @@ function _highlight(text: string, idx: number, v: Visit) {
 
     // TODO make sure they are unique? so we don't hl the same element twice..
     const to_hl = []
-    for (let [line, target] of findMatches(unwrap(doc.body), lines)) {
+    for (const [line, target_] of findMatches(doc.body!, lines)) {
+        let target: Node | null = target_
         // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType#Node_type_constants
         while (target != null && target.nodeType != Node.ELEMENT_NODE) {
-            // $FlowFixMe[incompatible-type]
             target = target.parentElement
         }
 
@@ -313,7 +313,9 @@ function _highlight(text: string, idx: number, v: Visit) {
             // eh. only text nodes are present, can't attach highlight to anything
             continue
         }
-        target = ((target: any): HTMLElement)
+        if (!(target instanceof HTMLElement)) {
+            throw Error("SHOULD NOT HAPPEN") // FIXME why is there no proper assert in ts??
+        }
 
         if (target.classList.contains(Cls.HIGHLIGHT)) {
             continue // shouldn't act on self
@@ -338,7 +340,7 @@ function _highlight(text: string, idx: number, v: Visit) {
             console.debug('promnesia: body matched for highlight; skipping it')
             continue;
         }
-        const d = unwrap(document.documentElement)
+        const d = document.documentElement!
         const rect = target.getBoundingClientRect()
         const ratio = (rect.width * rect.height) / (d.scrollWidth * d.scrollHeight)
         const RATIO = 0.5 // kinda arbitrary
@@ -355,7 +357,7 @@ function _highlight(text: string, idx: number, v: Visit) {
     for (const target of to_hl) {
         // NOTE: there is <mark> tag, but it doesn't do anything apart from
         // so perhaps best to keep the DOM intact
-        target.classList.add(Cls.HIGHLIGHT)
+        (target as HTMLElement).classList.add(Cls.HIGHLIGHT)
 
         const refc = doc.createElement('span')
         refc.classList.add(Cls.HIGHLIGHT_REF_WRAPPER)
@@ -399,7 +401,6 @@ async function* _bindSidebarData(response: Visits) {
 
     const cont = await sidebar.getContainer();
     const filtersEl = await sidebar.getFiltersEl();
-    // $FlowFixMe
     filtersEl.replaceChildren();
     await sidebar.clearContainer(); // TODO probably, unnecessary?
 
@@ -409,7 +410,7 @@ async function* _bindSidebarData(response: Visits) {
     let last_yield = 0
     let iterations_since = 0
     function shouldYield() {
-        let cur = new Date().getTime()
+        const cur = new Date().getTime()
         iterations_since += 1
         const took = cur - last_yield
         if (took < YIELD_DELAY_MS) {
@@ -434,7 +435,7 @@ async function* _bindSidebarData(response: Visits) {
         await binder.renderError(items, err)
     }
 
-    visits.sort((f, s) => {
+    visits.sort((f: Visit, s: Visit) => {
         // keep 'relatives' in the bottom
         // TODO: this might slightly break local visits sorting, because they don't necessarily have proper normalisation
         const fr = f.normalised_url === normalised
@@ -446,8 +447,8 @@ async function* _bindSidebarData(response: Visits) {
     })
 
     // move visits with contexts on top
-    const with_ctx = [];
-    const no_ctx = [];
+    const with_ctx: Array<Visit> = []
+    const no_ctx: Array<Visit> = []
     for (const v of visits) {
         if (v.context === null) {
             no_ctx.push(v);
@@ -461,24 +462,26 @@ async function* _bindSidebarData(response: Visits) {
     const all_tags = new Map<Src, number>()
     for (const v of with_ctx) {
         for (const t of v.tags) {
-            // $FlowFixMe
+            // @ts-expect-error
             const pv = (all_tags.has(t) ? all_tags.get(t) : 0) + 1;
             all_tags.set(t, pv);
         }
     }
 
     binder.makeTchild(filtersEl, 'Filter: ');
-    for (let [tag, count] of [[null, with_ctx.length], ...Array.from(all_tags).sort()]) {
-        let predicate: ((string) => boolean);
-        if (tag === null) {
+    for (const [tag_, count] of [[null, with_ctx.length], ...Array.from(all_tags).sort()]) {
+        let predicate: ((arg0: string) => boolean);
+        let tag: string | null
+        if (tag_ === null) {
             // TODO https://github.com/karlicoss/promnesia/issues/132
             // maybe just reorder them and show after visits with context?
             // meh
             tag = 'all';
             predicate = () => true;
         } else {
-            const tag_ = tag  // make Flow happy
-            predicate = t => t == asClass(tag_)
+            tag = tag_ as string  // TODO typescript is being dumb here?
+            const __tag = tag  // make type checker happy (variable captured in closure)
+            predicate = t => t == asClass(__tag)
         }
 
         // TODO show total counts?
@@ -494,15 +497,16 @@ async function* _bindSidebarData(response: Visits) {
             // 1) reset status from all sources
             filtersEl.childNodes.forEach(filter_element => {
                 if (filter_element.nodeType == Node.ELEMENT_NODE) {
-                    filter_element = ((filter_element: any): HTMLElement);
-                    filter_element.classList.remove('active');
+                    (filter_element as HTMLElement).classList.remove('active')
                 }
             });
             // 2) set active to clicked source
             tag_c.classList.add('active');
             for (const x of items.children) {
-                const sources = unwrap(x.dataset['sources']).split(' ');
+                // @ts-expect-error // TODO??
+                const sources = x.dataset['sources']!.split(' ');
                 const found = sources.some(predicate);
+                // @ts-expect-error // TODO??
                 x.style.display = found ? 'block' : 'none';
             }
         });
@@ -520,7 +524,7 @@ async function* _bindSidebarData(response: Visits) {
             yield
         }
         const idx1 = idx0 + 1; // eh, I guess that makes more sense for humans
-        const ctx = unwrap(v.context);
+        const ctx = v.context!
 
         // TODO hmm. hopefully chrome visits wouldn't get highlighted here?
         const relative = v.normalised_url != normalised
@@ -573,18 +577,17 @@ async function* _bindSidebarData(response: Visits) {
         const first = group[0];
         const last  = group[group.length - 1];
         // eslint-disable-next-line no-unused-vars
-        const [fdates, ftimes] = visit_date_time(first)
+        const [_fdates, ftimes] = visit_date_time(first)
         const [ldates, ltimes] = visit_date_time(last)
         const dates = ldates;
         const times = ltimes == ftimes ? ltimes : ltimes + "-" + ftimes;
         const tset = new Set<Src>();
-        let total_dur: ?Second = null;
+        let total_dur: Second | null = null;
         for (const v of group) {
             if (v.duration !== null) {
                 if (total_dur === null) {
                     total_dur = 0;
                 }
-                // $FlowFixMe
                 total_dur += v.duration;
             }
             for (const tag of v.tags) {
@@ -622,10 +625,9 @@ async function bindSidebarData(response: Visits) {
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
 // todo hmm this isn't used??
-// eslint-disable-next-line no-unused-vars
-function requestVisits(): void {
+function _requestVisits(): void {
     browser.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
-           .then((response: {}) => {
+           .then((response: any) => {
                if (response == null) {
                    // todo why would it be?
                    return
@@ -635,7 +637,7 @@ function requestVisits(): void {
 }
 
 
-const onMessageListener = (msg: any, _: chrome$MessageSender) => {
+const onMessageListener = (msg: any, _: Runtime.MessageSender) => {
     const method = msg.method
     if        (method == Methods.BIND_SIDEBAR_VISITS) {
         bindSidebarData(Visits.fromJObject(msg.data))
@@ -649,10 +651,11 @@ const onMessageListener = (msg: any, _: chrome$MessageSender) => {
 
 
 // this is necessary because due to data races it's possible for sidebar.js to be injected twice in the page
+// @ts-expect-error
 if (window.promnesia_haslistener == null) {
+    // @ts-expect-error
     window.promnesia_haslistener = true
     console.debug(`[promnesia] [sidebar-${UUID}] registering callbacks`)
-    // $FlowFixMe
     browser.runtime.onMessage.addListener(onMessageListener)
 } else {
     console.debug(`[promnesia] [sidebar-${UUID}] skipping callback registration, they are already present`)

@@ -10,7 +10,6 @@ npm install
 
 FAILED=0
 
-npm run flow   || FAILED=1
 npm run eslint || FAILED=1
 npm run test   || FAILED=1
 

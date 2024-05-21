@@ -1,5 +1,8 @@
 /* @flow */
 
+// keeping it here just for the reference and in case someone finds it in the future
+// I've migrated to typescript now, seems like much less struggle with webext annotations
+
 /*
  * Based on https://github.com/Shraymonks/flow-interfaces-chrome
  * not sure if browser polyfill has flow types??

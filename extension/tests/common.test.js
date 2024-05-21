@@ -1,4 +1,4 @@
-import {_fmt} from '../src/display.js'
+import {_fmt} from '../src/display'
 
 test('formats visit date/time', () => {
     // NOTE: under Node env there might not be necessary locales (e.g. if you're running in Docker)
@@ -10,7 +10,7 @@ test('formats visit date/time', () => {
     expect(ts).toBe('05:58')
 })
 
-import {format_duration} from '../src/common.js'
+import {format_duration} from '../src/common'
 
 test('formats duration', () => {
     expect(format_duration(40)).toBe('40 seconds');
@@ -51,21 +51,21 @@ test('visits', () => {
     }
 })
 
-import {normalise_url} from '../src/normalise.js';
+import {normalise_url} from '../src/normalise'
 
 test('normalises', () => {
     expect(normalise_url('https://www.youtube.com/playlist?list=PLWz5rJ2EKKc9CBxr3BVjPTPoDPLdPIFCE/')).toBe('youtube.com/playlist?list=PLWz5rJ2EKKc9CBxr3BVjPTPoDPLdPIFCE');
 });
 
 
-import {normalisedURLHostname} from '../src/normalise.js';
+import {normalisedURLHostname} from '../src/normalise'
 test('normalisedURLHostname', () => {
     expect(normalisedURLHostname('https://www.reddit.com/whatever')).toBe('reddit.com');
     expect(normalisedURLHostname('file:///usr/share/doc/python3/html/index.html')).toBe('');
 });
 
 
-import {Filterlist} from '../src/filterlist.js'
+import {Filterlist} from '../src/filterlist'
 
 
 test('filterlists', async () => {

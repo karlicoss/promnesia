@@ -1,5 +1,3 @@
-/* @flow */
-import {unwrap} from './common'
 import {getStoredOptions, setOptions, resetOptions} from './options'
 import {defensifyAlert, alertError} from './notifications'
 
@@ -20,7 +18,7 @@ class Option<T> {
     }
 
     get element(): HTMLInputElement {
-        return ((document.getElementById(this.id): any): HTMLInputElement);
+        return document.getElementById(this.id) as HTMLInputElement
     }
 }
 
@@ -54,8 +52,8 @@ class Toggle extends Option<boolean> {
 }
 
 // none means 'rely on the default set by developer'
-class IToggle extends Option<?boolean> {
-    async setValue(x: ?boolean): Promise<void> {
+class IToggle extends Option<boolean | null> {
+    async setValue(x: boolean | null): Promise<void> {
         if (x == null) {
             this.element.indeterminate = true
         } else {
@@ -63,7 +61,7 @@ class IToggle extends Option<?boolean> {
         }
     }
 
-    async getValue(): Promise<?boolean> {
+    async getValue(): Promise<boolean | null> {
         if (this.element.indeterminate) {
             return null
         } else {
@@ -73,8 +71,8 @@ class IToggle extends Option<?boolean> {
 }
 
 class Editor extends Option<string> {
-    mode: ?string
-    constructor(id: string, {mode}: {mode: ?string}) {
+    mode: string | null
+    constructor(id: string, {mode}: {mode: string | null}) {
         super(id)
         this.mode = mode
     }
@@ -90,23 +88,15 @@ class Editor extends Option<string> {
         return (await this.editor()).state.doc.toString()
     }
 
-    // $FlowFixMe[missing-local-annot]
     async bind(value: string): Promise<void> {
-        // $FlowFixMe[cannot-resolve-module]
+        // @ts-expect-error
         const {EditorView, minimalSetup} = await import(/* webpackChunkName: "codermirror" */"codemirror")
-        // $FlowFixMe[cannot-resolve-module]
         const {highlightActiveLine, lineNumbers, highlightActiveLineGutter} = await import (/* webpackChunkName: "codermirror" */"@codemirror/view")
-        // $FlowFixMe[cannot-resolve-module]
         const {indentOnInput, bracketMatching} = await import (/* webpackChunkName: "codermirror" */"@codemirror/language")
-        // $FlowFixMe[cannot-resolve-module]
         const {highlightSelectionMatches} = await import (/* webpackChunkName: "codermirror" */"@codemirror/search")
-        // $FlowFixMe[cannot-resolve-module]
         const {autocompletion} = await import (/* webpackChunkName: "codermirror" */"@codemirror/autocomplete")
-        // $FlowFixMe[cannot-resolve-module]
         const {Compartment} = await import (/* webpackChunkName: "codermirror" */"@codemirror/state")
-        // $FlowFixMe[cannot-resolve-module]
         const {css} = await import (/* webpackChunkName: "codermirror" */"@codemirror/lang-css")
-        // $FlowFixMe[cannot-resolve-module]
         const {javascript} = await import (/* webpackChunkName: "codermirror" */"@codemirror/lang-javascript")
 
         // see https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
@@ -120,7 +110,7 @@ class Editor extends Option<string> {
             highlightActiveLine(),
             highlightSelectionMatches(),
         ]
-        let language = new Compartment
+        const language = new Compartment
         const lang = []
         if (this.mode === 'javascript') {
             lang.push(language.of(javascript()))
@@ -139,11 +129,10 @@ class Editor extends Option<string> {
         })
     }
 
-    // $FlowFixMe[missing-local-annot]
     async editor() {
-        // $FlowFixMe[cannot-resolve-module]
+        // @ts-expect-error
         const {EditorView} = await import(/* webpackChunkName: "codermirror" */"codemirror")
-        return unwrap(EditorView.findFromDOM(this.element))
+        return EditorView.findFromDOM(this.element)!
     }
 }
 // end
@@ -191,6 +180,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
         [o_position_css            , opts.position_css            ],
         [o_extra_css               , opts.extra_css               ],
     ]) {
+        // @ts-expect-error
         await el.bind(value)
     }
 
@@ -199,22 +189,22 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     settings_loaded.id = 'promnesia-settings-loaded'
     settings_loaded.style.display = 'none'
 
-    unwrap(document.body).appendChild(settings_loaded)
+    document.body!.appendChild(settings_loaded)
 }));
 
 
 // https://stackoverflow.com/a/34156339/706389
 function download(content: string, fileName: string, contentType: string) {
-    var a = document.createElement("a")
-    var file = new Blob([content], {type: contentType})
+    const a = document.createElement("a")
+    const file = new Blob([content], {type: contentType})
     a.href = URL.createObjectURL(file)
     a.download = fileName
     a.click()
 }
 
-unwrap(document.getElementById(
+document.getElementById(
     'export_settings_id'
-)).addEventListener('click', defensifyAlert(async () => {
+)!.addEventListener('click', defensifyAlert(async () => {
     // NOTE: gets all keys, including the old onces, just what we need
     const opts = await getStoredOptions()
     download(JSON.stringify(opts), 'promnesia_settings.json', 'text/json')
@@ -222,9 +212,9 @@ unwrap(document.getElementById(
 
 // TODO careful here if I ever implement not showing notifications?
 // defensify might need to alert then...
-unwrap(document.getElementById(
+document.getElementById(
     'save_id'
-)).addEventListener('click', defensifyAlert(async () => {
+)!.addEventListener('click', defensifyAlert(async () => {
     // todo make opts active object so we don't query unnecessary things like blacklist every time?
     const opts = {
         host                      : await (o_host                      .getValue()),
@@ -249,9 +239,9 @@ unwrap(document.getElementById(
     alert("Saved!");
 }));
 
-unwrap(document.getElementById(
+document.getElementById(
     'reset_id',
-)).addEventListener('click', defensifyAlert(async() => {
+)!.addEventListener('click', defensifyAlert(async() => {
     if (confirm('This will RESET your settings! Make sure you exported them first.')) {
         await resetOptions()
         alert('Reset! Reload the page to see the effect.')
@@ -261,7 +251,7 @@ unwrap(document.getElementById(
 
 // https://stackoverflow.com/questions/46946380/fetch-api-request-timeout
 // not fully correct, need to cancel request; but hopefully ok for now
-function fetchTimeout(url: string, options: any, timeout: ?number): Promise<any> {
+function fetchTimeout(url: string, options: any, timeout: number | null): Promise<any> {
     return new Promise((resolve, reject) => {
         fetch(url, options).then(resolve, reject);
 
@@ -272,7 +262,7 @@ function fetchTimeout(url: string, options: any, timeout: ?number): Promise<any>
     });
 }
 
-unwrap(document.getElementById('backend_status_id')).addEventListener('click', defensifyAlert(async() => {
+document.getElementById('backend_status_id')!.addEventListener('click', defensifyAlert(async() => {
     const host  = await o_host .getValue()
     const token = await o_token.getValue()
 

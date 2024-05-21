@@ -1,15 +1,14 @@
-/* @flow */
 import browser from "webextension-polyfill"
 
 import type {Url} from './common';
 import {Blacklisted} from './common';
 import {getOptions} from './options';
+import type {Options} from './options'
 
 
 // last resort.. because these could be annoying (also might not make sense to display globally)
 // only using it when there is no other context (e.g. current tab) to show a notification
 export function desktopNotify(message: string, priority: number=0) {
-    // $FlowFixMe
     browser.notifications.create({
         'type'    : "basic",
         'title'   : "promnesia",
@@ -43,11 +42,13 @@ export function alertError(obj: any) {
 }
 
 
+// TODO see if I can define a typescript tyoe..
+// @ts-expect-error
 export function defensify(pf: (...any) => Promise<any>, name: string): (...any) => Promise<void> {
     const fname = pf.name // hopefully it's always present?
     const error_handler = (err: Error) => {
         console.error('function "%s" %s failed: %o', fname, name, err)
-        getOptions().then(opts => {
+        getOptions().then((opts: Options) => {
             if (opts.verbose_errors_on) {
                 notifyError(err, 'defensify')
             } else {
@@ -63,6 +64,7 @@ export function defensify(pf: (...any) => Promise<any>, name: string): (...any) 
 
 
 // TODO return type should be void here too...
+// @ts-expect-error
 export function defensifyAlert(pf: (...any) => Promise<any>): (any) => Promise<any> {
     return (...args) => pf(...args).catch(alertError);
 }
@@ -98,7 +100,7 @@ Toastify({
 }
 
 // TODO maybe if tabId = -1, show normal notification?
-async function showTabNotification(tabId: ?number, message: string, opts: ToastOptions): Promise<void> {
+async function showTabNotification(tabId: number | null, message: string, opts: ToastOptions): Promise<void> {
     if (tabId == null) {
         // not much else we can do..
         desktopNotify(message)
@@ -108,7 +110,7 @@ async function showTabNotification(tabId: ?number, message: string, opts: ToastO
         await _showTabNotification(tabId, message, opts)
     } catch (error) {
         console.error('showTabNotification: %o %s', error, message)
-        let errmsg = error.message || ''
+        const errmsg = (error as Error).message || ''
             // ugh. might happen if the page is down..
         if (errmsg.includes('Missing host permission for the tab') ||
             // might happen on special pages?
@@ -125,13 +127,13 @@ async function showTabNotification(tabId: ?number, message: string, opts: ToastO
 }
 
 export const notifications = {
-    notify: async function(tabId: ?number, message: string, opts: ToastOptions): Promise<void> {
+    notify: async function(tabId: number | null, message: string, opts: ToastOptions): Promise<void> {
         return showTabNotification(tabId, message, opts)
     },
     error: async function(tabId: number, e: Error | string): Promise<void> {
         return notifications.notify(tabId, String(e), {color: 'red'})
     },
-    page_ignored: async function(tabId: ?number, url: ?Url, reason: string): Promise<void> {
+    page_ignored: async function(tabId: number | null, url: Url | null, reason: string): Promise<void> {
         return notifications.notify(tabId, `${url || ''} is ignored: ${reason}`, {color: 'red'})
     },
     excluded: async function(tabId: number, b: Blacklisted): Promise<void> {

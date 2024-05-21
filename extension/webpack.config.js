@@ -207,19 +207,19 @@ const options = {
   },
   entry: {
     background: {
-      import: path.join(__dirname, './src/background'),
+      import: path.join(__dirname, './src/background.ts'),
       dependOn: ['webext-options-sync'],
     },
     options_page: {
-      import: path.join(__dirname, './src/options_page'),
+      import: path.join(__dirname, './src/options_page.ts'),
       dependOn: ['webext-options-sync'],
     },
     sidebar: {
-      import: path.join(__dirname, './src/sidebar'),
+      import: path.join(__dirname, './src/sidebar.ts'),
       dependOn: ['webext-options-sync'],
     },
     search: {
-      import: path.join(__dirname, './src/search'),
+      import: path.join(__dirname, './src/search.ts'),
       dependOn: ['webext-options-sync'],
     },
     'webext-options-sync': {
