@@ -1,8 +1,7 @@
 const webpack = require('webpack'),
       path = require('path'),
       {CleanWebpackPlugin} = require('clean-webpack-plugin'),
-      CopyWebpackPlugin = require('copy-webpack-plugin'),
-      WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+      CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const T = {
     CHROME  : 'chrome',
@@ -23,7 +22,6 @@ const v3 = process.env.MANIFEST === '3'
 const ext_id = process.env.EXT_ID
 
 const pkg = require('./package.json');
-const baseManifest = require('./src/manifest.json');
 
 const release = env.RELEASE == 'YES' ? true : false;
 const publish = env.PUBLISH == 'YES' ? true : false;
@@ -34,30 +32,25 @@ const target = env.TARGET; // TODO erm didn't work?? assert(target != null);
 // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#Other_UI_related_API_and_manifest.json_key_differences
 // const isMobile = target.includes('mobile');
 
-const name = 'Promnesia' + (dev ? ' [dev]' : '');
+const name = 'Promnesia' + (dev ? ' [dev]' : '')
+
+
+// ugh. declarative formats are shit.
+
 
 // Firefox wouldn't let you rebind its default shortcuts most of which use Shift
 // On the other hand, Chrome wouldn't let you use Alt
-const modifier = target === T.CHROME ? 'Shift' : 'Alt';
+const modifier = target === T.CHROME ? 'Shift' : 'Alt'
 
-// ugh. declarative formats are shit.
-const commandsExtra = {
-    "_execute_browser_action": {
-        "description": "Activate sidebar",
-        "suggested_key": {
-          /* fucking hell, ubuntu is hijacking Ctrl-Shift-E... not sure what to do :(
-           * https://superuser.com/questions/358749/how-to-disable-ctrlshiftu-in-ubuntu-linux/1392682
-           * */
-            "default": `Ctrl+${modifier}+E`,
-            "mac":  `Command+${modifier}+E`
-        }
-    },
+const action_name = v3 ? 'action' : 'browser_action'
+
+const commands = {
     "mark_visited": {
         "description": "Mark/unmark visited links on the current page",
         "suggested_key": {
             "default": `Ctrl+${modifier}+V`,
-            "mac":  `Command+${modifier}+V`
-        }
+            "mac":  `Command+${modifier}+V`,
+        },
     },
     // right, 'S' interferes with OS hotkey?
     // need all of that discoverable from menu anyway
@@ -66,84 +59,163 @@ const commandsExtra = {
         "description": "Open search page",
         "suggested_key": {
             "default": `Ctrl+${modifier}+H`,
-            "mac":  `Command+${modifier}+H`
-        }
-    }
-};
+            "mac":  `Command+${modifier}+H`,
+        },
+    },
+}
+
+commands[`_execute_${action_name}`] =  {
+    "description": "Activate sidebar",
+    "suggested_key": {
+      /* fucking hell, ubuntu is hijacking Ctrl-Shift-E... not sure what to do :(
+       * https://superuser.com/questions/358749/how-to-disable-ctrlshiftu-in-ubuntu-linux/1392682
+       * */
+        "default": `Ctrl+${modifier}+E`,
+        "mac":  `Command+${modifier}+E`,
+    },
+}
 
 
-// TODO ugh it's getting messy...
 const action = {
     "default_icon": "images/ic_not_visited_48.png",
     "default_title": "Show promnesia sidebar",
-};
+}
 
 
-const hostPermissions = [
-  // these are necessary for webNavigation to work
-  // otherwise we get "Cannot access contents of the page. Extension manifest must request permission to access the respective host."
-  "file:///*",
-  "https://*/*",
-  "http://*/*",
-
-  /* also note that if we have host permissions, we don't need tabs/activeTab permission to inject css/code
-   * this is necessary to call insertCss and executeScript
-   * note that just activeTab isn't enough because things aren't necessarily happening after user interaction like action
-   * e.g. sidebar/icon state is updating after webNavigation callback
-   * */
+const endpoints = (domain) => [
+    // TODO not sure if need to include api subpages?? seems like connect-src doesn't like /* in path component..
+    'http://'  + domain + '/',
+    'https://' + domain + '/',
 ]
 
+
+// prepare for manifest v3
+const host_permissions = [
+    // broad permissions (*) are necessary for webNavigation to work
+    // otherwise we get "Cannot access contents of the page. Extension manifest must request permission to access the respective host."
+    'file:///*',
+    ...endpoints('*'),
+    /* also note that if we have host permissions, we don't need tabs/activeTab permission to inject css/code
+     * this is necessary to call insertCss and executeScript
+     * note that just activeTab isn't enough because things aren't necessarily happening after user interaction like action
+     * e.g. sidebar/icon state is updating after webNavigation callback
+     * */
+]
+// FIXME not sure if need these considering it needs broad host permissions anyway?
+const optional_host_permissions = endpoints('*')
+
+
+// TODO make permissions literate
 const permissions = [
-  ...hostPermissions,
+    'storage',
 
-  'storage',
+    'webNavigation',
+    'contextMenus',
 
-  'webNavigation',
-  'contextMenus',
+    // todo could be optional?
+    'notifications',
 
-  // todo could be optional?
-  'notifications',
+    // todo could be optional?
+    'bookmarks',   // NOTE: isn't available on mobile
 
-  // todo could be optional?
-  'bookmarks',   // NOTE: isn't available on mobile
-
-  // todo could be optional?
-  'history',  // NOTE: isn't available on mobile
+    // todo could be optional?
+    'history',  // NOTE: isn't available on mobile
 ]
 
 
-const manifestExtra = {
+const optional_permissions = []
+
+
+const content_security_policy = [
+    "script-src 'self'",  // this must be specified when overriding, otherwise it complains
+    /// also this works, but it seems that default-src somehow shadows style-src???
+    // "default-src 'self'",
+    // "style-src 'unsafe-inline'", // FFS, otherwise <style> directives on extension's pages not working??
+    ///
+
+    // also need to override it to exclude 'upgrade-insecure-requests' in manifest v3?
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_Security_Policy#upgrade_insecure_network_requests_in_manifest_v3
+    // NOTE: could be connect-src http: https: to allow all?
+    // but we're specifically allowing endpoints that have /capture in them FIXME misleading mention of grasp?
+    "connect-src " + endpoints('*:*').join(' '),
+].join('; ')
+
+
+const scripts = [
+    'background.js',
+    'webext-options-sync.js',
+]
+
+const background = {}
+
+if (v3) {
+    if (target === T.CHROME) {
+        background['service_worker'] = scripts
+        background['scripts'] = scripts  // FIXME why its it specified twice??
+        // see header of background.js, this was for some experiments
+        // NOTE: not working in firefox? just fails to load the manifest
+        // background['type'] = 'module'
+    } else {
+      background['scripts'] = scripts
+    }
+} else {
+  background['scripts'] = scripts
+  background['persistent'] = false
+}
+
+
+const manifest = {
     name: name,
     version: pkg.version,
-    description: "Indicates whether and when the page was visited (and more!)",
+    description: pkg.description,
+    permissions: permissions,
+    commands: commands,  // NOTE: this doesn't have any effect on mobile
+    optional_permissions: optional_permissions,
+    manifest_version: v3 ? 3 : 2,
+    background: background,
     icons: {
         "48": "images/ic_not_visited_48.png",
     },
-    browser_action: action,
-    permissions: permissions,
-    options_ui: {},
+    options_ui: {
+        page: 'options_page.html'
+    },
     web_accessible_resources: [
         "sidebar.css", /* injected in the sidebar */
         "*.js.map",  // debugging symbols
     ],
 }
+manifest[action_name] = action
+
+if (target === T.FIREFOX) {
+    // NOTE: chrome v3 works without content_security_policy??
+    // but in firefox it refuses to make a request even when we allow hostname permission??
+    manifest.content_security_policy = (v3 ? {extension_pages: content_security_policy} : content_security_policy)
+}
 
 // this is only needed during testing
 if (!publish) {
-  manifestExtra.content_scripts = [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["selenium_bridge.js"],
-    },
-  ]
+    manifest.content_scripts = [{"matches": ["<all_urls>"], "js": ["selenium_bridge.js"]}]
 }
 
 if (dev) {
-    manifestExtra.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self'";
+    // TODO -- not sure what this was for??
+    // manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }
 
-// NOTE: this doesn't have any effect on mobile
-manifestExtra.commands = commandsExtra;
+
+if (v3) {
+    if (target === T.FIREFOX) {
+        // firefox doesn't support optional host permissions
+        // note that these will still have to be granted by user (unlike in chrome)
+        manifest.host_permissions = [...host_permissions, ...optional_host_permissions]
+    } else {
+        manifest.host_permissions = host_permissions
+        manifest.optional_host_permissions = optional_host_permissions
+    }
+} else {
+    manifest.permissions.push(...host_permissions)
+    manifest.optional_permissions.push(...optional_host_permissions)
+}
 
 /*
  * TODO ??? from the debugger
@@ -158,7 +230,8 @@ manifestExtra.commands = commandsExtra;
 // NOTE: chrome doesn't allow both page_action and browser_action in manifest
 // https://stackoverflow.com/questions/7888915/why-i-cannot-use-two-or-more-browser-action-page-action-or-app-together
 if (target != T.CHROME) {
-    manifestExtra.page_action = {
+    // TODO not sure what happens in manifest v3? don't think page_action is available
+    manifest.page_action = {
         browser_style: true,
         default_icon: {
             "48": "images/ic_visited_48.png"
@@ -169,33 +242,31 @@ if (target != T.CHROME) {
 
 
 if (target === T.CHROME) {
-    manifestExtra.options_ui.chrome_style = true;
+    manifest.options_ui.chrome_style = true;
 } else if (target.includes('firefox')) {
     // TODO not sure if should do anything special for mobile
-    manifestExtra.options_ui.browser_style = true;
-    manifestExtra.browser_action.browser_style = true;
+    manifest.options_ui.browser_style = true;
+    manifest.browser_action.browser_style = true;
 } else {
     throw new Error("unknown target " + target);
 }
 
 // on mobile it looks kinda small-ish... but I think can be fixed with responsive CSS, fine.
-manifestExtra.options_ui.open_in_tab = true;
+manifest.options_ui.open_in_tab = true; // TODO get rid of this?..
 
-
-if (!publish && target === T.FIREFOX) {
-    /*
-     * When we publish, the id used is AMO/CWS and provided by the build script
-     * Otherwise, use temporary id (or some APIs don't work, at least in firefox..)
-     */
-    manifestExtra.browser_specific_settings = {
+// FIXME should it be conditional on publishing??
+if (v3 || target === T.FIREFOX) {
+  // this isn't really required in chrome, but without it, webext lint fails for chrome addon
+  // if this isn't specified in firefox, it's complainint that storage api isn't available in background worker :shrug:
+  const gecko_id = target === T.FIREFOX ? ext_id : "{00000000-0000-0000-0000-000000000000}"
+  manifest.browser_specific_settings = {
       gecko: {
-        id: ext_id,
+          id: gecko_id,
       },
-    }
+  }
 }
 
-
-const buildPath = path.join(__dirname, 'dist', target);
+const buildPath = path.join(__dirname, 'dist', target)
 
 const options = {
   mode: dev ? 'development' : 'production',
@@ -296,13 +367,15 @@ const options = {
         // not sure if it's the right way, but I guess webpack can't guess otherwise
         { context: 'src', from: 'toastify.js'   },  // TODO my version is tweaked, right?
         { context: 'src', from: 'selenium_bridge.js' },
+        {
+            // due to firefox + chrome and manifest v2 + v3 combination, 95% of the manifest is JS generated anyway
+            // so with this we're just generaing it fully dynamically
+            // in addition, WebpackExtensionManifestPlugin is outdated, hasn't been updated for a while
+            from: 'webpack.config.js',
+            to: path.join(buildPath, 'manifest.json'),
+            transform: (content, path) => JSON.stringify(manifest, null, 2),
+        },
        ]
-    }),
-    new WebpackExtensionManifestPlugin({
-      config: {
-        base: baseManifest,
-        extend: manifestExtra,
-      }
     }),
   ],
   // docs claim it's the slowest but pretty fast anyway
