@@ -143,15 +143,20 @@ const content_security_policy = [
 
 const scripts = [
     'background.js',
-    'webext-options-sync.js',
+    'webext-options-sync.js', // TODO need to get rid of this... so I can specify service_worker (it takes just one string)
 ]
 
 const background = {}
 
 if (v3) {
     if (target === T.CHROME) {
-        background['service_worker'] = scripts
-        background['scripts'] = scripts  // FIXME why its it specified twice??
+        // webext lint will warn about this since it's not supported in firefox yet
+        background['service_worker'] = 'background.js'
+
+        // this isn't supported in chrome manifest v3 (chrome warns about unsupported field)
+        // but without it webext lint fails
+        background['scripts'] = scripts
+
         // see header of background.js, this was for some experiments
         // NOTE: not working in firefox? just fails to load the manifest
         // background['type'] = 'module'
@@ -163,6 +168,13 @@ if (v3) {
   background['persistent'] = false
 }
 
+
+const _resources = [
+    "sidebar.css", // injected in the sidebar
+    "*.js.map",    // debugging symbols
+]
+
+const web_accessible_resources = v3 ? [{resources: _resources, matches: [ '*://*/*']}] : _resources
 
 const manifest = {
     name: name,
@@ -177,12 +189,10 @@ const manifest = {
         "48": "images/ic_not_visited_48.png",
     },
     options_ui: {
-        page: 'options_page.html'
+        page: 'options_page.html',
+        open_in_tab: true,
     },
-    web_accessible_resources: [
-        "sidebar.css", /* injected in the sidebar */
-        "*.js.map",  // debugging symbols
-    ],
+    web_accessible_resources: web_accessible_resources,
 }
 manifest[action_name] = action
 
@@ -217,47 +227,27 @@ if (v3) {
     manifest.optional_permissions.push(...optional_host_permissions)
 }
 
-/*
- * TODO ??? from the debugger
- * Reading manifest: Error processing browser_action.browser_style: Unsupported on Android.
- * Warning details
- * Reading manifest: Error processing browser_action.default_icon:
- */
 
-// TODO shit, how to validate manifest?? didn't find anything...
-
-// NOTE: this is only for mobile Firefox, we dynamically enable it in background.js
+// NOTE: this is only for mobile Firefox, we dynamically enable it in background page
 // NOTE: chrome doesn't allow both page_action and browser_action in manifest
 // https://stackoverflow.com/questions/7888915/why-i-cannot-use-two-or-more-browser-action-page-action-or-app-together
+// for Firefox, it will also be deprecated in manifest v3 at some point? keeping for now just in case
+// https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/
 if (target != T.CHROME) {
-    // TODO not sure what happens in manifest v3? don't think page_action is available
     manifest.page_action = {
-        browser_style: true,
         default_icon: {
             "48": "images/ic_visited_48.png"
         },
         default_title: "Promnesia",
-    };
+    }
 }
 
-
-if (target === T.CHROME) {
-    manifest.options_ui.chrome_style = true;
-} else if (target.includes('firefox')) {
-    // TODO not sure if should do anything special for mobile
-    manifest.options_ui.browser_style = true;
-    manifest.browser_action.browser_style = true;
-} else {
-    throw new Error("unknown target " + target);
-}
-
-// on mobile it looks kinda small-ish... but I think can be fixed with responsive CSS, fine.
-manifest.options_ui.open_in_tab = true; // TODO get rid of this?..
 
 // FIXME should it be conditional on publishing??
 if (v3 || target === T.FIREFOX) {
-  // this isn't really required in chrome, but without it, webext lint fails for chrome addon
-  // if this isn't specified in firefox, it's complainint that storage api isn't available in background worker :shrug:
+  // this isn't really required in chrome (it warns about unrecognised browser_specific_settings)
+  // but without it, webext lint fails for chrome addon
+  // if this isn't specified in firefox, it's complaining that storage api isn't available in background worker :shrug:
   const gecko_id = target === T.FIREFOX ? ext_id : "{00000000-0000-0000-0000-000000000000}"
   manifest.browser_specific_settings = {
       gecko: {
