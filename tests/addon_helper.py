@@ -4,13 +4,12 @@ import json
 from pathlib import Path
 import re
 import subprocess
-from typing import Any, List
+from typing import Any
 
 from loguru import logger
-import psutil
 from selenium import webdriver
 
-from webdriver_utils import is_headless
+from webdriver_utils import is_headless, get_browser_process
 
 
 @dataclass
@@ -26,6 +25,10 @@ class AddonHelper:
     def manifest(self) -> Any:
         # ugh. sadly (at least in Firefox) there doesn't seem a way to read actual manifest loaded in browser?
         return json.loads((self.addon_source / 'manifest.json').read_text())
+
+    @cached_property
+    def manifest_version(self) -> int:
+        return self.manifest['manifest_version']
 
     @property
     def extension_prefix(self) -> str:
@@ -63,9 +66,9 @@ class AddonHelper:
             )
         else:
             hotkey = commands[command]['suggested_key']['default']
-            self.trigger_hotkey(hotkey)
+            self.gui_hotkey(hotkey)
 
-    def trigger_hotkey(self, key: str) -> None:
+    def gui_hotkey(self, key: str) -> None:
         assert not self.headless  # just in case
         lkey = key.lower().split('+')
         logger.debug(f'sending hotkey {lkey}')
@@ -75,13 +78,13 @@ class AddonHelper:
         focus_browser_window(self.driver)
         pyautogui.hotkey(*lkey)
 
-    def gui_typewrite(self, *args, **kwargs) -> None:
+    def gui_write(self, *args, **kwargs) -> None:
         assert not self.headless
 
         import pyautogui
 
         focus_browser_window(self.driver)
-        pyautogui.typewrite(*args, **kwargs)  # select first item
+        pyautogui.write(*args, **kwargs)
 
 
 # NOTE looks like it used to be posssible in webdriver api?
@@ -142,11 +145,7 @@ def get_window_id(driver: webdriver.Remote) -> str:
         pid = str(driver.capabilities['moz:processID'])
     elif driver.name == 'chrome':
         # ugh no pid in capabilities...
-        driver_pid = driver.service.process.pid  # type: ignore[attr-defined]
-        process = psutil.Process(driver_pid)
-        [chrome_process] = process.children()
-        cmdline = chrome_process.cmdline()
-        assert '--enable-automation' in cmdline, cmdline
+        chrome_process = get_browser_process(driver)
         pid = str(chrome_process.pid)
     else:
         raise RuntimeError(driver.name)

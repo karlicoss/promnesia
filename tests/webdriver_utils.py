@@ -3,6 +3,7 @@ from pathlib import Path
 from time import sleep
 from typing import Dict, Iterator, Optional
 
+import psutil
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
@@ -53,8 +54,10 @@ def is_headless(driver: Driver) -> bool:
     if driver.name == 'firefox':
         return driver.capabilities.get('moz:headless', False)
     elif driver.name == 'chrome':
+        return any('--headless' in c for c in get_browser_process(driver).cmdline())
+        # ugh.. looks like this stopped working?
         # https://antoinevastel.com/bot%20detection/2018/01/17/detect-chrome-headless-v2.html
-        return driver.execute_script("return navigator.webdriver") is True
+        # return driver.execute_script("return navigator.webdriver") is True
     else:
         raise RuntimeError(driver.name)
 
@@ -157,3 +160,17 @@ See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
     version_string = ' '.join(f'{k}={v}' for k, v in version_data.items())
     logger.info(f'webdriver version: {version_string}')
     return driver
+
+
+def get_browser_process(driver: webdriver.Remote) -> psutil.Process:
+    driver_pid = driver.service.process.pid  # type: ignore[attr-defined]
+    dprocess = psutil.Process(driver_pid)
+    [process] = dprocess.children()
+    cmdline = process.cmdline()
+    if driver.name == 'firefox':
+        assert '--marionette' in cmdline, cmdline
+    elif driver.name == 'chrome':
+        assert '--enable-automation' in cmdline, cmdline
+    else:
+        raise AssertionError
+    return process

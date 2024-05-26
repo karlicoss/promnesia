@@ -291,7 +291,7 @@ def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver) -> None:
     driver.get('https://example.com')
 
     addon.open_context_menu()
-    addon.helper.gui_typewrite(['enter'])  # select first item
+    addon.helper.gui_write(['enter'])  # select first item
 
     confirm('shows prompt with alert to enter pattern to block?')
     wait_for_alert(driver).accept()
@@ -682,7 +682,7 @@ def test_fuzz(addon: Addon, driver: Driver, backend: Backend) -> None:
         pytest.skip("Rest of this test uses send_key to restore tab and it's not working under headless webdriver :(")
 
     for _ in range(10):
-        addon.helper.trigger_hotkey('Ctrl+Shift+t')  # restore tabs
+        addon.helper.gui_hotkey('Ctrl+Shift+t')  # restore tabs
         sleep(0.1)
     confirm("shouldn't result in 'unexpected error occured'; show only show single notification per page")
 
