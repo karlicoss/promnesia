@@ -320,7 +320,7 @@ class Addon:
         else:
             offset = 0
 
-        self.helper.gui_typewrite(['up'] + ['up'] * offset + ['enter'], interval=0.5)
+        self.helper.gui_write(['up'] + ['up'] * offset + ['enter'], interval=0.5)
 
     # TODO this doesn't belong to this class really, think about it
     def move_to(self, element) -> None:
