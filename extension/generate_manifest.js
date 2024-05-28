@@ -154,10 +154,14 @@ export function generateManifest({
             background['scripts'] = ['background.js']
         }
     } else {
-        background['scripts'] = ['background.js']
+        if (target === T.CHROME) {
+            background['scripts'] = ['background_chrome_mv2.js']
+        } else {
+            background['scripts'] = ['background.js']
+        }
         background['persistent'] = false
     }
-    // hmm seems like it works in firefox v2 too, but NOT in chrome v2??
+    // this doesn't have any effect in mv2 chrome, see the hack above for chrome specifically
     background['type'] = 'module'
 
     const _resources = [
