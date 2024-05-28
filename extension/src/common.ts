@@ -326,3 +326,11 @@ export function getOrDefault<T>(obj: any, key: string, def: T): T {
     const res = obj[key];
     return res === undefined ? def : res;
 }
+
+
+// js doesn't have builtin assert :(
+export function assert(condition: any, msg?: string): asserts condition {
+    if (!condition) {
+        throw new Error(`assertion failed ${msg}`)
+    }
+}

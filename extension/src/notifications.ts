@@ -42,10 +42,12 @@ export function alertError(obj: any) {
 }
 
 
-// TODO see if I can define a typescript tyoe..
-// @ts-expect-error
-export function defensify(pf: (...any) => Promise<any>, name: string): (...any) => Promise<void> {
-    const fname = pf.name // hopefully it's always present?
+type DefensifyArgs = readonly unknown[]
+export function defensify<Args extends DefensifyArgs>(
+    pf: (...args: Args) => Promise<any>,
+    name: string,
+): (...args: Args) => Promise<void> {
+    const fname = pf.name  // hopefully it's always present?
     const error_handler = (err: Error) => {
         console.error('function "%s" %s failed: %o', fname, name, err)
         getOptions().then((opts: Options) => {
@@ -56,17 +58,18 @@ export function defensify(pf: (...any) => Promise<any>, name: string): (...any) 
             }
         })
     }
-    return (...args) => pf(...args).then(() => {
+    return (...args: Args) => pf(...args).then(() => {
         // suppress return values, since the defensive error handler 'erases; the type anyway'
         return
     }).catch(error_handler)
 }
 
 
-// TODO return type should be void here too...
-// @ts-expect-error
-export function defensifyAlert(pf: (...any) => Promise<any>): (any) => Promise<any> {
-    return (...args) => pf(...args).catch(alertError);
+type DefensifyAlertArgs = readonly unknown[]
+export function defensifyAlert<Args extends DefensifyAlertArgs>(
+    pf: (...args: Args) => Promise<any>,
+): (...args: Args) => Promise<void> {
+    return (...args) => pf(...args).catch(alertError)
 }
 
 
