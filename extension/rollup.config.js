@@ -101,6 +101,7 @@ const compile = inputs => { return {
              {src: 'src/**/*.css'          , dest: buildDir},
              {src: 'src/toastify.js'       , dest: buildDir},
              {src: 'src/selenium_bridge.js', dest: buildDir},
+             {src: 'src/background_chrome_mv2.js', dest: buildDir},
          ],
          flatten: false,
        }),
