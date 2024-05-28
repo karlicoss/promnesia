@@ -1,11 +1,10 @@
 // @ts-check
+import globals from 'globals'
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
 
-const globals = require('globals')
-const eslint = require('@eslint/js')
-const tseslint = require('typescript-eslint')
 
-
-module.exports = tseslint.config(
+export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended, // TODO recommendedTypeChecked??
   {

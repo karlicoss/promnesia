@@ -1,8 +1,8 @@
 import browser from "webextension-polyfill"
 
-import type {Url} from './common';
-import {Blacklisted} from './common';
-import {getOptions} from './options';
+import type {Url} from './common'
+import {Blacklisted} from './common'
+import {getOptions} from './options'
 import type {Options} from './options'
 
 

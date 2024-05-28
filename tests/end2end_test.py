@@ -313,7 +313,7 @@ def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
     index_hypothesis(backend.backend_dir)
 
     driver.get(test_url)
-    confirm("sidebar: shouldn't be visible")
+    confirm("sidebar: SHOULD NOT be visible")
 
     with addon.sidebar.ctx():
         # hmm not sure how come it returns anything at all.. but whatever
@@ -325,10 +325,11 @@ def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
         # todo ugh, need to filter out filters, how to only query the ones in the sidebar?
 
     addon.sidebar.open()
-    confirm('sidebar: you should see hypothesis contexts')
+    confirm('sidebar: you SHOULD see hypothesis contexts')
 
     with addon.sidebar.ctx():
         # sleep(1)
+        # locate the linkified link in sidebar
         link = driver.find_element(By.PARTIAL_LINK_TEXT, 'how_algorithms_shape_our_world')
         assert is_visible(driver, link), link
 
@@ -338,7 +339,7 @@ def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
         assert len(contexts) == 8
 
     addon.sidebar.close()
-    confirm("sidebar: shouldn't be visible")
+    confirm("sidebar: SHOULD NOT be visible")
 
 
 @browsers()

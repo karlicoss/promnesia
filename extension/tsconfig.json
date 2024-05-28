@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
     "baseUrl": "src/",
     "noImplicitAny": true,
-    "module": "nodenext",
     "target": "es2022",
     "strict": true,
     "allowJs": true,
-    "moduleResolution": "nodenext",
+
+    // this is necessary to allos importing as import './whatever' (instead of explicit extension)
+    "moduleResolution": "bundler",
+    // esnext is necessary, otherwise bundler module resolution can't be used?
+    "module": "esnext",
   },
   "include": [
     "./src/**/*.ts"

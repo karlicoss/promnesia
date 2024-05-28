@@ -85,13 +85,13 @@ def main() -> None:
     if args.release:
         assert args.lint # TODO not sure..
 
-    def firefox_release_args():
+    def firefox_publish_args():
         from firefox_dev_secrets import API_KEY, API_SECRET
         return [
             '--artifacts-dir', str(artifacts_dir),
             '--api-key'      , API_KEY,
             '--api-secret'   , API_SECRET,
-            '--id'           , IDS[target],
+            # seems like webext sign requires addon id to be in manifest now
         ]
 
     if args.publish is not None:
@@ -99,11 +99,12 @@ def main() -> None:
         assert args.release
         if 'firefox' in target:
             check_call([
-                npm, 'run', 'release:amo',
+                npm, 'run', 'web-ext',
                 '--',
+                'sign', '--use-submission-api',
                 '--channel', args.publish,
                 '--source-dir', str(ext_dir),
-                *firefox_release_args(),
+                *firefox_publish_args(),
             ])
         elif target == 'chrome':
             assert args.publish == 'listed'  # no notion of unlisted on chrome store?

@@ -1,10 +1,6 @@
-// hmm. for some reason esm version isn't properly working with CSS??
-// but umd bundle does???
-// import tippy from '../node_modules/tippy.js/dist/tippy.esm.js'
-// import tippy from '../node_modules/tippy.js/dist/tippy-bundle.umd.js'
-// OK, headless is better because it doesn't inject extra CSS
+// headless is better because it doesn't inject extra CSS
 // also not causing issues with unsafe HTML assignment
-import tippy from '../node_modules/tippy.js/headless/dist/tippy-headless.esm.js'
+import tippy from "tippy.js/headless"
 
 // 'API': take
 // - link_element: list of <a> DOM elements on the page

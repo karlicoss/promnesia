@@ -2,7 +2,7 @@
 import browser from "webextension-polyfill"
 import type {BrowserAction, Menus, PageAction, Runtime, Tabs, WebNavigation} from "webextension-polyfill"
 
-import type {Url, SearchPageParams} from './common';
+import type {Url, SearchPageParams} from './common'
 import {Visit, Visits, Blacklisted, Methods, uuid} from './common'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
@@ -142,12 +142,7 @@ async function updateState(tab: TabUrl): Promise<void> {
         await browser.tabs.insertCSS    (tabId, {file: 'sidebar-outer.css'})
         await browser.tabs.insertCSS    (tabId, {file: 'sidebar.css'      })
         await browser.tabs.insertCSS    (tabId, {code: opts.position_css  })
-        await browser.tabs.executeScript(tabId, {file: 'webext-options-sync.js'})
-        await browser.tabs.executeScript(tabId, {file: 'anchorme.js'})
-        if (opts.sidebar_detect_urls) {
-            // meh
-            await browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
-        }
+        await browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
         proceed = true // successful code injection
     } catch (error) {
         const msg = (error as Error).message
