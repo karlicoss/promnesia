@@ -3,10 +3,10 @@ import type {Runtime} from "webextension-polyfill"
 
 import {Visits, Visit, format_duration, Methods, addStyle, Ids, uuid, getOrDefault} from './common'
 import type {Second, Src} from './common'
-import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options';
-import type {Options} from './options';
-import {Binder, _fmt, asClass} from './display';
-import {defensify} from './notifications';
+import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options'
+import type {Options} from './options'
+import {Binder, _fmt, asClass} from './display'
+import {defensify} from './notifications'
 
 // TODO how to prevent sidebar hiding on click??
 

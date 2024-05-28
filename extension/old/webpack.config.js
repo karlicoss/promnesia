@@ -1,3 +1,6 @@
+/**
+ * NOTE: I switched to rollup now, but keeping webpack config just for future reference
+ */
 const webpack = require('webpack'),
       path = require('path'),
       {CleanWebpackPlugin} = require('clean-webpack-plugin'),

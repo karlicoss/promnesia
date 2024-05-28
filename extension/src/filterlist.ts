@@ -1,7 +1,7 @@
-import type {Url} from './common';
+import type {Url} from './common'
 import {getOptions} from './options'
 import {asList, fetch_max_stale} from './common'
-import {normalisedURLHostname} from './normalise';
+import {normalisedURLHostname} from './normalise'
 
 type Reason = string
 

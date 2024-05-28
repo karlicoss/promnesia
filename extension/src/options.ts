@@ -1,4 +1,5 @@
 import browser from "webextension-polyfill"
+import OptionsSync from 'webext-options-sync'
 
 import {getBrowser, Methods} from './common'
 
@@ -241,9 +242,6 @@ function defaultOptions(): StoredOptions {
 
 
 async function optSync() {
-    // uhh.. for some reason await import here works with jest
-    // whereas static import on top of file doesn't??
-    const {default: OptionsSync} = await import('webext-options-sync')
     return new OptionsSync({
         // TODO hmm, seems like it doesn't like null in Options
         // but this actually works? open issue in webext-options-sync?

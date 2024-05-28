@@ -1,4 +1,5 @@
 import browser from "webextension-polyfill"
+import anchorme from "anchorme"
 
 import type {Url, Src, Locator} from './common'
 import {Methods, safeSetInnerHTML} from './common'
@@ -177,20 +178,20 @@ export class Binder {
                 // }
                 // note: performance is OK
                 // 339 iterations passed, took  200  ms -- and it's counting other DOM operations as well
-                // @ts-expect-error
-                if (window.promnesia_anchorme != null) {
-                    // @ts-expect-error
-                    const anchorme = window.promnesia_anchorme.default
+                // if (window.promnesia_anchorme != null) {
+                    // const anchorme = window.promnesia_anchorme.default
+                    // TODO for now keeping this anchorme garbage above
+                    // since later hoping to make import dynamic gain
                     handle_plain = (text: string) => {
                         try {
-                            const res = anchorme!(text)
+                            const res = anchorme(text)
                             safeSetInnerHTML(ctx_c, res)
                         } catch (err) { // just in case..
                             console.error(err)
                             do_simple(text)
                         }
                     }
-                }
+                // }
             }
 
             let ctx = context;

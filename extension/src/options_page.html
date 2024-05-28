@@ -2,12 +2,14 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <title>Options</title>
-        <script src='webext-options-sync.js'></script>
+        <title>Promnesia preferences</title>
+        <script type="module" src="options_page.js" defer></script>
         <link rel="stylesheet" type="text/css" href="options_page.css">
     </head>
 
 <body>
+    <!-- TODO rename to 'preferences' everywhere for consistency -->
+    <h1>Promnesia preferences</h1>
     <!-- TODO link from the page here straight to the features? -->
     <fieldset>
         <legend><strong>Don't forget to save settings after changing</strong></legend>
@@ -185,6 +187,5 @@ They will be autoupdated every 3 days. Spec format (Json):<pre>[
         <button id="reset_id" style="color:red">DANGER: reset settings to defaults</button>
     </fieldset>
         <!-- </details> -->
-    <script src="options_page.js"/></script>
 </body>
 </html>

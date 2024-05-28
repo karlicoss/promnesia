@@ -89,15 +89,14 @@ class Editor extends Option<string> {
     }
 
     async bind(value: string): Promise<void> {
-        // @ts-expect-error
-        const {EditorView, minimalSetup} = await import(/* webpackChunkName: "codermirror" */"codemirror")
-        const {highlightActiveLine, lineNumbers, highlightActiveLineGutter} = await import (/* webpackChunkName: "codermirror" */"@codemirror/view")
-        const {indentOnInput, bracketMatching} = await import (/* webpackChunkName: "codermirror" */"@codemirror/language")
-        const {highlightSelectionMatches} = await import (/* webpackChunkName: "codermirror" */"@codemirror/search")
-        const {autocompletion} = await import (/* webpackChunkName: "codermirror" */"@codemirror/autocomplete")
-        const {Compartment} = await import (/* webpackChunkName: "codermirror" */"@codemirror/state")
-        const {css} = await import (/* webpackChunkName: "codermirror" */"@codemirror/lang-css")
-        const {javascript} = await import (/* webpackChunkName: "codermirror" */"@codemirror/lang-javascript")
+        const {EditorView, minimalSetup} = await import ("codemirror")
+        const {highlightActiveLine, lineNumbers, highlightActiveLineGutter} = await import ("@codemirror/view")
+        const {indentOnInput, bracketMatching} = await import ("@codemirror/language")
+        const {highlightSelectionMatches} = await import ("@codemirror/search")
+        const {autocompletion} = await import ("@codemirror/autocomplete")
+        const {Compartment} = await import ("@codemirror/state")
+        const {css} = await import ("@codemirror/lang-css")
+        const {javascript} = await import ("@codemirror/lang-javascript")
 
         // see https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
         // and https://codemirror.net/docs/ref/
@@ -130,8 +129,7 @@ class Editor extends Option<string> {
     }
 
     async editor() {
-        // @ts-expect-error
-        const {EditorView} = await import(/* webpackChunkName: "codermirror" */"codemirror")
+        const {EditorView} = await import("codemirror")
         return EditorView.findFromDOM(this.element)!
     }
 }
