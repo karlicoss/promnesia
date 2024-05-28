@@ -10,6 +10,9 @@
     "moduleResolution": "bundler",
     // esnext is necessary, otherwise bundler module resolution can't be used?
     "module": "esnext",
+
+    // without it, emacs (LSP?) complains when editing files.. not sure if impacts actual code generation?
+    "lib": ["es6", "dom"],
   },
   "include": [
     "./src/**/*.ts"

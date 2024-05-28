@@ -3,7 +3,7 @@ import browser from "webextension-polyfill"
 import type {BrowserAction, Menus, PageAction, Runtime, Tabs, WebNavigation} from "webextension-polyfill"
 
 import type {Url, SearchPageParams} from './common'
-import {Visit, Visits, Blacklisted, Methods, uuid} from './common'
+import {Visit, Visits, Blacklisted, Methods, assert, uuid} from './common'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
 
@@ -666,7 +666,10 @@ export async function handleToggleSidebar() {
 function registerActions() {
     // NOTE: on mobile, this sets action for both icon (if it's displayed) and in the menu
     for (const action of actions()) {
-        action.onClicked.addListener(defensify(toggleSidebarOnTab, 'action.onClicked'))
+        action.onClicked.addListener(defensify(
+            (tab: Tabs.Tab) => toggleSidebarOnTab({url: tab.url!, id: tab.id!}),
+            'action.onClicked',
+        ))
     }
 }
 
@@ -687,12 +690,6 @@ const onCommandCallback = defensify(async cmd => {
         throw new Error(`unexpected command ${cmd}`)
     }
 }, 'onCommand')
-
-
-type MenuInfo = {
-    menuItemId: string,
-    linkUrl?: string,
-}
 
 
 async function active(): Promise<TabUrl> {
@@ -844,7 +841,7 @@ ${surl}
             },
         )
     },
-    onMenuClick: async function(info: MenuInfo, _tab: Tabs.Tab) {
+    onMenuClick: async function(info: Menus.OnClickData, _tab: Tabs.Tab) {
         const url = info.linkUrl!
         await AddToMarkVisitedExcludelist.add([url])
     },
@@ -858,7 +855,7 @@ const DEFAULT_CONTEXTS: Array<Menus.ContextType> = ['page', 'browser_action']
 type MenuEntry = {
     id: string,
     title: string,
-    callback: ((info: MenuInfo, tab: Tabs.Tab) => Promise<void>) | null,
+    callback: ((info: Menus.OnClickData, tab: Tabs.Tab) => Promise<void>) | null,
     contexts?: Array<Menus.ContextType>, // NOTE: not present interpreted as DEFAULT_CONTEXTS
     parentId?: string,
 }
@@ -977,7 +974,8 @@ function initContextMenus(): void {
     })
 
     // need to keep these callbacks here, since onInstalled above isn't called when background page resumes
-    const onMenuClickedCallback = defensify(async (info: MenuInfo, tab: Tabs.Tab) => {
+    const onMenuClickedCallback = defensify(async (info: Menus.OnClickData, tab: Tabs.Tab | undefined) => {
+        assert(tab != null)
         const mid = info.menuItemId
         for (const m of [...MENUS, ...TOGGLES]) {
             if (mid == m.id) {
