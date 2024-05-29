@@ -51,6 +51,7 @@ LOCALHOST = 'http://localhost'
 class Command:
     # TODO assert these against manifest?
     ACTIVATE = '_execute_browser_action'
+    ACTIVATE_V3 = '_execute_action'
     MARK_VISITED = 'mark_visited'
     SEARCH = 'search'
 
@@ -290,11 +291,29 @@ class Addon:
 
     @property
     def sidebar(self) -> Sidebar:
+        driver = self.helper.driver
+        if driver.name == 'chrome':
+            browser_version = tuple(map(int, driver.capabilities['browserVersion'].split('.')))
+            driver_version = tuple(map(int, driver.capabilities['chrome']['chromedriverVersion'].split(' ')[0].split('.')))
+            last_working = (113, 0, 5623, 0)
+            if browser_version > last_working or driver_version > last_working:
+                # NOTE: feel free to comment this out if necessary, it's just to avoid hours of debugging
+                raise RuntimeError(
+                    f"""
+NOTE: you're using chrome {browser_version} with chromedriver {driver_version}.
+Some tests aren't working with recent Chrome versions (later than {last_working}) due to regressions in chromedriver.
+See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
+"""
+                )
         return Sidebar(addon=self)
 
     def activate(self) -> None:
         # TODO the activate command could be extracted from manifest too?
-        self.helper.trigger_command(Command.ACTIVATE)
+        cmd = {
+            2: Command.ACTIVATE,
+            3: Command.ACTIVATE_V3,  # meh
+        }[self.helper.manifest_version]
+        self.helper.trigger_command(cmd)
 
     def mark_visited(self) -> None:
         self.helper.trigger_command(Command.MARK_VISITED)
