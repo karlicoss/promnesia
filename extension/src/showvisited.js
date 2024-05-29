@@ -78,7 +78,7 @@ function formatVisit(v) {
     }
     const e_at = document.createElement('span')
     e_at.classList.add('datetime')
-    e_at.textContent = `${new Date(dt).toLocaleString()}`
+    e_at.textContent = new Date(dt).toLocaleString()
     e.appendChild(e_at)
     return e
 }
@@ -121,7 +121,7 @@ function showMark(element) {
     const url = element.href
     // 'visited' passed in backgroud.js
     // eslint-disable-next-line no-undef
-    const v = visited.get(url)
+    const v = window.visited.get(url)
     if (!v) {
         return // no visits or was excluded (add some data attribute maybe?)
     }

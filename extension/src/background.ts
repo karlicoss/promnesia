@@ -4,6 +4,7 @@ import type {Action, BrowserAction, Menus, PageAction, Runtime, Tabs, WebNavigat
 
 import type {Url, SearchPageParams} from './common'
 import {Visit, Visits, Blacklisted, Methods, assert, uuid} from './common'
+import {executeScript} from './compat'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
 
@@ -140,10 +141,11 @@ async function updateState(tab: TabUrl): Promise<void> {
     // todo only inject after blacklist check? just in case?
     let proceed: boolean
     try {
-        await browser.tabs.insertCSS    (tabId, {file: 'sidebar-outer.css'})
-        await browser.tabs.insertCSS    (tabId, {file: 'sidebar.css'      })
-        await browser.tabs.insertCSS    (tabId, {code: opts.position_css  })
-        await browser.tabs.executeScript(tabId, {file: 'sidebar.js'})
+        const target = {tabId: tabId}
+        await browser.scripting.insertCSS    ({target: target, files: ['sidebar-outer.css']})
+        await browser.scripting.insertCSS    ({target: target, files: ['sidebar.css'      ]})
+        await browser.scripting.insertCSS    ({target: target, css: opts.position_css      })
+        await browser.scripting.executeScript({target: target, files: ['sidebar.js'       ]})
         proceed = true // successful code injection
     } catch (error) {
         const msg = (error as Error).message
@@ -313,33 +315,38 @@ async function filter_urls(urls: Array<Url | null>) {
 }
 
 
+
 async function doToggleMarkVisited(tabId: number, {show}: {show: boolean | null} = {show: null}) {
     // first check if we need to disable TODO
-    const _should_show = await browser.tabs.executeScript(tabId, {
-        code: `
-{
-    let res // ?boolean
-    let show = ${show == null ? 'null' : String(show)}
-    const shown = window.promnesiaShowsVisits || false
-    if (show == null) {
-        // we want the opposite
-        show = !shown
-    }
-    if (show === shown) {
-        res = null // no change
-    } else if (show) {
-        res = true // should show
-        window.promnesiaShowsVisits = true // ugh. set early to avoid race conditions...
-    } else {//
-        res = false // should hide
-        setTimeout(() => hideMarks()) // async to return straightaway
-        window.promnesiaShowsVisits = false
-    }
-    res
-}
-`})
-    const should_show: boolean | null = _should_show![0]
-    if (should_show == null) {
+    const target = {tabId: tabId}
+    const should_show = await executeScript<boolean | null>({
+        target: target,
+        func: (show: boolean) => {
+            let res: boolean | null
+            // @ts-expect-error
+            const shown = window.promnesiaShowsVisits || false
+            if (show == null) {
+                // we want the opposite
+                show = !shown
+            }
+            if (show === shown) {
+                res = null // no change
+            } else if (show) {
+                res = true // should show
+                // @ts-expect-error
+                window.promnesiaShowsVisits = true // ugh. set early to avoid race conditions...
+            } else {
+                res = false // should hide
+                // @ts-expect-error hideMarks is declared in showvisited.js
+                setTimeout(() => hideMarks()) // async to return straightaway
+                // @ts-expect-error
+                window.promnesiaShowsVisits = false
+            }
+            return res
+        },
+        args: [show],
+    })
+    if (should_show === null) {
         console.debug('requested state %s: no change needed', show)
         return
     } else if (should_show === false) {
@@ -348,22 +355,23 @@ async function doToggleMarkVisited(tabId: number, {show}: {show: boolean | null}
     }
 
     // collect URLS from the page
-    const mresults = await browser.tabs.executeScript(tabId, {
-        code: `
-     // NOTE: important to make a snapshot here.. otherwise might go in an infinite loop
-     link_elements = Array.from(document.getElementsByTagName("a"))
-     link_elements.map(el => {
-        try {
-            // handle relative urls
-            return new URL(el.href, document.baseURI).href
-        } catch {
-            return null
+    const results = await executeScript<Array<Url | null>>({
+        target: target,
+        func: () => {
+            // NOTE: important to make a snapshot here.. otherwise might go in an infinite loop
+            const links = Array.from(document.getElementsByTagName("a"))
+            // @ts-expect-error
+            window.link_elements = links
+            return links.map(el => {
+                try {
+                    // handle relative urls
+                    return new URL(el.href, document.baseURI).href
+                } catch {
+                    return null
+                }
+            })
         }
-     })
- `
-})
-    // not sure why it's returning array..
-    const results: Array<Url | null> = mresults![0]
+    })
     const page_urls = Array.from(await filter_urls(results))
     const resp = await allsources.visited(page_urls)
     if (resp instanceof Error) {
@@ -410,21 +418,24 @@ async function doToggleMarkVisited(tabId: number, {show}: {show: boolean | null}
             visited.delete(url)
         }
     }
-    // todo ugh. errors inside the script (e.g. syntax errors) get swallowed..
-    // TODO not sure.. probably need to inject the script once and then use a message listener or something like in sidebar??
-    await browser.tabs.insertCSS(tabId, {
-        file: 'showvisited.css',
-    })
-    await browser.tabs.executeScript(tabId, {
-        file: 'showvisited.js',
-    })
-    await browser.tabs.executeScript(tabId, {
-        code: `
-visited = new Map(JSON.parse(${JSON.stringify(JSON.stringify([...visited]))}))
-setTimeout(() => showMarks())
-// best to set it in case of partial processing
-window.promnesiaShowsVisits = true
-`
+    await browser.scripting.insertCSS    ({target: target, files: ['showvisited.css']})
+    await executeScript({target: target, files: ['showvisited.js' ]})
+    await executeScript({
+        target: target,
+        func: (visited_entries: Array<[Url, any]>) => {
+            // FIXME ok, the only thing I'm not sure about is how it preserves Visit objects?
+            // but I suspect this is consistent with previous version of code anyway
+            const visited = new Map(visited_entries)
+            // @ts-expect-error
+            window.visited = visited
+            // @ts-expect-error
+            setTimeout(() => showMarks())
+            // best to set it in case of partial processing
+            // @ts-expect-error
+            window.promnesiaShowsVisits = true
+        },
+        // ugh. need to make sure it's json serializable
+        args: [Array.from(visited, ([key, value]) => [key, value.toJObject()])],
     })
 }
 
@@ -701,24 +712,28 @@ async function active(): Promise<TabUrl> {
 async function globalExcludelistPrompt(): Promise<Array<Url>> {
     // NOTE: needs to take active tab becaue tab isn't present in the 'info' object if it was clicked from the launcher etc.
     const {id: tabId, url: url} = await active()
-    const prompt = `Global excludelist. Supported formats:
+    const prompt_msg = `Global excludelist. Supported formats:
 - domain.name, e.g.: web.telegram.org
       Will exclude whole Telegram website.
 - http://exact/match, e.g.: http://github.com
       Will only exclude Github main page. Subpages will still work.
 - /regul.r.*expression/, e.g.: /github.*/yourusername/
       Quick way to exclude your own Github repostitories.
-`;
+`
 
     // ugh. won't work for multiple urls, prompt can only be single line...
-    const res = await browser.tabs.executeScript(tabId, {
-        code: `prompt(\`${prompt}\`, "${url}");`
+    const res = await executeScript<Url | null>({
+        target: {tabId: tabId},
+        func: (prompt_msg: string, url: string) => {
+            return prompt(prompt_msg, url)
+        },
+        args: [prompt_msg, url],
     })
-    if (res == null || res[0] == null) {
+    if (res == null) {
         console.info('user chose not to add %s', url)
         return []
     }
-    return [res[0]]
+    return [res]
 }
 
 async function handleAddToGlobalExcludelist() {
@@ -748,56 +763,61 @@ const AddToMarkVisitedExcludelist = {
         // TODO only call prompts if more than one? sort before showing?
         const {id: tabId, url: _url} = await active()
 
-        await browser.tabs.executeScript(tabId, {
-            code: `{
-let listener = e => {
-    e.stopPropagation()
+        // TODO ugh at this point could just move to external file?
+        await executeScript({
+            target: {tabId: tabId},
+            func: (method_zapper_excludelist: string) => {
+                const listener = (e: MouseEvent) => {
+                    e.stopPropagation()
 
-    const tgt = e.target
-    const old = tgt.style.outline
+                    const tgt = e.target!
+                    // @ts-expect-error
+                    const tgt_style = tgt.style
+                    const old = tgt_style.outline
 
-    tgt.addEventListener('mouseout', e => {
-        tgt.style.outline = old
-    })
-    // display zapper frame
-    tgt.style.outline = '4px solid #07C'
-    // todo use css class?
-}
-document.addEventListener('mouseover', listener)
+                    tgt.addEventListener('mouseout', (_e) => {
+                        tgt_style.outline = old
+                    })
+                    // display zapper frame
+                    tgt_style.outline = '4px solid #07C'
+                    // todo use css class?
+                }
+                document.addEventListener('mouseover', listener)
 
-document.addEventListener('click', e => {
-    // console.error("CLiCK!!! %o", e)
-    document.removeEventListener('mouseover', listener)
+                document.addEventListener('click', (e: MouseEvent) => {
+                    document.removeEventListener('mouseover', listener)
 
-    // FIXME ugh. it also captures file:// links and javascript:
-    // should't traverse inside promnesia clases...
-    let links = Array.from(e.target.getElementsByTagName('a')).map(el => {
-        const href = el.href
-        if (href == null) {
-            return null
-        }
-        try {
-            // handle relative urls
-            return new URL(href, document.baseURI).href
-        } catch (e) {
-            console.error(e)
-            return null
-        }
-    }).filter(e => e != null)
-    links = [...new Set(links)].sort() // make unique
-    //
-    chrome.runtime.sendMessage({method: '${Methods.ZAPPER_EXCLUDELIST}', data: links})
-})
-let cancel = e => {
-    // console.error("ESCAPE!!!, %o", e)
-    if (e.key == 'Escape') {
-        document.removeEventListener('mouseover', listener)
-        window.removeEventListener('keydown', cancel)
-    }
-}
-window.addEventListener('keydown', cancel)
-
-}`})
+                    // FIXME ugh. it also captures file:// links and javascript:
+                    // should't traverse inside promnesia clases...
+                    // @ts-expect-error
+                    let links = Array.from(e.target.getElementsByTagName('a')).map((el: HTMLAnchorElement) => {
+                        const href = el.href
+                        if (href == null) {
+                            return null
+                        }
+                        try {
+                            // handle relative urls
+                            return new URL(href, document.baseURI).href
+                        } catch (e) {
+                            console.error(e)
+                            return null
+                        }
+                    }).filter(e => e != null)
+                    links = Array.from(new Set(links)).sort() // make unique
+                    // @ts-expect-error
+                    chrome.runtime.sendMessage({method: method_zapper_excludelist, data: links})
+                })
+                const cancel = (e: KeyboardEvent) => {
+                    // console.error("ESCAPE!!!, %o", e)
+                    if (e.key == 'Escape') {
+                        document.removeEventListener('mouseover', listener)
+                        window.removeEventListener('keydown', cancel)
+                    }
+                }
+                window.addEventListener('keydown', cancel)
+            },
+            args: [Methods.ZAPPER_EXCLUDELIST],
+        })
     },
     handleZapperResult: async function(msg: any) {
         const urls: Array<Url> = msg.data
