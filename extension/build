@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import subprocess
 from subprocess import check_call
 from pathlib import Path
-from sys import platform
+import subprocess
+import sys
 
 # right, specifying id in manifest doesn't seem to work
 # AMO responds with: Server response: Duplicate add-on ID found. (status: 400)
@@ -18,7 +20,7 @@ TARGETS = [
     'firefox',
 ]
 
-npm = "npm.cmd" if platform == "win32" else "npm"
+npm = "npm.cmd" if sys.platform == "win32" else "npm"
 
 def main() -> None:
     p = argparse.ArgumentParser()
@@ -44,14 +46,40 @@ def main() -> None:
     ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks
     # sadly no way to specify zip name in the regex..
     artifacts_dir = (base_ext_dir / 'artifacts' / target).resolve()
-    def webext(*args, **kwargs) -> None:
-        check_call([
-            npm, 'run', 'web-ext',
+    def webext(*args, silent: bool=False, method=subprocess.check_call):
+        return method([
+            npm, 'run', *(['--silent'] if silent else []), 'web-ext',
             '--',
             '--source-dir'   , ext_dir,
             '--artifacts-dir', artifacts_dir,
             *args,
-        ], **kwargs)
+        ])
+
+    def webext_lint() -> None:
+        # first run for human readable output
+        webext('lint', method=subprocess.run)
+
+        # second run actually checks (annoying)
+        res = webext(
+            'lint',
+            '--output=json',
+            '--no-config-discovery',  # prevent it from printing "Applying config file" to stdout
+            silent=True,  # otherwise craps in stdout
+            method=lambda cmd: subprocess.run(cmd, stdout=subprocess.PIPE, text=True),
+        )
+        import json
+        j = json.loads(res.stdout)
+        errors = j['errors']
+        if len(errors) == 0:
+            return
+
+        assert target == 'chrome' and manifest == '3', (target, manifest)  # only chrome v3 allowed to have errors at this point
+
+        assert len(errors) == 1, errors
+        [err] = errors
+        d = '"/background/service_worker" is not supported'
+        assert d in err['description'], err
+        print(f"NOTE: skipping '{d}' for chrome -- this is false positive in webext lint", file=sys.stderr)
 
     env = {
         'TARGET' : target,
@@ -76,7 +104,7 @@ def main() -> None:
     if args.lint:
         # TODO --self-hosted
         # TODO warnings as errors??
-        webext('lint')
+        webext_lint()
 
         # TODO move somewhere more appropriate..
         webext('build', '-o') # -o overwrites existing artifact
