@@ -148,8 +148,11 @@ export function generateManifest({
             background['service_worker'] = 'background.js'
 
             // this isn't supported in chrome manifest v3 (chrome warns about unsupported field)
-            // but without it webext lint fails
-            background['scripts'] = ['background.js']
+            // but NOT in older chrome versions (on which end2end tests are actually working)
+            // -- if you specify scripts, loading extension actually fails
+            // ... but without it webext lint fails
+            // background['scripts'] = ['background.js']
+            // sigh... ended up adding a wrapper around webext lint to filter out this one error for chrome...
         } else {
             background['scripts'] = ['background.js']
         }
