@@ -18,27 +18,22 @@ export function desktopNotify(message: string, priority: number=0) {
     });
 }
 
-function errmsg(obj: any): string {
-    let msg = null;
-    if (obj instanceof XMLHttpRequest) {
-        msg = `while requesting ${obj.responseURL}`;
-    } else {
-        msg = obj;
-    }
-    return `ERROR: ${msg}`;
-}
 
-export function notifyError(obj: any, context: string='') {
-    const message = errmsg(obj);
-    console.error('%o, context=%s', obj, context);
-    desktopNotify(message)
+function error2string(err: Error): string {
+    // sigh.. in chrome stack includes name and message already.. but not in firefox
+    return `ERROR: ${err}\n${err.stack}`
 }
 
 
-export function alertError(obj: any) {
-    const message = errmsg(obj);
-    console.error('%o', obj);
-    alert(message);
+export function notifyError(err: Error) {
+    console.error(err)
+    desktopNotify(error2string(err))
+}
+
+
+export function alertError(err: Error) {
+    console.error(err)
+    alert(error2string(err))
 }
 
 
@@ -52,7 +47,7 @@ export function defensify<Args extends DefensifyArgs>(
         console.error('function "%s" %s failed: %o', fname, name, err)
         getOptions().then((opts: Options) => {
             if (opts.verbose_errors_on) {
-                notifyError(err, 'defensify')
+                notifyError(err)
             } else {
                 console.warn("error notification is suppressed by 'verbose_errors' option")
             }

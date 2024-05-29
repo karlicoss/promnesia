@@ -6,16 +6,11 @@ from dataclasses import dataclass
 from datetime import datetime
 import os
 from pathlib import Path
+import socket
 from time import sleep
 from typing import Iterator, TypeVar, Callable
 
 import pytest
-
-if __name__ == '__main__':
-    # TODO ugh need to figure out PATH
-    # python3 -m pytest -s tests/server_test.py::test_query
-    pytest.main(['-s', __file__])
-
 
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.keys import Keys
@@ -156,8 +151,8 @@ def driver(tmp_path: Path, browser: Browser) -> Iterator[Driver]:
 
 @dataclass
 class Backend:
-    # directory with database and configs
-    backend_dir: Path
+    backend_dir: Path  # directory with database and configs
+    port: str
 
 
 @pytest.fixture
@@ -168,7 +163,7 @@ def backend(tmp_path: Path, addon: Addon) -> Iterator[Backend]:
         # this bit (up to yield) takes about 1.5s -- I guess it's the 1s sleep in configure_extension
         addon.configure(host=LOCALHOST, port=srv.port)
         addon.helper.driver.get('about:blank')  # not sure if necessary
-        yield Backend(backend_dir=backend_dir)
+        yield Backend(backend_dir=backend_dir, port=srv.port)
 
 
 @browsers()
@@ -245,6 +240,33 @@ def test_sidebar_position(addon: Addon, driver: Driver) -> None:
 
 
 @browsers()
+def test_bad_port(addon: Addon, driver: Driver) -> None:
+    """
+    Check that we get error notification instead of silently failing if the endpoint is wrong
+    """
+    addon.configure(host=LOCALHOST, port='12346')
+
+    driver.get('https://example.com')
+
+    sidebar = addon.sidebar
+
+    sidebar.open()
+
+    # TODO would be nice to check that regular visits also work..
+    with sidebar.ctx():
+        visits = sidebar.visits
+
+        [err] = visits
+
+        assert err.get_attribute('class') == 'error'
+        assert 'http://localhost:12346/visits: unavailable' in err.text
+
+    # TODO check 'mark visited' too?
+    # although at the moment due to error handling in sources.visited it's not really showing error
+    # if there is a single visit in the results
+
+
+@browsers()
 def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
     addon.configure(port='12345', blacklist=('stackoverflow.com',))
     driver.get('https://stackoverflow.com/questions/27215462')
@@ -305,6 +327,11 @@ def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver) -> None:
 # todo might be nice to run soft asserts for this test?
 @browsers()
 def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
+    # TODO separate this out into a parameterized test?
+    # also check that custom hostname works too
+    hostname = socket.gethostname()  # typically returns proper hostname instead of 'localhost'
+    addon.configure(host=f'http://{hostname}', port=backend.port)
+
     from promnesia.tests.sources.test_hypothesis import index_hypothesis
 
     test_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"

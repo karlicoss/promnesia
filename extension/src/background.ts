@@ -38,7 +38,7 @@ function actions(): Array<Action> {
         // see https://developer.chrome.com/docs/extensions/mv2/background_pages/#listeners
         isMobile().then(mobile => {
             if (mobile) {
-                notifyError("Expected pageAction to be present!")
+                notifyError(new Error("Expected pageAction to be present!"))
             }
         })
     }
@@ -928,7 +928,7 @@ function hasContextMenus(): boolean {
     if (browser.contextMenus == undefined) {
         isMobile().then(mobile => {
             if (!mobile) {
-                notifyError("error: chrome.contextMenus should be available")
+                notifyError(new Error("chrome.contextMenus should be available"))
             }
         })
         return false
@@ -1026,7 +1026,7 @@ function initBackground(): void {
     } else {
         isMobile().then(mobile => {
             if (!mobile) {
-                notifyError("error: chrome.commands should be available")
+                notifyError(new Error("chrome.commands should be available"))
             }
         })
     }
