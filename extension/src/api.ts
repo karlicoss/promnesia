@@ -19,8 +19,11 @@ type VisitsResponse = {
 // NOTE: boolean is legacy behaviour
 type VisitedBackendResponse = Array<JsonObject | null | boolean>
 
+type Endpoint = 'visits' | 'search' | 'search_around' | 'visited'
+
+
 // TODO ugh, why params: {} not working??
-export async function queryBackendCommon<R>(params: any, endp: string): Promise<R | Error> {
+export async function queryBackendCommon<R>(params: any, endp: Endpoint): Promise<R | Error> {
     const opts = await getOptions()
     if (opts.host == '') { // use 'dummy' backend
         // the user only wants to use browser visits?
@@ -49,36 +52,31 @@ export async function queryBackendCommon<R>(params: any, endp: string): Promise<
     const endpoint = `${opts.host}/${endp}`
     params['client_version'] = browser.runtime.getManifest().version
 
-    function with_stack(e: Error): Error {
-        const stack = []
-        if (e.stack) {
-            stack.push(e.stack)
-        }
-        stack.push(`while requesting ${endpoint}`)
-        stack.push("check extension options, make sure you set backend or disable it (set to empty string)")
-        e.stack = stack.join('\n')
-        console.error(e, e.stack) // hopefully worth loging, meant to happen rarely
-        return e
+    const extra_error = "Check if backend is running, or disable it in extension preferences."
+
+    let response: Response
+    try {
+        response = await fetch(
+            endpoint,
+            {
+                method: 'POST', // todo use GET?
+                headers: {
+                    'Content-Type' : 'application/json',
+                    'Authorization': "Basic " + btoa(opts.token),
+                },
+                body: JSON.stringify(params)
+            },
+        )
+    } catch (err) {
+        console.error(err)
+        throw new Error(`${endpoint}: unavailable (${(err as Error).toString()}).\n${extra_error}`)
     }
 
-    // TODO cors mode?
-    return fetch(endpoint, {
-        method: 'POST', // todo use GET?
-        headers: {
-            'Content-Type' : 'application/json',
-            'Authorization': "Basic " + btoa(opts.token),
-        },
-        body: JSON.stringify(params)
-    }).then(response => {
-        // right, fetch API doesn't reject on HTTP error status...
-        const ok = response.ok
-        if (!ok) {
-            return with_stack(new Error(`${response.statusText} (${response.status}`))
-        }
-        return response.json()
-    }).catch((err: Error) => {
-        return with_stack(err)
-    })
+    // note: fetch API doesn't reject on HTTP error
+    if (!response.ok) {  // http error
+        throw new Error(`${endpoint}: HTTP error ${response.status} ${response.statusText}.\n${extra_error}`)
+    }
+    return response.json()
 }
 
 // eslint-disable-next-line no-unused-vars

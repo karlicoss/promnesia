@@ -279,7 +279,7 @@ document.getElementById('backend_status_id')!.addEventListener('click', defensif
         // TODO ugh. need to reject if ok is false...
         const resj = await res.json()
         alert(`Success! ${JSON.stringify(resj)}`)
-    }, err => {
-        alertError(`${err}. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`);
+    }, (err: Error) => {
+        alertError(new Error(`${err}\n${err.stack}\n\nSee https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`))
     });
 }));

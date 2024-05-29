@@ -82,7 +82,8 @@ export class Binder {
         const item = child(parent, 'li', ['error'])
         const ec   = child(item  , 'code')
         // todo not sure if need any other info?
-        tchild(ec, `${error.name}: ${error.message}\n${error.stack}`)
+        // sigh.. in chrome stack includes name and message already.. but not in firefox
+        tchild(ec, `${error}\n${error.stack}`)
     }
 
     async render(
