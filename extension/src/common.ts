@@ -67,9 +67,9 @@ export class Visit {
         const o = {}
         Object.assign(o, this)
         // @ts-expect-error
-        o.time     = o.time    .getTime()
+        o.time     = o.time    .toJSON()
         // @ts-expect-error
-        o.dt_local = o.dt_local.getTime()
+        o.dt_local = o.dt_local.toJSON()
         return o
     }
 
@@ -247,17 +247,17 @@ export type Json = JsonArray | JsonObject
 
 export function getBrowser(): string {
     // https://stackoverflow.com/questions/12489546/getting-a-browsers-name-client-side
-    const agent = window.navigator.userAgent.toLowerCase()
+    const agent = navigator.userAgent.toLowerCase()
     switch (true) {
         // @ts-expect-error
-        case agent.indexOf("chrome") > -1 && !! window.chrome: return "chrome";
-        case agent.indexOf("firefox") > -1                   : return "firefox";
-        case agent.indexOf("safari") > -1                    : return "safari";
-        case agent.indexOf("edge") > -1                      : return "edge";
+        case agent.indexOf("chrome") > -1 && !! chrome: return "chrome"
+        case agent.indexOf("firefox") > -1            : return "firefox"
+        case agent.indexOf("safari") > -1             : return "safari"
+        case agent.indexOf("edge") > -1               : return "edge"
         // @ts-expect-error
-        case agent.indexOf("opr") > -1 && !!window.opr       : return "opera";
-        case agent.indexOf("trident") > -1                   : return "ie";
-        default: return "browser";
+        case agent.indexOf("opr") > -1 && !!opr       : return "opera"
+        case agent.indexOf("trident") > -1            : return "ie"
+        default: return "browser"
     }
 }
 
@@ -317,8 +317,11 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
 
 
 // useful for debugging
+// borrowed from https://stackoverflow.com/a/2117523/706389
 export function uuid(): string {
-    return URL.createObjectURL(new Blob([])).substr(-36)
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+        (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+    )
 }
 
 

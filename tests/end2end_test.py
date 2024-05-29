@@ -773,13 +773,21 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
     )
     addon.move_to(link_with_popup)  # hover over visited mark
     # meh, but might need some time to render..
-    popup = Wait(driver, timeout=5).until(
+    popup_context = Wait(driver, timeout=5).until(
         EC.presence_of_element_located((By.CLASS_NAME, 'context')),
     )
     sleep(3)  #  text might take some time to render too..
-    assert popup.text == 'some comment'
+    assert is_visible(driver, popup_context)
+    assert popup_context.text == 'some comment'
 
-    assert is_visible(driver, popup)
+    popup_datetime = Wait(driver, timeout=5).until(
+        EC.presence_of_element_located((By.CLASS_NAME, 'datetime'))
+    )
+    assert is_visible(driver, popup_datetime)
+    assert popup_datetime.text in {
+        '10/09/2014, 00:00:00',
+        '9/10/2014, 12:00:00 AM',  # TODO ugh. github actions has a different locale..
+    }
 
 
 @browsers()

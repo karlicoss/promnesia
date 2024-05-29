@@ -40,7 +40,10 @@ def main() -> None:
 
     assert target is not None
 
-    manifest = args.manifest or '2'  # FIXME change default to 3 later
+    manifest = args.manifest or {
+        'firefox': '2',
+        'chrome': '3',
+    }[target]
 
     base_ext_dir = Path(__file__).absolute().parent / 'dist'
     ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks

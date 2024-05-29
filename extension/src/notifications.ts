@@ -2,6 +2,7 @@ import browser from "webextension-polyfill"
 
 import type {Url} from './common'
 import {Blacklisted} from './common'
+import {executeScript} from './compat'
 import {getOptions} from './options'
 import type {Options} from './options'
 
@@ -73,27 +74,35 @@ type ToastOptions = {
     duration_ms?: number,
 }
 
-export async function _showTabNotification(tabId: number, text: string, {color: color, duration_ms: duration_ms}: ToastOptions) {
+export async function _showTabNotification(tabId: number, text: string, {color, duration_ms}: ToastOptions) {
     color = color || 'green'
     duration_ms = duration_ms || 2 * 1000
     // TODO can it be remote script?
-    text = text.replace(/\n/g, "\\n"); // ....
 
-    await browser.tabs.executeScript(tabId, {file: 'toastify.js'})
-    await browser.tabs.insertCSS(tabId, {file: 'toastify.css'});
+    // FIXME maybe use async import?
+
+    const target = {tabId: tabId}
+
+    await executeScript({target: target, files: ['toastify.js']})
+    await browser.scripting.insertCSS    ({target: target, files: ['toastify.css']})
     // TODO extract toast settings somewhere...
-    await browser.tabs.executeScript(tabId, { code: `
-Toastify({
-  text: "${text}",
-  duration: ${duration_ms},
-  newWindow: true,
-  close: true,
-  stopOnFocus: true, // prevent dismissing on hover
-  gravity: "top",
-  positionLeft: false,
-  backgroundColor: "${color}",
-}).showToast();
-    ` });
+    await executeScript({
+        target: target,
+        func: (text: string, duration_ms: number, color: string) => {
+            // @ts-expect-error
+            Toastify({
+                text: text,
+                duration: duration_ms,
+                newWindow: true,
+                close: true,
+                stopOnFocus: true, // prevent dismissing on hover
+                gravity: 'top',
+                positionLeft: false,
+                backgroundColor: color,
+            }).showToast()
+        },
+        args: [text, duration_ms, color],
+    })
     // todo ugh. close icon is shown on the bottom?..
 }
 

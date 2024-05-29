@@ -67,12 +67,12 @@ export class Filterlist {
 
         console.debug('loading %s from %s', name, url)
 
-        // clear old basket.js local storge
-        for (const key of Object.keys(localStorage)) {
-            if (key.startsWith('basket-')) {
-                localStorage.removeItem(key)
-            }
-        }
+        // clear old basket.js local storge  // FIXME not sure?
+        // for (const key of Object.keys(localStorage)) {
+        //     if (key.startsWith('basket-')) {
+        //         localStorage.removeItem(key)
+        //     }
+        // }
 
         if (url.includes('/cbuijs/shallalist/')) {
             // use my fork just in case... they stopped updating the list anyway
