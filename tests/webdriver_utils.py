@@ -141,20 +141,6 @@ def get_webdriver(
         version_data['chromedriverVersion'] = driver.capabilities['chrome']['chromedriverVersion']
         version_data['userDataDir'] = driver.capabilities['chrome']['userDataDir']
         version_data['driver_path'] = getattr(driver.service, '_path')
-
-        browser_version = tuple(map(int, version_data['browserVersion'].split('.')))
-        driver_version = tuple(map(int, version_data['chromedriverVersion'].split(' ')[0].split('.')))
-        last_working = (113, 0, 5623, 0)
-        if browser_version > last_working or driver_version > last_working:
-            # NOTE: feel free to comment this out if necessary, it's just to avoid hours of debugging
-            raise RuntimeError(
-                f"""
-NOTE: you're using chrome {version_data}.
-Some tests aren't working with recent Chrome versions (later than {last_working}) due to regressions in chromedriver.
-See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
-"""
-            )
-
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
     version_string = ' '.join(f'{k}={v}' for k, v in version_data.items())

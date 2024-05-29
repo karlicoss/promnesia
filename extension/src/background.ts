@@ -1,6 +1,6 @@
 // import * as browser from "webextension-polyfill"
 import browser from "webextension-polyfill"
-import type {BrowserAction, Menus, PageAction, Runtime, Tabs, WebNavigation} from "webextension-polyfill"
+import type {Action, BrowserAction, Menus, PageAction, Runtime, Tabs, WebNavigation} from "webextension-polyfill"
 
 import type {Url, SearchPageParams} from './common'
 import {Visit, Visits, Blacklisted, Methods, assert, uuid} from './common'
@@ -17,15 +17,16 @@ const UUID = uuid()
 console.info('[promnesia]: running background page with UUID %s', UUID)
 
 
-type Action = BrowserAction.Static | PageAction.Static
+type Action = Action.Static | BrowserAction.Static | PageAction.Static
 
 
 function actions(): Array<Action> {
     // eh, on mobile neither pageAction nor browserAction have setIcon
     // but we can use pageAction to show at least some (default) icon in some circumstances
-
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Differences_between_desktop_and_Android#User_interface
-    const res: Array<Action> = [browser.browserAction]
+
+    // manifest v2 doesn't have browser.action
+    const res: Array<Action> = [browser.action ? browser.action : browser.browserAction]
 
     // need to be defensive, it's only for mobile firefox
     if (browser.pageAction) {
@@ -518,7 +519,7 @@ browser.webNavigation.onCompleted.addListener(defensify(async (detail: WebNaviga
         }
         throw error
     }
-}, 'webNavigation.onCompleteed'))
+}, 'webNavigation.onCompleted'))
 
 
 export async function getActiveTab(): Promise<TabUrl | null> {
@@ -851,7 +852,6 @@ ${surl}
 
 
 
-const DEFAULT_CONTEXTS: Array<Menus.ContextType> = ['page', 'browser_action']
 type MenuEntry = {
     id: string,
     title: string,
@@ -941,6 +941,11 @@ function initContextMenus(): void {
     if (!hasContextMenus()) {
         return
     }
+
+    const DEFAULT_CONTEXTS: Array<Menus.ContextType> = [
+        'page',
+        browser.action ? 'action' : 'browser_action',  // support both mv2 and mv3
+    ]
 
     /*
     Normally, you'd create context menu in chrome.runtime.onInstalled, since browser remembers context menu items in between installs.
@@ -1032,6 +1037,9 @@ function initBackground(): void {
 
 browser.runtime.onMessage.addListener((info: any, _: Runtime.MessageSender) => {
     // see selenium_bridge.js
+    if (info === 'selenium-bridge-_execute_action') {
+        handleToggleSidebar()
+    }
     if (info === 'selenium-bridge-_execute_browser_action') {
         handleToggleSidebar()
     }
