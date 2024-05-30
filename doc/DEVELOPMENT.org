@@ -80,6 +80,8 @@ You can also run them via tox:
 - it's useful to pass =--pdb= to pytest, so you don't have to restart webdriver all over
 - after initial run, it's best pass =--skip-pkg-install= to tox to speedup repetitive test runs
 - when you're in development/debugging process, perhaps best to run the firefox version of tests -- Chrome has a 5-ish seconds lag after installing the extension
+- since these tests can be quite slow, you can benefit from installing =pytest-xdist= plugin and using =-n= flag to parallelize
+- to debug flaky tests, it's useful to install =pytest-repeat= in addition, e.g. =--repeat=5 -n 5=
 
 * Releasing
 ** AMO (addons.mozilla.org)

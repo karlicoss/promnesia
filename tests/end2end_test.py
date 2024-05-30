@@ -328,9 +328,11 @@ def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver) -> None:
 @browsers()
 def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
     # TODO separate this out into a parameterized test?
-    # also check that custom hostname works too
-    hostname = socket.gethostname()  # typically returns proper hostname instead of 'localhost'
-    addon.configure(host=f'http://{hostname}', port=backend.port)
+    # also check that custom hostname/ip works too
+    # backend listens on 'localhost', and it's also default in extension prefs
+    # this triggers permissions check in Firefox v3 manifest, so good enough
+    ip = '127.0.0.1'
+    addon.configure(host=f'http://{ip}', port=backend.port)
 
     from promnesia.tests.sources.test_hypothesis import index_hypothesis
 
