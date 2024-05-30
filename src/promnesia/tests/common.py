@@ -1,11 +1,12 @@
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import gc
 import inspect
 import os
 from pathlib import Path
+import socket
 import sys
 from textwrap import dedent
-from typing import NoReturn, TypeVar
+from typing import Iterator, NoReturn, TypeVar
 
 import pytest
 
@@ -107,3 +108,30 @@ def write_config(path: Path, gen, **kwargs) -> None:
         assert k in cfg_src, k
         cfg_src = cfg_src.replace(k, repr(str(v)))  # meh
     path.write_text(cfg_src)
+
+
+@contextmanager
+def free_port() -> Iterator[int]:
+    # this is a generator to make sure there are no race conditions between the time we call this and launch program
+    #
+    # also some relevant articles about this 'technique'
+    # - https://eklitzke.org/binding-on-port-zero
+    # - https://idea.popcount.org/2014-04-03-bind-before-connect
+    # - https://blog.cloudflare.com/the-quantum-state-of-a-tcp-port
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        if sys.platform == 'linux':
+            # Ok, so from what I've been reading, SO_REUSEADDR should only be necessary in the program that reuses the port
+            # However, this answer (or man socket) claims we need it on both sites in Linux? see https://superuser.com/a/587955/300795
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # also not sure where REUSEADDR is set in uvicorn (e.g. here reuse_address isn't passed?)
+        # https://github.com/encode/uvicorn/blob/6d666d99a285153bc4613e811543c39eca57054a/uvicorn/server.py#L162C37-L162C50
+        # but from strace looks like it is called somewhere :shrug:
+
+        # assign euphemeral port
+        # see table in
+        # https://stackoverflow.com/questions/14388706/how-do-so-reuseaddr-and-so-reuseport-differ/14388707#14388707
+        # we rely on server binding to localhost later (or anything except 0.0.0.0 really)
+        s.bind(('', 0))
+
+        port = s.getsockname()[1]
+        yield port
