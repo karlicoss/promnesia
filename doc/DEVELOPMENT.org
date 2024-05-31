@@ -88,7 +88,7 @@ You can also run them via tox:
 
 : cd extension
 : npm install # (if necessary)
-: ./build --firefox --lint --release --publish
+: ./build --firefox --lint --release --publish listed
 
 Note that this will only upload the extension (see [[https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#channel][web-ext sign command reference]] and [[https://github.com/fregante/web-ext-submit#readme][web-ext-submit]] for more info).
 You need go to https://addons.mozilla.org/en-GB/developers/addon/promnesia/versions, there you should see your extension as 'pending approval'. Usually it's approved within minutes.
@@ -100,7 +100,7 @@ For build instructions, you can point the reviewers at [[file:addons-mozilla-org
 ** CWS (chrome web store)
 : cd extension
 : npm install # (if necessary)
-: ./build --chrome  --lint --release --publish
+: ./build --chrome  --lint --release --publish listed
 
 This command should work in theory and upload automatically... however getting the api keys is super annoying (see [[https://github.com/DrewML/chrome-webstore-upload/blob/master/How%20to%20generate%20Google%20API%20keys.md][this]]).
 
