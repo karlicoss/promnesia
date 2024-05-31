@@ -143,6 +143,7 @@ function showMark(element) {
             content: popup,
             maxWidth: "none",  /* default makes it wrap over */
             interactive: true,  // so it's not hiding on hover
+            hideOnClick: false,  // default is true, and clicking hides the 'pinned' tippies
             plugins: [pinOnDoubleClick],
 
             // todo could make configurable? it might break accessibility https://github.com/atomiks/tippyjs/blob/master/MIGRATION_GUIDE.md#props-1
@@ -151,7 +152,6 @@ function showMark(element) {
             /* useful for debugging */
             // trigger: "manual",
             // showOnCreate: true,
-            // hideOnClick: false,
         })
     } catch (e) {
         console.error('[promnesia]: error while adding tooltip to %o', element)
