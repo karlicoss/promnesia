@@ -26,7 +26,7 @@
   "dependencies": {
     "@codemirror/lang-css": "^6.0.1",
     "@codemirror/lang-javascript": "^6.1.2",
-    "anchorme": "github:karlicoss/anchorme.js#promnesia",
+    "anchorme": "^3.0.8",
     "codemirror": "^6.0.1",
     "tippy.js": "^6.3.7",
     "webext-options-sync": "^4.0.0"

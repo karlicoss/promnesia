@@ -71,6 +71,26 @@ function generateManifestPlugin() {
     }
 }
 
+const shared_plugins = () => [
+    // hmm ok this turned out not to be necessary, seems like this works as expected in the newer version
+    //replace({
+    //    include: ['**/anchorme.js'],
+    //    delimiters: ['', ''],
+    //    values: Object.fromEntries([
+    //        // remove square brackets from link detection regex to support org-mode links
+    //        // also see https://github.com/alexcorvi/anchorme.js/compare/gh-pages...karlicoss:anchorme.js:promnesia
+    //        [String.raw`\\[\\]`, ''],
+    //    ]),
+    //    preventAssignment: true,  // will be default soon, atm warns if not true
+    //}),
+    typescript({
+        outDir: buildDir,
+        noEmitOnError: true,  // fail on errors
+    }),
+    nodeResolve(),
+    commonjs(),  // needed for webext polyfill
+]
+
 
 const compile = inputs => { return {
     input: inputs,
@@ -105,12 +125,7 @@ const compile = inputs => { return {
          ],
          flatten: false,
        }),
-       typescript({
-           outDir: buildDir,
-           noEmitOnError: true,  // fail on errors
-       }),
-       commonjs(),  // needed for webext polyfill
-       nodeResolve(),
+       ...shared_plugins(),
        generateManifestPlugin(),
    ],
 }}
@@ -130,12 +145,7 @@ const standalone = inputs => { return {
             },
             preventAssignment: true,  // will be default soon, atm warns if not true
         }),
-        typescript({
-            outDir: buildDir,
-            noEmitOnError: true,  // fail on errors
-        }),
-        nodeResolve(),
-        commonjs(), // needed for webext polyfill
+       ...shared_plugins(),
     ],
 }}
 
