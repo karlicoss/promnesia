@@ -1,4 +1,4 @@
-import {getStoredOptions, setOptions, resetOptions} from './options'
+import {getStoredOptions, setOptions, resetOptions, exportOptions} from './options'
 import {defensifyAlert, alertError} from './notifications'
 
 
@@ -191,22 +191,9 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
 }));
 
 
-// https://stackoverflow.com/a/34156339/706389
-function download(content: string, fileName: string, contentType: string) {
-    const a = document.createElement("a")
-    const file = new Blob([content], {type: contentType})
-    a.href = URL.createObjectURL(file)
-    a.download = fileName
-    a.click()
-}
-
 document.getElementById(
     'export_settings_id'
-)!.addEventListener('click', defensifyAlert(async () => {
-    // NOTE: gets all keys, including the old onces, just what we need
-    const opts = await getStoredOptions()
-    download(JSON.stringify(opts), 'promnesia_settings.json', 'text/json')
-}))
+)!.addEventListener('click', defensifyAlert(exportOptions))
 
 // TODO careful here if I ever implement not showing notifications?
 // defensify might need to alert then...

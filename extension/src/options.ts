@@ -243,8 +243,7 @@ function defaultOptions(): StoredOptions {
 
 async function optSync() {
     return new OptionsSync({
-        // TODO hmm, seems like it doesn't like null in Options
-        // but this actually works? open issue in webext-options-sync?
+        // TODO remove suppression after https://github.com/fregante/webext-options-sync/issues/71 ?
         // @ts-expect-error
         defaults: defaultOptions(),
     })
@@ -299,6 +298,10 @@ export async function resetOptions(): Promise<void> {
     const os = await optSync()
     await os.setAll({})
     notifyOptionsUpdated()
+}
+
+export async function exportOptions(): Promise<void> {
+    await (await optSync()).exportToFile()
 }
 
 type ToggleOptionRes = () => Promise<void>
