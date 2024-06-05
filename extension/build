@@ -20,7 +20,12 @@ TARGETS = [
     'firefox',
 ]
 
+
+THISDIR = Path(__file__).absolute().parent
+
+
 npm = "npm.cmd" if sys.platform == "win32" else "npm"
+
 
 def main() -> None:
     p = argparse.ArgumentParser()
@@ -45,7 +50,7 @@ def main() -> None:
         'chrome': '3',
     }[target]
 
-    base_ext_dir = Path(__file__).absolute().parent / 'dist'
+    base_ext_dir = THISDIR / 'dist'
     ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks
     # sadly no way to specify zip name in the regex..
     artifacts_dir = (base_ext_dir / 'artifacts' / target).resolve()
@@ -94,15 +99,10 @@ def main() -> None:
     }
 
     if args.watch:
-        check_call([
-            npm, 'run', 'watch',
-        ], env=env, cwd=str(Path(__file__).absolute().parent))
-        # TODO exec instead?
+        check_call([npm, 'run', 'watch'], env=env, cwd=str(THISDIR)) # TODO exec instead?
         return
 
-    check_call([
-        npm, 'run', 'build',
-    ], env=env, cwd=str(Path(__file__).absolute().parent))
+    check_call([npm, 'run', 'build'], env=env, cwd=str(THISDIR))
 
     if args.lint:
         # TODO --self-hosted
@@ -112,30 +112,31 @@ def main() -> None:
         # TODO move somewhere more appropriate..
         webext('build', '-o') # -o overwrites existing artifact
 
-
     if args.release:
         assert args.lint # TODO not sure..
-
-    def firefox_publish_args():
-        from firefox_dev_secrets import API_KEY, API_SECRET
-        return [
-            '--artifacts-dir', str(artifacts_dir),
-            '--api-key'      , API_KEY,
-            '--api-secret'   , API_SECRET,
-            # seems like webext sign requires addon id to be in manifest now
-        ]
 
     if args.publish is not None:
         assert args.lint
         assert args.release
+
+        # TODO check repo is clean?? maybe only if listed?
+        source_zip = base_ext_dir / 'promnesia-source.zip'
+        check_call(['git', 'archive', 'HEAD', '--output', source_zip], cwd=THISDIR)
+
         if 'firefox' in target:
+            from firefox_dev_secrets import API_KEY, API_SECRET
             check_call([
                 npm, 'run', 'web-ext',
                 '--',
-                'sign', '--use-submission-api',
+                'sign',
                 '--channel', args.publish,
                 '--source-dir', str(ext_dir),
-                *firefox_publish_args(),
+                '--artifacts-dir', str(artifacts_dir),
+                '--api-key'      , API_KEY,
+                '--api-secret'   , API_SECRET,
+                # seems like webext sign requires addon id to be in manifest now
+                '--amo-metadata' , THISDIR / 'amo-metadata.json',
+                '--upload-source-code', source_zip,
             ])
         elif target == 'chrome':
             assert args.publish == 'listed'  # no notion of unlisted on chrome store?
