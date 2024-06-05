@@ -32,7 +32,7 @@ def main() -> None:
     p.add_argument('--release', action='store_true', help="Use release flavor of build")
     p.add_argument('--watch'  , action='store_true')
     p.add_argument('--lint'   , action='store_true')
-    p.add_argument('--publish', choices=['listed', 'unlisted'], help="Publish on chrome web store/addons.mozilla.org")
+    p.add_argument('--publish', choices=['listed', 'unlisted', 'skip'], help="Publish on chrome web store/addons.mozilla.org")
     p.add_argument('--v3', action='store_const', const='3', dest='manifest')
     p.add_argument('--v2', action='store_const', const='2', dest='manifest')
 
@@ -115,7 +115,8 @@ def main() -> None:
     if args.release:
         assert args.lint # TODO not sure..
 
-    if args.publish is not None:
+    if args.publish not in {None, 'skip'}:
+        # 'skip' mode is useful to build exactly same build as for the store, but without actually uploading
         assert args.lint
         assert args.release
 

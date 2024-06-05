@@ -1,5 +1,47 @@
 {
   "version": {
-    "approval_notes": "just testing approval notes via API"
+    "approval_notes": "
+You can find up-to-date extension code here https://github.com/karlicoss/promnesia/tree/master/extension
+
+The build instructions assume that the zip file with source code is in =/path/to/promnesia-source.zip= (on the HOST system).
+*Make sure to replace it with the actual path to the source code zip file.*
+
+To build you need *Ubuntu 24.04/Noble* and *Node 20*. The easiest way to build cleanly would be a Docker container:
+
+```
+# on the HOST system: cleanup previous container -- if it didn't exist in the first, it will show an error, ignore it
+docker rm -f promnesia_build
+
+# on the HOST system: create the container
+docker create --name promnesia_build -it ubuntu:noble /bin/bash
+
+# on the HOST system: put the sources into the container
+docker cp /path/to/promnesia-source.zip promnesia_build:/promnesia.zip
+
+# on the HOST system: start the container
+docker start -i promnesia_build
+```
+
+After that build the addon (run these commands INSIDE the container if you choose to do it with Docker):
+
+```
+$ apt update && apt install -y git curl unzip
+$ curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+$ DEBIAN_FRONTEND=noninteractive apt install -y nodejs
+$ unzip promnesia.zip -d promnesia
+$ cd promnesia
+$ npm install
+$ ./build --firefox --release --lint --publish=skip
+```
+
+
+The final artifact will be in =/promnesia/dist/artifacts/firefox/promnesia-<version>.zip= (INSIDE the container).
+
+If you need to get it back onto the HOST system (e.g. to test in the browser), run on the HOST system (e.g. in a separate terminal):
+
+docker cp promnesia_build:/promnesia/dist/artifacts/firefox/promnesia-<version>.zip .
+
+This will copy it into the current directory on the HOST system.
+"
   }
 }
