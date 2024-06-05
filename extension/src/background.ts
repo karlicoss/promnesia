@@ -145,7 +145,7 @@ async function updateState(tab: TabUrl): Promise<void> {
         await browser.scripting.insertCSS    ({target: target, files: ['sidebar-outer.css']})
         await browser.scripting.insertCSS    ({target: target, files: ['sidebar.css'      ]})
         await browser.scripting.insertCSS    ({target: target, css: opts.position_css      })
-        await browser.scripting.executeScript({target: target, files: ['sidebar.js'       ]})
+        await executeScript                  ({target: target, files: ['sidebar.js']       })
         proceed = true // successful code injection
     } catch (error) {
         const msg = (error as Error).message
