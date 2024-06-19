@@ -108,12 +108,18 @@ messages_query = dedent(
         SELECT
             id,
             type,
-            coalesce(name, profileName, profileFamilyName, e164) as aname,
+            coalesce(
+                profileFullName, 
+                profileName, 
+                name,
+                profileFamilyName, 
+                e164
+            ) as aname,
             name,
             profileName,
             profileFamilyName,
             e164,
-            uuid
+            serviceId
         FROM conversations
     ),
     Msgs AS (
@@ -125,8 +131,8 @@ messages_query = dedent(
                 M.received_at,
                 M.sent_at
             ) AS timestamp,
-            IIF(M.type = "outgoing",
-                "Me (" || C2.aname || ")",
+            IIF(M.type = 'outgoing',
+                'Me (' || C2.aname || ')',
                 C2.aname
             ) AS sender,
             M.conversationId AS cid,
@@ -140,7 +146,7 @@ messages_query = dedent(
         INNER JOIN Cons AS C1
             ON M.conversationId = C1.id
         INNER JOIN Cons AS C2
-            ON M.sourceUuid = C2.uuid
+            ON M.sourceServiceId = C2.serviceId
     )
     SELECT id, timestamp, sender, cid, chatname, body
     FROM Msgs
