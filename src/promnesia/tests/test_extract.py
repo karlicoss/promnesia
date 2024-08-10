@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..common import Visit, DbVisit, Loc, Source
 from ..extract import extract_visits
@@ -14,9 +14,9 @@ def test_with_error() -> None:
         pass
 
     def indexer():
-        yield Visit(url='http://test1', dt=datetime.utcfromtimestamp(0), locator=Loc.make('whatever'))
+        yield Visit(url='http://test1', dt=datetime.fromtimestamp(0, tz=timezone.utc), locator=Loc.make('whatever'))
         yield ExtractionError()
-        yield Visit(url='http://test2', dt=datetime.utcfromtimestamp(0), locator=Loc.make('whatever'))
+        yield Visit(url='http://test2', dt=datetime.fromtimestamp(0, tz=timezone.utc), locator=Loc.make('whatever'))
 
     [v1, e, v2] = extract_visits(source=Source(indexer), src='whatever')
     assert isinstance(v1, DbVisit)
