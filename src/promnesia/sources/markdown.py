@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Iterator, NamedTuple, Optional
 
-from ..common import get_logger, Extraction, Url, PathIsh, Res, Visit, Loc, file_mtime, logger
+from ..common import Extraction, Url, PathIsh, Res, Visit, Loc, file_mtime, logger
 
 
-import mistletoe # type: ignore
-from mistletoe.span_token import AutoLink, Link # type: ignore
-import mistletoe.block_token as BT # type: ignore
-from mistletoe.html_renderer import HTMLRenderer # type: ignore
+import mistletoe  # type: ignore
+from mistletoe.span_token import AutoLink, Link  # type: ignore
+import mistletoe.block_token as BT  # type: ignore
+from mistletoe.html_renderer import HTMLRenderer  # type: ignore
 
 
 renderer = HTMLRenderer()
@@ -42,7 +42,7 @@ HTML_MARKER = '!html '
 def _ashtml(block) -> str:
     res = renderer.render(block)
     if res.startswith('<p>') and res.endswith('</p>'):
-        res = res[3: -4] # meh, but for now fine
+        res = res[3:-4]  # meh, but for now fine
     return res
 
 
@@ -62,7 +62,6 @@ class Parser:
         context = None if last_block is None else HTML_MARKER + _ashtml(last_block)
         yield Parsed(url=url, context=context)
 
-
     def _walk(self, cur, last_block) -> Iterator[Result]:
         if isinstance(cur, block_tokens):
             last_block = cur
@@ -73,12 +72,14 @@ class Parser:
             logger.exception(e)
             yield e
 
-        children = getattr(cur, 'children', [])
+        # keeping getattr for compatibility in older versions of mistletoe, it was optional
+        children = getattr(cur, 'children', None)
+        if children is None:
+            return
         for c in children:
             yield from self._walk(c, last_block=last_block)
 
-
-    def walk(self):
+    def walk(self) -> Iterator[Result]:
         yield from self._walk(self.doc, last_block=None)
 
 
@@ -94,7 +95,7 @@ def extract_from_file(fname: PathIsh) -> Iterator[Extraction]:
             yield Visit(
                 url=r.url,
                 dt=fallback_dt,
-                locator=Loc.file(fname), # TODO line number
+                locator=Loc.file(fname),  # TODO line number
                 context=r.context,
             )
 
@@ -105,9 +106,9 @@ class TextParser(Parser):
     Instead of chunking blocks like for files, this returns the entire
     message rendered as the context
     '''
-    def __init__(self, text: str):
-        self.doc = mistletoe.Document(text)
 
+    def __init__(self, text: str) -> None:
+        self.doc = mistletoe.Document(text)
 
     def _doc_ashtml(self):
         '''
@@ -117,8 +118,7 @@ class TextParser(Parser):
             self._html = HTML_MARKER + _ashtml(self.doc)
         return self._html
 
-
-    def _extract(self, cur, last_block = None) -> Iterator[Parsed]:
+    def _extract(self, cur, last_block=None) -> Iterator[Parsed]:
         if not isinstance(cur, (AutoLink, Link)):
             return
 
