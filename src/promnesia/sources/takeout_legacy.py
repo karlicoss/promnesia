@@ -113,7 +113,7 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
     hist = j['Browser History']
     for item in hist:
         url = item['url']
-        time = datetime.utcfromtimestamp(item['time_usec'] / 10 ** 6).replace(tzinfo=pytz.utc)
+        time = datetime.fromtimestamp(item['time_usec'] / 10 ** 6, tz=pytz.utc)
         # TODO any more interesitng info?
         yield Visit(
             url=url,

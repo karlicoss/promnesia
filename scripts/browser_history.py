@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 DEPRECATION = 'NOTE: this is DEPRECATED! Please use https://github.com/seanbreckenridge/browserexport instead'
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from subprocess import check_output
 import filecmp
@@ -70,7 +70,7 @@ def backup_history(browser: Browser, to: Path, profile: str='*', pattern=None) -
     assert to.is_dir()
     logger = get_logger()
 
-    now = format_dt(datetime.utcnow())
+    now = format_dt(datetime.now(tz=timezone.utc))
 
     path = get_path(browser, profile=profile)
 
@@ -99,7 +99,7 @@ def guess_db_date(db: Path) -> str:
         '-csv',
         db,
         'SELECT max(datetime(((visits.visit_time/1000000)-11644473600), "unixepoch")) FROM visits;'
-    ]).decode('utf8').strip().strip('"');
+    ]).decode('utf8').strip().strip('"')
     return format_dt(datetime.strptime(maxvisit, "%Y-%m-%d %H:%M:%S"))
 
 
