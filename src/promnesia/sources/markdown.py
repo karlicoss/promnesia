@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Iterator, NamedTuple, Optional
+from typing import Iterator, NamedTuple
 
 from ..common import Extraction, Url, PathIsh, Res, Visit, Loc, file_mtime, logger
 
@@ -18,7 +20,7 @@ block_tokens = tuple(getattr(BT, name) for name in BT.__all__)
 
 class Parsed(NamedTuple):
     url: Url
-    context: Optional[str]
+    context: str | None
 
 
 Result = Res[Parsed]
@@ -118,7 +120,7 @@ class TextParser(Parser):
             self._html = HTML_MARKER + _ashtml(self.doc)
         return self._html
 
-    def _extract(self, cur, last_block=None) -> Iterator[Parsed]:
+    def _extract(self, cur, last_block=None) -> Iterator[Parsed]:  # noqa: ARG002
         if not isinstance(cur, (AutoLink, Link)):
             return
 

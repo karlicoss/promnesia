@@ -2,9 +2,7 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for RSS data.
 '''
 
-from itertools import chain
-
-from ..common import Visit, Loc, extract_urls, Results, get_logger
+from promnesia.common import Visit, Loc, Results
 
 from datetime import datetime
 

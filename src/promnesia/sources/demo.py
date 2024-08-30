@@ -2,11 +2,11 @@
 A dummy source, used for testing
 Generates a sequence of fake evenly separated visits
 '''
+from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Union
 
-from ..common import Results, Visit, Loc
+from promnesia.common import Results, Visit, Loc
 
 
 IsoFormatDt = str
@@ -16,10 +16,10 @@ Seconds = int
 # TODO allow passing isoformat string as base_dt?
 # and maybe something similar as delta? start with seconds maybe
 def index(
-        count: int=100,
-        *,
-        base_dt: Union[datetime, IsoFormatDt] = datetime.min + timedelta(days=5000),
-        delta: Union[timedelta, Seconds] = timedelta(hours=1),
+    count: int = 100,
+    *,
+    base_dt: datetime | IsoFormatDt = datetime.min + timedelta(days=5000),
+    delta: timedelta | Seconds = timedelta(hours=1),
 ) -> Results:
 
     base_dt_ = base_dt if isinstance(base_dt, datetime) else datetime.fromisoformat(base_dt)

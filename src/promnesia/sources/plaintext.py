@@ -1,9 +1,10 @@
-from ..common import get_logger, get_tmpdir, PathIsh, _is_windows
-from ..compat import removeprefix
+from __future__ import annotations
+
+from promnesia.common import get_logger, get_tmpdir, PathIsh, _is_windows
+from promnesia.compat import removeprefix
 
 from functools import lru_cache
 from pathlib import Path
-import os
 from typing import List
 
 # https://linux-and-mac-hacks.blogspot.co.uk/2013/04/use-grep-and-regular-expressions-to.html
@@ -15,7 +16,7 @@ if _is_windows:
     _URL_REGEX = removeprefix(_URL_REGEX, r'\b')
 
 
-@lru_cache()
+@lru_cache
 def _has_grep() -> bool:
     import shutil
     return shutil.which('grep') is not None
@@ -39,7 +40,7 @@ if not _is_windows:
 
 # NOTE: grep/findstr exit with code 1 on no matches...
 # we hack around it in shellcmd module (search 'grep')
-def _grep(*, paths: List[str], recursive: bool) -> Command:
+def _grep(*, paths: list[str], recursive: bool) -> Command:
     return [
         'grep',
         *(['-r'] if recursive else []),
@@ -91,26 +92,26 @@ def extract_from_path(path: PathIsh) -> Command:
     logger = get_logger()
     if pp.is_dir(): # TODO handle archives here???
         return _extract_from_dir(str(pp))
-    else:
-        if any(pp.suffix == ex for ex in (
-                '.xz',
-                '.bz2',
-                '.gz',
-                '.zip',
-        )):
-            # todo should be debug?
-            # or should delete it completely, feels like unpacking archives here is a bit too much
-            raise RuntimeError(f"Archives aren't supported yet: {path}")
-            logger.info(f"Extracting from compressed file {path}")
-            import lzma
-            from tempfile import NamedTemporaryFile
-            # TODO hopefully, no collisions
-            import os.path
-            fname = os.path.join(tdir.name, os.path.basename(path))
-            with open(fname, 'wb') as fo:
-                with lzma.open(path, 'r') as cf:
-                    fo.write(cf.read())
-                return _extract_from_file(fname)
-        else:
-            r = _extract_from_file(str(pp))
-            return r
+
+    if any(pp.suffix == ex for ex in (
+            '.xz',
+            '.bz2',
+            '.gz',
+            '.zip',
+    )):
+        # todo should be debug?
+        # or should delete it completely, feels like unpacking archives here is a bit too much
+        raise RuntimeError(f"Archives aren't supported yet: {path}")
+        # logger.info(f"Extracting from compressed file {path}")
+        # import lzma
+        # from tempfile import NamedTemporaryFile
+        # # TODO hopefully, no collisions
+        # import os.path
+        # fname = os.path.join(tdir.name, os.path.basename(path))
+        # with open(fname, 'wb') as fo:
+        #     with lzma.open(path, 'r') as cf:
+        #         fo.write(cf.read())
+        #     return _extract_from_file(fname)
+
+    r = _extract_from_file(str(pp))
+    return r

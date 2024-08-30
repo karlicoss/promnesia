@@ -1,13 +1,14 @@
 """
 Collects visits from Viber desktop app (e.g. `~/.ViberPC/XYZ123/viber.db`)
 """
+from __future__ import annotations
 
 import logging
 import textwrap
 from os import PathLike
 from pathlib import Path
 import sqlite3
-from typing import Iterable, Optional
+from typing import Iterable
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, join_tags
 from ..sqlite import sqlite_connection
@@ -34,12 +35,12 @@ def index(
 
     msgs_query = messages_query(http_only)
 
-    for db_path in _get_files(db_path):
-        assert db_path.is_file(), f"Is it a (Viber-desktop sqlite) file? {db_path}"
-        yield from _harvest_db(db_path, msgs_query, locator_schema)
+    for db in _get_files(db_path):
+        assert db.is_file(), f"Is it a (Viber-desktop sqlite) file? {db}"
+        yield from _harvest_db(db, msgs_query, locator_schema)
 
 
-def messages_query(http_only: Optional[bool]) -> str:
+def messages_query(http_only: bool | None) -> str:
     """
     An SQL-query returning 1 row for each message
 
@@ -123,7 +124,7 @@ def _handle_row(row: sqlite3.Row, db_path: PathLike, locator_schema: str) -> Res
     tags: str = row["tags"]
     url_title: str = row["url_title"]
 
-    assert (
+    assert (  # noqa: PT018
         text and mid and sender and chatname
     ), f"sql-query should eliminate messages without 'http' or missing ids: {row}"
 
@@ -154,7 +155,7 @@ def _get_files(path: PathIsh) -> Iterable[Path]:
     """
     path = Path(path).expanduser()
     parts = path.parts[1:] if path.is_absolute() else path.parts
-    return Path(path.root).glob(str(Path("").joinpath(*parts)))
+    return Path(path.root).glob(str(Path("").joinpath(*parts)))  # noqa: PTH201
 
 
 def _harvest_db(db_path: PathIsh, msgs_query: str, locator_schema: str) -> Results:

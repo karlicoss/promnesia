@@ -1,6 +1,7 @@
 '''
 Extracts links from HTML files
 '''
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterator, Tuple
@@ -10,7 +11,7 @@ from ..common import PathIsh, Visit, Loc, Results, file_mtime
 from bs4 import BeautifulSoup
 
 
-# TODO present error summary in the very end; import errors -- makes sense to show 
+# TODO present error summary in the very end; import errors -- makes sense to show
 # TODO on some exceptions, request a fallback to text?
 
 

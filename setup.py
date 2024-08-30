@@ -37,6 +37,7 @@ def main() -> None:
             'appdirs', # for portable user directories detection
             'tzlocal',
             'more_itertools',
+            'typing-extensions',
             'pytz',
             'sqlalchemy>=2.0',  # DB api
 

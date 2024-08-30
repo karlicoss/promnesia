@@ -3,11 +3,11 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
 '''
 from typing import Iterable
 
-from ..common import logger, Results, Visit, Loc, extract_urls, Res
+from promnesia.common import logger, Results, Visit, Loc, extract_urls, Res
 
 
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     import my.twitter.all as tw
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0

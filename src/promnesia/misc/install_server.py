@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 
 import argparse
@@ -9,7 +8,6 @@ from pathlib import Path
 import platform
 import shutil
 from subprocess import check_call, run
-from typing import List
 
 SYSTEM = platform.system()
 UNSUPPORTED_SYSTEM = RuntimeError(f'Platform {SYSTEM} is not supported yet!')
@@ -59,7 +57,7 @@ def systemd(*args: str | Path, method=check_call) -> None:
     ])
 
 
-def install_systemd(name: str, out: Path, launcher: str, largs: List[str]) -> None:
+def install_systemd(name: str, out: Path, launcher: str, largs: list[str]) -> None:
     unit_name = name
 
     import shlex
@@ -81,7 +79,7 @@ def install_systemd(name: str, out: Path, launcher: str, largs: List[str]) -> No
         raise e
 
 
-def install_launchd(name: str, out: Path, launcher: str, largs: List[str]) -> None:
+def install_launchd(name: str, out: Path, launcher: str, largs: list[str]) -> None:
     service_name = name
     arguments = '\n'.join(f'<string>{a}</string>' for a in [launcher, *largs])
     out.write_text(LAUNCHD_TEMPLATE.format(

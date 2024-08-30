@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from functools import lru_cache
 import re
-import traceback
-from typing import Set, Iterable, Sequence, Union
+from typing import Iterable, Sequence
 
 from .cannon import CanonifyException
 from .common import (
@@ -11,7 +12,7 @@ from .common import (
     SourceName, Source,
     Filter,
     Url,
-    Results, Extractor,
+    Results,
 )
 
 
@@ -53,7 +54,7 @@ def extract_visits(source: Source, *, src: SourceName) -> Iterable[Res[DbVisit]]
         yield e
         return
 
-    handled: Set[Visit] = set()
+    handled: set[Visit] = set()
     try:
         for p in vit:
             if isinstance(p, Exception):
@@ -94,7 +95,7 @@ def filtered(url: Url) -> bool:
     return any(f(url) for f in filters())
 
 
-def make_filter(thing: Union[str, Filter]) -> Filter:
+def make_filter(thing: str | Filter) -> Filter:
     if isinstance(thing, str):
         rc = re.compile(thing)
         def filter_(u: str) -> bool:

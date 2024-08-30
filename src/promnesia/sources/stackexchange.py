@@ -2,11 +2,11 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Stackexchange data.
 '''
 
-from ..common import Results, Visit, Loc
+from promnesia.common import Results, Visit, Loc
 
 
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     import my.stackexchange.gdpr as G
     for v in G.votes():
         if isinstance(v, Exception):

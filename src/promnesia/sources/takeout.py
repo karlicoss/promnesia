@@ -1,11 +1,14 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
 '''
-from typing import Iterable, Set, Any, NamedTuple
+from __future__ import annotations
+
+import json
+from typing import Iterable, Any, NamedTuple
 import warnings
 
-from ..common import Visit, Loc, Results, logger
-from ..compat import removeprefix
+from promnesia.common import Visit, Loc, Results, logger
+from promnesia.compat import removeprefix
 
 
 # incase user is using an old version of google_takeout_parser
@@ -14,8 +17,7 @@ class YoutubeCSVStub(NamedTuple):
 
 
 def index() -> Results:
-    from . import hpi
-    import json
+    from . import hpi  # noqa: F401
 
     try:
         from my.google.takeout.parser import events
@@ -32,7 +34,7 @@ def index() -> Results:
         return
 
 
-    _seen: Set[str] = {
+    _seen: set[str] = {
         # these are definitely not useful for promnesia
         'Location',
         'PlaceVisit',
@@ -54,7 +56,7 @@ def index() -> Results:
         if et_name in _seen:
             return
         _seen.add(et_name)
-        yield RuntimeError(f"Unhandled event {repr(type(e))}: {e}")
+        yield RuntimeError(f"Unhandled event {type(e)!r}: {e}")
 
     for e in events():
         if isinstance(e, Exception):

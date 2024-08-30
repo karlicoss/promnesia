@@ -19,7 +19,7 @@ def makemap(visits):
     def it():
         vit = (throw(v) if isinstance(v, Exception) else v for v in visits)
         for k, g in groupby(sorted(vit, key=key), key=key):
-            yield k, list(sorted(g))
+            yield k, sorted(g)
 
     return dict(it())
 

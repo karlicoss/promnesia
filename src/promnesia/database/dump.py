@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 import sqlite3
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, Optional
 
 from more_itertools import chunked
 
@@ -58,8 +60,8 @@ def visits_to_sqlite(
     vit: Iterable[Res[DbVisit]],
     *,
     overwrite_db: bool,
-    _db_path: Optional[Path] = None,  # only used in tests
-) -> List[Exception]:
+    _db_path: Path | None = None,  # only used in tests
+) -> list[Exception]:
     if _db_path is None:
         db_path = config.get().db
     else:
@@ -95,7 +97,7 @@ def visits_to_sqlite(
 
     def query_total_stats(conn) -> Stats:
         query = select(table.c.src, func.count(table.c.src)).select_from(table).group_by(table.c.src)
-        return {src: cnt for (src, cnt) in conn.execute(query).all()}
+        return dict(conn.execute(query).all())
 
     def get_engine(*args, **kwargs) -> Engine:
         # kwargs['echo'] = True  # useful for debugging
@@ -122,7 +124,7 @@ def visits_to_sqlite(
     # (note that this also requires WAL mode)
     engine = get_engine(f'sqlite:///{db_path}', connect_args={'timeout': _CONNECTION_TIMEOUT_SECONDS})
 
-    cleared: Set[str] = set()
+    cleared: set[str] = set()
 
     # by default, sqlalchemy does some sort of BEGIN (implicit) transaction, which doesn't provide proper isolation??
     # see https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
@@ -144,7 +146,7 @@ def visits_to_sqlite(
         insert_stmt_raw = str(insert_stmt.compile(dialect=dialect_sqlite.dialect(paramstyle='qmark')))
 
         for chunk in chunked(vit_ok(), n=_CHUNK_BY):
-            srcs = set(v.src or '' for v in chunk)
+            srcs = {v.src or '' for v in chunk}
             new = srcs.difference(cleared)
 
             for src in new:
@@ -181,7 +183,7 @@ def visits_to_sqlite(
         for k, v in stats_changes.items():
             logger.info(f'database stats changes: {k} {v}')
 
-    res: List[Exception] = []
+    res: list[Exception] = []
     if total_ok == 0:
         res.append(RuntimeError('No visits were indexed, something is probably wrong!'))
     return res

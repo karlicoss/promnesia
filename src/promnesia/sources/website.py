@@ -30,7 +30,7 @@ def index(path: PathIsh, *args, **kwargs) -> Iterable[Extraction]:
     ]
     # TODO follow sitemap? e.g. gwern
     logger.info(' '.join(cmd))
-    res = run(cmd)
+    res = run(cmd, check=False)
 
     if res.returncode == 8:
         # man wget: 8 means server error (e.g. broken link)

@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote
 import sqlite3
-from typing import List, Set, Optional
 
 import pytz
 
@@ -35,21 +36,21 @@ def index(p: PathIsh) -> Results:
 
 
 
-def _index_dbs(dbs: List[Path], cachew_name: str):
+def _index_dbs(dbs: list[Path], cachew_name: str):
     # TODO right... not ideal, need to think how to handle it properly...
     import sys
     sys.setrecursionlimit(5000)
 
     cache_dir = config.get().cache_dir
     cpath = None if cache_dir is None else cache_dir / cachew_name
-    emitted: Set = set()
+    emitted: set = set()
     yield from _index_dbs_aux(cpath, dbs, emitted=emitted)
 
 
 # todo wow, stack traces are ridiculous here...
 # todo hmm, feels like it should be a class or something?
-@cachew(lambda cp, dbs, emitted: cp, depends_on=lambda cp, dbs, emitted: dbs) # , logger=logger)
-def _index_dbs_aux(cache_path: Optional[Path], dbs: List[Path], emitted: Set) -> Results:
+@cachew(lambda cp, dbs, emitted: cp, depends_on=lambda cp, dbs, emitted: dbs) # , logger=logger)  # noqa: ARG005
+def _index_dbs_aux(cache_path: Path | None, dbs: list[Path], emitted: set) -> Results:
     if len(dbs) == 0:
         return
 
@@ -75,7 +76,7 @@ def _index_dbs_aux(cache_path: Optional[Path], dbs: List[Path], emitted: Set) ->
         yield from _index_db(db, emitted=emitted)
 
 
-def _index_db(db: Path, emitted: Set):
+def _index_db(db: Path, emitted: set):
     logger.info('processing %s', db) # debug level?
 
     # todo schema check (not so critical for cachew though)
@@ -121,10 +122,10 @@ Col = str
 ColType = str
 
 
-from typing import Any, NamedTuple, Tuple, Union, Sequence, Optional
+from typing import NamedTuple, Tuple, Union, Sequence
 
 class Schema(NamedTuple):
-    cols: Sequence[Tuple[Col, ColType]]
+    cols: Sequence[tuple[Col, ColType]]
     key: Sequence[str]
 
 
@@ -179,7 +180,7 @@ class Chrome(Extr):
         dt = chrome_time_to_utc(int(ts))
         url = unquote(url) # chrome urls are all quoted
         dd = int(durs)
-        dur: Optional[Second] = None if dd == 0 else dd // 1_000_000
+        dur: Second | None = None if dd == 0 else dd // 1_000_000
         return Visit(
             url=url,
             dt=dt,

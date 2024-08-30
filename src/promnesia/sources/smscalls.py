@@ -6,7 +6,7 @@ from promnesia.common import Visit, Loc, Results, extract_urls
 
 
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     from my.smscalls import messages
 
     for m in messages():

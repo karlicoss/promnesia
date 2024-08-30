@@ -12,7 +12,7 @@ import shutil
 from subprocess import run, PIPE, Popen
 from timeit import default_timer as timer
 from types import ModuleType
-from typing import NamedTuple, Iterable, TypeVar, Callable, List, Optional, Union, TypeVar
+from typing import NamedTuple, Iterable, TypeVar, Callable, Union, TypeVar, Sequence, Optional
 import warnings
 
 from more_itertools import intersperse
@@ -38,14 +38,14 @@ Second = int
 # TODO hmm. arguably, source and context are almost same things...
 class Loc(NamedTuple):
     title: str
-    href: Optional[str]=None
+    href: Optional[str] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
 
     @classmethod
-    def make(cls, title: str, href: Optional[str]=None) -> 'Loc':
+    def make(cls, title: str, href: str | None=None) -> Loc:
         return cls(title=title, href=href)
 
     @classmethod
-    def file(cls, path: PathIsh, line: Optional[int]=None, relative_to: Optional[Path]=None) -> 'Loc':
+    def file(cls, path: PathIsh, line: int | None=None, relative_to: Path | None=None) -> Loc:
         lstr = '' if line is None else f':{line}'
         # todo loc should be url encoded? dunno.
         # or use line=? eh. I don't know. Just ask in issues.
@@ -94,7 +94,7 @@ def _warn_no_xdg_mime() -> None:
 def _detect_mime_handler() -> str:
     def exists(what: str) -> bool:
         try:
-            r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE)
+            r = run(f'xdg-mime query default x-scheme-handler/{what}'.split(), stdout=PIPE, check=False)
         except (FileNotFoundError, NotADirectoryError):  # ugh seems that osx might throw NotADirectory for some reason
             _warn_no_xdg_mime()
             return False
@@ -139,12 +139,12 @@ class Visit(NamedTuple):
     # TODO back to DatetimeIsh, but somehow make compatible to dbcache?
     dt: datetime
     locator: Loc
-    context: Optional[Context] = None
-    duration: Optional[Second] = None
+    context: Context | None = None
+    duration: Second | None = None
     # TODO shit. I need to insert it in chrome db....
     # TODO gonna be hard to fill retroactively.
     # spent: Optional[Second] = None
-    debug: Optional[str] = None
+    debug: str | None = None
 
 Result = Union[Visit, Exception]
 Results = Iterable[Result]
@@ -157,12 +157,12 @@ class DbVisit(NamedTuple):
     orig_url: Url
     dt: datetime
     locator: Loc
-    src: Optional[SourceName] = None
-    context: Optional[Context] = None
-    duration: Optional[Second] = None
+    src: Optional[SourceName] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
+    context: Optional[Context] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
+    duration: Optional[Second] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
 
     @staticmethod
-    def make(p: Visit, src: SourceName) -> Res['DbVisit']:
+    def make(p: Visit, src: SourceName) -> Res[DbVisit]:
         try:
             # hmm, mypy gets a bit confused here.. presumably because datetime is always datetime (but date is not datetime)
             if isinstance(p.dt, datetime):
@@ -171,7 +171,7 @@ class DbVisit(NamedTuple):
                 # TODO that won't be with timezone..
                 dt = datetime.combine(p.dt, datetime.min.time()) # meh..
             else:
-                raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')
+                raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')  # noqa: TRY301
         except Exception as e:
             return e
 
@@ -249,7 +249,7 @@ def iter_urls(s: str, *, syntax: Syntax='') -> Iterable[Url]:
         yield _sanitize(u)
 
 
-def extract_urls(s: str, *, syntax: Syntax='') -> List[Url]:
+def extract_urls(s: str, *, syntax: Syntax='') -> list[Url]:
     return list(iter_urls(s=s, syntax=syntax))
 
 
@@ -274,7 +274,7 @@ class PathWithMtime(NamedTuple):
     mtime: float
 
     @classmethod
-    def make(cls, p: Path) -> 'PathWithMtime':
+    def make(cls, p: Path) -> PathWithMtime:
         return cls(
             path=p,
             mtime=p.stat().st_mtime,
@@ -362,11 +362,11 @@ Indexer = Source
 # NOTE: used in configs...
 def last(path: PathIsh, *parts: str) -> Path:
     import os.path
-    pp = os.path.join(str(path), *parts)
-    return Path(max(glob(pp, recursive=True)))
+    pp = os.path.join(str(path), *parts)  # noqa: PTH118
+    return Path(max(glob(pp, recursive=True)))  # noqa: PTH207
 
 
-from .logging import setup_logger
+from .logging import setup_logger  # noqa: F401
 
 from copy import copy
 def echain(ex: Exception, cause: Exception) -> Exception:
@@ -409,13 +409,13 @@ def default_cache_dir() -> Path:
 # make it lazy, otherwise it might crash on module import (e.g. on Windows)
 # ideally would be nice to fix it properly https://github.com/ahupp/python-magic#windows
 @lru_cache(1)
-def _magic() -> Callable[[PathIsh], Optional[str]]:
+def _magic() -> Callable[[PathIsh], str | None]:
     logger = get_logger()
     try:
         import magic # type: ignore
     except Exception as e:
         logger.exception(e)
-        defensive_msg: Optional[str] = None
+        defensive_msg: str | None = None
         if isinstance(e, ModuleNotFoundError) and e.name == 'magic':
             defensive_msg = "python-magic is not detected. It's recommended for better file type detection (pip3 install --user python-magic). See https://github.com/ahupp/python-magic#installation"
         elif isinstance(e, ImportError):
@@ -425,7 +425,7 @@ def _magic() -> Callable[[PathIsh], Optional[str]]:
         if defensive_msg is not None:
             logger.warning(defensive_msg)
             warnings.warn(defensive_msg)
-            return lambda path: None # stub
+            return lambda path: None  # stub  # noqa: ARG005
         else:
             raise e
     else:
@@ -441,7 +441,7 @@ def _mimetypes():
     return mimetypes
 
 
-def mime(path: PathIsh) -> Optional[str]:
+def mime(path: PathIsh) -> str | None:
     ps = str(path)
     mimetypes = _mimetypes()
     # first try mimetypes, it's only using the filename without opening the file
@@ -453,7 +453,7 @@ def mime(path: PathIsh) -> Optional[str]:
     return magic(ps)
 
 
-def find_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
+def find_args(root: Path, *, follow: bool, ignore: Sequence[str] = ()) -> list[str]:
     prune_dir_args = []
     ignore_file_args = []
     if ignore:
@@ -476,7 +476,7 @@ def find_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
     ]
 
 
-def fdfind_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
+def fdfind_args(root: Path, *, follow: bool, ignore: Sequence[str] = ()) -> list[str]:
     from .config import extra_fd_args
 
     ignore_args = []
@@ -496,7 +496,7 @@ def fdfind_args(root: Path, follow: bool, ignore: List[str]=[]) -> List[str]:
     ]
 
 
-def traverse(root: Path, *, follow: bool=True, ignore: List[str]=[]) -> Iterable[Path]:
+def traverse(root: Path, *, follow: bool=True, ignore: Sequence[str] = ()) -> Iterable[Path]:
     if not root.is_dir():
         yield root
         return
