@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from datetime import datetime
 import re
-from typing import Iterable, List, Set, Optional, Iterator, Tuple, NamedTuple, cast
+from typing import Iterable, Optional, Iterator, NamedTuple, cast
 from pathlib import Path
 
 
-from ..common import Visit, get_logger, Results, Url, Loc, from_epoch, iter_urls, PathIsh, Res, file_mtime
+from ..common import Visit, get_logger, Results, Url, Loc, iter_urls, PathIsh, Res, file_mtime
 
 
 import orgparse
@@ -36,7 +38,7 @@ CREATED_RGX = re.compile(gene_timestamp_regex(brtype='inactive'), re.VERBOSE)
 """
 
 class Parsed(NamedTuple):
-    dt: Optional[datetime]
+    dt: datetime | None
     heading: str
 
 
@@ -74,7 +76,7 @@ def _get_heading(n: OrgNode):
     return '' if n.is_root() else n.get_heading(format='raw')
 
 
-def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Res[Tuple[Parsed, OrgNode]]]:
+def walk_node(*, node: OrgNode, dt: datetime) -> Iterator[Res[tuple[Parsed, OrgNode]]]:
     try:
         parsed = _parse_node(node)
     except Exception as e:
@@ -98,7 +100,7 @@ def get_body_compat(node: OrgNode) -> str:
             # get_body was only added to root in 0.2.0
             for x in warn_old_orgparse_once():
                 # ugh. really crap, but it will at least only warn once... (becaue it caches)
-                raise x
+                raise x  # noqa: B904
             return UPDATE_ORGPARSE_WARNING
         else:
             raise e

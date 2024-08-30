@@ -6,11 +6,12 @@ import importlib
 import inspect
 import os
 from pathlib import Path
+import shlex
 import shutil
 from subprocess import run, check_call, Popen
 import sys
 from tempfile import TemporaryDirectory, gettempdir
-from typing import Callable, Sequence, Iterable, Iterator, Union
+from typing import Callable, Sequence, Iterable, Iterator
 
 
 from . import config
@@ -22,7 +23,7 @@ from .database.dump import visits_to_sqlite
 from .extract import extract_visits
 
 
-def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Res[DbVisit]]:
+def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[DbVisit]]:
     cfg = config.get()
     output_dir = cfg.output_dir
     # not sure if belongs here??
@@ -74,7 +75,7 @@ def iter_all_visits(sources_subset: Iterable[Union[str, int]]=()) -> Iterator[Re
         logger.warning("unknown --sources: %s", ", ".join(repr(i) for i in sources_subset))
 
 
-def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), overwrite_db: bool=False) -> Iterable[Exception]:
+def _do_index(*, dry: bool = False, sources_subset: Iterable[str | int] = (), overwrite_db: bool = False) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: list[Exception] = []
     def it() -> Iterable[Res[DbVisit]]:
@@ -98,9 +99,10 @@ def _do_index(dry: bool=False, sources_subset: Iterable[Union[str, int]]=(), ove
 
 def do_index(
     config_file: Path,
-    dry: bool=False,
-    sources_subset: Iterable[Union[str, int]]=(),
-    overwrite_db: bool=False,
+    *,
+    dry: bool = False,
+    sources_subset: Iterable[str | int] = (),
+    overwrite_db: bool = False,
 ) -> Sequence[Exception]:
     config.load_from(config_file) # meh.. should be cleaner
     try:
@@ -120,7 +122,8 @@ def demo_sources() -> dict[str, Callable[[], Extractor]]:
     def lazy(name: str) -> Callable[[], Extractor]:
         # helper to avoid failed imports etc, since people might be lacking necessary dependencies
         def inner() -> Extractor:
-            from . import sources
+            # TODO why this import??
+            from . import sources  # noqa: F401
             module = importlib.import_module(f'promnesia.sources.{name}')
             return getattr(module, 'index')
         return inner
@@ -145,7 +148,7 @@ def do_demo(
         config_file: Path | None,
         dry: bool=False,
         name: str='demo',
-        sources_subset: Iterable[Union[str, int]]=(),
+        sources_subset: Iterable[str | int]=(),
         overwrite_db: bool=False,
     ) -> None:
     with TemporaryDirectory() as tdir:
@@ -219,9 +222,10 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
     logger.info('config: %s', cfg)
 
     def check(cmd: list[str | Path], **kwargs) -> Iterable[Exception]:
-        logger.debug(' '.join(map(str, cmd)))
-        res = run(cmd, **kwargs)
+        logger.debug(shlex.join(map(str, cmd)))
+        res = run(cmd, **kwargs)  # noqa: PLW1510
         if res.returncode > 0:
+            # TODO what's up with empty exception??
             yield Exception()
 
     logger.info('Checking syntax...')
@@ -239,7 +243,7 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
     # todo not sure if should be more defensive than check_call here
     logger.info('Checking type safety...')
     try:
-        import mypy
+        import mypy  # noqa: F401
     except ImportError:
         logger.warning("mypy not found, can't use it to check config!")
     else:
@@ -291,7 +295,7 @@ def cli_doctor_server(args: argparse.Namespace) -> None:
     logger.info('You should see the database path and version above!')
 
 
-def _ordinal_or_name(s: str) -> Union[str, int]:
+def _ordinal_or_name(s: str) -> str | int:
     try:
         s = int(s)  # type: ignore
     except ValueError:
@@ -328,7 +332,7 @@ def main() -> None:
 
     F = lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog, width=120)
     p = argparse.ArgumentParser(formatter_class=F)
-    subp = p.add_subparsers(dest='mode', )
+    subp = p.add_subparsers(dest='mode' )
     ep = subp.add_parser('index', help='Create/update the link database', formatter_class=F)
     add_index_args(ep, default_config_path())
     # TODO use some way to override or provide config only via cmdline?
@@ -348,7 +352,7 @@ def main() -> None:
     ap.add_argument('--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server')
     ap.add_argument(
         '--as',
-        choices=list(sorted(demo_sources().keys())),
+        choices=sorted(demo_sources().keys()),
         default='guess',
         help='Promnesia source to index as (see https://github.com/karlicoss/promnesia/tree/master/src/promnesia/sources for the full list)',
     )
@@ -359,7 +363,7 @@ def main() -> None:
     install_server.setup_parser(isp)
 
     cp = subp.add_parser('config', help='Config management')
-    cp.set_defaults(func=lambda *args: cp.print_help())
+    cp.set_defaults(func=lambda *_args: cp.print_help())
     scp = cp.add_subparsers()
     ccp = scp.add_parser('check', help='Check config')
     ccp.set_defaults(func=config_check)
@@ -373,7 +377,7 @@ def main() -> None:
 
     dp = subp.add_parser('doctor', help='Troubleshooting assistant')
     dp.add_argument('--config', type=Path, default=default_config_path(), help='Config path')
-    dp.set_defaults(func=lambda *args: dp.print_help())
+    dp.set_defaults(func=lambda *_args: dp.print_help())
     sdp = dp.add_subparsers()
     sdp.add_parser('config'  , help='Check config'    ).set_defaults(func=config_check )
     sdp.add_parser('database', help='Inspect database').set_defaults(func=cli_doctor_db)

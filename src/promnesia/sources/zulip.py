@@ -2,11 +2,11 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Zulip data.
 '''
 
-from ..common import Results, Visit, Loc, iter_urls
+from promnesia.common import Results, Visit, Loc, iter_urls
 
 
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     import my.zulip.organization as Z
     for m in Z.messages():
         if isinstance(m, Exception):

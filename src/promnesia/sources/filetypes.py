@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Callable, Optional, Sequence, NamedTuple, Union, Iterable
+from typing import Callable, Sequence, NamedTuple, Union, Iterable
 
 from ..common import Results, Url
 
@@ -18,13 +19,13 @@ class EUrl(NamedTuple):
 # keys are mime types + extensions
 Ex = Callable[[Path], Union[Results, Iterable[EUrl]]]
 # None means unhandled
-TYPE2IDX: Dict[str, Optional[Ex]] = {}
+TYPE2IDX: dict[str, Ex | None] = {}
 # NOTE: there are some types in auto.py at the moment... it's a bit messy
 
 
 # TYPE2IDX only contains the 'prefixes', to speed up the lookup we are using cache..
 @lru_cache(None)
-def type2idx(t: str) -> Optional[Ex]:
+def type2idx(t: str) -> Ex | None:
     if len(t) == 0:
         return None # just in case?
     # first try exact match
@@ -97,9 +98,9 @@ audio/
 video/
 '''
 
-handle_later = lambda *args, **kwargs: ()
+handle_later = lambda *_args, **_kwargs: ()
 
-def ignore(*args, **kwargs):
+def ignore(*_args, **_kwargs):
     # TODO log (once?)
     yield from ()
 

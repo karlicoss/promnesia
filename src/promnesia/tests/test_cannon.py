@@ -134,7 +134,7 @@ def test_reddit(url, expected):
 def test_pocket(url, expected):
     assert canonify(url) == expected
 
-@pytest.mark.parametrize("url,expected", [
+@pytest.mark.parametrize(("url", "expected"), [
     # TODO ?? 'https://groups.google.com/a/list.hypothes.is/forum/#!topic/dev/kcmS7H8ssis',
     #
     # TODO FIXME fragment handling
@@ -295,7 +295,7 @@ def test(url, expected):
     },
 ])
 def test_same_norm(urls):
-    urls = list(sorted(urls))
+    urls = sorted(urls)
     u0 = urls[0]
     c0 = canonify(u0)
     for u in urls[1:]:
@@ -308,7 +308,7 @@ def test_error():
         # borrowed from https://bugs.mageia.org/show_bug.cgi?id=24640#c7
         canonify('https://example.com\uFF03@bing.com')
 
-@pytest.mark.parametrize("url,expected", [
+@pytest.mark.parametrize(("url", "expected"), [
     ('https://news.ycombinator.com/item?id=', 'news.ycombinator.com/item?id='),
     ('https://www.youtube.com/watch?v=hvoQiF0kBI8&list&index=2',
      'youtube.com/watch?v=hvoQiF0kBI8&list='),
@@ -316,7 +316,7 @@ def test_error():
 def test_empty_query_parameter(url, expected):
     assert canonify(url) == expected
 
-@pytest.mark.parametrize("url,expected", [
+@pytest.mark.parametrize(("url", "expected"), [
     ('http://www.isfdb.org/cgi-bin/title.cgi?2172', 'isfdb.org/cgi-bin/title.cgi?2172='),
     ('http://www.isfdb.org/cgi-bin/title.cgi?2172+1', 'isfdb.org/cgi-bin/title.cgi?2172%201='),
     ('http://www.isfdb.org/cgi-bin/title.cgi?2172&foo=bar&baz&quux', 'isfdb.org/cgi-bin/title.cgi?2172=&baz=&foo=bar&quux='),

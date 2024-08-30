@@ -1,4 +1,5 @@
-from typing import Optional
+from __future__ import annotations
+
 
 from ...common import Visit
 from ...sources.org import extract_from_file
@@ -6,7 +7,7 @@ from ...sources.org import extract_from_file
 from ..common import get_testdata, throw
 
 
-def delrf(s: Optional[str]) -> Optional[str]:
+def delrf(s: str | None) -> str | None:
     if s is None:
         return None
     # meh.. not sure how ot handle this properly, ideally should be via pytest?

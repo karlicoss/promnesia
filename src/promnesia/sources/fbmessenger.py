@@ -2,11 +2,11 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for the messages data.
 '''
 
-from ..common import Results, Visit, Loc, extract_urls
+from promnesia.common import Results, Visit, Loc, extract_urls
 
 
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     from my.fbmessenger import messages
     for m in messages():
         if isinstance(m, Exception):

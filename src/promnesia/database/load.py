@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple
 
 from sqlalchemy import (
     create_engine,
@@ -39,7 +41,7 @@ def get_db_stuff(db_path: Path) -> DbStuff:
     return engine, table
 
 
-def get_all_db_visits(db_path: Path) -> List[DbVisit]:
+def get_all_db_visits(db_path: Path) -> list[DbVisit]:
     # NOTE: this is pretty inefficient if the DB is huge
     # mostly intended for tests
     engine, table = get_db_stuff(db_path)

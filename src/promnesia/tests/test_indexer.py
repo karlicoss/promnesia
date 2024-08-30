@@ -8,7 +8,8 @@ from ..database.load import get_all_db_visits
 
 import pytest
 
-from .common import get_testdata, promnesia_bin, reset_filters, write_config
+from .common import get_testdata, promnesia_bin, write_config
+from .common import reset_filters  # noqa: F401
 
 
 def get_stats(tmp_path: Path) -> Counter:
@@ -204,7 +205,7 @@ def test_hook(tmp_path: Path) -> None:
             if 'page1' in nurl:
                 yield visit._replace(norm_url='patched.com')
             elif 'page2' in nurl:
-                raise Exception('boom')  # deliberately crash
+                raise RuntimeError('boom')  # deliberately crash
             elif 'page3' in nurl:
                 # just don't yield anything! it will be omitted
                 pass
@@ -235,7 +236,7 @@ def test_example_config(tmp_path: Path) -> None:
     if _is_windows:
         pytest.skip("doesn't work on Windows: example config references /usr/include paths")
 
-    config = read_example_config() + '\n' + f'OUTPUT_DIR = "{str(tmp_path)}"'
+    config = read_example_config() + '\n' + f'OUTPUT_DIR = "{tmp_path!s}"'
     cfg_path = tmp_path / 'example_config.py'
     cfg_path.write_text(config)
 

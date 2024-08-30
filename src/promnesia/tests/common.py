@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import closing, contextmanager
 import gc
 import inspect
@@ -25,7 +27,7 @@ def throw(x: Exception) -> NoReturn:
 
 
 @pytest.fixture
-def gc_control(gc_on: bool):
+def gc_control(*, gc_on: bool):
     if gc_on:
         # no need to do anything, should be on by default
         yield

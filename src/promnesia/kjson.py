@@ -3,6 +3,7 @@ Some experimental ideas on JSON processing.
 This is a bit overengineered and I admit it!
 I'll make it more readable, but in the meantime feel free to open an issue if you're confused about something.
 """
+from __future__ import annotations
 
 from typing import Any, Dict, List, Union, Tuple, cast
 
@@ -36,7 +37,7 @@ class JsonProcessor:
         if res is self.SKIP:
             return
         for k, v in js.items():
-            path = cast(JPath, jp + ((js, k), ))
+            path = cast(JPath, jp + ((js, k), ))  # noqa: RUF005
             self._do(v, path)
 
     def do_list(self, js: JList, jp: JPath) -> None:
@@ -45,7 +46,7 @@ class JsonProcessor:
         if res is self.SKIP:
             return
         for i, x in enumerate(js):
-            path = cast(JPath, jp + ((js, i), ))
+            path = cast(JPath, jp + ((js, i), ))  # noqa: RUF005
             self._do(x, path)
 
     def _do(self, js: Json, path: JPath) -> None:
@@ -65,7 +66,7 @@ class JsonProcessor:
         self._do(js, path)
 
     @classmethod
-    def kpath(cls, path: JPath) -> Tuple[JPathPart, ...]:
+    def kpath(cls, path: JPath) -> tuple[JPathPart, ...]:
         return tuple(x[1] for x in path) # type: ignore
 
 # TODO path is a sequence of jsons and keys?
@@ -73,9 +74,10 @@ class JsonProcessor:
 def test_json_processor():
     handled = []
     class Proc(JsonProcessor):
-        def handle_dict(self, value: JDict, path):
+        def handle_dict(self, value: JDict, path):  # noqa: ARG002
             if 'skipme' in self.kpath(path):  # type: ignore[comparison-overlap]
                 return JsonProcessor.SKIP
+            return None
 
         def handle_str(self, value: str, path):
             if 'http' in value:

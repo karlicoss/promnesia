@@ -1,8 +1,10 @@
-from ..common import Visit, logger, PathIsh, Url, Loc, Results
+from __future__ import annotations
+
+from promnesia.common import Visit, logger, Loc, Results
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     from my.google.takeout.paths import get_takeouts
     takeouts = list(get_takeouts())
     # TODO if no takeouts, raise?
@@ -25,7 +27,7 @@ def index() -> Results:
 import pytz
 from itertools import chain
 from datetime import datetime
-from typing import List, Optional, Iterable, TYPE_CHECKING
+from typing import Iterable
 from pathlib import Path
 import json
 
@@ -61,7 +63,7 @@ def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
 
     locator = Loc.file(spath)
     from my.google.takeout.html import read_html
-    for dt, url, title in read_html(takeout, spath):
+    for dt, url, _title in read_html(takeout, spath):
         yield Visit(
             url=url,
             dt=dt,

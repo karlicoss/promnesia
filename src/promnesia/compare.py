@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
+from __future__ import annotations
+
 # TODO perhaps make it external script?
 import argparse
 from pathlib import Path
 import logging
 import sys
-from typing import Dict, List, Any, NamedTuple, Optional, Iterator, Set, Tuple
+from typing import Iterator
+from typing import TypeVar, Sequence
 
 
 from .common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
@@ -19,14 +21,11 @@ def get_logger():
 # TODO return error depending on severity?
 
 
-from typing import TypeVar, Sequence
-
-
 T = TypeVar('T')
 
 def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
-    def make_dict(s: Sequence[T]) -> Dict[str, List[T]]:
-        res: Dict[str, List[T]] = {}
+    def make_dict(s: Sequence[T]) -> dict[str, list[T]]:
+        res: dict[str, list[T]] = {}
         for a in s:
             k = key(a)
             ll = res.get(k, None)
@@ -39,9 +38,9 @@ def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
     db = make_dict(sb)
     ka = set(da.keys())
     kb = set(db.keys())
-    onlya: Set[T] = set()
-    common: Set[T] = set()
-    onlyb: Set[T] = set()
+    onlya: set[T] = set()
+    common: set[T] = set()
+    onlyb: set[T] = set()
     for k in ka.union(kb):
         la = da.get(k, [])
         lb = db.get(k, [])
@@ -54,13 +53,13 @@ def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
     return onlya, common, onlyb
 
 
-def compare(before: List[DbVisit], after: List[DbVisit], between: str, *, log=True) -> List[DbVisit]:
+def compare(before: list[DbVisit], after: list[DbVisit], between: str, *, log=True) -> list[DbVisit]:
     logger = get_logger()
     logger.info('comparing between: %s', between)
 
-    errors: List[DbVisit] = []
+    errors: list[DbVisit] = []
 
-    umap: Dict[Url, List[DbVisit]] = {}
+    umap: dict[Url, list[DbVisit]] = {}
     for a in after:
         url = a.norm_url
         xx = umap.get(url, []) # TODO canonify here?
@@ -71,7 +70,7 @@ def compare(before: List[DbVisit], after: List[DbVisit], between: str, *, log=Tr
         errors.append(b)
         if log:
             logger.error('between %s missing %s', between, b)
-            print('ignoreline "%s", # %s %s' % ('exid', b.norm_url, b.src), file=sys.stderr)
+            print('ignoreline "{}", # {} {}'.format('exid', b.norm_url, b.src), file=sys.stderr)
 
 
     # the idea is that we eliminate items simultaneously from both sets
@@ -108,7 +107,7 @@ def get_files(args):
     if len(args.paths) == 0:
         int_dir = args.intermediate_dir
         assert int_dir.exists()
-        files = list(sorted(int_dir.glob('*.sqlite*')))
+        files = sorted(int_dir.glob('*.sqlite*'))
         files = files[-args.last:]
     else:
         files = [Path(p) for p in args.paths]
@@ -126,7 +125,7 @@ def main():
         sys.exit(1)
 
 
-def compare_files(*files: Path, log=True) -> Iterator[Tuple[str, DbVisit]]:
+def compare_files(*files: Path, log=True) -> Iterator[tuple[str, DbVisit]]:
     assert len(files) > 0
 
     logger = get_logger()

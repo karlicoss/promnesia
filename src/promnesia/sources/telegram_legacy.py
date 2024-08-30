@@ -1,11 +1,12 @@
 '''
 Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
 '''
+from __future__ import annotations
 
 from pathlib import Path
 import sqlite3
 from textwrap import dedent
-from typing import Union, TypeVar
+from typing import TypeVar
 from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 
 from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, Results, echain
@@ -14,11 +15,10 @@ from ..sqlite import sqlite_connection
 T = TypeVar("T")
 
 
-def unwrap(res: Union[T, Exception]) -> T:
+def unwrap(res: T | Exception) -> T:
     if isinstance(res, Exception):
         raise res
-    else:
-        return res
+    return res
 
 
 def index(database: PathIsh, *, http_only: bool=False) -> Results:

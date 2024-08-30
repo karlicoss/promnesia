@@ -1,11 +1,11 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myinstapaper][instapaper]] module
 '''
-from ..common import Results, logger, Visit, Loc
+from promnesia.common import Results, Visit, Loc
 
 
 def index() -> Results:
-    from . import hpi
+    from . import hpi  # noqa: F401
     import my.instapaper as ip
 
     for p in ip.pages():

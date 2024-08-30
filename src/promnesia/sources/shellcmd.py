@@ -1,19 +1,20 @@
 """
 Greps out URLs from an arbitrary shell command results.
 """
+from __future__ import annotations
 
 from datetime import datetime
 import os
 import re
 from subprocess import run, PIPE
-from typing import Union, Sequence
+from typing import Sequence
 import warnings
 
 from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows, PathIsh
 from .plaintext import _has_grep
 
 
-def index(command: Union[str, Sequence[PathIsh]]) -> Results:
+def index(command: str | Sequence[PathIsh]) -> Results:
     cmd: Sequence[PathIsh]
     cmds: str
     if isinstance(command, str):
@@ -71,7 +72,7 @@ def index(command: Union[str, Sequence[PathIsh]]) -> Results:
                 context=context,
             )
 
-    r = run(cmd, stdout=PIPE)
+    r = run(cmd, stdout=PIPE, check=False)
     if r.returncode > 0:
         if not (cmd[0] in {'grep', 'findstr'} and r.returncode == 1): # ugh. grep returns 1 on no matches...
             r.check_returncode()

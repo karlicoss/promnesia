@@ -4,7 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Iterable
+from typing import Any
 
 
 from hypothesis import settings, given
@@ -20,13 +20,14 @@ from ..database.dump import visits_to_sqlite
 from ..database.load import get_all_db_visits
 from ..sqlite import sqlite_connection
 
-from .common import gc_control, running_on_ci
+from .common import running_on_ci
+from .common import gc_control  # noqa: F401
 
 
-HSETTINGS: dict[str, Any] = dict(
-    derandomize=True,
-    deadline=timedelta(seconds=2),  # sometimes slow on ci
-)
+HSETTINGS: dict[str, Any] = {
+    'derandomize': True,
+    'deadline': timedelta(seconds=2),  # sometimes slow on ci
+}
 
 
 def test_no_visits(tmp_path: Path) -> None:

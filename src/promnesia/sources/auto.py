@@ -5,25 +5,23 @@
 - autodetects Obsidian vault and adds `obsidian://` app protocol support [[file:../src/promnesia/sources/obsidian.py][promnesia.sources.obsidian]]
 - autodetects Logseq graph and adds `logseq://` app protocol support [[file:../src/promnesia/sources/logseq.py][promnesia.sources.logseq]]
 """
+from __future__ import annotations
 
 import csv
 from concurrent.futures import ProcessPoolExecutor as Pool
 from contextlib import nullcontext
-from datetime import datetime
 import itertools
 import json
 import os
-from typing import Optional, Iterable, Union, List, Tuple, NamedTuple, Sequence, Iterator, Iterable, Callable, Any, Dict, Set
+from typing import Optional, Iterable, NamedTuple, Sequence, Iterator, Iterable, Callable, Any
 from fnmatch import fnmatch
 from pathlib import Path
-from functools import lru_cache, wraps
-import warnings
+from functools import wraps
 
-import pytz
 
-from ..common import Visit, Url, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Extraction, Result, Results, mime, traverse, file_mtime, echain, logger
-from ..common import warn_once
-from ..config import use_cores
+from promnesia.common import Visit, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Result, Results, mime, traverse, file_mtime, echain, logger
+from promnesia.common import warn_once
+from promnesia.config import use_cores
 
 
 from .filetypes import EUrl, Ctx
@@ -31,7 +29,7 @@ from .auto_obsidian import obsidian_replacer
 from .auto_logseq import logseq_replacer
 
 
-def _collect(thing, path: List[str], result: List[EUrl]) -> None:
+def _collect(thing, path: list[str], result: list[EUrl]) -> None:
     if isinstance(thing, str):
         ctx: Ctx = tuple(path)
         result.extend([EUrl(url=u, ctx=ctx) for u in extract_urls(thing)])
@@ -51,9 +49,9 @@ def _collect(thing, path: List[str], result: List[EUrl]) -> None:
 
 
 # TODO mm. okay, I suppose could use kython consuming thingy?..
-def collect_from(thing) -> List[EUrl]:
-    uuu: List[EUrl] = []
-    path: List[str] = []
+def collect_from(thing) -> list[EUrl]:
+    uuu: list[EUrl] = []
+    path: list[str] = []
     _collect(thing, path, uuu)
     return uuu
 
@@ -85,7 +83,7 @@ def _plaintext(path: Path) -> Results:
 def fallback(ex):
     """Falls back to plaintext in case of issues"""
 
-    fallback_active: Dict[Any, bool] = {}
+    fallback_active: dict[Any, bool] = {}
     @wraps(ex)
     def wrapped(path: Path):
         nonlocal fallback_active
@@ -169,7 +167,7 @@ Replacer = Optional[Callable[[str, str], str]]
 
 def index(
         *paths: PathIsh,
-        ignored: Union[Sequence[str], str]=(),
+        ignored: Sequence[str] | str=(),
         follow: bool=True,
         replacer: Replacer=None,
 ) -> Results:
@@ -210,10 +208,10 @@ class Options(NamedTuple):
     # TODO option to add ignores? not sure..
     # TODO I don't like this replacer thing... think about removing it
     replacer: Replacer
-    root: Optional[Path]=None
+    root: Path | None=None
 
 
-def _index_file_aux(path: Path, opts: Options) -> Union[Exception, List[Result]]:
+def _index_file_aux(path: Path, opts: Options) -> Exception | list[Result]:
     # just a helper for the concurrent version (the generator isn't picklable)
     try:
         return list(_index_file(path, opts=opts))
@@ -248,7 +246,7 @@ def _index(path: Path, opts: Options) -> Results:
                 continue
 
             p = p.resolve()
-            if not os.path.exists(p):
+            if not os.path.exists(p):  # noqa: PTH110
                 logger.debug('ignoring %s: broken symlink?', p)
                 continue
 
@@ -267,7 +265,7 @@ def _index(path: Path, opts: Options) -> Results:
 
 Mime = str
 from .filetypes import Ex # meh
-def by_path(pp: Path) -> Tuple[Optional[Ex], Optional[Mime]]:
+def by_path(pp: Path) -> tuple[Ex | None, Mime | None]:
     suf = pp.suffix.lower()
     # firt check suffixes, it's faster
     s = type2idx(suf)
@@ -318,7 +316,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
 
     logger.debug('indexing via %s: %s', ip.__name__, pp)
 
-    def indexer() -> Union[Urls, Results]:
+    def indexer() -> Urls | Results:
         # eh, annoying.. need to make more generic..
         idx = ip(pp)
         try:
@@ -353,7 +351,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
             v = v._replace(locator=loc)
 
         if replacer is not None and root is not None:
-            upd: Dict[str, Any] = {}
+            upd: dict[str, Any] = {}
             href = v.locator.href
             if href is not None:
                 upd['locator'] = v.locator._replace(href=replacer(href, str(root)), title=replacer(v.locator.title, str(root)))

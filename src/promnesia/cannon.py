@@ -9,15 +9,16 @@ are same content, but you can't tell that by URL equality. Even canonical urls a
 
 Also some experiments to establish 'URL hierarchy'.
 """
+from __future__ import annotations
 # TODO eh?? they fixed mobile.twitter.com?
 
 from itertools import chain
 import re
 import typing
-from typing import Iterable, NamedTuple, Set, Optional, List, Sequence, Union, Tuple, Dict, Any, Collection
+from typing import Iterable, NamedTuple, Sequence, Union, Tuple, Any, Collection
 
 import urllib.parse
-from urllib.parse import urlsplit, parse_qsl, urlunsplit, parse_qs, urlencode, SplitResult
+from urllib.parse import urlsplit, parse_qsl, urlunsplit, urlencode, SplitResult
 
 
 # this has some benchmark, but quite a few librarires seem unmaintained, sadly
@@ -108,11 +109,11 @@ default_qkeep = [
 
 # TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?
 class Spec(NamedTuple):
-    qkeep  : Optional[Union[Collection[str], bool]] = None
-    qremove: Optional[Set[str]] = None
+    qkeep  : Collection[str] | bool | None = None
+    qremove: set[str] | None = None
     fkeep  : bool = False
 
-    def keep_query(self, q: str) -> Optional[int]: # returns order
+    def keep_query(self, q: str) -> int | None: # returns order
         if self.qkeep is True:
             return 1
         qkeep = {
@@ -134,13 +135,13 @@ class Spec(NamedTuple):
         return None
 
     @classmethod
-    def make(cls, **kwargs) -> 'Spec':
+    def make(cls, **kwargs) -> Spec:
         return cls(**kwargs)
 
 S = Spec
 
 # TODO perhaps these can be machine learnt from large set of urls?
-specs: Dict[str, Spec] = {
+specs: dict[str, Spec] = {
     'youtube.com': S(
         # TODO search_query?
         qkeep=[ # note: experimental.. order matters here
@@ -178,7 +179,6 @@ specs: Dict[str, Spec] = {
 
             'source', 'tsid', 'refsrc', 'pnref', 'rc', '_rdr', 'src', 'hc_location', 'section', 'permPage', 'soft', 'pn_ref', 'action',
             'ti', 'aref', 'event_time_id', 'action_history', 'filter', 'ref_notif_type', 'has_source', 'source_newsfeed_story_type',
-            'ref_notif_type',
         },
     ),
     'physicstravelguide.com': S(fkeep=True), # TODO instead, pass fkeep marker object for shorter spec?
@@ -221,7 +221,7 @@ Frag = Any
 Parts = Sequence[Tuple[str, str]]
 
 
-def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> Tuple[Any, Any, Parts, Frag]:
+def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> tuple[Any, Any, Parts, Frag]:
     if path[:5] == '/from':
         site = dict(qq).get('site')
         if site is not None:
@@ -232,7 +232,7 @@ def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> Tuple[Any, Any, Parts,
     # TODO this should be in-place? for brevity?
     return (domain, path, qq, frag)
 
-def get_spec2(dom: str) -> Optional[Spec2]:
+def get_spec2(dom: str) -> Spec2 | None:
     return {
         'news.ycombinator.com': _yc,
     }.get(dom)
@@ -288,7 +288,7 @@ def transform_split(split: SplitResult):
     Right = Tuple[str, str, str]
     # the idea is that we can unify certain URLs here and map them to the 'canonical' one
     # this is a dict only for grouping but should be a list really.. todo
-    rules: Dict[Left, Right] = {
+    rules: dict[Left, Right] = {
         # TODO m. handling might be quite common
         # f'm.youtube.com/{REST}': ('youtube.com', '{rest}'),
         (
@@ -322,9 +322,9 @@ def transform_split(split: SplitResult):
             continue
         gd = m.groupdict()
         if len(to) == 2:
-            to = to + ('', )
+            to = (*to, '')
 
-        (netloc, path, qq) = [t.format(**gd) for t in to]
+        (netloc, path, qq) = (t.format(**gd) for t in to)
         qparts.extend(parse_qsl(qq, keep_blank_values=True)) # TODO hacky..
         # TODO eh, qparts should really be a map or something...
         break
@@ -361,7 +361,7 @@ def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
 #     ]
 #     for re in regexes:
 
-def handle_archive_org(url: str) -> Optional[str]:
+def handle_archive_org(url: str) -> str | None:
     are = r'web.archive.org/web/(?P<timestamp>\d+)/(?P<rest>.*)'
     m = re.fullmatch(are, url)
     if m is None:
@@ -697,8 +697,8 @@ def groups(it, args): # pragma: no cover
     all_pats = get_patterns()
 
     from collections import Counter
-    c: typing.Counter[Optional[str]] = Counter()
-    unmatched: List[str] = []
+    c: typing.Counter[str | None] = Counter()
+    unmatched: list[str] = []
 
     def dump():
         print(c)

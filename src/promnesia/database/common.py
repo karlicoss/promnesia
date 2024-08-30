@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Sequence, Tuple
+from typing import Sequence
 
 from sqlalchemy import (
     Column,
     Integer,
-    Row,
     String,
 )
 
@@ -30,7 +31,7 @@ def get_columns() -> Sequence[Column]:
     return res
 
 
-def db_visit_to_row(v: DbVisit) -> Tuple:
+def db_visit_to_row(v: DbVisit) -> tuple:
     # ugh, very hacky...
     # we want to make sure the resulting tuple only consists of simple types
     # so we can use dbengine directly

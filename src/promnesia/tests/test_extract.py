@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 from ..common import Visit, DbVisit, Loc, Source
 from ..extract import extract_visits
 
-from .common import get_testdata, unwrap, running_on_ci, gc_control
+from .common import get_testdata, unwrap, running_on_ci
+from .common import gc_control  # noqa: F401
 
 from more_itertools import ilen
 import pytest
