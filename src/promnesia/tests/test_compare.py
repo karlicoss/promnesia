@@ -1,5 +1,5 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 from ..compare import compare_files
 from .utils import index_urls

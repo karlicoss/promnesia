@@ -1,32 +1,43 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
-from datetime import timedelta
-from functools import lru_cache
 import importlib.metadata
 import json
 import logging
 import os
+from dataclasses import dataclass
+from datetime import timedelta
+from functools import lru_cache
 from pathlib import Path
-from typing import List, NamedTuple, Dict, Optional, Any, Protocol
-
-
-import pytz
-from pytz import BaseTzInfo
+from typing import Any, Dict, List, NamedTuple, Optional, Protocol
 
 import fastapi
-
-from sqlalchemy import literal, between, or_, and_, exc, select
-from sqlalchemy import Column, Table, func, types
-from sqlalchemy.sql.elements import ColumnElement
+import pytz
+from pytz import BaseTzInfo
+from sqlalchemy import (
+    Column,
+    Table,
+    and_,
+    between,
+    exc,
+    func,
+    literal,
+    or_,
+    select,
+    types,
+)
 from sqlalchemy.sql import text
+from sqlalchemy.sql.elements import ColumnElement
 
-
-from .common import PathWithMtime, DbVisit, setup_logger, default_output_dir, get_system_tz
 from .cannon import canonify
+from .common import (
+    DbVisit,
+    PathWithMtime,
+    default_output_dir,
+    get_system_tz,
+    setup_logger,
+)
 from .database.load import DbStuff, get_db_stuff, row_to_db_visit
-
 
 Json = Dict[str, Any]
 

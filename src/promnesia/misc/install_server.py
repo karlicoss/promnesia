@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
+import shutil
 import sys
 import time
 from pathlib import Path
-import platform
-import shutil
 from subprocess import check_call, run
 
 SYSTEM = platform.system()

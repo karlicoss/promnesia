@@ -1,16 +1,28 @@
 """
 Greps out URLs from an arbitrary shell command results.
 """
+
 from __future__ import annotations
 
-from datetime import datetime
 import os
 import re
-from subprocess import run, PIPE
-from typing import Sequence
 import warnings
+from datetime import datetime
+from subprocess import PIPE, run
+from typing import Sequence
 
-from ..common import Visit, Loc, Results, extract_urls, file_mtime, get_system_tz, now_tz, _is_windows, PathIsh
+from promnesia.common import (
+    Loc,
+    PathIsh,
+    Results,
+    Visit,
+    _is_windows,
+    extract_urls,
+    file_mtime,
+    get_system_tz,
+    now_tz,
+)
+
 from .plaintext import _has_grep
 
 

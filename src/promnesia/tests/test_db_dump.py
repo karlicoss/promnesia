@@ -6,23 +6,21 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-
-from hypothesis import settings, given
-from hypothesis.strategies import from_type
 # NOTE: pytest ... -s --hypothesis-verbosity=debug is useful for seeing what hypothesis is doing
 import pytest
 import pytz
-
+from hypothesis import given, settings
+from hypothesis.strategies import from_type
 
 from ..common import Loc
 from ..database.common import DbVisit
 from ..database.dump import visits_to_sqlite
 from ..database.load import get_all_db_visits
 from ..sqlite import sqlite_connection
-
-from .common import running_on_ci
-from .common import gc_control  # noqa: F401
-
+from .common import (
+    gc_control,  # noqa: F401
+    running_on_ci,
+)
 
 HSETTINGS: dict[str, Any] = {
     'derandomize': True,

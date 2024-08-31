@@ -4,13 +4,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from ..common import Source
-from ..config import import_config, Config
-
-
-from more_itertools import ilen
 import pytest
+from more_itertools import ilen
 
+from ..common import Source
+from ..config import Config, import_config
 from .common import throw
 
 

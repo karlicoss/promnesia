@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+import sys
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-import sys
-import time
 from typing import Any, Iterator
 
 import psutil
 import requests
 
 from ..common import PathIsh
-from .common import tmp_popen, promnesia_bin, free_port
+from .common import free_port, promnesia_bin, tmp_popen
 
 
 @dataclass

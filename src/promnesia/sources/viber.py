@@ -1,18 +1,18 @@
 """
 Collects visits from Viber desktop app (e.g. `~/.ViberPC/XYZ123/viber.db`)
 """
+
 from __future__ import annotations
 
 import logging
+import sqlite3
 import textwrap
 from os import PathLike
 from pathlib import Path
-import sqlite3
 from typing import Iterable
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, join_tags
 from ..sqlite import sqlite_connection
-
 
 logger = logging.getLogger(__name__)
 

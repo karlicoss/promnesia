@@ -10,16 +10,15 @@ are same content, but you can't tell that by URL equality. Even canonical urls a
 Also some experiments to establish 'URL hierarchy'.
 """
 from __future__ import annotations
-# TODO eh?? they fixed mobile.twitter.com?
 
-from itertools import chain
 import re
 import typing
-from typing import Iterable, NamedTuple, Sequence, Union, Tuple, Any, Collection
-
 import urllib.parse
-from urllib.parse import urlsplit, parse_qsl, urlunsplit, urlencode, SplitResult
 
+# TODO eh?? they fixed mobile.twitter.com?
+from itertools import chain
+from typing import Any, Collection, Iterable, NamedTuple, Sequence, Tuple, Union
+from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
 
 # this has some benchmark, but quite a few librarires seem unmaintained, sadly
 # I guess i'll stick to default for now, until it's a critical bottleneck
@@ -756,9 +755,9 @@ def groups(it, args): # pragma: no cover
 def display(it, args) -> None: # pragma: no cover
     # TODO better name?
     import difflib
-    # pylint: disable=import-error
-    from termcolor import colored as C # type: ignore
     from sys import stdout
+
+    from termcolor import colored as C  # type: ignore
 
     for line in it:
         line = line.strip()

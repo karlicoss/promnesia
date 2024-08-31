@@ -2,11 +2,11 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] smscalls module
 '''
 
-from promnesia.common import Visit, Loc, Results, extract_urls
+from promnesia.common import Loc, Results, Visit, extract_urls
 
 
 def index() -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     from my.smscalls import messages
 
     for m in messages():

@@ -1,11 +1,12 @@
 '''
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Pocket highlights & bookmarks
 '''
-from promnesia.common import Visit, Loc, Results
+
+from promnesia.common import Loc, Results, Visit
 
 
 def index() -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     from my.pocket import articles
 
     # TODO use docstring from my. module? E.g. describing which pocket format is expected

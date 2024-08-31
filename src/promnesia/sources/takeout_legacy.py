@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from promnesia.common import Visit, logger, Loc, Results
+from promnesia.common import Loc, Results, Visit, logger
+
 
 # TODO make an iterator, insert in db as we go? handle errors gracefully?
 def index() -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     from my.google.takeout.paths import get_takeouts
+
     takeouts = list(get_takeouts())
     # TODO if no takeouts, raise?
     # although could raise a warning on top level, when source emitted no takeouts
@@ -24,18 +26,16 @@ def index() -> Results:
 
 
 
-import pytz
-from itertools import chain
-from datetime import datetime
-from typing import Iterable
-from pathlib import Path
 import json
+from datetime import datetime
+from itertools import chain
+from pathlib import Path
+from typing import Iterable
 
-
-from .. import config
-
-
+import pytz
 from more_itertools import unique_everseen
+
+from promnesia import config
 
 try:
     from cachew import cachew

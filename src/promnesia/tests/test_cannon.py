@@ -2,7 +2,7 @@ from typing import cast
 
 import pytest
 
-from ..cannon import canonify, CanonifyException
+from ..cannon import CanonifyException, canonify
 
 # TODO should actually understand 'sequences'?
 # e.g.

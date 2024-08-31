@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from ..common import write_config, get_testdata
+from my.core.cfg import tmp_config
+
 from ...__main__ import do_index
 from ...database.load import get_all_db_visits
-
-from my.core.cfg import tmp_config
+from ..common import get_testdata, write_config
 
 
 def index_hypothesis(tmp_path: Path) -> None:

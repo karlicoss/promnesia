@@ -1,9 +1,8 @@
-from ...common import _is_windows, Source
-from ...extract import extract_visits
-from ...sources import shellcmd
-
 import pytest
 
+from ...common import Source, _is_windows
+from ...extract import extract_visits
+from ...sources import shellcmd
 from ..common import get_testdata
 
 

@@ -1,15 +1,26 @@
 '''
 Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
 '''
+
 from __future__ import annotations
 
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 from textwrap import dedent
 from typing import TypeVar
-from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
+from urllib.parse import unquote  # TODO mm, make it easier to rememember to use...
 
-from ..common import PathIsh, Visit, get_logger, Loc, extract_urls, from_epoch, Results, echain
+from promnesia.common import (
+    Loc,
+    PathIsh,
+    Results,
+    Visit,
+    echain,
+    extract_urls,
+    from_epoch,
+    get_logger,
+)
+
 from ..sqlite import sqlite_connection
 
 T = TypeVar("T")

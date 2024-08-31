@@ -3,14 +3,21 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterator, NamedTuple
 
-from ..common import Extraction, Url, PathIsh, Res, Visit, Loc, file_mtime, logger
-
-
 import mistletoe  # type: ignore
-from mistletoe.span_token import AutoLink, Link  # type: ignore
 import mistletoe.block_token as BT  # type: ignore
 from mistletoe.html_renderer import HTMLRenderer  # type: ignore
+from mistletoe.span_token import AutoLink, Link  # type: ignore
 
+from promnesia.common import (
+    Extraction,
+    Loc,
+    PathIsh,
+    Res,
+    Url,
+    Visit,
+    file_mtime,
+    logger,
+)
 
 renderer = HTMLRenderer()
 

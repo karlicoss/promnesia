@@ -1,15 +1,18 @@
 from collections import Counter
 from pathlib import Path
-from subprocess import check_call, Popen
+from subprocess import Popen, check_call
+
+import pytest
 
 from ..__main__ import do_index, read_example_config
 from ..common import DbVisit, _is_windows
 from ..database.load import get_all_db_visits
-
-import pytest
-
-from .common import get_testdata, promnesia_bin, write_config
-from .common import reset_filters  # noqa: F401
+from .common import (
+    get_testdata,
+    promnesia_bin,
+    reset_filters,  # noqa: F401
+    write_config,
+)
 
 
 def get_stats(tmp_path: Path) -> Counter:
@@ -193,7 +196,8 @@ def test_hook(tmp_path: Path) -> None:
 
         SOURCES = [Source(demo.index, count=7, name='somename')]
 
-        from typing import cast, Iterator
+        from typing import Iterator, cast
+
         from promnesia.common import DbVisit, Loc, Res
         from promnesia.sources import demo
 

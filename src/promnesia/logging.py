@@ -29,9 +29,9 @@ def test() -> None:
 
 
 import logging
-from typing import Union, Optional, cast
 import os
 import warnings
+from typing import Optional, Union, cast
 
 Level = int
 LevelIsh = Optional[Union[Level, str]]

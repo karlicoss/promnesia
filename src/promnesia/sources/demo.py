@@ -2,12 +2,12 @@
 A dummy source, used for testing
 Generates a sequence of fake evenly separated visits
 '''
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from promnesia.common import Results, Visit, Loc
-
+from promnesia.common import Loc, Results, Visit
 
 IsoFormatDt = str
 Seconds = int

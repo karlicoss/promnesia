@@ -1,13 +1,14 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
 '''
+
 from __future__ import annotations
 
 import json
-from typing import Iterable, Any, NamedTuple
 import warnings
+from typing import Any, Iterable, NamedTuple
 
-from promnesia.common import Visit, Loc, Results, logger
+from promnesia.common import Loc, Results, Visit, logger
 from promnesia.compat import removeprefix
 
 
@@ -20,9 +21,17 @@ def index() -> Results:
     from . import hpi  # noqa: F401
 
     try:
+        from google_takeout_parser.models import (
+            Activity,
+            ChromeHistory,
+            LikedYoutubeVideo,
+            YoutubeComment,
+        )
+        from google_takeout_parser.parse_csv import (
+            extract_comment_links,
+            reconstruct_comment_content,
+        )
         from my.google.takeout.parser import events
-        from google_takeout_parser.models import Activity, YoutubeComment, LikedYoutubeVideo, ChromeHistory
-        from google_takeout_parser.parse_csv import reconstruct_comment_content, extract_comment_links
     except ModuleNotFoundError as ex:
         logger.exception(ex)
         yield ex

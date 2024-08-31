@@ -2,10 +2,11 @@
 Clones & indexes Git repositories (via sources.auto)
 '''
 from __future__ import annotations
-# TODO not sure if worth exposing... could be just handled by auto or something?)
 
-from pathlib import Path
 import re
+
+# TODO not sure if worth exposing... could be just handled by auto or something?)
+from pathlib import Path
 from subprocess import check_call
 from typing import Iterable
 

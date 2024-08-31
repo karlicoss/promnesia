@@ -1,6 +1,7 @@
 import os.path
 import urllib.parse
 
+
 def logseq_replacer(path: str, root: str) -> str:
     if not path.startswith("editor://") or not (path.endswith((".md", ".org"))):
         return path

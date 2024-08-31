@@ -2,12 +2,13 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Zulip data.
 '''
 
-from promnesia.common import Results, Visit, Loc, iter_urls
+from promnesia.common import Loc, Results, Visit, iter_urls
 
 
 def index() -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     import my.zulip.organization as Z
+
     for m in Z.messages():
         if isinstance(m, Exception):
             yield m

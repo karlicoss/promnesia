@@ -1,17 +1,18 @@
 '''
 Uses [[https://github.com/karlicoss/HPI][HPI]] for visits from web browsers.
 '''
+
 from __future__ import annotations
 
 import re
-from typing import Iterator, Any, TYPE_CHECKING
 import warnings
+from typing import TYPE_CHECKING, Any, Iterator
 
-from promnesia.common import Results, Visit, Loc, Second, PathIsh, logger, is_sqlite_db
+from promnesia.common import Loc, PathIsh, Results, Second, Visit, is_sqlite_db, logger
 
 
 def index(p: PathIsh | None = None) -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
 
     if p is None:
         from my.browser.all import history
@@ -37,11 +38,12 @@ def index(p: PathIsh | None = None) -> Results:
 
 def _index_old(*, path: PathIsh) -> Results:
     from . import browser_legacy
+
     yield from browser_legacy.index(path)
 
 
 def _index_new_with_adhoc_config(*, path: PathIsh) -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
 
     ## previously, it was possible to index be called with multiple different db search paths
     ## this would result in each subsequent call to my.browser.export.history to invalidate cache every time
@@ -52,7 +54,7 @@ def _index_new_with_adhoc_config(*, path: PathIsh) -> Results:
     cache_override = None if hpi_cache_dir is None else hpi_cache_dir / sanitized_path
     ##
 
-    from my.core.common import classproperty, Paths, get_files
+    from my.core.common import Paths, classproperty, get_files
     class config:
         class core:
             cache_dir = cache_override

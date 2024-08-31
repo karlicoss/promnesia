@@ -5,22 +5,30 @@ import ast
 import importlib
 import inspect
 import os
-from pathlib import Path
 import shlex
 import shutil
-from subprocess import run, check_call, Popen
 import sys
+from pathlib import Path
+from subprocess import Popen, check_call, run
 from tempfile import TemporaryDirectory, gettempdir
-from typing import Callable, Sequence, Iterable, Iterator
+from typing import Callable, Iterable, Iterator, Sequence
 
-
-from . import config
-from . import server
-from .misc import install_server
-from .common import Extractor, PathIsh, logger, get_tmpdir, DbVisit, Res
-from .common import Source, get_system_tz, user_config_file, default_config_path
+from . import config, server
+from .common import (
+    DbVisit,
+    Extractor,
+    PathIsh,
+    Res,
+    Source,
+    default_config_path,
+    get_system_tz,
+    get_tmpdir,
+    logger,
+    user_config_file,
+)
 from .database.dump import visits_to_sqlite
 from .extract import extract_visits
+from .misc import install_server
 
 
 def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[DbVisit]]:

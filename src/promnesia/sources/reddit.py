@@ -1,27 +1,28 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myreddit][reddit]] module
 '''
+
 from __future__ import annotations
 
+import typing
 from itertools import chain
 
-from promnesia.common import Visit, Loc, extract_urls, Results, logger
-
-import typing
+from promnesia.common import Loc, Results, Visit, extract_urls, logger
 
 if typing.TYPE_CHECKING:
-    from my.reddit.common import Submission, Comment, Save, Upvote, RedditBase
+    from my.reddit.common import Comment, RedditBase, Save, Submission, Upvote
 
 
 def index(*, render_markdown: bool = False, renderer: type[RedditRenderer] | None = None) -> Results:
     from . import hpi  # noqa: F401
+
     try:
-        from my.reddit.all import submissions, comments, saved, upvoted
+        from my.reddit.all import comments, saved, submissions, upvoted
     except ModuleNotFoundError as e:
         if "No module named 'my.reddit.all'" in str(e):
             import warnings
             warnings.warn("DEPRECATED/reddit: Using an old version of HPI, please update")
-            from my.reddit import submissions, comments, saved, upvoted
+            from my.reddit import comments, saved, submissions, upvoted
         else:
             raise e
 

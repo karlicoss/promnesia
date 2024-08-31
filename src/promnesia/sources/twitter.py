@@ -1,18 +1,19 @@
 '''
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
 '''
+
 from typing import Iterable
 
-from promnesia.common import logger, Results, Visit, Loc, extract_urls, Res
+from promnesia.common import Loc, Res, Results, Visit, extract_urls, logger
 
 
 def index() -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     import my.twitter.all as tw
+    from my.twitter.archive import Tweet  # todo extract to common or something?
+
     # TODO hmm. tweets themselves are sort of visits? not sure if they should contribute..
     processed = 0
-
-    from my.twitter.archive import Tweet # todo extract to common or something?
     tweets: Iterable[Res[Tweet]] = tw.tweets()
     for t in tweets:
         if isinstance(t, Exception):

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote
-import sqlite3
 
 import pytz
 
-from ..common import PathIsh, Results, Visit, Loc, logger, Second, is_sqlite_db
-from .. import config
+from promnesia import config
+from promnesia.common import Loc, PathIsh, Results, Second, Visit, is_sqlite_db, logger
 
 try:
     from cachew import cachew
@@ -122,7 +122,8 @@ Col = str
 ColType = str
 
 
-from typing import NamedTuple, Tuple, Union, Sequence
+from typing import NamedTuple, Sequence, Tuple, Union
+
 
 class Schema(NamedTuple):
     cols: Sequence[tuple[Col, ColType]]
@@ -132,6 +133,7 @@ class Schema(NamedTuple):
 SchemaCheck = Tuple[str, Union[str, Sequence[str]]] # todo Union: meh
 
 from dataclasses import dataclass
+
 
 # todo protocol?
 @dataclass

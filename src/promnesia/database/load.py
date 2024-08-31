@@ -4,16 +4,15 @@ from pathlib import Path
 from typing import Tuple
 
 from sqlalchemy import (
+    Engine,
+    Index,
+    MetaData,
+    Table,
     create_engine,
     exc,
-    Engine,
-    MetaData,
-    Index,
-    Table,
 )
 
 from .common import DbVisit, get_columns, row_to_db_visit
-
 
 DbStuff = Tuple[Engine, Table]
 
