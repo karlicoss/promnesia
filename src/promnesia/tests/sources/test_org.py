@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-
 from ...common import Visit
 from ...sources.org import extract_from_file
-
 from ..common import get_testdata, throw
 
 

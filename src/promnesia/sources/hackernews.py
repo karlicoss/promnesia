@@ -4,11 +4,11 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] dogsheep module to import HackerN
 
 import textwrap
 
-from promnesia.common import Visit, Loc, Results
+from promnesia.common import Loc, Results, Visit
 
 
 def index() -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     from my.hackernews import dogsheep
 
     for item in dogsheep.items():

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 from typing import Dict, Iterable, Optional
 
 from more_itertools import chunked
-
 from sqlalchemy import (
     Engine,
     MetaData,
@@ -18,6 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects import sqlite as dialect_sqlite
 
+from .. import config
 from ..common import (
     DbVisit,
     Loc,
@@ -26,9 +26,7 @@ from ..common import (
     get_logger,
     now_tz,
 )
-from .common import get_columns, db_visit_to_row
-from .. import config
-
+from .common import db_visit_to_row, get_columns
 
 # NOTE: I guess the main performance benefit from this is not creating too many tmp lists and avoiding overhead
 # since as far as sql is concerned it should all be in the same transaction. only a guess

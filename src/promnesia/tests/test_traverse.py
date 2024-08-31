@@ -1,9 +1,7 @@
 from unittest.mock import patch
 
 from ..common import traverse
-
 from .common import get_testdata
-
 
 testDataPath = get_testdata('traverse')
 

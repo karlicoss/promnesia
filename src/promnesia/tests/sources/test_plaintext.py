@@ -1,7 +1,6 @@
 from ...common import Source
 from ...extract import extract_visits
 from ...sources import plaintext, shellcmd
-
 from ..common import get_testdata, unwrap
 
 

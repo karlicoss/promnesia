@@ -5,8 +5,7 @@ I'll make it more readable, but in the meantime feel free to open an issue if yo
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Union, Tuple, cast
-
+from typing import Any, Dict, List, Tuple, Union, cast
 
 JDict = Dict[str, Any] # TODO not sure if we can do recursive..
 JList = List[Any]

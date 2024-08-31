@@ -4,13 +4,11 @@ Uses [[https://github.com/karlicoss/HPI][HPI]] github module
 from __future__ import annotations
 
 # Note: requires the 'mistletoe' module if you enable render_markdown
-
-
-from promnesia.common import Results, Visit, Loc, iter_urls, logger
+from promnesia.common import Loc, Results, Visit, iter_urls, logger
 
 
 def index(*, render_markdown: bool = False) -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     from my.github.all import events
 
     if render_markdown:

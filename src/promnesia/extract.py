@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from functools import lru_cache
 import re
+from functools import lru_cache
 from typing import Iterable, Sequence
 
 from .cannon import CanonifyException
 from .common import (
-    logger,
-    DbVisit, Visit,
-    Res,
-    SourceName, Source,
+    DbVisit,
     Filter,
-    Url,
+    Res,
     Results,
+    Source,
+    SourceName,
+    Url,
+    Visit,
+    logger,
 )
-
 
 DEFAULT_FILTERS = (
     r'^chrome-\w+://',

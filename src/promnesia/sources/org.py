@@ -1,18 +1,25 @@
 from __future__ import annotations
 
-from datetime import datetime
 import re
-from typing import Iterable, Optional, Iterator, NamedTuple, cast
+from datetime import datetime
 from pathlib import Path
-
-
-from ..common import Visit, get_logger, Results, Url, Loc, iter_urls, PathIsh, Res, file_mtime
-
+from typing import Iterable, Iterator, NamedTuple, Optional, cast
 
 import orgparse
-from orgparse.date import gene_timestamp_regex, OrgDate
+from orgparse.date import OrgDate, gene_timestamp_regex
 from orgparse.node import OrgNode
 
+from promnesia.common import (
+    Loc,
+    PathIsh,
+    Res,
+    Results,
+    Url,
+    Visit,
+    file_mtime,
+    get_logger,
+    iter_urls,
+)
 
 UPDATE_ORGPARSE_WARNING = 'WARNING: please update orgparse version to a more recent (pip3 install -U orgparse)'
 

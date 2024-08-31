@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from ...common import PathIsh, _is_windows as windows
+from ...common import PathIsh
+from ...common import _is_windows as windows
 from ...sources.auto import by_path
 
 

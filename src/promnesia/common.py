@@ -1,26 +1,28 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import datetime, date
-from functools import lru_cache
-from glob import glob
 import itertools
 import logging
 import os
-from pathlib import Path
+import re
 import shutil
-from subprocess import run, PIPE, Popen
+import tempfile
+import warnings
+from contextlib import contextmanager
+from copy import copy
+from datetime import date, datetime
+from functools import lru_cache
+from glob import glob
+from pathlib import Path
+from subprocess import PIPE, Popen, run
 from timeit import default_timer as timer
 from types import ModuleType
-from typing import NamedTuple, Iterable, TypeVar, Callable, Union, TypeVar, Sequence, Optional
-import warnings
+from typing import Callable, Iterable, NamedTuple, Optional, Sequence, TypeVar, Union
 
-from more_itertools import intersperse
 import pytz
+from more_itertools import intersperse
 
 from .cannon import canonify
 from .compat import removeprefix
-
 
 _is_windows = os.name == 'nt'
 
@@ -196,6 +198,7 @@ Filter = Callable[[Url], bool]
 
 
 from .logging import LazyLogger
+
 logger = LazyLogger('promnesia', level='DEBUG')
 
 def get_logger() -> logging.Logger:
@@ -204,7 +207,6 @@ def get_logger() -> logging.Logger:
 
 
 
-import tempfile
 # kinda singleton
 @lru_cache(1)
 def get_tmpdir() -> tempfile.TemporaryDirectory[str]:
@@ -218,7 +220,7 @@ Syntax = str
 
 @lru_cache(None)
 def _get_urlextractor(syntax: Syntax):
-    from urlextract import URLExtract # type: ignore
+    from urlextract import URLExtract  # type: ignore
     u = URLExtract()
     # https://github.com/lipoja/URLExtract/issues/13
     if syntax in {'org', 'orgmode', 'org-mode'}: # TODO remove hardcoding..
@@ -368,7 +370,8 @@ def last(path: PathIsh, *parts: str) -> Path:
 
 from .logging import setup_logger  # noqa: F401
 
-from copy import copy
+
+# TODO get rid of this? not sure if still necessary
 def echain(ex: Exception, cause: Exception) -> Exception:
     e = copy(ex)
     e.__cause__ = cause
@@ -382,7 +385,6 @@ def echain(ex: Exception, cause: Exception) -> Exception:
 
 def slugify(x: str) -> str:
     # https://stackoverflow.com/a/38766141/706389
-    import re
     valid_file_name = re.sub(r'[^\w_.)( -]', '', x)
     return valid_file_name
 
@@ -392,7 +394,7 @@ def appdirs():
     under_test = os.environ.get('PYTEST_CURRENT_TEST') is not None
     # todo actually use test name?
     name = 'promnesia-test' if under_test else 'promnesia'
-    import appdirs as ad # type: ignore[import-untyped]
+    import appdirs as ad  # type: ignore[import-untyped]
     return ad.AppDirs(appname=name)
 
 
@@ -412,7 +414,7 @@ def default_cache_dir() -> Path:
 def _magic() -> Callable[[PathIsh], str | None]:
     logger = get_logger()
     try:
-        import magic # type: ignore
+        import magic  # type: ignore
     except Exception as e:
         logger.exception(e)
         defensive_msg: str | None = None

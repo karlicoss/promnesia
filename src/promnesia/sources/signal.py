@@ -8,8 +8,6 @@ from __future__ import annotations
 # * Open-ciphered-db adapted from:
 #   https://github.com/carderne/signal-export/commit/2284c8f4
 # * Copyright (c) 2019 Chris Arderne, 2020 Kostis Anagnostopoulos
-
-
 import json
 import logging
 import platform

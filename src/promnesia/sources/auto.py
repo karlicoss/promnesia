@@ -8,25 +8,37 @@
 from __future__ import annotations
 
 import csv
-from concurrent.futures import ProcessPoolExecutor as Pool
-from contextlib import nullcontext
 import itertools
 import json
 import os
-from typing import Optional, Iterable, NamedTuple, Sequence, Iterator, Iterable, Callable, Any
+from concurrent.futures import ProcessPoolExecutor as Pool
+from contextlib import nullcontext
 from fnmatch import fnmatch
-from pathlib import Path
 from functools import wraps
+from pathlib import Path
+from typing import Any, Callable, Iterable, Iterator, NamedTuple, Optional, Sequence
 
-
-from promnesia.common import Visit, PathIsh, get_logger, Loc, get_tmpdir, extract_urls, Result, Results, mime, traverse, file_mtime, echain, logger
-from promnesia.common import warn_once
+from promnesia.common import (
+    Loc,
+    PathIsh,
+    Result,
+    Results,
+    Visit,
+    echain,
+    extract_urls,
+    file_mtime,
+    get_logger,
+    get_tmpdir,
+    logger,
+    mime,
+    traverse,
+    warn_once,
+)
 from promnesia.config import use_cores
 
-
-from .filetypes import EUrl, Ctx
-from .auto_obsidian import obsidian_replacer
 from .auto_logseq import logseq_replacer
+from .auto_obsidian import obsidian_replacer
+from .filetypes import Ctx, EUrl
 
 
 def _collect(thing, path: list[str], result: list[EUrl]) -> None:
@@ -124,7 +136,7 @@ def _org(path: Path) -> Results:
     return org.extract_from_file(path)
 
 
-from .filetypes import TYPE2IDX, type2idx, IGNORE, CODE
+from .filetypes import CODE, IGNORE, TYPE2IDX, type2idx
 
 TYPE2IDX.update({
     'application/json': _json,
@@ -264,7 +276,9 @@ def _index(path: Path, opts: Options) -> Results:
 
 
 Mime = str
-from .filetypes import Ex # meh
+from .filetypes import Ex  # meh
+
+
 def by_path(pp: Path) -> tuple[Ex | None, Mime | None]:
     suf = pp.suffix.lower()
     # firt check suffixes, it's faster

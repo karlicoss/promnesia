@@ -5,7 +5,6 @@ from subprocess import Popen
 import pytest
 
 from ..__main__ import do_index
-
 from .common import promnesia_bin, write_config
 from .server_helper import run_server
 
@@ -82,7 +81,7 @@ def test_visits_hierarchy(tmp_path: Path) -> None:
     def cfg() -> None:
         from datetime import datetime
 
-        from promnesia.common import Source, Visit, Loc
+        from promnesia.common import Loc, Source, Visit
         from promnesia.sources import demo
 
         def indexer():
@@ -163,7 +162,7 @@ def test_search(tmp_path: Path) -> None:
     def cfg() -> None:
         from datetime import datetime
 
-        from promnesia.common import Source, Visit, Loc
+        from promnesia.common import Loc, Source, Visit
         from promnesia.sources import demo
 
         def indexer():

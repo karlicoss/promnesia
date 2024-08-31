@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from urllib.parse import unquote # TODO mm, make it easier to rememember to use...
 import warnings
+from urllib.parse import unquote  # TODO mm, make it easier to rememember to use...
 
-from promnesia.common import Results, logger, extract_urls, Visit, Loc, PathIsh
+from promnesia.common import Loc, PathIsh, Results, Visit, extract_urls, logger
 
 
 def index(database: PathIsh | None=None, *, http_only: bool=False, with_extra_media_info: bool=False)  -> Results:
@@ -34,7 +34,7 @@ def _index_legacy(*, database: PathIsh, http_only: bool) -> Results:
 
 
 def _index_new_with_adhoc_config(*, database: PathIsh, http_only: bool, with_extra_media_info: bool) -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
 
     class config:
         class telegram:
@@ -47,7 +47,7 @@ def _index_new_with_adhoc_config(*, database: PathIsh, http_only: bool, with_ext
 
 
 def _index_new(*, http_only: bool, with_extra_media_info: bool) -> Results:
-    from . import hpi  # noqa: F401
+    from . import hpi  # noqa: F401,I001
     from my.telegram.telegram_backup import messages
 
     extra_where = "(has_media == 1 OR text LIKE '%http%')" if http_only else None

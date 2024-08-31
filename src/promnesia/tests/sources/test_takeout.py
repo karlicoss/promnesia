@@ -1,14 +1,12 @@
 from datetime import datetime, timezone
 
+import pytest
+from my.core.cfg import tmp_config
+
 from ...common import Source
 from ...extract import extract_visits
 from ...sources import takeout
-
-import pytest
-
 from ..common import get_testdata, unwrap
-
-from my.core.cfg import tmp_config
 
 
 # TODO apply in conftest so it's used in all tests?

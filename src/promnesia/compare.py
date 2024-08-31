@@ -2,14 +2,12 @@ from __future__ import annotations
 
 # TODO perhaps make it external script?
 import argparse
-from pathlib import Path
 import logging
 import sys
-from typing import Iterator
-from typing import TypeVar, Sequence
+from pathlib import Path
+from typing import Iterator, Sequence, TypeVar
 
-
-from .common import DbVisit, Url, PathWithMtime # TODO ugh. figure out pythonpath
+from .common import DbVisit, PathWithMtime, Url
 from .database.load import row_to_db_visit
 
 # TODO include latest too?
@@ -138,7 +136,7 @@ def compare_files(*files: Path, log=True) -> Iterator[tuple[str, DbVisit]]:
         name = f.name
         this_dts = name[0: name.index('.')] # can't use stem due to multiple extensions..
 
-        from promnesia.server import _get_stuff # TODO ugh
+        from promnesia.server import _get_stuff  # TODO ugh
         engine, table = _get_stuff(PathWithMtime.make(f))
 
         with engine.connect() as conn:

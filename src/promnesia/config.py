@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
-import os
-from types import ModuleType
-from typing import Union, NamedTuple, Iterable, Callable
 import importlib
 import importlib.util
+import os
 import warnings
+from pathlib import Path
+from types import ModuleType
+from typing import Callable, Iterable, NamedTuple, Union
 
-from .common import PathIsh, default_output_dir, default_cache_dir
-from .common import Res, Source, DbVisit
-
+from .common import DbVisit, PathIsh, Res, Source, default_cache_dir, default_output_dir
 
 HookT = Callable[[Res[DbVisit]], Iterable[Res[DbVisit]]]
 

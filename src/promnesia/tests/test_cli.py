@@ -1,13 +1,11 @@
 import os
 import time
 
-from ..common import _is_windows
-
-from .common import get_testdata, promnesia_bin, tmp_popen
-
 import pytest
 import requests
 
+from ..common import _is_windows
+from .common import get_testdata, promnesia_bin, tmp_popen
 
 ox_hugo_data = get_testdata('ox-hugo/test/site')
 

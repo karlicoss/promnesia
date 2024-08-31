@@ -2,7 +2,7 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Roam Research data
 '''
 
-from ..common import Results, Visit, Loc, extract_urls
+from promnesia.common import Loc, Results, Visit, extract_urls
 
 
 def index() -> Results:
@@ -43,6 +43,7 @@ def _collect(node: 'RoamNode') -> Results:
 
 
 import typing
+
 if typing.TYPE_CHECKING:
     import my.roamresearch as RR
     RoamNode = RR.Node

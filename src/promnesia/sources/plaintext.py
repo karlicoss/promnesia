@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from promnesia.common import get_logger, get_tmpdir, PathIsh, _is_windows
-from promnesia.compat import removeprefix
-
 from functools import lru_cache
 from pathlib import Path
 from typing import List
+
+from promnesia.common import PathIsh, _is_windows, get_logger, get_tmpdir
+from promnesia.compat import removeprefix
 
 # https://linux-and-mac-hacks.blogspot.co.uk/2013/04/use-grep-and-regular-expressions-to.html
 _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'

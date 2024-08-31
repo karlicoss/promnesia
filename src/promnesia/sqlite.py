@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 import sqlite3
-from typing import Callable, Any, Iterator, Union, Literal
+from contextlib import contextmanager
+from typing import Any, Callable, Iterator, Literal, Union
 
 from .common import PathIsh
 

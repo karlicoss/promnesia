@@ -1,13 +1,16 @@
 from datetime import datetime, timezone
 
-from ..common import Visit, DbVisit, Loc, Source
-from ..extract import extract_visits
-
-from .common import get_testdata, unwrap, running_on_ci
-from .common import gc_control  # noqa: F401
-
-from more_itertools import ilen
 import pytest
+from more_itertools import ilen
+
+from ..common import DbVisit, Loc, Source, Visit
+from ..extract import extract_visits
+from .common import (
+    gc_control,  # noqa: F401
+    get_testdata,
+    running_on_ci,
+    unwrap,
+)
 
 
 def test_with_error() -> None:

@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from contextlib import closing, contextmanager
 import gc
 import inspect
 import os
-from pathlib import Path
 import socket
 import sys
+from contextlib import closing, contextmanager
+from pathlib import Path
 from textwrap import dedent
 from typing import Iterator, NoReturn, TypeVar
 
 import pytest
 
-from ..common import _is_windows, Res
+from ..common import Res, _is_windows
 
 
 def under_ci() -> bool:

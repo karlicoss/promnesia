@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Sequence, NamedTuple, Union, Iterable
+from typing import Callable, Iterable, NamedTuple, Sequence, Union
 
 from ..common import Results, Url
-
 
 # TODO doesn't really belong here...
 Ctx = Sequence[str]

@@ -1,8 +1,7 @@
-from itertools import groupby
 import os
+from itertools import groupby
 
 from ...sources import auto
-
 from ..common import get_testdata, throw
 
 sa2464 = 'https://www.scottaaronson.com/blog/?p=2464'
