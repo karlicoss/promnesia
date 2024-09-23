@@ -4,11 +4,10 @@ from __future__ import annotations
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
-import os
 from pathlib import Path
-import socket
 from time import sleep
 from typing import Iterator, TypeVar, Callable
+import os
 
 import pytest
 
@@ -18,6 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
 
+from promnesia.tests.common import get_testdata
 from promnesia.tests.utils import index_urls
 from promnesia.tests.server_helper import run_server as wserver
 from promnesia.logging import LazyLogger
@@ -560,7 +560,7 @@ def test_sidebar_navigation(base_url: str, addon: Addon, driver: Driver, backend
         # also need to extract a scenario for manual testing I guess
 
     if base_url == 'LOCAL':
-        local_addr = exit_stack.enter_context(local_http_server(PYTHON_DOC_PATH, port=15454))
+        local_addr = exit_stack.enter_context(local_http_server(PYTHON_DOC_PATH))
         base_url = local_addr
 
     tutorial = f'{base_url}/tutorial/index.html'
@@ -793,39 +793,48 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
 
 
 @browsers()
-def test_multiple_page_updates(addon: Addon, driver: Driver, backend: Backend) -> None:
+def test_multiple_page_updates(tmp_path: Path, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack) -> None:
     # on some pages, onUpdated is triggered multiple times (because of iframes or perhaps something else??)
     # which previously resulted in flickering sidebar/performance degradation etc, so it's a regression test against this
     # TODO would be nice to hook to the backend and check how many requests it had...
-    url = 'https://github.com/karlicoss/promnesia/projects/1'
+
+    http_server_root = get_testdata('test_multiple_page_updates')
+
+    base_url = exit_stack.enter_context(local_http_server(http_server_root))
+
     indexer = index_urls(
         [
-            ('https://github.com/karlicoss/promnesia', 'some comment'),
-            ('https://github.com/karlicoss/promnesia/projects/1', 'just a note for the sidebar'),
+            (f'{base_url}', 'this url is for the toast'),
+            ('https://github.com/karlicoss/promnesia', 'this url is to be marked as visited on the page'),
+            (f'{base_url}/projects/1', 'just a note for the sidebar'),
         ]
     )
     indexer(backend.backend_dir)
 
     addon.configure(notify_contexts=True, show_dots=True)
 
-    driver.get(url)
+    driver.get(base_url)
 
     had_toast = False
     # TODO need a better way to check this...
+    seen_titles = set()
     for _ in range(50):
         toasts = driver.find_elements(By.CLASS_NAME, 'toastify')
         if len(toasts) == 1:
             had_toast = True
         assert len(toasts) <= 1
         sleep(0.1)
+        seen_titles.add(driver.title)
     assert had_toast
+
+    assert len(seen_titles) > 10, seen_titles  # precondition to make sure page update events would be triggered
 
     addon.sidebar.open()
     addon.sidebar.close()
 
-    xpath = '//a[@href = "/karlicoss/promnesia"]'
+    xpath = '//a[@href = "https://github.com/karlicoss/promnesia"]'
     links_to_mark = driver.find_elements(By.XPATH, xpath)
-    assert len(links_to_mark) > 2  # sanity check
+    assert len(links_to_mark) >= 2  # sanity check
     for l in links_to_mark:
         assert 'promnesia-visited' in notnone(l.get_attribute('class'))
         # TODO would be nice to test clicking on them...
