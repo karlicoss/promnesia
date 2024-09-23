@@ -30,6 +30,7 @@ lint.extend-select = [
     "PTH",  # pathlib migration
     "ARG",  # unused argument checks
     "A",    # builtin shadowing
+    "G",    # logging stuff
     # "EM",  # TODO hmm could be helpful to prevent duplicate err msg in traceback.. but kinda annoying
 
     # "ALL", # uncomment this to check for new rules!

@@ -109,7 +109,7 @@ def fallback(ex):
             except ModuleNotFoundError as me:
                 logger = get_logger()
                 logger.exception(me)
-                logger.warn('%s: %s not found, falling back to grep! "pip3 install --user %s" for better support!', path, me.name, me.name)
+                logger.warning('%s: %s not found, falling back to grep! "pip3 install --user %s" for better support!', path, me.name, me.name)
                 yield me
                 fallback_active[ex] = True
                 do_fallback = True
