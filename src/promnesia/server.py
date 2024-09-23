@@ -185,7 +185,7 @@ def search_common(url: str, where: Where) -> VisitsResponse:
             visits: list[DbVisit] = [row_to_db_visit(row) for row in conn.execute(query)]
         except exc.OperationalError as e:
             if getattr(e, 'msg', None) == 'no such table: visits':
-                logger.warn('you may have to run indexer first!')
+                logger.warning('you may have to run indexer first!')
                 #result['visits'] = [{an error with a msg}] # TODO
                 #return result
             raise
