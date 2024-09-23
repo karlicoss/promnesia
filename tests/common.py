@@ -1,12 +1,17 @@
-from functools import wraps
+from __future__ import annotations
+
 import os
-from pathlib import Path
 import sys
 import time
-from typing import Iterator, Optional, TypeVar
+from contextlib import contextmanager
+from functools import wraps
+from pathlib import Path
+from typing import Iterator, TypeVar
 
 import pytest
 import requests
+
+from promnesia.tests.common import free_port
 
 
 def has_x() -> bool:
@@ -27,13 +32,14 @@ def uses_x(f):
     @wraps(f)
     def ff(*args, **kwargs):
         return f(*args, **kwargs)
+
     return ff
 
 
-from contextlib import contextmanager
 @contextmanager
 def tmp_popen(*args, **kwargs):
     import psutil
+
     with psutil.Popen(*args, **kwargs) as p:
         try:
             yield p
@@ -45,13 +51,16 @@ def tmp_popen(*args, **kwargs):
 
 
 @contextmanager
-def local_http_server(path: Path, *, port: int) -> Iterator[str]:
+def local_http_server(path: Path) -> Iterator[str]:
     address = '127.0.0.1'
-    with tmp_popen([sys.executable, '-m', 'http.server', '--directory', path, '--bind', address, str(port)]) as popen:
+    with (
+        free_port() as port,
+        tmp_popen([sys.executable, '-m', 'http.server', '--directory', path, '--bind', address, str(port)]) as popen,
+    ):
         endpoint = f'http://{address}:{port}'
 
         # meh.. but not sure if there is a better way to find out whether it's ready to serve requests
-        for attempt in range(50):
+        for _attempt in range(50):
             try:
                 requests.get(endpoint)
             except:
@@ -64,6 +73,7 @@ def local_http_server(path: Path, *, port: int) -> Iterator[str]:
 
 T = TypeVar('T')
 
-def notnone(x: Optional[T]) -> T:
+
+def notnone(x: T | None) -> T:
     assert x is not None
     return x
