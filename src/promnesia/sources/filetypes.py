@@ -121,6 +121,7 @@ TYPE2IDX.update({
     'font/woff': ignore,
     'text/x-Algol68': ignore,  # ugh some license file had this?? maybe always index text/ as text?
     'text/x-bytecode.python': ignore,  # todo ignore all x-bytecode?
+    'text/calendar': ignore,
 
     # TODO not sure what to do about these..
     'application/octet-stream': handle_later,

@@ -4,7 +4,6 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogle
 
 from __future__ import annotations
 
-import json
 import warnings
 from typing import Any, Iterable, NamedTuple
 
@@ -142,7 +141,7 @@ def index() -> Results:
                     url=url, dt=e.dt, context=e.content, locator=Loc(title=e.content, href=url)
                 )
         elif imported_yt_csv_models and isinstance(e, CSVYoutubeComment):
-            contentJSON = json.loads(e.contentJSON)
+            contentJSON = e.contentJSON
             content = reconstruct_comment_content(contentJSON, format='text')
             if isinstance(content, Exception):
                 yield content
@@ -160,7 +159,7 @@ def index() -> Results:
                 url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url)
             )
         elif imported_yt_csv_models and isinstance(e, CSVYoutubeLiveChat):
-            contentJSON = json.loads(e.contentJSON)
+            contentJSON = e.contentJSON
             content = reconstruct_comment_content(contentJSON, format='text')
             if isinstance(content, Exception):
                 yield content
