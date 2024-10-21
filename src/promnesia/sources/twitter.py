@@ -2,7 +2,7 @@
 Uses [[https://github.com/karlicoss/HPI][HPI]] for Twitter data.
 '''
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from promnesia.common import Loc, Res, Results, Visit, extract_urls, logger
 

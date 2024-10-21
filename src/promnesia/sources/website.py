@@ -3,9 +3,9 @@ Clones a website with wget and indexes via sources.auto
 '''
 
 import re
+from collections.abc import Iterable
 from pathlib import Path
 from subprocess import run
-from typing import Iterable
 
 from promnesia.common import Extraction, PathIsh, get_logger, get_tmpdir, slugify
 

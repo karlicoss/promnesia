@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List
 
 from promnesia.common import PathIsh, _is_windows, get_logger, get_tmpdir
-from promnesia.compat import removeprefix
 
 # https://linux-and-mac-hacks.blogspot.co.uk/2013/04/use-grep-and-regular-expressions-to.html
 _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'
@@ -13,7 +11,7 @@ _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@
 if _is_windows:
     # wtf? for some reason on windows (in cmd.exe specificaly) \b isn't working...
     # this will make the regex a bit less precise, but not end of the world
-    _URL_REGEX = removeprefix(_URL_REGEX, r'\b')
+    _URL_REGEX = _URL_REGEX.removeprefix(r'\b')
 
 
 @lru_cache
@@ -22,7 +20,7 @@ def _has_grep() -> bool:
     return shutil.which('grep') is not None
 
 
-Command = List[str]
+Command = list[str]
 
 
 _GREP_ARGS: Command = [

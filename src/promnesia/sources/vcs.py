@@ -4,11 +4,11 @@ Clones & indexes Git repositories (via sources.auto)
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 
 # TODO not sure if worth exposing... could be just handled by auto or something?)
 from pathlib import Path
 from subprocess import check_call
-from typing import Iterable
 
 from ..common import Extraction, PathIsh, get_tmpdir, slugify
 

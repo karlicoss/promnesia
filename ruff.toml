@@ -1,4 +1,4 @@
-target-version = "py38"  # NOTE: inferred from pyproject.toml if present
+target-version = "py39"  # NOTE: inferred from pyproject.toml if present
 
 lint.extend-select = [
     "F",    # flakes rules -- default, but extend just in case
@@ -9,7 +9,7 @@ lint.extend-select = [
     "C4",   # flake8-comprehensions -- unnecessary list/map/dict calls
     "COM",  # trailing commas
     "EXE",  # various checks wrt executable files
-    # "I",    # sort imports
+    "I",    # sort imports
     "ICN",  # various import conventions
     "FBT",  # detect use of boolean arguments
     "FURB", # various rules

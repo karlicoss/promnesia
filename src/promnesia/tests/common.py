@@ -5,10 +5,11 @@ import inspect
 import os
 import socket
 import sys
+from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from pathlib import Path
 from textwrap import dedent
-from typing import Iterator, NoReturn, TypeVar
+from typing import NoReturn, TypeVar
 
 import pytest
 

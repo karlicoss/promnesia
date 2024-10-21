@@ -27,10 +27,10 @@ def index() -> Results:
 
 
 import json
+from collections.abc import Iterable
 from datetime import datetime
 from itertools import chain
 from pathlib import Path
-from typing import Iterable
 
 import pytz
 from more_itertools import unique_everseen
@@ -52,7 +52,9 @@ TakeoutPath = Path
 
 
 def _read_myactivity_html(takeout: TakeoutPath, kind: str) -> Iterable[Visit]:
+    # FIXME switch to actual kompress? and use CPath?
     from my.core.kompress import kexists
+
     # TODO glob
     # TODO not sure about windows path separators??
     spath = 'Takeout/My Activity/' + kind

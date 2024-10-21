@@ -196,7 +196,8 @@ def test_hook(tmp_path: Path) -> None:
 
         SOURCES = [Source(demo.index, count=7, name='somename')]
 
-        from typing import Iterator, cast
+        from collections.abc import Iterator
+        from typing import cast
 
         from promnesia.common import DbVisit, Loc, Res
         from promnesia.sources import demo

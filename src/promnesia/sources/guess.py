@@ -1,6 +1,7 @@
 # TODO eh. confusing how guess and auto are different...
 # maybe merge them later?
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from ..common import Extraction, PathIsh
 

@@ -5,10 +5,10 @@ Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogle
 from __future__ import annotations
 
 import warnings
-from typing import Any, Iterable, NamedTuple
+from collections.abc import Iterable
+from typing import Any, NamedTuple
 
 from promnesia.common import Loc, Results, Visit, logger
-from promnesia.compat import removeprefix
 
 
 # incase user is using an old version of google_takeout_parser
@@ -77,13 +77,13 @@ def index() -> Results:
                 # when you follow something from search the actual url goes after this
                 # e.g. https://www.google.com/url?q=https://en.wikipedia.org/wiki/Clapham
                 # note: also title usually starts with 'Visited ', in such case but perhaps fine to keep it
-                url = removeprefix(url, "https://www.google.com/url?q=")
+                url = url.removeprefix("https://www.google.com/url?q=")
                 title = e.title
 
                 if e.header == 'Chrome':
                     # title contains 'Visited <page title>' in this case
                     context = None
-                    title = removeprefix(title, 'Visited ')
+                    title = title.removeprefix('Visited ')
                 elif e.header in _CLEAR_CONTEXT_FOR_HEADERS:
                     # todo perhaps could add to some sort of metadata?
                     # only useful for debugging really

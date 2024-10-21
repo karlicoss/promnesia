@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Iterator, NamedTuple, Optional, cast
+from typing import NamedTuple, Optional, cast
 
 import orgparse
 from orgparse.date import OrgDate, gene_timestamp_regex

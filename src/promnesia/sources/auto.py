@@ -11,12 +11,13 @@ import csv
 import itertools
 import json
 import os
+from collections.abc import Iterable, Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor as Pool
 from contextlib import nullcontext
 from fnmatch import fnmatch
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, NamedTuple, Optional, Sequence
+from typing import Any, Callable, NamedTuple, Optional
 
 from promnesia.common import (
     Loc,

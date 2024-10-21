@@ -4,8 +4,9 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import Iterator, Sequence, TypeVar
+from typing import TypeVar
 
 from .common import DbVisit, PathWithMtime, Url
 from .database.load import row_to_db_visit

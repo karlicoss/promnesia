@@ -7,9 +7,9 @@ from __future__ import annotations
 import logging
 import sqlite3
 import textwrap
+from collections.abc import Iterable
 from os import PathLike
 from pathlib import Path
-from typing import Iterable
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch, join_tags
 from ..sqlite import sqlite_connection

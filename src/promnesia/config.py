@@ -4,9 +4,10 @@ import importlib
 import importlib.util
 import os
 import warnings
+from collections.abc import Iterable
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Iterable, NamedTuple, Union
+from typing import Callable, NamedTuple, Union
 
 from .common import DbVisit, PathIsh, Res, Source, default_cache_dir, default_output_dir
 

@@ -1,6 +1,7 @@
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Mapping, Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 from ..common import Loc, Source, Visit
 from ..database.dump import visits_to_sqlite
@@ -9,7 +10,7 @@ from ..extract import extract_visits
 # TODO a bit shit... why did I make it dict at first??
 Urls = Union[
            Mapping[str, Optional[str]],
-    Sequence[Tuple[str, Optional[str]]],
+    Sequence[tuple[str, Optional[str]]],
 ]
 
 

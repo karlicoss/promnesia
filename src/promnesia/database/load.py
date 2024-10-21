@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Tuple
 
 from sqlalchemy import (
     Engine,
@@ -14,7 +13,7 @@ from sqlalchemy import (
 
 from .common import DbVisit, get_columns, row_to_db_visit
 
-DbStuff = Tuple[Engine, Table]
+DbStuff = tuple[Engine, Table]
 
 
 def get_db_stuff(db_path: Path) -> DbStuff:
