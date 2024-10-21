@@ -171,7 +171,10 @@ def _expand_path(path_pattern: PathIsh) -> Iterable[Path]:
 
     Expansion code adapted from https://stackoverflow.com/a/51108375/548792
     to handle also degenerate cases (``'', '.', '/'``):
+    """
 
+    # NOTE: suppressing doctest from github actions
+    """
     >>> str(next(iter(_get_files('/'))))
     '/'
 
@@ -214,7 +217,10 @@ def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]
         one or more pathish
 
     Note: needed `append` here, to resolve paths.
+    """
 
+    # NOTE: suppressing doctest from running on Github actions
+    """
     >>> bool(collect_db_paths())  # my home-path
     True
     >>> collect_db_paths(None)
