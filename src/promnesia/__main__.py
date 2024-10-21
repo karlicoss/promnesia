@@ -8,10 +8,11 @@ import os
 import shlex
 import shutil
 import sys
+from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from subprocess import Popen, check_call, run
 from tempfile import TemporaryDirectory, gettempdir
-from typing import Callable, Iterable, Iterator, Sequence
+from typing import Callable
 
 from . import config, server
 from .common import (

@@ -122,7 +122,8 @@ Col = str
 ColType = str
 
 
-from typing import NamedTuple, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import NamedTuple, Union
 
 
 class Schema(NamedTuple):
@@ -130,7 +131,7 @@ class Schema(NamedTuple):
     key: Sequence[str]
 
 
-SchemaCheck = Tuple[str, Union[str, Sequence[str]]] # todo Union: meh
+SchemaCheck = tuple[str, Union[str, Sequence[str]]] # todo Union: meh
 
 from dataclasses import dataclass
 

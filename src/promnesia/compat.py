@@ -7,9 +7,6 @@ if not TYPE_CHECKING:
     from typing import Literal, Protocol  # noqa: F401
     ##
 
-
-# can deprecate after python3.9
-def removeprefix(text: str, prefix: str) -> str:
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text
+    # todo deprecate properly
+    def removeprefix(text: str, prefix: str) -> str:
+        return text.removeprefix(prefix)

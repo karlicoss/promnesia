@@ -5,17 +5,17 @@ I'll make it more readable, but in the meantime feel free to open an issue if yo
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Union, cast
 
-JDict = Dict[str, Any] # TODO not sure if we can do recursive..
-JList = List[Any]
+JDict = dict[str, Any] # TODO not sure if we can do recursive..
+JList = list[Any]
 JPrim = Union[str, int, float] # , type(None)]
 
 Json = Union[JDict, JList, JPrim]
 
-JPathPart = Tuple[Json, Union[str, int]]
+JPathPart = tuple[Json, Union[str, int]]
 
-JPath = Tuple[JPathPart, ...]
+JPath = tuple[JPathPart, ...]
 
 
 class JsonProcessor:

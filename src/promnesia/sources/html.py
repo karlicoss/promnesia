@@ -4,8 +4,8 @@ Extracts links from HTML files
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -15,7 +15,7 @@ from promnesia.common import Loc, PathIsh, Results, Visit, file_mtime
 # TODO on some exceptions, request a fallback to text?
 
 
-Url = Tuple[str, str]
+Url = tuple[str, str]
 
 
 def extract_urls_from_html(s: str) -> Iterator[Url]:

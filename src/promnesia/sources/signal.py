@@ -13,10 +13,11 @@ import logging
 import platform
 import sqlite3
 import subprocess as sbp
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent, indent
-from typing import Any, Iterable, Iterator, Mapping, Union
+from typing import Any, Union
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
 

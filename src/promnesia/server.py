@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Protocol
+from typing import Any, NamedTuple, Optional, Protocol
 
 import fastapi
 import pytz
@@ -39,7 +39,7 @@ from .common import (
 )
 from .database.load import DbStuff, get_db_stuff, row_to_db_visit
 
-Json = Dict[str, Any]
+Json = dict[str, Any]
 
 app = fastapi.FastAPI()
 
@@ -348,10 +348,10 @@ def as_version(version: str) -> tuple[int, int, int]:
 
 @dataclass
 class VisitedRequest:
-    urls: List[str]  # noqa: UP006  # pydantic doesn't like list[str] on 3.8 -- remove later
+    urls: list[str]
     client_version: str = ''
 
-VisitedResponse = List[Optional[Json]]
+VisitedResponse = list[Optional[Json]]
 
 @app.get ('/visited', response_model=VisitedResponse)
 @app.post('/visited', response_model=VisitedResponse)

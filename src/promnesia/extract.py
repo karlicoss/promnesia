@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Sequence
 from functools import lru_cache
-from typing import Iterable, Sequence
 
 from .cannon import CanonifyException
 from .common import (

@@ -24,20 +24,23 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         exclude: [
             # windows runners are pretty scarce, so let's only run lowest and highest python version
             {platform: windows-latest, python-version: '3.10'},
             {platform: windows-latest, python-version: '3.11'},
+            {platform: windows-latest, python-version: '3.12'},
 
             # same, macos is a bit too slow and ubuntu covers python quirks well
             {platform: macos-latest  , python-version: '3.10'},
             {platform: macos-latest  , python-version: '3.11'},
+            {platform: macos-latest  , python-version: '3.12'},
         ]
 
     runs-on: ${{ matrix.platform }}
 
-    #continue-on-error: ${{ matrix.platform == 'windows-latest' }}
+    # useful for 'optional' pipelines
+    # continue-on-error: ${{ matrix.platform == 'windows-latest' }}
 
     steps:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
@@ -61,11 +64,13 @@ jobs:
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
       uses: actions/upload-artifact@v4
       with:
+        include-hidden-files: true
         name: .coverage.mypy-core_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-core/
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
       uses: actions/upload-artifact@v4
       with:
+        include-hidden-files: true
         name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-misc/
 

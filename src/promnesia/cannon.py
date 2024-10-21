@@ -14,10 +14,11 @@ from __future__ import annotations
 import re
 import typing
 import urllib.parse
+from collections.abc import Collection, Iterable, Sequence
 
 # TODO eh?? they fixed mobile.twitter.com?
 from itertools import chain
-from typing import Any, Collection, Iterable, NamedTuple, Sequence, Tuple, Union
+from typing import Any, NamedTuple, Union
 from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
 
 # this has some benchmark, but quite a few librarires seem unmaintained, sadly
@@ -217,7 +218,7 @@ Spec2 = Any # TODO
 
 # TODO this should be a map
 Frag = Any
-Parts = Sequence[Tuple[str, str]]
+Parts = Sequence[tuple[str, str]]
 
 
 def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> tuple[Any, Any, Parts, Frag]:
@@ -284,7 +285,7 @@ def transform_split(split: SplitResult):
     REST = r'(?P<rest>.*)'
 
     Left = Union[str, Sequence[str]]
-    Right = Tuple[str, str, str]
+    Right = tuple[str, str, str]
     # the idea is that we can unify certain URLs here and map them to the 'canonical' one
     # this is a dict only for grouping but should be a list really.. todo
     rules: dict[Left, Right] = {

@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import TYPE_CHECKING, Any, Iterator
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any
 
 from promnesia.common import Loc, PathIsh, Results, Second, Visit, is_sqlite_db, logger
 

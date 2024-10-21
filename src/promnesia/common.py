@@ -7,6 +7,7 @@ import re
 import shutil
 import tempfile
 import warnings
+from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from copy import copy
 from datetime import date, datetime
@@ -16,13 +17,12 @@ from pathlib import Path
 from subprocess import PIPE, Popen, run
 from timeit import default_timer as timer
 from types import ModuleType
-from typing import Callable, Iterable, NamedTuple, Optional, Sequence, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, NamedTuple, Optional, TypeVar, Union
 
 import pytz
 from more_itertools import intersperse
 
 from .cannon import canonify
-from .compat import removeprefix
 
 _is_windows = os.name == 'nt'
 
@@ -302,7 +302,7 @@ def _guess_name(thing: PreSource) -> str:
         guess = thing.__module__
 
     dflt = 'promnesia.sources.'
-    guess = removeprefix(guess, prefix=dflt)
+    guess = guess.removeprefix(dflt)
     if guess == 'config':
         # this happens when we define a lambda in config or something without properly wrapping in Source
         logger.warning(f'Inferred source name "config" for {thing}. This might be misleading TODO')
@@ -607,3 +607,8 @@ def is_sqlite_db(x: Path) -> bool:
         'application/vnd.sqlite3',
         # TODO this mime can also match wal files/journals, not sure
     }
+
+
+if not TYPE_CHECKING:
+    # todo deprecate properly --just backwards compat
+    from .compat import removeprefix  # noqa: F401

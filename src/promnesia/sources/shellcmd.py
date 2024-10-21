@@ -7,9 +7,9 @@ from __future__ import annotations
 import os
 import re
 import warnings
+from collections.abc import Sequence
 from datetime import datetime
 from subprocess import PIPE, run
-from typing import Sequence
 
 from promnesia.common import (
     Loc,

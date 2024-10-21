@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Iterable, NamedTuple, Sequence, Union
+from typing import Callable, NamedTuple, Union
 
 from ..common import Results, Url
 

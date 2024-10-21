@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, Optional
+from typing import Optional
 
 from more_itertools import chunked
 from sqlalchemy import (
@@ -50,7 +51,7 @@ def begin_immediate_transaction(conn):
     conn.exec_driver_sql('BEGIN IMMEDIATE')
 
 
-Stats = Dict[Optional[SourceName], int]
+Stats = dict[Optional[SourceName], int]
 
 
 # returns critical warnings
