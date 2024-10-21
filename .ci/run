@@ -11,6 +11,8 @@ if ! command -v sudo; then
     }
 fi
 
+# --parallel-live to show outputs while it's running
+tox_cmd='run-parallel --parallel-live'
 if [ -n "${CI-}" ]; then
     # install OS specific stuff here
     # TODO: pyjq is not necessary anymore? will keep CI deps just in case I guess
@@ -25,7 +27,8 @@ if [ -n "${CI-}" ]; then
         ;;
     cygwin* | msys* | win*)
         # windows
-        :
+        # ugh. parallel stuff seems super flaky under windows, some random failures, "file used by other process" and crap like that
+        tox_cmd='run'
         ;;
     *)
         # must be linux?
@@ -44,5 +47,9 @@ if ! command -v python3 &> /dev/null; then
     PY_BIN="python"
 fi
 
-"$PY_BIN" -m pip install --user tox
-"$PY_BIN" -m tox --parallel --parallel-live "$@"
+
+# TODO hmm for some reason installing uv with pip and then running
+# "$PY_BIN" -m uv tool fails with missing setuptools error??
+# just uvx directly works, but it's not present in PATH...
+"$PY_BIN" -m pip install --user pipx
+"$PY_BIN" -m pipx run uv tool run --with=tox-uv tox $tox_cmd "$@"

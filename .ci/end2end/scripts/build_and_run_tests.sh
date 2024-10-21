@@ -12,4 +12,8 @@ cp -R -T /promnesia_source /promnesia
 extension/.ci/build
 
 git init  # todo ??? otherwise setuptools-scm fails to detect the version...
-python3 -m tox -e end2end -- "$@"
+
+# eh. kinda annoying to jump over so many venv layer here...
+# but docker runs as root and it doesn't like pip install uv now
+# even if you pass --break-system-packages, then subsequent uv invocation also fails
+pipx run uv tool run --with=tox-uv tox -e end2end -- "$@"
