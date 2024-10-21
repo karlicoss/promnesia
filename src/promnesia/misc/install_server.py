@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 import platform
-import shutil
 import sys
 import time
 from pathlib import Path
@@ -114,14 +113,16 @@ def install(args: argparse.Namespace) -> None:
     print(f"Writing launch script to {out}", file=sys.stderr)
 
     # ugh. we want to know whether we're invoked 'properly' as an executable or ad-hoc via scripts/promnesia
+    extra_exe: list[str] = []
     if os.environ.get('DIRTY_RUN') is not None:
         launcher = str(root() / 'scripts/promnesia')
     else:
-        exe = shutil.which('promnesia'); assert exe is not None
-        launcher = exe # older systemd wants absolute paths..
+        launcher = sys.executable
+        extra_exe = ['-m', 'promnesia']
 
     db = args.db
     largs = [
+        *extra_exe,
         'serve',
         *([] if db is None else ['--db', str(db)]),
         '--timezone', args.timezone,
