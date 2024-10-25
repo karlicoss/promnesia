@@ -22,7 +22,7 @@ def index(p: PathIsh | None = None) -> Results:
 
     warnings.warn(
         f'Passing paths to promnesia.sources.browser is deprecated, you should setup my.browser.export instead. '
-        f'See https://github.com/seanbreckenridge/browserexport#hpi .'
+        f'See https://github.com/purarue/browserexport#hpi .'
         f'Will try to hack path to browser databases {p} into HPI config.'
     )
     try:

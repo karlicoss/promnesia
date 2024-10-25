@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-DEPRECATION = 'NOTE: this is DEPRECATED! Please use https://github.com/seanbreckenridge/browserexport instead'
+DEPRECATION = 'NOTE: this is DEPRECATED! Please use https://github.com/purarue/browserexport instead'
 
 from datetime import datetime, timezone
 from pathlib import Path

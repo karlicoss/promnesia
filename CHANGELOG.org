@@ -1,6 +1,6 @@
 * =v1.0.20210415=
 
-Thanks @ankostis, @seanbreckenridge, @gms8994, @Cobertos and others for changes!
+Thanks @ankostis, @purarue, @gms8994, @Cobertos and others for changes!
 
 ** general
 - *deprecate*: if you have =import promnesia= in the config you should switch it to =import promnesia.common=

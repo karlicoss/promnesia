@@ -187,13 +187,13 @@ for f in sorted((src / 'promnesia/sources').rglob('*.py')):
 ** browser
 
 The browser source here uses [[https://github.com/karlicoss/HPI][HPI]], which uses
-[[https://github.com/seanbreckenridge/browserexport][browserexport]] to
+[[https://github.com/purarue/browserexport][browserexport]] to
 save/parse browser history. Since browsers remove old history after your
 history database has grown to a certain size, this saves the raw database files to
 a directory you specify. =browserexport= supports many browsers, including any
 Chromium/Firefox based browsers (e.g. Brave, Vivaldi, Waterfox). For more
 instructions on backing up databases, see
-[[https://github.com/seanbreckenridge/browserexport#usage][here]], but as
+[[https://github.com/purarue/browserexport#usage][here]], but as
 a quickstart, after setting up =HPI=, run:
 #+BEGIN_SRC sh
 hpi module install my.browser.export
