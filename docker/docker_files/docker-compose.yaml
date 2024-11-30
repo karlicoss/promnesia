@@ -1,5 +1,7 @@
 version: '3.3'
 
+name: promnesia
+
 services:
   server:
     image: promnesia

@@ -1,6 +1,7 @@
 FROM promnesia:latest
 
-RUN apt-get update && apt-get install -y cron
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y cron && rm -rf /var/lib/apt/lists/*
 
 COPY docker/docker_files/indexer-entrypoint.sh /
 ENTRYPOINT ["/indexer-entrypoint.sh"]
