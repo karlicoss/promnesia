@@ -144,4 +144,6 @@ lint.ignore = [
 
     "ARG001",  # ugh, kinda annoying when using pytest fixtures
     "RUF001", "RUF002", "RUF003",  # spams about non-latin characters that we do use for testing
+
+    "A005",  #  we're using promnesia.logging module
 ]
