@@ -122,8 +122,6 @@ class Spec(NamedTuple):
         qremove = default_qremove.union(self.qremove or {})
         # I suppose 'remove' is only useful for logging. we remove by default anyway
 
-        keep = False
-        remove = False
         qk = qkeep.get(q)
         if qk is not None:
             return qk
@@ -273,6 +271,9 @@ def _prenormalise(url: str) -> str:
     return url
 
 
+Left = Union[str, Sequence[str]]
+Right = tuple[str, str, str]
+
 def transform_split(split: SplitResult):
     netloc = canonify_domain(split.netloc)
 
@@ -282,10 +283,8 @@ def transform_split(split: SplitResult):
     fragment = split.fragment
 
     ID   = r'(?P<id>[^/]+)'
-    REST = r'(?P<rest>.*)'
+    # REST = r'(?P<rest>.*)'
 
-    Left = Union[str, Sequence[str]]
-    Right = tuple[str, str, str]
     # the idea is that we can unify certain URLs here and map them to the 'canonical' one
     # this is a dict only for grouping but should be a list really.. todo
     rules: dict[Left, Right] = {

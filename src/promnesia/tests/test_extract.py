@@ -35,10 +35,12 @@ def test_urls_are_normalised() -> None:
     from ..sources import shellcmd
     from ..sources.plaintext import extract_from_path
 
-    visits = list(extract_visits(
-        source=Source(shellcmd.index, extract_from_path(get_testdata('normalise'))),
-        src='whatever',
-    ))
+    visits = list(
+        extract_visits(
+            source=Source(shellcmd.index, extract_from_path(get_testdata('normalise'))),
+            src='whatever',
+        )
+    )
     assert len(visits) == 7
 
     assert {unwrap(v).norm_url for v in visits} == {
@@ -59,6 +61,7 @@ def test_benchmark(count: int, gc_control) -> None:
         pytest.skip("test would be too slow on CI, only meant to run manually")
 
     from ..sources import demo
+
     source = Source(demo.index, count=count)
 
     total = ilen(extract_visits(source=source, src='whatever'))

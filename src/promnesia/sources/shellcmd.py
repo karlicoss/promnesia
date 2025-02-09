@@ -19,7 +19,6 @@ from promnesia.common import (
     _is_windows,
     extract_urls,
     file_mtime,
-    get_system_tz,
     now_tz,
 )
 
@@ -36,8 +35,6 @@ def index(command: str | Sequence[PathIsh]) -> Results:
     else:
         cmds = ' '.join(map(str, command))
         cmd = command
-
-    tz = get_system_tz()
 
     # ugh... on windows grep does something nasty? e.g:
     # grep --color=never -r -H -n -I -E http 'D:\\a\\promnesia\\promnesia\\tests\\testdata\\custom'

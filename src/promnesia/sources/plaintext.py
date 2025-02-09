@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from promnesia.common import PathIsh, _is_windows, get_logger, get_tmpdir
+from promnesia.common import PathIsh, _is_windows
 
 # https://linux-and-mac-hacks.blogspot.co.uk/2013/04/use-grep-and-regular-expressions-to.html
 _URL_REGEX = r'\b(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'
@@ -85,9 +85,6 @@ def _extract_from_file(path: str) -> Command:
 def extract_from_path(path: PathIsh) -> Command:
     pp = Path(path)
 
-    tdir = get_tmpdir()
-
-    logger = get_logger()
     if pp.is_dir(): # TODO handle archives here???
         return _extract_from_dir(str(pp))
 

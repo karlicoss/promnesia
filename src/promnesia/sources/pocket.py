@@ -16,7 +16,8 @@ def index() -> Results:
         loc = Loc.make(title=title, href=a.pocket_link)
         # Add a reverse locator so that the Promnesia browser extension shows a
         # link on the Pocket page back to the original URL.
-        loc_rev = Loc.make(title=title, href=a.url)
+        # FIXME need to actually use it
+        _loc_rev = Loc.make(title=title, href=a.url)
         hls = a.highlights
         excerpt = a.json.get('excerpt', None)
         if len(hls) == 0:

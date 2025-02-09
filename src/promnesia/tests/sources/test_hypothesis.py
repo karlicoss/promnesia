@@ -12,7 +12,7 @@ def index_hypothesis(tmp_path: Path) -> None:
         from promnesia.common import Source
         from promnesia.sources import hypothesis
 
-        SOURCES = [Source(hypothesis.index, name='hyp')]
+        SOURCES = [Source(hypothesis.index, name='hyp')]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)

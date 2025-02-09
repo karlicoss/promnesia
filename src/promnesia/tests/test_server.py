@@ -33,7 +33,7 @@ def test_status_ok(tmp_path: Path) -> None:
         from promnesia.common import Source
         from promnesia.sources import demo
 
-        SOURCES = [Source(demo.index, count=10)]
+        SOURCES = [Source(demo.index, count=10)]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)
@@ -56,7 +56,7 @@ def test_visits(tmp_path: Path) -> None:
         from promnesia.common import Source
         from promnesia.sources import demo
 
-        SOURCES = [Source(demo.index, base_dt='2000-01-01', delta=30 * 60)]
+        SOURCES = [Source(demo.index, base_dt='2000-01-01', delta=30 * 60)]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)
@@ -116,7 +116,7 @@ def test_visits_hierarchy(tmp_path: Path) -> None:
                 context='I am comment 1',
             )
 
-        SOURCES = [Source(indexer)]
+        SOURCES = [Source(indexer)]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)
@@ -138,7 +138,7 @@ def test_visited(tmp_path: Path) -> None:
         from promnesia.common import Source
         from promnesia.sources import demo
 
-        SOURCES = [Source(demo.index, base_dt='2000-01-01', delta=30 * 60)]
+        SOURCES = [Source(demo.index, base_dt='2000-01-01', delta=30 * 60)]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)
@@ -184,7 +184,7 @@ def test_search(tmp_path: Path) -> None:
             )
             yield from visits[3:]
 
-        SOURCES = [Source(indexer)]
+        SOURCES = [Source(indexer)]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)
@@ -214,7 +214,7 @@ def test_search_around(tmp_path: Path) -> None:
         from promnesia.sources import demo
 
         # generates 60 visits within 10 mins of each other -- so spanning over 10 hours
-        SOURCES = [Source(demo.index, count=60, base_dt='2000-01-01T00:00:00+03:00', delta=10 * 60)]
+        SOURCES = [Source(demo.index, count=60, base_dt='2000-01-01T00:00:00+03:00', delta=10 * 60)]  # noqa: F841
 
     cfg_path = tmp_path / 'config.py'
     write_config(cfg_path, cfg)
@@ -248,7 +248,7 @@ def test_query_while_indexing(tmp_path: Path, mode: str) -> None:
             from promnesia.common import Source
             from promnesia.sources import demo
 
-            SOURCES = [Source(demo.index, count=1_000, name=run_id)]
+            SOURCES = [Source(demo.index, count=1_000, name=run_id)]  # noqa: F841
 
         cfg_path = tmp_path / f'config{run_id}.py'
         write_config(cfg_path, cfg, run_id=run_id)

@@ -59,6 +59,7 @@ def get_testdata(path: str) -> Path:
 @contextmanager
 def tmp_popen(*args, **kwargs):
     import psutil
+
     with psutil.Popen(*args, **kwargs) as p:
         try:
             yield p
@@ -98,6 +99,7 @@ def reset_filters():
 
 # TODO could be a TypeGuard from 3.10
 V = TypeVar('V')
+
 
 def unwrap(r: Res[V]) -> V:
     assert not isinstance(r, Exception), r
