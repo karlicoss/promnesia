@@ -158,6 +158,7 @@ def test_random_visit(visit: DbVisit) -> None:
 _dt_naive = datetime.fromisoformat('2023-11-14T23:11:01')
 _dt_aware = pytz.timezone('America/New_York').localize(_dt_naive)
 
+
 def make_testvisit(i: int) -> DbVisit:
     return DbVisit(
         norm_url=f'google.com/{i}',

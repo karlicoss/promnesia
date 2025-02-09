@@ -39,8 +39,6 @@ class Config(NamedTuple):
 
     @property
     def sources(self) -> Iterable[Res[Source]]:
-        idx = self.INDEXERS
-
         if len(self.INDEXERS) > 0:
             warnings.warn("'INDEXERS' is deprecated. Please use 'SOURCES'!", DeprecationWarning)
 

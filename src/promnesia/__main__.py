@@ -69,8 +69,7 @@ def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[Db
             yield RuntimeError(f"Shouldn't have gotten this as a source: {source}")
             continue
 
-        # todo hmm it's not even used??
-        einfo = source.description
+        _einfo = source.description  # FIXME hmm it's not even used?? add as exception notes?
         for v in extract_visits(source, src=source.name):
             if hook is None:
                 yield v
@@ -409,7 +408,7 @@ def main() -> None:
     # the only downside is storage. dunno.
     # worst case -- could use database?
 
-    with get_tmpdir() as tdir: # TODO??
+    with get_tmpdir() as _tdir:  # TODO what's the tmp dir for??
         if mode == 'index':
             errors = do_index(
                 config_file=args.config,

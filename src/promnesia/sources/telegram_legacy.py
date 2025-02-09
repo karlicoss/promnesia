@@ -18,7 +18,6 @@ from promnesia.common import (
     echain,
     extract_urls,
     from_epoch,
-    get_logger,
 )
 
 from ..sqlite import sqlite_connection
@@ -39,8 +38,6 @@ def index(database: PathIsh, *, http_only: bool=False) -> Results:
     :param http_only:
         when true, do not collect IP-addresses and `python.py` strings
     """
-    logger = get_logger()
-
     path = Path(database)
     assert path.is_file(), path
 

@@ -363,7 +363,7 @@ def visited(request: VisitedRequest) -> VisitedResponse:
     logger = get_logger()
     logger.info('/visited %s %s', urls, client_version)
 
-    version = as_version(client_version)
+    _version = as_version(client_version)  # todo use it?
 
     nurls = [canonify(u) for u in urls]
     snurls = sorted(set(nurls))

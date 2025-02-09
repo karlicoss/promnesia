@@ -67,7 +67,7 @@ class Loc(NamedTuple):
             try:
                 # making it relative is a bit nicer for display
                 rel = rel.relative_to(relative_to)
-            except Exception as e:
+            except Exception:
                 pass # todo log/warn?
         loc = f'{rel}{lstr}'
         return cls.make(
