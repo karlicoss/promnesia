@@ -7,21 +7,12 @@ if ! which sudo; then
     apt -y install sudo
 fi
 
-# compensate for differences between ubuntu:focal and github action image...
-
-sudo apt -y install python3.10 python3.10-dev
-sudo python3.10 -m pip install -U setuptools pip # ugh. otherwise find_namespace_packages is missing
-
-# just in case? not sure if need anymore
-sudo ln -sfT "$(which python3.10)" /usr/bin/python3
+# make up for differences between ubuntu:focal and github action image...
+sudo apt -y install python3.12 python3.12-dev
+sudo apt -y install python3-pip python3-setuptools
 
 # otherwise setuptools don't work..
 sudo apt -y install git
 
 # jq wants it??
 sudo apt -y install dh-autoreconf
-
-sudo apt -y install python3-pip
-
-# this is only necessary on gitlab CI apparently???
-sudo apt -y install python3-setuptools
