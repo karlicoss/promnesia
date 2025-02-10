@@ -1,0 +1,129 @@
+# see https://github.com/karlicoss/pymplate for up-to-date reference
+[project]
+dynamic = ["version"]  # version is managed by setuptools_scm
+name = "promnesia"
+dependencies = [
+    "appdirs",            # for portable user directories detection
+    "tzlocal",            # guessling local timezone
+    "more_itertools",
+    "typing-extensions",
+    "pytz",
+    "sqlalchemy>=2.0",    # DB api
+
+    ##
+    # NOTE: ideally we don't need to install them by default?
+    # i.e. server and indexer can run on different hosts/containers etc
+    # keeping here for backwards compatibility for now
+    "promnesia[indexer]",
+    "promnesia[server]",
+    ##
+]
+requires-python = ">=3.9"
+
+## these need to be set if you're planning to upload to pypi
+description = "Enhancement of your browsing history"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"},
+]
+maintainers = [
+    {name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"},
+]
+[project.urls]
+Homepage = "https://github.com/karlicoss/promnesia"
+##
+
+
+[project.optional-dependencies]
+indexer = [
+    # indexer only dependencies
+    "urlextract",
+]
+server = [
+    # server only dependencies
+    "fastapi",
+    "uvicorn[standard]",
+]
+optional = [
+    # dependencies that bring some bells & whistles
+    "logzero"     ,  # pretty colored logging
+    "python-magic",  # better mimetype decetion
+]
+HPI = [
+    # dependencies for https://github.com/karlicoss/HPI
+    "HPI",  # pypi version
+    # TODO add notes how to override with github version?
+]
+html = [
+    # dependencies for sources.html
+    "beautifulsoup4",  # extracting links from the page
+    "lxml"          ,  # bs4 backend
+]
+markdown = [
+    # dependencies for sources.html
+    "mistletoe",
+]
+org = [
+    # dependencies for sources.org
+    "orgparse>=0.3.0",
+]
+telegram = [
+    # used to depend on 'dataset', keeping for backwards compatibility
+]
+all = [
+    "promnesia[optional,HPI,html,markdown,org]",
+]
+
+[dependency-groups]
+testing = [
+    "pytest",
+    "ruff",
+    "mypy",
+    "lxml",  # for mypy coverage
+    
+    "hypothesis",
+
+    "loguru",  # used in addon_helper... not sure if should just use promnesia's logger?
+
+    "psutil", "types-psutil",
+    "requests", "types-requests",
+
+    ## other mypy stubs
+    "types-pytz"      ,
+    "types-requests"  ,  # used in tests
+    "types-beautifulsoup4",  # NOTE: not needed after the <4.13.0 pinning is resolved
+    ##
+
+    # todo hmm ideally would be in corresponding testing-... sections
+    # but we don't split separate mypy for end2end tests... so idk
+    "selenium"      ,  # browser automations
+    "types-PyAutoGUI"
+]
+testing-end2end = [
+    "click"         ,  # confirmations for end2end test (might remove dependency)
+    "pytest-timeout",  # for PYTEST_TIMEOUT env variable
+    "pytest-xdist"  ,  # not used atm, but helpful to parallelise end2end tests
+]
+testing-gui = [
+    # pyautogui seems problematic, wheels often fail to build under windows
+    # we don't use it in CI, so keep in a separate extras section
+    "pyautogui",  # for keyboard automation during end2end tests
+]
+
+
+[project.scripts]
+promnesia = "promnesia.__main__:main"
+
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "python-simplified-semver"
+local_scheme = "dirty-tag"
+
+# workaround for error during uv publishing
+# see https://github.com/astral-sh/uv/issues/9513#issuecomment-2519527822
+[tool.setuptools]
+license-files = []

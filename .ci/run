@@ -40,16 +40,5 @@ if [ -n "${CI-}" ]; then
     esac
 fi
 
-
-PY_BIN="python3"
-# some systems might have python pointing to python3
-if ! command -v python3 &> /dev/null; then
-    PY_BIN="python"
-fi
-
-
-# TODO hmm for some reason installing uv with pip and then running
-# "$PY_BIN" -m uv tool fails with missing setuptools error??
-# just uvx directly works, but it's not present in PATH...
-"$PY_BIN" -m pip install --user pipx
-"$PY_BIN" -m pipx run uv tool run --with=tox-uv tox $tox_cmd "$@"
+# NOTE: expects uv installed
+uv tool run --with tox-uv tox $tox_cmd "$@"
