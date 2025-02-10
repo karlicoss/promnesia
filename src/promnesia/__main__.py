@@ -54,7 +54,7 @@ def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[Db
         if name and is_subset_sources:
             matched = name in sources_subset or i in sources_subset
             if matched:
-                sources_subset -= {i, name}  # type: ignore
+                sources_subset -= {i, name}  # type: ignore[operator]
             else:
                 logger.debug("skipping '%s' not in --sources.", name)
                 continue
@@ -79,7 +79,7 @@ def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[Db
                 except Exception as e:
                     yield e
 
-    if sources_subset:
+    if sources_subset:  # type: ignore[truthy-iterable]
         logger.warning("unknown --sources: %s", ", ".join(repr(i) for i in sources_subset))
 
 
@@ -305,10 +305,9 @@ def cli_doctor_server(args: argparse.Namespace) -> None:
 
 def _ordinal_or_name(s: str) -> str | int:
     try:
-        s = int(s)  # type: ignore
+        return int(s)
     except ValueError:
-        pass
-    return s
+        return s
 
 
 def main() -> None:

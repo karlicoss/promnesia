@@ -757,7 +757,7 @@ def display(it, args) -> None: # pragma: no cover
     import difflib
     from sys import stdout
 
-    from termcolor import colored as C  # type: ignore
+    from termcolor import colored as C  # type: ignore[import-not-found]
 
     for line in it:
         line = line.strip()
