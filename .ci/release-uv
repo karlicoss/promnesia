@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+'''
+Deploys Python package onto [[https://pypi.org][PyPi]] or [[https://test.pypi.org][test PyPi]].
+
+- running manually
+
+  You'll need =UV_PUBLISH_TOKEN= env variable
+
+- running on Github Actions
+
+  Instead of env variable, relies on configuring github as Trusted publisher (https://docs.pypi.org/trusted-publishers/) -- both for test and regular pypi
+
+  It's running as =pypi= job in [[file:.github/workflows/main.yml][Github Actions config]].
+  Packages are deployed on:
+  - every master commit, onto test pypi
+  - every new tag, onto production pypi
+'''
+
+UV_PUBLISH_TOKEN = 'UV_PUBLISH_TOKEN'
+
+import argparse
+import os
+import shutil
+from pathlib import Path
+from subprocess import check_call
+
+is_ci = os.environ.get('CI') is not None
+
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument('--use-test-pypi', action='store_true')
+    args = p.parse_args()
+
+    publish_url = ['--publish-url', 'https://test.pypi.org/legacy/'] if args.use_test_pypi else []
+
+    root = Path(__file__).absolute().parent.parent
+    os.chdir(root) # just in case
+
+    if is_ci:
+        # see https://github.com/actions/checkout/issues/217
+        check_call('git fetch --prune --unshallow'.split())
+
+    # TODO ok, for now uv won't remove dist dir if it already exists
+    #  https://github.com/astral-sh/uv/issues/10293
+    dist = root / 'dist'
+    if dist.exists():
+        shutil.rmtree(dist)
+
+    # todo what is --force-pep517?
+    check_call(['uv', 'build'])
+
+    if not is_ci:
+        # CI relies on trusted publishers so doesn't need env variable
+        assert UV_PUBLISH_TOKEN in os.environ, f'no {UV_PUBLISH_TOKEN} passed'
+
+    check_call(['uv', 'publish', *publish_url])
+
+
+if __name__ == '__main__':
+    main()

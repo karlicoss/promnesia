@@ -49,6 +49,10 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+      
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: false  # we don't have lock files, so can't use them as cache key
 
     - uses: actions/checkout@v4
       with:
@@ -99,25 +103,26 @@ jobs:
     # todo use setup-python thing?
     # todo run on macos too?
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - uses: mxschmitt/action-tmate@v3
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
     - run: .ci/github-ci-compat
 
     - run: |
-        # --use-pep517 is a work around for some breaking change in setuptools 66.0.0
-        # see https://github.com/pypa/setuptools/issues/3772#issuecomment-1384671296
-        python3 -m pip install --use-pep517 .
+        python3 -m pip install .
         export PATH=.ci/fake-systemd:$PATH
         tests/install_and_run
 
   pypi:
     runs-on: ubuntu-latest
     needs: [build, end2end_tests_chrome, end2end_tests_firefox, install_and_run_test]
-
+    permissions:
+      # necessary for Trusted Publishing
+      id-token: write
     steps:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -126,6 +131,10 @@ jobs:
       with:
         python-version: '3.10'
 
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: false  # we don't have lock files, so can't use them as cache key
+
     - uses: actions/checkout@v4
       with:
         submodules: recursive
@@ -133,17 +142,13 @@ jobs:
     - name: 'release to test pypi'
       # always deploy merged master to test pypi
       if: github.event_name != 'pull_request' && github.event.ref == 'refs/heads/master'
-      env:
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD_TEST }}
-      run: pip3 install --user --upgrade build twine && .ci/release --test
+      run: .ci/release-uv --use-test-pypi
 
     - name: 'release to pypi'
       # always deploy tags to release pypi
       # NOTE: release tags are guarded by on: push: tags on the top
       if: github.event_name != 'pull_request' && startsWith(github.event.ref, 'refs/tags')
-      env:
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-      run: pip3 install --user --upgrade build twine && .ci/release
+      run: .ci/release-uv
 
   ###
   build_extension:
