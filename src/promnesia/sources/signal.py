@@ -364,7 +364,7 @@ def connect_db(
         yield db
     finally:
         try:
-            if db:
+            if db is not None:
                 db.close()
         finally:
             if decrypted_file and decrypted_file.exists():

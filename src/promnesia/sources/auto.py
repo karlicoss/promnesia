@@ -243,8 +243,8 @@ def _index(path: Path, opts: Options) -> Results:
         mapper = map # dummy pool
     else:
         workers = None if cores == 0 else cores
-        pool = Pool(workers) # type: ignore
-        mapper = pool.map # type: ignore
+        pool = Pool(workers)  # type: ignore[assignment]
+        mapper = pool.map  # type: ignore[attr-defined]
 
     # iterate over resolved paths, to avoid duplicates
     def rit() -> Iterable[Path]:
@@ -359,7 +359,8 @@ def _index_file(pp: Path, opts: Options) -> Results:
             v = r
 
         loc = v.locator
-        if loc is not None and root is not None:
+        # FIXME double checke that v.locator indeed can't be none and remove the check?
+        if loc is not None and root is not None:  # type: ignore[redundant-expr]
             # meh. but it works
             # todo potentially, just use dataclasses instead...
             loc = loc._replace(title=loc.title.replace(str(root) + os.sep, ''))

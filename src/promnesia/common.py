@@ -220,7 +220,7 @@ Syntax = str
 
 @lru_cache(None)
 def _get_urlextractor(syntax: Syntax):
-    from urlextract import URLExtract  # type: ignore
+    from urlextract import URLExtract  # type: ignore[import-untyped]
     u = URLExtract()
     # https://github.com/lipoja/URLExtract/issues/13
     if syntax in {'org', 'orgmode', 'org-mode'}: # TODO remove hardcoding..
@@ -414,7 +414,7 @@ def default_cache_dir() -> Path:
 def _magic() -> Callable[[PathIsh], str | None]:
     logger = get_logger()
     try:
-        import magic  # type: ignore
+        import magic  # type: ignore[import-not-found]
     except Exception as e:
         logger.exception(e)
         defensive_msg: str | None = None
