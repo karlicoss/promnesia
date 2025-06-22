@@ -40,7 +40,7 @@ def index(
         yield from _harvest_db(db, msgs_query, locator_schema)
 
 
-def messages_query(http_only: bool | None) -> str:
+def messages_query(http_only: bool | None) -> str:  # noqa: FBT001
     """
     An SQL-query returning 1 row for each message
 

@@ -1,8 +1,3 @@
-# NOTE: version is inferred from pyproject.toml if present
-#   however, if ruff.toml is separate, pyproject isn't even parsed..
-#   see https://github.com/astral-sh/ruff/issues/10299
-target-version = "py39"
-
 lint.extend-select = [
     "F",    # flakes rules -- default, but extend just in case
     "E",    # pycodestyle  -- default, but extend just in case
@@ -38,6 +33,11 @@ lint.extend-select = [
 
     # "ALL", # uncomment this to check for new rules!
 ]
+
+# Preserve types, even if a file imports `from __future__ import annotations`
+# we need this for cachew to work with HPI types on 3.9
+# can probably remove after 3.10?
+lint.pyupgrade.keep-runtime-typing = true
 
 lint.ignore = [
     "D",     # annoying nags about docstrings
@@ -119,7 +119,7 @@ lint.ignore = [
     "TRY400",  # TODO double check this, might be useful
     "TRY401",  # redundant exception in logging.exception call? TODO double check, might result in excessive logging
 
-    "PGH",  # TODO force error code in mypy instead
+    "PGH",  # TODO force error code in mypy instead? although it also has blanket noqa rule
 
     "TID252",  # Prefer absolute imports over relative imports from parent modules
 
@@ -138,8 +138,18 @@ lint.ignore = [
     "RSE102",  # complains about missing parens in exceptions
     ##
 
+    "PLC0415", # "imports should be at the top level" -- not realistic
     "ARG001",  # ugh, kinda annoying when using pytest fixtures
     "RUF001", "RUF002", "RUF003",  # spams about non-latin characters that we do use for testing
-
     "A005",  #  we're using promnesia.logging module
+]
+
+extend-exclude = [
+    "untracked/**",
+    "old/**",
+    "tests/testdata/**",
+    # FIXME @karlicoss's private files.. sort out later
+    "config.py",
+    "adhoc_config.py",
+    "aaa_config.py",
 ]

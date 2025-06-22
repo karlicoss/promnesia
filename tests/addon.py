@@ -3,14 +3,16 @@ Promnesia-specific addon wrappers
 """
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-import json
 from pathlib import Path
 from time import sleep
-from typing import Optional, Iterator, Sequence
+from typing import Optional
 
 import pytest
+from addon_helper import AddonHelper
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -19,17 +21,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as Wait
-
-from promnesia.logging import LazyLogger
-
-from addon_helper import AddonHelper
 from webdriver_utils import frame_context, is_visible, wait_for_alert
 
+from promnesia.logging import LazyLogger
 
 logger = LazyLogger('promnesia-tests', level='debug')
 
 
 from promnesia.common import measure as measure_orig
+
+
 @contextmanager
 def measure(*args, **kwargs):
     kwargs['logger'] = logger
@@ -61,7 +62,7 @@ PROMNESIA_SIDEBAR_ID = 'promnesia-sidebar'
 
 @dataclass
 class Sidebar:
-    addon: 'Addon'
+    addon: Addon
 
     @property
     def driver(self) -> Driver:
@@ -75,7 +76,7 @@ class Sidebar:
             EC.presence_of_element_located(selector),
         )
 
-        frames = self.driver.find_elements(*selector)
+        # frames = self.driver.find_elements(*selector)
         # TODO uncomment it later when sidebar is injected gracefully...
         # assert len(frames) == 1, frames  # just in case
 
@@ -170,7 +171,7 @@ class OptionsPage:
     ) -> None:
         driver = self.helper.driver
 
-        def set_checkbox(cid: str, value: bool) -> None:
+        def set_checkbox(cid: str, value: bool) -> None:  # noqa: FBT001
             cb = driver.find_element(By.ID, cid)
             selected = cb.is_selected()
             if selected != value:
@@ -361,4 +362,4 @@ See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
 def addon(driver: Driver) -> Iterator[Addon]:
     addon_source = get_addon_source(kind=driver.name)
     helper = AddonHelper(driver=driver, addon_source=addon_source)
-    yield Addon(helper=helper)
+    return Addon(helper=helper)

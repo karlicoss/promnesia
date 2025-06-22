@@ -1,31 +1,28 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 
+import os
+from collections.abc import Iterator
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import Iterator, TypeVar, Callable
-import os
+from typing import Callable, TypeVar
 
 import pytest
-
+from addon import LOCALHOST, Addon, get_addon_source
+from common import has_x, local_http_server, notnone, under_ci
 from selenium.webdriver import Remote as Driver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait as Wait
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait as Wait
+from webdriver_utils import get_webdriver, is_visible, wait_for_alert
 
-from promnesia.tests.common import get_testdata
-from promnesia.tests.utils import index_urls
-from promnesia.tests.server_helper import run_server as wserver
 from promnesia.logging import LazyLogger
-
-from common import under_ci, has_x, local_http_server, notnone
-from webdriver_utils import is_visible, wait_for_alert, get_webdriver
-from addon import get_addon_source, Addon, LOCALHOST, addon
-
+from promnesia.tests.common import get_testdata
+from promnesia.tests.server_helper import run_server as wserver
+from promnesia.tests.utils import index_urls
 
 logger = LazyLogger('promnesia-tests', level='debug')
 

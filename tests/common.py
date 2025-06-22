@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 import sys
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
-from typing import Iterator, TypeVar
+from typing import TypeVar
 
 import pytest
 import requests
@@ -55,7 +56,7 @@ def local_http_server(path: Path) -> Iterator[str]:
     address = '127.0.0.1'
     with (
         free_port() as port,
-        tmp_popen([sys.executable, '-m', 'http.server', '--directory', path, '--bind', address, str(port)]) as popen,
+        tmp_popen([sys.executable, '-m', 'http.server', '--directory', path, '--bind', address, str(port)]),
     ):
         endpoint = f'http://{address}:{port}'
 
