@@ -72,7 +72,11 @@ def _parse_node(n: OrgNode) -> Parsed:
             dt = None
         else:
             [odt] = OrgDate.list_from_str(createds)
-            dt = odt.start
+            start = odt.start
+            if not isinstance(start, datetime):  # could be date
+                dt = datetime.combine(start, datetime.min.time())  # meh, but the best we can do?
+            else:
+                dt = start
     else:
         dt = None
     return Parsed(dt=dt, heading=heading)

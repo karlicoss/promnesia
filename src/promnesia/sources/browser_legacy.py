@@ -280,7 +280,7 @@ class Firefox(Extr):
     ], key=('url', 'visit_date', 'vid', 'pid'))
     query='FROM chunk.moz_historyvisits as V, chunk.moz_places as P WHERE V.place_id = P.id'
 
-    row2visit = _row2visit_firefox
+    row2visit = _row2visit_firefox  # type: ignore[assignment]
 
 
 class FirefoxPhone(Extr):
@@ -299,4 +299,4 @@ class FirefoxPhone(Extr):
     ], key=('url', 'date', 'vid', 'hid'))
     query='FROM chunk.visits as V, chunk.history as H  WHERE V.history_guid = H.guid'
 
-    row2visit = _row2visit_firefox
+    row2visit = _row2visit_firefox  # type: ignore[assignment]
