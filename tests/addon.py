@@ -359,7 +359,7 @@ See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
 
 
 @pytest.fixture
-def addon(driver: Driver) -> Iterator[Addon]:
+def addon(driver: Driver) -> Addon:
     addon_source = get_addon_source(kind=driver.name)
     helper = AddonHelper(driver=driver, addon_source=addon_source)
     return Addon(helper=helper)

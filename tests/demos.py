@@ -13,7 +13,7 @@ from end2end_test import (  # type: ignore[attr-defined]
     FF,
     _test_helper,
     browsers,
-    configure_extension,  # type: ignore[attr-defined]
+    configure_extension,
     confirm,
 )
 from record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
