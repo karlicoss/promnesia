@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 DEPRECATION = 'NOTE: this is DEPRECATED! Please use https://github.com/purarue/browserexport instead'
 
+import filecmp
+import logging
+import sys
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from subprocess import check_output
-import filecmp
-import logging
-import warnings
-import sys
 
 warnings.warn(DEPRECATION, DeprecationWarning)
 

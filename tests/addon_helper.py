@@ -1,15 +1,14 @@
-from dataclasses import dataclass
-from functools import cached_property
 import json
-from pathlib import Path
 import re
 import subprocess
+from dataclasses import dataclass
+from functools import cached_property
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
 from selenium import webdriver
-
-from webdriver_utils import is_headless, get_browser_process
+from webdriver_utils import get_browser_process, is_headless
 
 
 @dataclass

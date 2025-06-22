@@ -1,24 +1,28 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from time import sleep
 from subprocess import check_call
-from typing import Optional
+from time import sleep
 
-from promnesia.tests.utils import index_urls
-
-from common import uses_x
-from end2end_test import FF, CH, browsers, _test_helper  # type: ignore[attr-defined]
-from end2end_test import confirm
-from end2end_test import configure_extension  # type: ignore[attr-defined]
 from addon_helper import get_window_id
-
-from record import record, hotkeys, CURSOR_SCRIPT, SELECT_SCRIPT
+from common import uses_x
+from end2end_test import (  # type: ignore[attr-defined]
+    CH,
+    FF,
+    _test_helper,
+    browsers,
+    configure_extension,  # type: ignore[attr-defined]
+    confirm,
+)
+from record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
 
 
 def real_db():
-    from private import real_db_path, test_filter  # type: ignore[import-not-found]
     import shutil
+
+    from private import real_db_path, test_filter  # type: ignore[import-not-found]
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
         # tdb.touch()
@@ -50,7 +54,7 @@ class Annotator:
         self.l.append((now, text, length))
 
     def build(self, **extra):
-        from pysubs2 import SSAFile, SSAEvent, Color # type: ignore[import-not-found]
+        from pysubs2 import Color, SSAEvent, SSAFile  # type: ignore[import-not-found]
         millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
             SSAEvent(
@@ -156,7 +160,7 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
 
             subs = path.with_suffix('.ssa')
             subs.write_text(ann.build(alignment=spos))
-            out  = path.with_suffix('.webm')
+            out  = path.with_suffix('.webm')  # noqa: F841
 
             converter = Path(__file__).parent.absolute() / 'convert_screencast.py'
             check_call([
@@ -283,8 +287,8 @@ def test_demo_mark_visited_2(tmp_path, browser):
         driver.get(url)
 
     with demo_helper(tmp_path=tmp_path, browser=browser, path=path, before=before) as (helper, annotate):
-        driver = helper.driver
-       
+        driver = helper.driver  # noqa: F841
+
         wait(2)
 
         annotate('''
@@ -445,7 +449,6 @@ Clicking on 'context' will bring me straight to the original tweet.
         wait(8)
 
 
-from selenium import webdriver
 
 
 def scroll_to_text(driver, text: str):
@@ -460,7 +463,7 @@ def scroll_to_text(driver, text: str):
 
     driver.execute_script(f'window.scrollTo(0, {y})')
     # TODO a bit of wait??
-   
+
 
 from end2end_test import get_webdriver
 

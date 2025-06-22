@@ -1,7 +1,8 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from time import sleep
-from typing import Dict, Iterator, Optional
+from typing import Optional
 
 import psutil
 from selenium import webdriver
@@ -93,7 +94,7 @@ def get_webdriver(
 
     # hmm. seems like if it can't find the driver, selenium automatically downloads it?
     driver: Driver
-    version_data: Dict[str, str]
+    version_data: dict[str, str]
     if browser == 'firefox':
         ff_options = webdriver.FirefoxOptions()
         ff_options.set_preference('profile', str(profile_dir))

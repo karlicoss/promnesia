@@ -54,7 +54,7 @@ FORMAT_COLOR   = FORMAT.format(start='%(color)s', end='%(end_color)s')
 FORMAT_NOCOLOR = FORMAT.format(start='', end='')
 DATEFMT = '%Y-%m-%d %H:%M:%S'
 
-COLLAPSE_DEBUG_LOGS = os.environ.get('COLLAPSE_DEBUG_LOGS', False)
+COLLAPSE_DEBUG_LOGS = os.environ.get('COLLAPSE_DEBUG_LOGS', False)  # noqa: PLW1508
 
 _init_done = 'lazylogger_init_done'
 

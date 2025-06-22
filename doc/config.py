@@ -4,7 +4,6 @@ A more sophisticated example of config for Promnesia
 
 from promnesia.common import Source
 
-
 # now, let's import some indexers
 # NOTE: you might need extra dependencies before using some of the indexers
 # see https://github.com/karlicoss/HPI/blob/master/doc/SOURCES.org
@@ -12,17 +11,16 @@ from promnesia.common import Source
 # 'auto' indexer tries its best at indexing plaintext stuff
 # - plaintext like org-mode/markdown/HTML
 # - structured formats like JSON and CSV
-from promnesia.sources import auto
+from promnesia.sources import auto  # isort: skip
 
 # 'guess' indexer can do even more in addition:
 # - HTTP links (to index the contents of a website)
 # - Github links (to index the contents of a git repository
-from promnesia.sources import guess
+from promnesia.sources import guess  # isort: skip
 # TODO there is a very thin link between 'auto' and 'guess'... I might merge them in the future?
 
 
 # this is an incomplete list, just the (perhaps) most interesting ones
-from promnesia.sources import telegram
 from promnesia.sources import (
     fbmessenger,
     hypothesis,
@@ -30,12 +28,12 @@ from promnesia.sources import (
     pocket,
     roamresearch,
     rss,
+    signal,
     takeout,
+    telegram,
     twitter,
     viber,
-    signal,
 )
-
 
 # NOTE: at the moment try to avoid using complex sources names
 # it's best to stick to digits, latin characters, dashes and underscores

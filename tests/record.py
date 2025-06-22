@@ -1,9 +1,9 @@
+import re
 from contextlib import contextmanager
 from pathlib import Path
-import re
-from time import sleep
 from subprocess import Popen, check_output
-from typing import Optional, List, Union
+from time import sleep
+from typing import Optional, Union
 
 # TODO decorator that records a video if a certain env var/flag is set (pass a custom name too)
 
@@ -60,7 +60,7 @@ def record(output: Optional[Path]=None, wid: Optional[str]=None, quality: Option
     # fuck x 2
     margin   = 28
 
-    cmd: List[Union[Path, str]] = [
+    cmd: list[Union[Path, str]] = [
         'ffmpeg',
         '-hide_banner', '-loglevel', 'panic', # less spam in the terminal
         '-f', 'x11grab',
