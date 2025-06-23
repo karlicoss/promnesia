@@ -46,6 +46,11 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0  # nicer to have all git history when debugging/for tests
+
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
@@ -53,11 +58,6 @@ jobs:
     - uses: astral-sh/setup-uv@v5
       with:
         enable-cache: false  # we don't have lock files, so can't use them as cache key
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-depth: 0  # nicer to have all git history when debugging/for tests
 
     - uses: mxschmitt/action-tmate@v3
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
@@ -127,6 +127,10 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
@@ -134,10 +138,6 @@ jobs:
     - uses: astral-sh/setup-uv@v5
       with:
         enable-cache: false  # we don't have lock files, so can't use them as cache key
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: 'release to test pypi'
       # always deploy merged master to test pypi
