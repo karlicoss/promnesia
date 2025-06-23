@@ -10,7 +10,12 @@ from time import sleep
 from typing import Callable, TypeVar
 
 import pytest
-from addon import LOCALHOST, Addon, get_addon_source
+from addon import (
+    LOCALHOST,
+    Addon,
+    addon,  # noqa: F401
+    get_addon_source,
+)
 from common import has_x, local_http_server, notnone, under_ci
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.by import By
