@@ -10,10 +10,9 @@ from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, NamedTuple, Optional, Protocol
+from zoneinfo import ZoneInfo
 
 import fastapi
-import pytz
-from pytz import BaseTzInfo
 from sqlalchemy import (
     Column,
     Table,
@@ -66,20 +65,20 @@ def get_version() -> str:
 
 class ServerConfig(NamedTuple):
     db: Path
-    timezone: BaseTzInfo
+    timezone: ZoneInfo
 
     def as_str(self) -> str:
         return json.dumps({
-            'timezone': self.timezone.zone,
-            'db'      : str(self.db),
+            'timezone': self.timezone.key,
+            'db': str(self.db),
         })
 
     @classmethod
     def from_str(cls, cfgs: str) -> ServerConfig:
         d = json.loads(cfgs)
         return cls(
-            db      =Path         (d['db']),
-            timezone=pytz.timezone(d['timezone'])
+            db=Path(d['db']),
+            timezone=ZoneInfo(d['timezone'])
         )
 
 
@@ -196,8 +195,7 @@ def search_common(url: str, where: Where) -> VisitsResponse:
     for vis in visits:
         dt = vis.dt
         if dt.tzinfo is None: # FIXME need this for /visits endpoint as well?
-            tz = config.timezone
-            dt = tz.localize(dt)
+            dt = dt.replace(tzinfo=config.timezone)
             vis = vis._replace(dt=dt)
         vlist.append(vis)
 
@@ -475,7 +473,7 @@ def setup_parser(p: argparse.ArgumentParser) -> None:
 
     p.add_argument(
         '--timezone',
-        type=pytz.timezone,
+        type=ZoneInfo,
         default=get_system_tz(),
         help='Fallback timezone, defaults to the system timezone if not specified',
     )
