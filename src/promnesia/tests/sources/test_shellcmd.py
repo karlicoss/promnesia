@@ -8,7 +8,6 @@ from ..common import get_testdata
 
 @pytest.mark.skipif(_is_windows, reason="no grep on windows")
 def test_via_grep() -> None:
-
     visits = list(
         extract_visits(
             Source(

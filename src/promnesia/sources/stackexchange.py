@@ -16,7 +16,7 @@ def index() -> Results:
             yield Visit(
                 url=v.link,
                 dt=v.when,
-                context='voted', # todo use the votetype? although maybe worth ignoring downvotes
+                context='voted',  # todo use the votetype? although maybe worth ignoring downvotes
                 # or, downvotes could have 'negative' ranking or something
-                locator=Loc.make(title='voted', href=v.link)
+                locator=Loc.make(title='voted', href=v.link),
             )

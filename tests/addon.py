@@ -1,6 +1,7 @@
 """
 Promnesia-specific addon wrappers
 """
+
 from __future__ import annotations
 
 import json

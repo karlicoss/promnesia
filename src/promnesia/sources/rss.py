@@ -11,6 +11,7 @@ default_datetime = datetime.fromtimestamp(1320365123, tz=timezone.utc)
 # TODO FIXME allow for visit not to have datetime?
 # I.e. even having context is pretty good!
 
+
 def index() -> Results:
     from my.rss.all import subscriptions
 
@@ -20,6 +21,6 @@ def index() -> Results:
         yield Visit(
             url=feed.url,
             dt=feed.created_at or default_datetime,
-            context='RSS subscription', # TODO use 'provider', etc?
+            context='RSS subscription',  # TODO use 'provider', etc?
             locator=locator,
         )

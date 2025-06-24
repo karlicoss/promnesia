@@ -42,6 +42,7 @@ Json = dict[str, Any]
 
 app = fastapi.FastAPI()
 
+
 # meh. need this since I don't have hooks in hug to initialize logging properly..
 @lru_cache(1)
 def get_logger() -> logging.Logger:
@@ -68,18 +69,17 @@ class ServerConfig(NamedTuple):
     timezone: ZoneInfo
 
     def as_str(self) -> str:
-        return json.dumps({
-            'timezone': self.timezone.key,
-            'db': str(self.db),
-        })
+        return json.dumps(
+            {
+                'timezone': self.timezone.key,
+                'db': str(self.db),
+            }
+        )
 
     @classmethod
     def from_str(cls, cfgs: str) -> ServerConfig:
         d = json.loads(cfgs)
-        return cls(
-            db=Path(d['db']),
-            timezone=ZoneInfo(d['timezone'])
-        )
+        return cls(db=Path(d['db']), timezone=ZoneInfo(d['timezone']))
 
 
 class EnvConfig:
@@ -97,7 +97,9 @@ class EnvConfig:
     def set(cfg: ServerConfig) -> None:
         os.environ[EnvConfig.KEY] = cfg.as_str()
 
+
 # todo how to return exception in error?
+
 
 def as_json(v: DbVisit) -> Json:
     # yep, this is NOT %Y-%m-%d as is seems to be the only format with timezone that Date.parse in JS accepts. Just forget it.
@@ -113,14 +115,14 @@ def as_json(v: DbVisit) -> Json:
         'duration': v.duration,
         'locator': {
             'title': loc.title,
-            'href' : loc.href,
+            'href': loc.href,
         },
-        'original_url'  : v.orig_url,
+        'original_url': v.orig_url,
         'normalised_url': v.norm_url,
     }
 
 
-def get_db_path(*, check: bool=True) -> Path:
+def get_db_path(*, check: bool = True) -> Path:
     db = EnvConfig.get().db
     if check:
         assert db.exists(), db
@@ -134,7 +136,7 @@ def _get_stuff(db_path: PathWithMtime) -> DbStuff:
     return get_db_stuff(db_path=db_path.path)
 
 
-def get_stuff(db_path: Path | None=None) -> DbStuff: # TODO better name
+def get_stuff(db_path: Path | None = None) -> DbStuff:  # TODO better name
     # ok, it will always load from the same db file; but intermediate would be kinda an optional dump.
     if db_path is None:
         db_path = get_db_path()
@@ -152,8 +154,8 @@ def db_stats(db_path: Path) -> Json:
 
 
 class Where(Protocol):
-    def __call__(self, table: Table, url: str) -> ColumnElement[bool]:
-        ...
+    def __call__(self, table: Table, url: str) -> ColumnElement[bool]: ...
+
 
 @dataclass
 class VisitsResponse:
@@ -185,8 +187,8 @@ def search_common(url: str, where: Where) -> VisitsResponse:
         except exc.OperationalError as e:
             if getattr(e, 'msg', None) == 'no such table: visits':
                 logger.warning('you may have to run indexer first!')
-                #result['visits'] = [{an error with a msg}] # TODO
-                #return result
+                # result['visits'] = [{an error with a msg}] # TODO
+                # return result
             raise
 
     logger.debug('got %d visits from db', len(visits))
@@ -194,7 +196,7 @@ def search_common(url: str, where: Where) -> VisitsResponse:
     vlist: list[DbVisit] = []
     for vis in visits:
         dt = vis.dt
-        if dt.tzinfo is None: # FIXME need this for /visits endpoint as well?
+        if dt.tzinfo is None:  # FIXME need this for /visits endpoint as well?
             dt = dt.replace(tzinfo=config.timezone)
             vis = vis._replace(dt=dt)
         vlist.append(vis)
@@ -210,8 +212,8 @@ def search_common(url: str, where: Where) -> VisitsResponse:
 
 # TODO hmm, seems that the extension is using post for all requests??
 # perhasp should switch to get for most endpoint
-@app.get ('/status', response_model=Json)
-@app.post('/status', response_model=Json)
+@app.get ('/status', response_model=Json)  # fmt: skip
+@app.post('/status', response_model=Json)  # fmt: skip
 def status() -> Json:
     '''
     Ideally, status will always respond, regardless the internal state of the backend?
@@ -244,15 +246,16 @@ def status() -> Json:
         'version': version,
         'db'     : db_path,
         'stats'  : stats,
-    }
+    }  # fmt: skip
 
 
 @dataclass
 class VisitsRequest:
     url: str
 
-@app.get ('/visits', response_model=VisitsResponse)
-@app.post('/visits', response_model=VisitsResponse)
+
+@app.get ('/visits', response_model=VisitsResponse)  # fmt: skip
+@app.post('/visits', response_model=VisitsResponse)  # fmt: skip
 def visits(request: VisitsRequest) -> VisitsResponse:
     url = request.url
     get_logger().info('/visited %s', url)
@@ -263,7 +266,7 @@ def visits(request: VisitsRequest) -> VisitsResponse:
             # exact match
             table.c.norm_url == url,
             # + child visits, but only 'interesting' ones
-            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True))  # noqa: E711
+            and_(table.c.context != None, table.c.norm_url.startswith(url, autoescape=True)),  # noqa: E711
         ),
     )
 
@@ -272,11 +275,13 @@ def visits(request: VisitsRequest) -> VisitsResponse:
 class SearchRequest:
     url: str
 
-@app.get ('/search', response_model=VisitsResponse)
-@app.post('/search', response_model=VisitsResponse)
+
+@app.get ('/search', response_model=VisitsResponse)  # fmt: skip
+@app.post('/search', response_model=VisitsResponse)  # fmt: skip
 def search(request: SearchRequest) -> VisitsResponse:
     url = request.url
     get_logger().info('/search %s', url)
+    # fmt: off
     return search_common(
         url=url,
         where=lambda table, url: or_(
@@ -287,48 +292,53 @@ def search(request: SearchRequest) -> VisitsResponse:
             table.c.locator_title.contains(url, autoescape=True),
         ),
     )
+    # fmt: on
 
 
 @dataclass
 class SearchAroundRequest:
     timestamp: float
 
-@app.get ('/search_around', response_model=VisitsResponse)
-@app.post('/search_around', response_model=VisitsResponse)
+
+@app.get ('/search_around', response_model=VisitsResponse)  # fmt: skip
+@app.post('/search_around', response_model=VisitsResponse)  # fmt: skip
 def search_around(request: SearchAroundRequest) -> VisitsResponse:
     timestamp = request.timestamp
     get_logger().info('/search_around %s', timestamp)
-    utc_timestamp = timestamp # old 'timestamp' name is legacy
+    utc_timestamp = timestamp  # old 'timestamp' name is legacy
 
     # TODO meh. use count/pagination instead?
-    delta_back  = timedelta(hours=3  ).total_seconds()
+    delta_back = timedelta(hours=3).total_seconds()
     delta_front = timedelta(minutes=2).total_seconds()
     # TODO not sure about delta_front.. but it also serves as quick hack to accommodate for all the truncations etc
 
     return search_common(
-        url='http://dummy.org', # NOTE: not used in the where query (below).. perhaps need to get rid of this
+        url='http://dummy.org',  # NOTE: not used in the where query (below).. perhaps need to get rid of this
         where=lambda table, url: between(  # noqa: ARG005
             func.strftime(
-                '%s', # NOTE: it's tz aware, e.g. would distinguish +05:00 vs -03:00
+                '%s',  # NOTE: it's tz aware, e.g. would distinguish +05:00 vs -03:00
                 # this is a bit fragile, relies on cachew internal timestamp format, e.g.
                 # 2020-11-10T06:13:03.196376+00:00 Europe/London
                 func.substr(
                     table.c.dt,
-                    1, # substr is 1-indexed
+                    1,  # substr is 1-indexed
                     # instr finds the first match, but if not found it defaults to 0.. which we hack by concatting with ' '
                     func.instr(func.cast(table.c.dt, types.Unicode).op('||')(' '), ' ') - 1,
                     # for fucks sake.. seems that cast is necessary otherwise it tries to treat ' ' as datetime???
-                )
-            ) - literal(utc_timestamp),
+                ),
+            )
+            - literal(utc_timestamp),
             literal(-delta_back),
             literal(delta_front),
         ),
     )
 
+
 # before 0.11.14 (including), extension didn't share the version
 # so if it's not shared, assume that version
 _NO_VERSION = (0, 11, 14)
 _LATEST = (9999, 9999, 9999)
+
 
 def as_version(version: str) -> tuple[int, int, int]:
     if version == '':
@@ -349,10 +359,12 @@ class VisitedRequest:
     urls: list[str]
     client_version: str = ''
 
+
 VisitedResponse = list[Optional[Json]]
 
-@app.get ('/visited', response_model=VisitedResponse)
-@app.post('/visited', response_model=VisitedResponse)
+
+@app.get ('/visited', response_model=VisitedResponse)  # fmt: skip
+@app.post('/visited', response_model=VisitedResponse)  # fmt: skip
 def visited(request: VisitedRequest) -> VisitedResponse:
     # TODO instead switch logging to fastapi
     urls = request.urls
@@ -374,10 +386,11 @@ def visited(request: VisitedRequest) -> VisitedResponse:
     # sqlalchemy doesn't seem to support SELECT FROM (VALUES (...)) in its api
     # also doesn't support array binding...
     # https://stackoverflow.com/questions/13190392/how-can-i-bind-a-list-to-a-parameter-in-a-custom-query-in-sqlalchemy
-    bstring = ','.join(f'(:b{i})'   for i, _ in enumerate(snurls))
-    bdict = {            f'b{i}': v for i, v in enumerate(snurls)}
+    bstring = ','.join(f'(:b{i})'   for i, _ in enumerate(snurls))  # fmt: skip
+    bdict = {            f'b{i}': v for i, v in enumerate(snurls)}  # fmt: skip
     # TODO hopefully, visits.* thing only returns one visit??
-    query = text(f"""
+    query = (
+        text(f"""
 WITH cte(queried) AS (SELECT * FROM (values {bstring}))
 SELECT queried, visits.*
     FROM cte JOIN visits
@@ -387,9 +400,12 @@ SELECT queried, visits.*
     but somehow DESC is the one that actually works..
 */
     ORDER BY visits.context IS NULL DESC
-    """).bindparams(**bdict).columns(
-        Column('match', types.Unicode),
-        *table.columns,
+    """)
+        .bindparams(**bdict)
+        .columns(
+            Column('match', types.Unicode),
+            *table.columns,
+        )
     )
     # TODO might be very beneficial for performance to have an intermediate table
     # SELECT visits.* FROM visits GROUP BY visits.norm_url ORDER BY visits.context IS NULL DESC
@@ -420,6 +436,7 @@ def _run(*, host: str, port: str, quiet: bool, config: ServerConfig) -> None:
     EnvConfig.set(config)
 
     import uvicorn
+
     uvicorn.run('promnesia.server:app', host=host, port=int(port), log_level='debug')
 
 
@@ -431,7 +448,7 @@ def run(args: argparse.Namespace) -> None:
         config=ServerConfig(
             db=args.db,
             timezone=args.timezone,
-        )
+        ),
     )
 
 

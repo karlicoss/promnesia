@@ -101,7 +101,7 @@ def test_concurrent_indexing(tmp_path: Path) -> None:
             fasts = [
                 Popen(promnesia_bin('index', '--config', cfg_fast_path, '--overwrite'))
                 for _ in range(10)
-            ]
+            ]  # fmt: skip
             for fast in fasts:
                 assert fast.wait() == 0, fast  # should succeed
                 total_runs += 1

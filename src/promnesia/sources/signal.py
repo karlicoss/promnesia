@@ -1,6 +1,7 @@
 """
 Collects visits from Signal Desktop's encrypted SQLIite db(s).
 """
+
 from __future__ import annotations
 
 # Functions get their defaults from module-data.
@@ -27,7 +28,7 @@ PathIshes = Union[PathIsh, Iterable[PathIsh]]
 def index(
     *db_paths: PathIsh,
     http_only: bool = False,
-    locator_schema: str="editor",
+    locator_schema: str = "editor",
     append_platform_path: bool = False,
     override_key: str | None = None,
 ) -> Results:
@@ -51,8 +52,7 @@ def index(
         otherwise, this same key is used for harvesting all db-files.
     """
     logger.debug(
-        "http_only?(%s), locator_schema?(%s), append_platform_path?(%s), "
-        "overide_key given?(%s), db_paths: %s",
+        "http_only?(%s), locator_schema?(%s), append_platform_path?(%s), overide_key given?(%s), db_paths: %s",
         http_only,
         locator_schema,
         append_platform_path,
@@ -244,10 +244,7 @@ def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]
         try:
             plat_paths = platform_db_paths[platform_name]
         except LookupError as le:
-            raise ValueError(
-                f"Unknown platform({platform_name}!"
-                f"\n  Expected one of {list(platform_db_paths.keys())}."
-            ) from le
+            raise ValueError(f"Unknown platform({platform_name}!\n  Expected one of {list(platform_db_paths.keys())}.") from le
 
         if db_paths and append:
             db_paths = [  # type: ignore[assignment]
@@ -331,9 +328,7 @@ def connect_db(
             )
             sql = "\n".join(sql_cmds)
             cmd = [sqlcipher_exe, str(db_path)]
-            logger.debug(
-                "Decrypting db '%s' with cmd: %s <<<EOF\n%s\nEOF", db_path, cmd, sql
-            )
+            logger.debug("Decrypting db '%s' with cmd: %s <<<EOF\n%s\nEOF", db_path, cmd, sql)
             try:
                 sbp.run(
                     cmd,
@@ -369,7 +364,6 @@ def connect_db(
         finally:
             if decrypted_file and decrypted_file.exists():
                 try:
-
                     logger.debug("Deleting temporary decrypted db: %s", decrypted_file)
                     decrypted_file.unlink()
                 except Exception as ex:

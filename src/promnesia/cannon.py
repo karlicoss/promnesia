@@ -9,6 +9,7 @@ are same content, but you can't tell that by URL equality. Even canonical urls a
 
 Also some experiments to establish 'URL hierarchy'.
 """
+
 from __future__ import annotations
 
 import re
@@ -28,17 +29,20 @@ from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
 
 # TODO perhaps archive.org contributes to both?
 
+
 def try_cutl(prefix: str, s: str) -> str:
     if s.startswith(prefix):
-        return s[len(prefix):]
+        return s[len(prefix) :]
     else:
         return s
 
+
 def try_cutr(suffix: str, s: str) -> str:
     if s.endswith(suffix):
-        return s[:-len(suffix)]
+        return s[: -len(suffix)]
     else:
         return s
+
 
 # TODO move this to site-specific normalisers?
 dom_subst = [
@@ -59,7 +63,8 @@ dom_subst = [
     # app.getpocket.com is the canonical domain in the JSON returned by
     # https://github.com/karlicoss/pockexport, so let's canonicalize to that.
     ('getpocket.'     , 'app.getpocket.'),
-]
+]  # fmt: skip
+
 
 def canonify_domain(dom: str) -> str:
     # TODO perhaps not necessary now that I'm checking suffixes??
@@ -68,11 +73,10 @@ def canonify_domain(dom: str) -> str:
 
     for start, repl in dom_subst:
         if dom.startswith(start):
-            dom = repl + dom[len(start):]
+            dom = repl + dom[len(start) :]
             break
 
     return dom
-
 
 
 default_qremove = {
@@ -93,7 +97,7 @@ default_qremove = {
 
     # e.g. on github
     'utf8',
-}
+}  # fmt: skip
 
 default_qkeep = [
     # ok, various BBS have it, hackernews has it etc?
@@ -105,20 +109,19 @@ default_qkeep = [
 
     # common to some sites.., usually 'post'
     'p',
-]
+]  # fmt: skip
+
 
 # TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?
 class Spec(NamedTuple):
-    qkeep  : Collection[str] | bool | None = None
+    qkeep: Collection[str] | bool | None = None
     qremove: set[str] | None = None
-    fkeep  : bool = False
+    fkeep: bool = False
 
-    def keep_query(self, q: str) -> int | None: # returns order
+    def keep_query(self, q: str) -> int | None:  # returns order
         if self.qkeep is True:
             return 1
-        qkeep = {
-            q: i for i, q in enumerate(chain(default_qkeep, self.qkeep or []))
-        }
+        qkeep = {q: i for i, q in enumerate(chain(default_qkeep, self.qkeep or []))}
         qremove = default_qremove.union(self.qremove or {})
         # I suppose 'remove' is only useful for logging. we remove by default anyway
 
@@ -135,6 +138,7 @@ class Spec(NamedTuple):
     @classmethod
     def make(cls, **kwargs) -> Spec:
         return cls(**kwargs)
+
 
 S = Spec
 
@@ -187,9 +191,11 @@ specs: dict[str, Spec] = {
     'play.google.com'    : S(qkeep={'id'}),
     'answers.yahoo.com'  : S(qkeep={'qid'}),
     'isfdb.org': S(qkeep=True),
-}
+}  # fmt: skip
 
 _def_spec = S()
+
+
 # TODO use cache?
 def get_spec(dom: str) -> Spec:
     # ugh. a bit ugly way of getting stuff without subdomain...
@@ -206,13 +212,12 @@ def get_spec(dom: str) -> Spec:
     return _def_spec
 
 
-
 # ideally we'd just be able to reference the domain name and use it in the subst?
 # some sort of hierarchical matchers? not sure what's got better performance..
 # if 'from?site=' in url:
 #     return p.query('site')
 
-Spec2 = Any # TODO
+Spec2 = Any  # TODO
 
 # TODO this should be a map
 Frag = Any
@@ -230,6 +235,7 @@ def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> tuple[Any, Any, Parts,
     # TODO this should be in-place? for brevity?
     return (domain, path, qq, frag)
 
+
 def get_spec2(dom: str) -> Spec2 | None:
     return {
         'news.ycombinator.com': _yc,
@@ -239,8 +245,9 @@ def get_spec2(dom: str) -> Spec2 | None:
 class CanonifyException(Exception):
     pass
 
+
 # TODO not so sure if it's better to quote or not?
-quote_via   = urllib.parse.quote
+quote_via = urllib.parse.quote
 unquote_via = urllib.parse.unquote
 
 
@@ -249,7 +256,9 @@ def _quote_path(path: str) -> str:
     nparts = []
     for p in parts:
         # TODO maybe re.match?
-        if '%' in p or '+' in p: # some urls are partially encoded... perhaps canonify needs hints indicating if url needs normalising or not
+        if (
+            '%' in p or '+' in p
+        ):  # some urls are partially encoded... perhaps canonify needs hints indicating if url needs normalising or not
             p = unquote_via(p)
         # TODO safe argumnet?
         nparts.append(quote_via(p))
@@ -267,22 +276,23 @@ def _prenormalise(url: str) -> str:
         # not sure how safe it in general...
         first_q = url.find('&')
         if first_q != -1:
-            return url[:first_q] + '?' + url[first_q + 1:]
+            return url[:first_q] + '?' + url[first_q + 1 :]
     return url
 
 
 Left = Union[str, Sequence[str]]
 Right = tuple[str, str, str]
 
+
 def transform_split(split: SplitResult):
     netloc = canonify_domain(split.netloc)
 
-    path     = split.path
-    qparts   = parse_qsl(split.query, keep_blank_values=True)
+    path = split.path
+    qparts = parse_qsl(split.query, keep_blank_values=True)
 
     fragment = split.fragment
 
-    ID   = r'(?P<id>[^/]+)'
+    ID = r'(?P<id>[^/]+)'
     # REST = r'(?P<rest>.*)'
 
     # the idea is that we can unify certain URLs here and map them to the 'canonical' one
@@ -293,19 +303,19 @@ def transform_split(split: SplitResult):
         (
             f'youtu.be/{ID}',
             f'youtube.com/embed/{ID}',
-        ) : ('youtube.com', '/watch', 'v={id}'),
+        ): ('youtube.com', '/watch', 'v={id}'),
         # TODO wonder if there is a better candidate for canonical video link?
         # {DOMAIN} pattern? implicit?
         (
             'twitter.com/home',
             'twitter.com/explore',
-        ) : ('twitter.com', '', ''),
+        ): ('twitter.com', '', ''),
     }
 
     def iter_rules():
         for fr, to in rules.items():
             if isinstance(fr, str):
-                fr = (fr, )
+                fr = (fr,)
             for f in fr:
                 yield f, to
 
@@ -324,26 +334,25 @@ def transform_split(split: SplitResult):
             to = (*to, '')
 
         (netloc, path, qq) = (t.format(**gd) for t in to)
-        qparts.extend(parse_qsl(qq, keep_blank_values=True)) # TODO hacky..
+        qparts.extend(parse_qsl(qq, keep_blank_values=True))  # TODO hacky..
         # TODO eh, qparts should really be a map or something...
         break
-
 
     return netloc, path, qparts, fragment
 
 
-
 def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
-    uns = urlunsplit((
-        '', # dummy protocol
-        domain,
-        path,
-        query,
-        fragment,
-    ))
+    uns = urlunsplit(
+        (
+            '',  # dummy protocol
+            domain,
+            path,
+            query,
+            fragment,
+        )
+    )
     uns = try_cutl('//', uns)  # // due to dummy protocol
     return uns
-
 
 
 #
@@ -359,6 +368,7 @@ def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
 #         r'web.archive.org/web/(?<timestamp>\d+)/' # TODO what about 'rest'?
 #     ]
 #     for re in regexes:
+
 
 def handle_archive_org(url: str) -> str | None:
     are = r'web.archive.org/web/(?P<timestamp>\d+)/(?P<rest>.*)'
@@ -396,7 +406,7 @@ def canonify(url: str) -> str:
 
     res = handle_archive_org(no_protocol)
     if res is not None:
-        assert len(res) < len(no_protocol) # just a paranoia to avoid infinite recursion...
+        assert len(res) < len(no_protocol)  # just a paranoia to avoid infinite recursion...
         return canonify(res)
 
     domain, path, qq, _frag = transform_split(parts)
@@ -405,7 +415,6 @@ def canonify(url: str) -> str:
     if spec2 is not None:
         # meh
         domain, path, qq, _frag = spec2(domain, path, qq, _frag)
-
 
     spec = get_spec(domain)
 
@@ -426,11 +435,11 @@ def canonify(url: str) -> str:
     path = _quote_path(path)
 
     uns = myunsplit(domain, path, query, frag)
-    uns = try_cutr('/', uns) # not sure if there is a better way
+    uns = try_cutr('/', uns)  # not sure if there is a better way
     return uns
 
 
- # TODO wonder if lisp could be convenient for this. lol
+# TODO wonder if lisp could be convenient for this. lol
 TW_PATTERNS = [
     {
         'U': r'[\w-]+',
@@ -468,7 +477,7 @@ TW_PATTERNS = [
     r'twitter.com/i/events/\d+',
 
     r'(dev|api|analytics|developer|help|support|blog|anywhere|careers|pic).twitter.com/.*',
-]
+]  # fmt: skip
 
 RD_PATTERNS = [
     {
@@ -499,7 +508,7 @@ RD_PATTERNS = [
     r'reddit.com/dev/api',
     r'reddit.com/api/v1/authorize',
     r'reddit.com/domain/.*',
-]
+]  # fmt: skip
 
 GH_PATTERNS = [
     {
@@ -542,7 +551,7 @@ GH_PATTERNS = [
     # TODO FIXME no canonical here
     # https://gist.github.com/dneto/2258454
     # same as https://gist.github.com/2258454
-]
+]  # fmt: skip
 
 YT_PATTERNS = [
     {
@@ -565,7 +574,7 @@ YT_PATTERNS = [
     r'youtube.com/feed/(subscriptions|library|trending|history)',
     r'youtube.com',
     r'youtube.com/(post_login|upload)',
-]
+]  # fmt: skip
 
 SOP = r'(^|\w+\.)stackoverflow.com'
 
@@ -588,7 +597,7 @@ SO_PATTERNS = [
     SOP + r'/users/UI',
     SOP + r'/users/UI/U',
     SOP,
-]
+]  # fmt: skip
 
 WKP = r'(^|.+\.)wikipedia.org'
 
@@ -598,7 +607,7 @@ WK_PATTERNS = [
     },
     WKP + '/wiki/AN',
     WKP,
-]
+]  # fmt: skip
 
 FB_PATTERNS = [
     {
@@ -626,7 +635,7 @@ FB_PATTERNS = [
     r'F/pages/U/P',
     r'F/stories/I',
     r'F/notes/U/P',
-]
+]  # fmt: skip
 
 PKP = r'^(app)?\.getpocket\.com'
 
@@ -635,7 +644,7 @@ PK_PATTERNS = [
         'ID': r'\d+',
     },
     PKP + '/read/ID',
-]
+]  # fmt: skip
 
 # NOTE: right, I think this is just for analysis so far... not actually used
 PATTERNS = {
@@ -648,7 +657,7 @@ PATTERNS = {
     'wikipedia' : WK_PATTERNS,
     'pocket'    : PK_PATTERNS,
     # 'news.ycombinator.com': YC_PATTERNS,
-}
+}  # fmt: skip
 
 
 def get_patterns():  # pragma: no cover
@@ -671,11 +680,13 @@ def get_patterns():  # pragma: no cover
         [rdict] = repls
         for p in pats:
             yield repl(p, rdict)
+
     return {k: list(handle(v)) for k, v in PATTERNS.items()}
 
 
-def domains(it): # pragma: no cover
+def domains(it):  # pragma: no cover
     from collections import Counter
+
     c: typing.Counter[str] = Counter()
     for line in it:
         url = line.strip()
@@ -686,16 +697,18 @@ def domains(it): # pragma: no cover
             c['ERROR'] += 1
             continue
         else:
-            udom = nurl[:nurl.find('/')]
+            udom = nurl[: nurl.find('/')]
             c[udom] += 1
     from pprint import pprint
+
     pprint(c.most_common(20))
 
 
-def groups(it, args): # pragma: no cover
+def groups(it, args):  # pragma: no cover
     all_pats = get_patterns()
 
     from collections import Counter
+
     c: typing.Counter[str | None] = Counter()
     unmatched: list[str] = []
 
@@ -708,7 +721,6 @@ def groups(it, args): # pragma: no cover
         if pat is None:
             unmatched.append(nurl)
 
-
     for i, line in enumerate(it):
         if i % 10000 == 0:
             pass
@@ -719,12 +731,12 @@ def groups(it, args): # pragma: no cover
         except CanonifyException as e:
             print(f"ERROR while normalising! {url} {e}")
             continue
-        udom = nurl[:nurl.find('/')]
+        udom = nurl[: nurl.find('/')]
         usplit = udom.split('.')
         patterns = None
         for dom, pats in all_pats.items():
             dsplit = dom.split('.')
-            if '$'.join(dsplit) in '$'.join(usplit): # meh
+            if '$'.join(dsplit) in '$'.join(usplit):  # meh
                 patterns = pats
                 break
         else:
@@ -748,11 +760,11 @@ def groups(it, args): # pragma: no cover
     print(f"Unmatched: {nones / sum(c.values()) * 100:.1f}%")
     uc = Counter([u.split('/')[:2][-1] for u in unmatched]).most_common(10)
     from pprint import pprint
+
     pprint(uc)
 
 
-
-def display(it, args) -> None: # pragma: no cover
+def display(it, args) -> None:  # pragma: no cover
     # TODO better name?
     import difflib
     from sys import stdout
@@ -772,15 +784,16 @@ def display(it, args) -> None: # pragma: no cover
         can_ = ""
 
         pr = False
+
         def delete(x):
             nonlocal pr
             if x in (
-                    'https://www.',
-                    'http://www.',
-                    'http://',
-                    'https://',
-                    'file://',
-                    '/',
+                'https://www.',
+                'http://www.',
+                'http://',
+                'https://',
+                'file://',
+                '/',
             ):
                 col = None
             else:
@@ -799,9 +812,8 @@ def display(it, args) -> None: # pragma: no cover
                 fn = lambda x: C(x, color='cyan')
             # TODO exclude certain items from comparison?
 
-
-            org_ += fn(line[ff: tt])
-            can_ += fn(can[ff2: tt2])
+            org_ += fn(line[ff:tt])
+            can_ += fn(can[ff2:tt2])
             cl = max(len(org_), len(can_))
             org_ += ' ' * (cl - len(org_))
             can_ += ' ' * (cl - len(can_))
@@ -810,14 +822,17 @@ def display(it, args) -> None: # pragma: no cover
             stdout.write(f'{org_}\n{can_}\n---\n')
 
 
-def main() -> None: # pragma: no cover
+def main() -> None:  # pragma: no cover
     import argparse
-    p = argparse.ArgumentParser(epilog='''
+
+    p = argparse.ArgumentParser(
+        epilog='''
 - sqlite3 promnesia.sqlite 'select distinct orig_url from visits' | cannon.py --domains
 
 - running comparison
   sqlite3 promnesia.sqlite 'select distinct orig_url from visits where norm_url like "%twitter%" order by orig_url' | src/promnesia/cannon.py
-''', formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=100)
+''',
+        formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=100),
     )
     p.add_argument('input', nargs='?')
     p.add_argument('--human', action='store_true')
@@ -828,6 +843,7 @@ def main() -> None: # pragma: no cover
     it: Iterable[str]
     if args.input is None:
         import sys
+
         it = sys.stdin
     else:
         it = [args.input]
@@ -841,7 +857,7 @@ def main() -> None: # pragma: no cover
 
 
 if __name__ == '__main__':
-    main() # pragma: no cover
+    main()  # pragma: no cover
 
 # TODO hmm, it's actually sort of fingerprinter... so maybe that's what I should call it
 

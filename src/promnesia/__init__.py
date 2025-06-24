@@ -14,4 +14,7 @@ from .common import (  # noqa: F401
 )
 
 # TODO think again about it -- what are the pros and cons?
-warnings.warn("DEPRECATED! Please import directly from 'promnesia.common', e.g. 'from promnesia.common import Visit, Source, Results'", DeprecationWarning)
+warnings.warn(
+    "DEPRECATED! Please import directly from 'promnesia.common', e.g. 'from promnesia.common import Visit, Source, Results'",
+    DeprecationWarning,
+)

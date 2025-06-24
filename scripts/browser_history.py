@@ -16,6 +16,7 @@ Browser = str
 CHROME = 'chrome'
 FIREFOX = 'firefox'
 
+
 def get_logger():
     return logging.getLogger('browser-history')
 
@@ -29,7 +30,7 @@ def only(it):
     raise RuntimeError(f'Expected a single value: {values}')
 
 
-def get_path(browser: Browser, profile: str='*') -> Path:
+def get_path(browser: Browser, profile: str = '*') -> Path:
     if browser == 'chrome':
         bpath = Path('~/.config/google-chrome').expanduser()
         dbs = bpath.glob(profile + '/History')
@@ -42,7 +43,6 @@ def get_path(browser: Browser, profile: str='*') -> Path:
     if len(ldbs) == 1:
         return ldbs[0]
     raise RuntimeError(f'Expected single database, got {ldbs}. Perhaps you want to use --profile argument?')
-
 
 
 def test_get_path():
@@ -66,7 +66,7 @@ def format_dt(dt: datetime) -> str:
     return dt.strftime('%Y%m%d%H%M%S')
 
 
-def backup_history(browser: Browser, to: Path, profile: str='*', pattern=None) -> Path:
+def backup_history(browser: Browser, to: Path, profile: str = '*', pattern=None) -> Path:
     assert to.is_dir()
     logger = get_logger()
 
@@ -76,7 +76,6 @@ def backup_history(browser: Browser, to: Path, profile: str='*', pattern=None) -
 
     pattern = path.stem + '-{}' + path.suffix if pattern is None else pattern
     fname = pattern.format(now)
-
 
     res = to / fname
     logger.info('backing up to %s', res)
@@ -94,12 +93,12 @@ def test_backup_history(tmp_path):
 
 
 def guess_db_date(db: Path) -> str:
-    maxvisit = check_output([
-        'sqlite3',
-        '-csv',
-        db,
-        'SELECT max(datetime(((visits.visit_time/1000000)-11644473600), "unixepoch")) FROM visits;'
-    ]).decode('utf8').strip().strip('"')
+    maxvisit = (
+        check_output(['sqlite3', '-csv', db, 'SELECT max(datetime(((visits.visit_time/1000000)-11644473600), "unixepoch")) FROM visits;'])
+        .decode('utf8')
+        .strip()
+        .strip('"')
+    )
     return format_dt(datetime.strptime(maxvisit, "%Y-%m-%d %H:%M:%S"))
 
 
@@ -112,9 +111,12 @@ def test_guess(tmp_path):
 def main():
     logger = get_logger()
     import argparse
+
     p = argparse.ArgumentParser()
     p.add_argument('--browser', type=Browser, required=True)
-    p.add_argument('--profile', type=str, default='*', help='Use to pick the correct profile to back up. If unspecified, will assume a single profile')
+    p.add_argument(
+        '--profile', type=str, default='*', help='Use to pick the correct profile to back up. If unspecified, will assume a single profile'
+    )
     p.add_argument('--to', type=Path, required=True)
     args = p.parse_args()
 

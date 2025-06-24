@@ -1,6 +1,7 @@
 '''
 Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#myinstapaper][instapaper]] module
 '''
+
 from promnesia.common import Loc, Results, Visit
 
 

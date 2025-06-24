@@ -17,6 +17,7 @@ def index(p: PathIsh | None = None) -> Results:
 
     if p is None:
         from my.browser.all import history
+
         yield from _index_new(history())
         return
 
@@ -50,12 +51,14 @@ def _index_new_with_adhoc_config(*, path: PathIsh) -> Results:
     ## this would result in each subsequent call to my.browser.export.history to invalidate cache every time
     ## so we hack cachew path so it's different for each call
     from my.core.core_config import config as hpi_core_config
+
     hpi_cache_dir = hpi_core_config.get_cache_dir()
     sanitized_path = re.sub(r'\W', '_', str(path))
     cache_override = None if hpi_cache_dir is None else hpi_cache_dir / sanitized_path
     ##
 
     from my.core.common import Paths, classproperty, get_files
+
     class config:
         class core:
             cache_dir = cache_override
@@ -67,8 +70,10 @@ def _index_new_with_adhoc_config(*, path: PathIsh) -> Results:
                     return tuple([f for f in get_files(path, glob='**/*') if is_sqlite_db(f)])
 
     from my.core.cfg import tmp_config
+
     with tmp_config(modules='my.browser.export|my.core.core_config', config=config):
         from my.browser.export import history
+
         yield from _index_new(history())
 
 

@@ -51,27 +51,28 @@ LAUNCHD_TEMPLATE = '''
 
 
 def systemd(*args: str | Path, method=check_call) -> None:
-    method([
-        'systemctl', '--no-pager', '--user', *args,
-    ])
+    method(['systemctl', '--no-pager', '--user', *args])
 
 
 def install_systemd(name: str, out: Path, launcher: str, largs: list[str]) -> None:
     unit_name = name
 
     import shlex
+
     extra_args = ' '.join(shlex.quote(str(a)) for a in largs)
 
-    out.write_text(SYSTEMD_TEMPLATE.format(
-        launcher=launcher,
-        extra_args=extra_args,
-    ))
+    out.write_text(
+        SYSTEMD_TEMPLATE.format(
+            launcher=launcher,
+            extra_args=extra_args,
+        )
+    )
 
     try:
-        systemd('stop' , unit_name, method=run) # ignore errors here if it wasn't running in the first place
+        systemd('stop', unit_name, method=run)  # ignore errors here if it wasn't running in the first place
         systemd('daemon-reload')
         systemd('enable', unit_name)
-        systemd('start' , unit_name)
+        systemd('start', unit_name)
         systemd('status', unit_name)
     except Exception as e:
         print(f"Something has gone wrong... you might want to use 'journalctl --user -u {unit_name}' to investigate", file=sys.stderr)
@@ -81,15 +82,17 @@ def install_systemd(name: str, out: Path, launcher: str, largs: list[str]) -> No
 def install_launchd(name: str, out: Path, launcher: str, largs: list[str]) -> None:
     service_name = name
     arguments = '\n'.join(f'<string>{a}</string>' for a in [launcher, *largs])
-    out.write_text(LAUNCHD_TEMPLATE.format(
-        service_name=service_name,
-        arguments=arguments,
-    ))
+    out.write_text(
+        LAUNCHD_TEMPLATE.format(
+            service_name=service_name,
+            arguments=arguments,
+        )
+    )
     cmd = ['launchctl', 'load', '-w', str(out)]
     print('Running: ' + ' '.join(cmd), file=sys.stderr)
     check_call(cmd)
 
-    time.sleep(1) # to give it some time? not sure if necessary
+    time.sleep(1)  # to give it some time? not sure if necessary
     check_call(f'launchctl list | grep {name}', shell=True)
 
 
@@ -105,7 +108,7 @@ def install(args: argparse.Namespace) -> None:
         if Path(name).suffix != suf:
             name = name + suf
         out = Path(f'~/.config/systemd/user/{name}')
-    elif SYSTEM == 'Darwin': # osx
+    elif SYSTEM == 'Darwin':  # osx
         out = Path(f'~/Library/LaunchAgents/{name}.plist')
     else:
         raise UNSUPPORTED_SYSTEM
@@ -128,9 +131,9 @@ def install(args: argparse.Namespace) -> None:
         '--timezone', args.timezone,
         '--host', args.host,
         '--port', args.port,
-    ]
+    ]  # fmt: skip
 
-    out.parent.mkdir(parents=True, exist_ok=True) # sometimes systemd dir doesn't exist
+    out.parent.mkdir(parents=True, exist_ok=True)  # sometimes systemd dir doesn't exist
     if SYSTEM == 'Linux':
         install_systemd(name=name, out=out, launcher=launcher, largs=largs)
     elif SYSTEM == 'Darwin':

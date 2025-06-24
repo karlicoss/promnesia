@@ -33,7 +33,7 @@ def test_filetypes() -> None:
         # seriously, windows doesn't know about docx???
         *([] if windows else 'docx pptx xlsx'.split()),
         *([] if windows else 'ods odt rtf'.split()),
-    ] + ([] if windows else 'djvu'.split()):
+    ] + ([] if windows else 'djvu'.split()):  # fmt: skip
         assert handled('file.' + ext)
 
     # source code
