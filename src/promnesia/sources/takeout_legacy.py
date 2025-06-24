@@ -28,11 +28,10 @@ def index() -> Results:
 
 import json
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from itertools import chain
 from pathlib import Path
 
-import pytz
 from more_itertools import unique_everseen
 
 from promnesia import config
@@ -117,7 +116,7 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
     hist = j['Browser History']
     for item in hist:
         url = item['url']
-        time = datetime.fromtimestamp(item['time_usec'] / 10 ** 6, tz=pytz.utc)
+        time = datetime.fromtimestamp(item['time_usec'] / 10 ** 6, tz=timezone.utc)
         # TODO any more interesitng info?
         yield Visit(
             url=url,

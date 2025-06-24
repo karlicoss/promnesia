@@ -7,7 +7,6 @@ dependencies = [
     "tzlocal",            # guessling local timezone
     "more_itertools",
     "typing-extensions",
-    "pytz",
     "sqlalchemy>=2.0",    # DB api
 
     ##
@@ -89,7 +88,6 @@ testing = [
     "requests", "types-requests",
 
     ## other mypy stubs
-    "types-pytz"      ,
     "types-requests"  ,  # used in tests
     "types-beautifulsoup4",  # NOTE: not needed after the <4.13.0 pinning is resolved
     ##

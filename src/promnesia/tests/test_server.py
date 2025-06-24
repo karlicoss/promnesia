@@ -284,7 +284,7 @@ def test_query_while_indexing(tmp_path: Path, mode: str) -> None:
 # S.EnvConfig.set(S.ServerConfig(
 #     # TODO populate with test db and benchmark properly...
 #     db=Path('/todo'),
-#     timezone=pytz.utc,
+#     timezone=timezone.utc,
 # ))
 # links = [f'https://reddit.com/whatever{i}.html' for i in range(count)]
 # res = S.visited(links)

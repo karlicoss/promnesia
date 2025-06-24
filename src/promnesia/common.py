@@ -10,7 +10,7 @@ import warnings
 from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from copy import copy
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
@@ -18,8 +18,8 @@ from subprocess import PIPE, Popen, run
 from timeit import default_timer as timer
 from types import ModuleType
 from typing import TYPE_CHECKING, Callable, NamedTuple, Optional, TypeVar, Union
+from zoneinfo import ZoneInfo
 
-import pytz
 from more_itertools import intersperse
 
 from .cannon import canonify
@@ -256,7 +256,7 @@ def extract_urls(s: str, *, syntax: Syntax='') -> list[Url]:
 
 
 def from_epoch(ts: int) -> datetime:
-    return datetime.fromtimestamp(ts, tz=pytz.utc)
+    return datetime.fromtimestamp(ts, tz=timezone.utc)
 
 
 def join_tags(tags: Iterable[str]) -> str:
@@ -547,14 +547,14 @@ def get_system_zone() -> str:
 
 
 @lru_cache(1)
-def get_system_tz() -> pytz.BaseTzInfo:
+def get_system_tz() -> ZoneInfo:
     zone = get_system_zone()
     try:
-        return pytz.timezone(zone)
+        return ZoneInfo(zone)
     except Exception as e:
         logger.exception(e)
         logger.error("Unknown time zone %s. Falling back to UTC. Please report this as a bug!", zone)
-        return pytz.utc
+        return ZoneInfo('UTC')
 
 # used in misc/install_server.py
 def root() -> Path:

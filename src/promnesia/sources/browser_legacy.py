@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
-
-import pytz
 
 from promnesia import config
 from promnesia.common import Loc, PathIsh, Results, Second, Visit, is_sqlite_db, logger
@@ -196,7 +194,7 @@ class Chrome(Extr):
 # yep, tested it and looks like utc
 def chrome_time_to_utc(chrome_time: int) -> datetime:
     epoch = (chrome_time / 1_000_000) - 11644473600
-    return datetime.fromtimestamp(epoch, pytz.utc)
+    return datetime.fromtimestamp(epoch, timezone.utc)
 
 
 def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
@@ -214,7 +212,7 @@ def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
     else:
         # milliseconds
         ts /= 1_000
-    dt = datetime.fromtimestamp(ts, pytz.utc)
+    dt = datetime.fromtimestamp(ts, timezone.utc)
     url = unquote(url) # firefox urls are all quoted
     return Visit(
         url=url,
@@ -251,7 +249,7 @@ class Safari(Extr):
     def row2visit(row: sqlite3.Row, loc: Loc) -> Visit:
         url  = row['url']
         ts   = row['visit_time'] + 978307200 # https://stackoverflow.com/a/34546556/16645
-        dt = datetime.fromtimestamp(ts, pytz.utc)
+        dt = datetime.fromtimestamp(ts, timezone.utc)
 
         return Visit(
             url=url,
