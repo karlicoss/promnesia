@@ -95,7 +95,7 @@ def install_launchd(name: str, out: Path, launcher: str, largs: list[str]) -> No
 
 def install(args: argparse.Namespace) -> None:
     name = args.name
-    # todo use appdirs for config dir detection
+    # todo use platformdirs for config dir detection
     if SYSTEM == 'Linux':
         # Check for existence of systemd
         # https://www.freedesktop.org/software/systemd/man/sd_booted.html

@@ -235,7 +235,7 @@ Also check out [[file:doc/TROUBLESHOOTING.org][troubleshooting guide]] or [[http
 
 - create the config: =promnesia config create=
 
-  The command will put a stub promnesia config in your user config directory, e.g. =~/.config/promnesia/config.py= on Linux. (it's possibly different on OSX and Windows, see [[https://github.com/ActiveState/appdirs/blob/3fe6a83776843a46f20c2e5587afcffe05e03b39/appdirs.py#L187-L190][this]] if you're not sure). If you wish to specify a custom location, you can set the ~PROMNESIA_CONFIG~ environment variable or pass the ~--config~ flag.
+  The command will put a stub promnesia config in your user config directory, e.g. =~/.config/promnesia/config.py= on Linux. (it's possibly different on OSX and Windows, see [[https://github.com/tox-dev/platformdirs?tab=readme-ov-file#example-output][this]] if you're not sure). If you wish to specify a custom location, you can set the ~PROMNESIA_CONFIG~ environment variable or pass the ~--config~ flag.
 
 - edit the config and add some sources
 

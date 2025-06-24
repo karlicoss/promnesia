@@ -20,6 +20,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Callable, NamedTuple, Optional, TypeVar, Union
 from zoneinfo import ZoneInfo
 
+import platformdirs
 from more_itertools import intersperse
 
 from .cannon import canonify
@@ -210,7 +211,7 @@ def get_logger() -> logging.Logger:
 # kinda singleton
 @lru_cache(1)
 def get_tmpdir() -> tempfile.TemporaryDirectory[str]:
-    # todo use appdirs?
+    # todo use platformdirs?
     tdir = tempfile.TemporaryDirectory(suffix="promnesia")
     return tdir
 
@@ -390,22 +391,21 @@ def slugify(x: str) -> str:
 
 
 # todo cache?
-def appdirs():
+def _platformdirs() -> platformdirs.PlatformDirs:
     under_test = os.environ.get('PYTEST_CURRENT_TEST') is not None
     # todo actually use test name?
     name = 'promnesia-test' if under_test else 'promnesia'
-    import appdirs as ad  # type: ignore[import-untyped]
-    return ad.AppDirs(appname=name)
+    return platformdirs.PlatformDirs(appname=name)
 
 
 def default_output_dir() -> Path:
     # TODO: on Windows, there are two extra subdirectories (<AppAuthor>\<AppName>)
     # perhaps makes sense to create it here with parents to avoid issues downstream?
-    return Path(appdirs().user_data_dir)
+    return Path(_platformdirs().user_data_dir)
 
 
 def default_cache_dir() -> Path:
-    return Path(appdirs().user_cache_dir)
+    return Path(_platformdirs().user_cache_dir)
 
 
 # make it lazy, otherwise it might crash on module import (e.g. on Windows)
@@ -576,7 +576,7 @@ def user_config_file() -> Path:
     if "PROMNESIA_CONFIG" in os.environ:
         return Path(os.environ["PROMNESIA_CONFIG"])
     else:
-        return Path(appdirs().user_config_dir) / 'config.py'
+        return Path(_platformdirs().user_config_dir) / 'config.py'
 
 
 def default_config_path() -> Path:
