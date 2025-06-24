@@ -3,7 +3,7 @@
 dynamic = ["version"]  # version is managed by setuptools_scm
 name = "promnesia"
 dependencies = [
-    "appdirs",            # for portable user directories detection
+    "platformdirs",       # for portable user directories detection
     "tzlocal",            # guessling local timezone
     "more_itertools",
     "typing-extensions",

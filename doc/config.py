@@ -130,7 +130,7 @@ SOURCES = [
 Optional setting.
 A directory where promnesia.sqlite will be stored.
 If not specified, user data directory is used, e.g. ~/.local/share/promnesia/
-see https://github.com/ActiveState/appdirs#some-example-output for different OS
+see https://github.com/tox-dev/platformdirs?tab=readme-ov-file#example-output for different OS
 '''
 OUTPUT_DIR = '/data/promnesia'
 
