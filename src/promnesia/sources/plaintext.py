@@ -17,6 +17,7 @@ if _is_windows:
 @lru_cache
 def _has_grep() -> bool:
     import shutil
+
     return shutil.which('grep') is not None
 
 
@@ -25,9 +26,9 @@ Command = list[str]
 
 _GREP_ARGS: Command = [
     '--color=never',
-    '-H', # always show filename TODO not sure if works on osx
-    '-n', # print line numbers (to restore context)
-    '-I', # ignore binaries
+    '-H',  # always show filename TODO not sure if works on osx
+    '-n',  # print line numbers (to restore context)
+    '-I',  # ignore binaries
 ]
 
 if not _is_windows:
@@ -36,6 +37,7 @@ if not _is_windows:
         '--exclude-dir=".git"',
     ]
 
+
 # NOTE: grep/findstr exit with code 1 on no matches...
 # we hack around it in shellcmd module (search 'grep')
 def _grep(*, paths: list[str], recursive: bool) -> Command:
@@ -43,10 +45,11 @@ def _grep(*, paths: list[str], recursive: bool) -> Command:
         'grep',
         *(['-r'] if recursive else []),
         *_GREP_ARGS,
-        '-E', # 'extended' syntax
+        '-E',  # 'extended' syntax
         _URL_REGEX,
         *paths,
     ]
+
 
 def _findstr(*, path: str, recursive: bool) -> Command:
     return [
@@ -85,15 +88,18 @@ def _extract_from_file(path: str) -> Command:
 def extract_from_path(path: PathIsh) -> Command:
     pp = Path(path)
 
-    if pp.is_dir(): # TODO handle archives here???
+    if pp.is_dir():  # TODO handle archives here???
         return _extract_from_dir(str(pp))
 
-    if any(pp.suffix == ex for ex in (
+    if any(
+        pp.suffix == ex
+        for ex in (
             '.xz',
             '.bz2',
             '.gz',
             '.zip',
-    )):
+        )
+    ):
         # todo should be debug?
         # or should delete it completely, feels like unpacking archives here is a bit too much
         raise RuntimeError(f"Archives aren't supported yet: {path}")

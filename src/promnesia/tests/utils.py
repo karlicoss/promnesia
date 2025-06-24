@@ -9,7 +9,7 @@ from ..extract import extract_visits
 
 # TODO a bit shit... why did I make it dict at first??
 Urls = Union[
-           Mapping[str, Optional[str]],
+    Mapping[str, Optional[str]],
     Sequence[tuple[str, Optional[str]]],
 ]
 

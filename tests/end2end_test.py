@@ -46,15 +46,17 @@ class Browser:
             pytest.skip("Only can't use headless browser on CI")
 
 
+# fmt: off
 FF  = Browser('firefox', headless=False)
 CH  = Browser('chrome' , headless=False)
 FFH = Browser('firefox', headless=True)
 CHH = Browser('chrome' , headless=True)
+# fmt: on
 
 
 # TODO ugh, I guess it's not that easy to make it work because of isAndroid checks...
 # I guess easy way to test if you really want is to temporary force isAndroid to return true in extension...
-FM  = Browser('firefox-mobile', headless=False)
+FM = Browser('firefox-mobile', headless=False)
 
 
 def browser_(driver: Driver) -> Browser:
@@ -76,6 +78,7 @@ def confirm(what: str) -> None:
         return
 
     import click
+
     click.confirm(click.style(what, blink=True, fg='yellow'), abort=True)
     # TODO focus window if not headless
 
@@ -84,9 +87,11 @@ class Manual:
     def confirm(self, what: str) -> None:
         raise NotImplementedError
 
+
 class Interactive(Manual):
     def confirm(self, what: str) -> None:
         confirm(what)
+
 
 class Headless(Manual):
     def confirm(self, what: str) -> None:
@@ -121,17 +126,21 @@ def browsers(*br: Browser) -> IdType:
         br = tuple(b for b in br if b.headless)
 
     from functools import wraps
+
     def dec(f):
         if len(br) == 0:
             dec_ = pytest.mark.skip('Filtered out all browsers (because of no GUI/non-interactive mode)')
         else:
             dec_ = pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
+
         @with_browser_tests
         @dec_
         @wraps(f)
         def ff(*args, **kwargs):
             return f(*args, **kwargs)
+
         return ff
+
     return dec
 
 
@@ -432,7 +441,6 @@ def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> N
     'url',
     [
         "https://en.wikipedia.org/wiki/Symplectic_group",
-
         # regression test for https://github.com/karlicoss/promnesia/issues/295
         # note: seemed to reproduce on chrome more consistently for some reason
         "https://www.udemy.com/course/javascript-bible/",
@@ -466,16 +474,18 @@ def test_sidebar_basic(url: str, addon: Addon, driver: Driver, backend: Backend)
         assert len(filters) == 2, filters
 
         _all = filters[0]
-        tag  = filters[1]
+        tag = filters[1]
 
         # this should happen in JS
         sanitized = src.replace(' ', '')
 
+        # fmt: off
         assert 'all'     in _all.text
         assert sanitized in tag.text
 
         assert 'all'     in notnone(_all.get_attribute('class')).split()
         assert sanitized in notnone(tag .get_attribute('class')).split()
+        # fmt: on
 
         visits = addon.sidebar.visits
         assert len(visits) == 1, visits
@@ -784,9 +794,7 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
     assert is_visible(driver, popup_context)
     assert popup_context.text == 'some comment'
 
-    popup_datetime = Wait(driver, timeout=5).until(
-        EC.presence_of_element_located((By.CLASS_NAME, 'datetime'))
-    )
+    popup_datetime = Wait(driver, timeout=5).until(EC.presence_of_element_located((By.CLASS_NAME, 'datetime')))
     assert is_visible(driver, popup_datetime)
     assert popup_datetime.text in {
         '10/09/2014, 00:00:00',

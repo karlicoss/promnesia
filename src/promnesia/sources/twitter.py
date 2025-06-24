@@ -23,7 +23,7 @@ def index() -> Results:
         processed += 1
         try:
             urls = t.urls
-        except Exception as e: # just in case..
+        except Exception as e:  # just in case..
             yield e
             urls = []
 

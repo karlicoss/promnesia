@@ -45,8 +45,8 @@ def run_server(db: PathIsh | None = None, *, timezone: str | None = None) -> Ite
             '--quiet',
             '--port', port,
             *([] if timezone is None else ['--timezone', timezone]),
-            *([] if db is None else ['--db'  , str(db)]),
-        ]
+            *([] if db is None else ['--db', str(db)]),
+        ]  # fmt: skip
         with tmp_popen(promnesia_bin(*args)) as server_process:
             server = Helper(host=host, port=port, process=server_process)
 

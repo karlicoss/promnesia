@@ -33,4 +33,3 @@ def index() -> Results:
                 context=m.text,
                 locator=loc,
             )
-

@@ -35,7 +35,7 @@ class Config(NamedTuple):
     #
     # NOTE: INDEXERS is deprecated, use SOURCES instead
     INDEXERS: list[ConfigSource] = []
-    #MIME_HANDLER: Optional[str] = None # TODO
+    # MIME_HANDLER: Optional[str] = None # TODO
 
     @property
     def sources(self) -> Iterable[Res[Source]]:
@@ -45,7 +45,9 @@ class Config(NamedTuple):
         raw = self.SOURCES + self.INDEXERS
 
         if len(raw) == 0:
-            raise RuntimeError("Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup for more information")
+            raise RuntimeError(
+                "Please specify SOURCES in the config! See https://github.com/karlicoss/promnesia#setup for more information"
+            )
 
         for r in raw:
             if isinstance(r, ModuleName):
@@ -70,8 +72,8 @@ class Config(NamedTuple):
         cd = self.CACHE_DIR
         cpath: Path | None
         if cd is None:
-            cpath = None # means 'disabled' in cachew
-        elif cd == '': # meh.. but need to make it None friendly..
+            cpath = None  # means 'disabled' in cachew
+        elif cd == '':  # meh.. but need to make it None friendly..
             cpath = default_cache_dir()
         else:
             cpath = Path(cd)
@@ -95,11 +97,13 @@ class Config(NamedTuple):
     def hook(self) -> HookT | None:
         return self.HOOK
 
+
 instance: Config | None = None
 
 
 def has() -> bool:
     return instance is not None
+
 
 def get() -> Config:
     assert instance is not None, "Expected config to be set, but it's not"
@@ -122,9 +126,12 @@ def import_config(config_file: PathIsh) -> Config:
 
     # todo just exec??
     name = p.stem
-    spec = importlib.util.spec_from_file_location(name, p); assert spec is not None
-    mod = importlib.util.module_from_spec(spec); assert mod is not None
-    loader = spec.loader; assert loader is not None
+    spec = importlib.util.spec_from_file_location(name, p)
+    assert spec is not None
+    mod = importlib.util.module_from_spec(spec)
+    assert mod is not None
+    loader = spec.loader
+    assert loader is not None
     loader.exec_module(mod)
 
     d = {}
@@ -146,7 +153,7 @@ def use_cores() -> int | None:
         return None
     try:
         return int(cs)
-    except ValueError: # any other value means 'use all
+    except ValueError:  # any other value means 'use all
         return 0
 
 
@@ -156,5 +163,5 @@ def extra_fd_args() -> list[str]:
     Can be used to pass --ignore-file parameter
     '''
     v = os.environ.get('PROMNESIA_FD_EXTRA_ARGS', '')
-    extra = v.split() # eh, hopefully splitting that way is ok...
+    extra = v.split()  # eh, hopefully splitting that way is ok...
     return extra

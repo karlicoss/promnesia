@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def index(
     db_path: PathIsh = "~/.ViberPC/*/viber.db",
-    locator_schema: str="editor",
+    locator_schema: str = "editor",
     *,
     http_only: bool = False,
 ) -> Results:

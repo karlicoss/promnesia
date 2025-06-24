@@ -1,6 +1,7 @@
 '''
 Uses [[https://github.com/karlicoss/HPI][HPI]] github module
 '''
+
 from __future__ import annotations
 
 # Note: requires the 'mistletoe' module if you enable render_markdown

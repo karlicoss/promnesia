@@ -23,6 +23,7 @@ def real_db():
     import shutil
 
     from private import real_db_path, test_filter  # type: ignore[import-not-found]
+
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
         # tdb.touch()
@@ -30,11 +31,7 @@ def real_db():
 
         filt = test_filter()
         if filt is not None:
-            check_call([
-                'sqlite3',
-                tdb,
-                filt,
-            ])
+            check_call(['sqlite3', tdb, filt])
 
     return indexer
 
@@ -55,6 +52,7 @@ class Annotator:
 
     def build(self, **extra):
         from pysubs2 import Color, SSAEvent, SSAFile  # type: ignore[import-not-found]
+
         millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
             SSAEvent(
@@ -62,15 +60,15 @@ class Annotator:
                 end  =millis(t - self.start + timedelta(seconds=length)),
                 text=text.replace('\n', r'\N'), # \N necessary for SSA files
             ) for t, text, length in self.l
-        )
+        )  # fmt: skip
         sf = SSAFile()
         style = sf.styles['Default'].copy()
-        style.fontsize = 16 # default is 20, bit too much??
-        style.outlinecolor = Color(0, 0, 0, 50) # semitransparent
+        style.fontsize = 16  # default is 20, bit too much??
+        style.outlinecolor = Color(0, 0, 0, 50)  # semitransparent
         style.shadow = 0.0
 
         style.outline = 0.1
-        style.borderstyle = 3 # no idea why 3, but it makes the background apperar in conjunction with outline
+        style.borderstyle = 3  # no idea why 3, but it makes the background apperar in conjunction with outline
 
         for k, v in extra.items():
             setattr(style, k, v)
@@ -78,7 +76,6 @@ class Annotator:
         for s in subs:
             sf.append(s)
         return sf.to_string('ass')
-
 
 
 @contextmanager
@@ -89,8 +86,8 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
     # 456
     # 123
     spos = {
-        'topleft'    : 7,
-        'bottomleft' : 1,
+        'topleft': 7,
+        'bottomleft': 1,
         'bottomright': 3,
     }[subs_position]
 
@@ -115,19 +112,21 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
         W = 2560
         H = 1440
 
-        margin   = 28 # make up space for panel etc... figure that out properly later
+        margin = 28  # make up space for panel etc... figure that out properly later
         titlebar = 32
         # TODO I think firefox counts position as the actual top left corner, but geometry without the title bar???
 
         w = W // 2
         h = H - margin - titlebar
+
         def set_geometry(wid: str):
             check_call([
                 'wmctrl',
                 '-i',
                 '-r', wid,
                 '-e', f'0,0,{margin},{w},{h}',
-            ])
+            ])  # fmt: skip
+
         set_geometry(wid=driver_wid)
 
         extras = kwargs
@@ -136,7 +135,8 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
 
         configure_extension(
             driver,
-            host=None, port=None, # TODO meh
+            host=None,
+            port=None,  # TODO meh
             notify_contexts=False,
             position=position,
             verbose_errors=False,
@@ -160,13 +160,10 @@ def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, 
 
             subs = path.with_suffix('.ssa')
             subs.write_text(ann.build(alignment=spos))
-            out  = path.with_suffix('.webm')  # noqa: F841
+            out = path.with_suffix('.webm')  # noqa: F841
 
             converter = Path(__file__).parent.absolute() / 'convert_screencast.py'
-            check_call([
-                converter,
-                path,
-            ])
+            check_call([converter, path])
 
             # TODO unlink subs here?
             # subs.unlink()
@@ -187,6 +184,7 @@ def prompt(what: str):
 
 fast = False
 
+
 def wait(x):
     if fast:
         return
@@ -199,18 +197,21 @@ def wait(x):
 def test_demo_quick(tmp_path, browser):
     path = Path('demos/quick')
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='topleft',
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='topleft',
     ) as (helper, annotate):
         driver = helper.driver
 
         driver.get('https://en.wikipedia.org/wiki/Whatever_(slang)')
-        annotate('''
+        annotate(
+            '''
 One two three four five.
 Six seven eight nine ten?
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
 
@@ -228,10 +229,10 @@ def test_demo_mark_visited(tmp_path, browser):
     # TODO fast mode??
     url = 'https://slatestarcodex.com/'
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomright',
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='bottomright',
     ) as (helper, annotate):
         driver = helper.driver
 
@@ -239,17 +240,23 @@ def test_demo_mark_visited(tmp_path, browser):
 
         # TODO display subs nicer??
 
-        annotate('''
+        annotate(
+            '''
 On the left you can see a blogroll with recommended blogs.
 Lots of sites there!
-''', length=3)
+''',
+            length=3,
+        )
 
         wait(3)
 
-        annotate('''
+        annotate(
+            '''
 You feel like reading something new.
 Which are the ones you haven't seen before?
-        ''', length=3)
+        ''',
+            length=3,
+        )
 
         wait(3)
 
@@ -262,15 +269,21 @@ Which are the ones you haven't seen before?
         # TODO somehow mark images with the same annotations??
         helper.screenshot(path.with_suffix('.png'))
 
-        annotate('''
+        annotate(
+            '''
 The command marks links you've already visited with dots.
 This way you don't have to search your browser history all over for each of them!
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
-        annotate('''
+        annotate(
+            '''
 You can click right on the ones you haven't seen before and start exploring!
-        ''', length=8)
+        ''',
+            length=8,
+        )
         wait(8)
 
 
@@ -291,21 +304,30 @@ def test_demo_mark_visited_2(tmp_path, browser):
 
         wait(2)
 
-        annotate('''
+        annotate(
+            '''
 Lots of links to explore on this page.
 Which ones haven't I seen before?
-''', length=5)
+''',
+            length=5,
+        )
         wait(5)
 
         helper.mark_visited()
-        annotate('''
+        annotate(
+            '''
 Hotkey press...
-        ''', length=1.5)
+        ''',
+            length=1.5,
+        )
         wait(1.5)
 
-        annotate('''
+        annotate(
+            '''
 Links I've already visited are marked with dots!
-        ''', length=8)
+        ''',
+            length=8,
+        )
         wait(2)
         helper.screenshot(path.with_suffix('.png'))
 
@@ -314,28 +336,35 @@ Links I've already visited are marked with dots!
 
 # TODO perhaps make them independent of network? Although useful for demos
 
+
 @uses_x
 @browsers(FF, CH)
 def test_demo_child_visits(tmp_path, browser):
     path = Path('demos/child-visits')
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomleft',
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='bottomleft',
     ) as (helper, annotate):
         driver = helper.driver
         driver.get('https://twitter.com/michael_nielsen/status/1162502843921600512')
 
-        annotate('''
+        annotate(
+            '''
 While browsing Twitter, I see an account recommendation.
-''', length=4)
+''',
+            length=4,
+        )
         wait(4)
 
-        annotate('''
+        annotate(
+            '''
 I really value Michael Nielsen's opinion, so it's worth checking out.
-''', length=5)
-        wait(5) # TODO maybe, wait by default??
+''',
+            length=5,
+        )
+        wait(5)  # TODO maybe, wait by default??
 
         # TODO move_to, etc. animate!
 
@@ -346,17 +375,23 @@ I really value Michael Nielsen's opinion, so it's worth checking out.
         # TODO wait till loaded??
 
         # TODO turn contexts notification on here?
-        annotate('''
+        annotate(
+            '''
 See the green eye icon in top right?
 It means I have run into this account before!
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
         wait(1)
         # TODO make hotkey popup larger...
-        annotate('''
+        annotate(
+            '''
 Let's see...
-        ''', length=2)
+        ''',
+            length=2,
+        )
         wait(1)
 
         helper.activate()
@@ -364,14 +399,16 @@ Let's see...
 
         helper.screenshot(path.with_suffix('.png'))
 
-        annotate('''
+        annotate(
+            '''
 Right, I've already bookmarked something interesting from that guy before.
 I guess I should follow him!
-        ''', length=7)
+        ''',
+            length=7,
+        )
         wait(7)
 
         # TODO this could also demonstrate jump to the tweet? ( ->->  )
-
 
 
 @uses_x
@@ -384,35 +421,44 @@ def test_demo_child_visits_2(tmp_path, browser):
         driver.get('https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7')
 
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomleft',
-            before=before,
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='bottomleft',
+        before=before,
     ) as (helper, annotate):
         driver = helper.driver
         wait(2)
 
-        annotate('''
+        annotate(
+            '''
 I ran into this cool post on Hackernews.
 Usually I'd also check out the author's blog for more content.
-''', length=6)
+''',
+            length=6,
+        )
         wait(6)
 
         driver.get('https://medium.com/@justlv')
         wait(1)
 
-        annotate('''
+        annotate(
+            '''
 The icon is green.
 So I've interacted with the page before!
-''', length=5)
+''',
+            length=5,
+        )
         wait(5)
 
         wait(1)
         # TODO make hotkey popup larger...
-        annotate('''
+        annotate(
+            '''
 Let's see...
-        ''', length=2)
+        ''',
+            length=2,
+        )
         wait(2)
 
         helper.activate()
@@ -426,17 +472,23 @@ Let's see...
         tweet = driver.find_element_by_class_name('locator')
         helper.move_to(tweet)
 
-        annotate('''
+        annotate(
+            '''
 Cool, I've even tweeted about one of the posts on this blog before!
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
         helper.screenshot(path.with_suffix('.png'))
 
         # TODO original tweet -> smth else??
-        annotate('''
+        annotate(
+            '''
 Clicking on 'context' will bring me straight to the original tweet.
-        ''', length=6)
+        ''',
+            length=6,
+        )
         wait(2)
 
         a_tweet = tweet.find_element_by_tag_name('a')
@@ -447,8 +499,6 @@ Clicking on 'context' will bring me straight to the original tweet.
         a_tweet.click()
 
         wait(8)
-
-
 
 
 def scroll_to_text(driver, text: str):
@@ -471,9 +521,8 @@ from end2end_test import get_webdriver
 @uses_x
 @browsers(FF, CH)
 def test_demo_highlights(tmp_path, browser):
-    assert browser == FF, browser # because of the profile_dir hack
+    assert browser == FF, browser  # because of the profile_dir hack
     path = demos / 'highlights'
-
 
     def before(driver):
         from private import instapaper_cookies
@@ -485,23 +534,25 @@ def test_demo_highlights(tmp_path, browser):
 
         driver.get('https://instapaper.com/read/1257588750')
 
-
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomleft',
-            highlights=True,
-            before=before,
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='bottomleft',
+        highlights=True,
+        before=before,
     ) as (helper, annotate):
         # TODO is it possible to disable extension first??
         driver = helper.driver
 
         wait(2)
 
-        annotate('''
+        annotate(
+            '''
 I'm using Instapaper to read and highlight articles while I'm offline on my phone.
-        ''', length=7)
+        ''',
+            length=7,
+        )
         wait(2)
 
         scroll_to_text(driver, "where things stood")
@@ -516,9 +567,12 @@ I'm using Instapaper to read and highlight articles while I'm offline on my phon
             driver2.get(ORIG)
 
             # TODO maybe, have annotation 'start' and 'interrupt'?
-            annotate('''
+            annotate(
+                '''
 But if you open the original article, you can't see the annotations!
-            ''', length=7)
+            ''',
+                length=7,
+            )
             wait(2)
 
             scroll_to_text(driver2, "where things stood")
@@ -526,9 +580,12 @@ But if you open the original article, you can't see the annotations!
             scroll_to_text(driver2, "As impossible as it sounds")
             wait(3)
 
-        annotate('''
+        annotate(
+            '''
 Let's try it with Promnesia!
-        ''', length=7)
+        ''',
+            length=7,
+        )
         wait(2)
 
         driver.get(ORIG)
@@ -537,9 +594,12 @@ Let's try it with Promnesia!
         scroll_to_text(driver, "As impossible as it sounds")
         wait(3)
 
-        annotate('''
+        annotate(
+            '''
 Highlights are displayed within the original page!
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
         helper.activate()
@@ -550,9 +610,12 @@ Highlights are displayed within the original page!
         # check_call(['import', '-window', self.wid(), path])
         helper.screenshot(path.with_suffix('.png'))
 
-        annotate('''
+        annotate(
+            '''
 It works with any highlight source, be it Pocket, Hypothes.is or anything else.
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
         annotate('''
@@ -567,16 +630,20 @@ Let me demonstrate...
         wait(2)
 
         # TODO move cursor to the note?
-        annotate('''
+        annotate(
+            '''
 This clipping is in my org-mode notes!
 It's not using any annotation service -- it's just a plaintext file!
-        ''', length=7)
+        ''',
+            length=7,
+        )
         wait(7)
 
 
 # TODO https://www.youtube.com/watch?v=YKLpz025vYY
 # TODO https://www.youtube.com/watch?v=17Q0tJZcsnY
 # TODO https://en.wikipedia.org/wiki/SnapPea
+
 
 @uses_x
 @browsers(FF, CH)
@@ -587,26 +654,32 @@ def test_demo_how_did_i_get_here(tmp_path, browser):
         driver.get('https://www.amazon.co.uk/Topoi-Categorial-Analysis-Logic-Mathematics/dp/0486450260')
 
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomleft',
-            before=before,
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='bottomleft',
+        before=before,
     ) as (helper, annotate):
         driver = helper.driver
 
-        annotate('''
+        annotate(
+            '''
 I found this link in my bookmarks.
 Hmmm, can't remember, why I added it.
-        ''', length=6)
+        ''',
+            length=6,
+        )
         wait(6)
 
         helper.activate()
         wait(2)
 
-        annotate('''
+        annotate(
+            '''
 If you click on a timestamp, you'll jump straight to the visit in your timeline.
-        ''', length=6)
+        ''',
+            length=6,
+        )
         wait(2)
 
         helper.switch_to_sidebar()
@@ -624,11 +697,14 @@ If you click on a timestamp, you'll jump straight to the visit in your timeline.
         driver.execute_script(CURSOR_SCRIPT)
         wait(1)
 
-        annotate('''
+        annotate(
+            '''
 Looks like right before clicking on the Amazon link, I was reading
 a book on math.ucr.edu/home/baez/planck
 Let's see...
-        ''', length=8)
+        ''',
+            length=8,
+        )
         wait(4)
         # meh..
 
@@ -645,9 +721,12 @@ Let's see...
         # driver.switch_to.window(driver.window_handles[-1])
 
         wait(2)
-        annotate('''
+        annotate(
+            '''
 Aha! Here's the reference to the book.
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(2)
         driver.execute_script(
             # meh
@@ -655,7 +734,6 @@ Aha! Here's the reference to the book.
         )
         wait(5)
     # TODO mention that it's chrome history! so I wouldn't have it in my browser history in firefox
-
 
 
 @uses_x
@@ -666,35 +744,43 @@ def test_demo_watch_later(tmp_path, browser):
     def before(driver):
         driver.get('https://www.youtube.com/watch?v=DvT-O_DI4t4')
 
-
     with demo_helper(
-            tmp_path=tmp_path,
-            browser=browser,
-            path=path,
-            subs_position='bottomleft',
-            before=before,
+        tmp_path=tmp_path,
+        browser=browser,
+        path=path,
+        subs_position='bottomleft',
+        before=before,
     ) as (helper, annotate):
         driver = helper.driver
         wait(2)
 
-        annotate('''
+        annotate(
+            '''
 I have this video in my "Watch later" playlist.
 I wonder why?
-        ''', length=4)
+        ''',
+            length=4,
+        )
         wait(4)
 
         helper.activate()
         wait(2)
 
-        annotate('''
+        annotate(
+            '''
 Aha, my friend sent it to me on Telegram.
 The sidebar also embeds the message that mentions it.
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(5)
 
-        annotate('''
+        annotate(
+            '''
 Once I watched it, I want to discuss it with the friend.
-        ''', length=3)
+        ''',
+            length=3,
+        )
         wait(3)
 
         helper.switch_to_sidebar()
@@ -704,9 +790,12 @@ Once I watched it, I want to discuss it with the friend.
 
         helper.screenshot(path.with_suffix('.png'))
 
-        annotate('''
+        annotate(
+            '''
 Clicking on the "chat with" link will jump straight into that message in Telegram web app.
-        ''', length=5)
+        ''',
+            length=5,
+        )
         wait(2)
         a_loc = loc.find_element_by_tag_name('a')
         helper.move_to(a_loc)

@@ -38,9 +38,9 @@ def index() -> Results:
         warnings.warn("Please set up my.google.takeout.parser module for better takeout support. Falling back to legacy implementation.")
 
         from . import takeout_legacy
+
         yield from takeout_legacy.index()
         return
-
 
     _seen: set[str] = {
         # these are definitely not useful for promnesia
@@ -52,10 +52,13 @@ def index() -> Results:
     imported_yt_csv_models = False
     try:
         from google_takeout_parser.models import CSVYoutubeComment, CSVYoutubeLiveChat
+
         imported_yt_csv_models = True
     except ImportError:
         # warn user to upgrade google_takeout_parser
-        warnings.warn("Please upgrade google_takeout_parser (`pip install -U google_takeout_parser`) to support the new format for youtube comments")
+        warnings.warn(
+            "Please upgrade google_takeout_parser (`pip install -U google_takeout_parser`) to support the new format for youtube comments"
+        )
         CSVYoutubeComment = YoutubeCSVStub  # type: ignore[misc,assignment]
         CSVYoutubeLiveChat = YoutubeCSVStub  # type: ignore[misc,assignment]
 
@@ -130,16 +133,12 @@ def index() -> Results:
         elif isinstance(e, LikedYoutubeVideo):
             # TODO not sure if desc makes sense here since it's not user produced data
             # it's just a part of video meta?
-            yield Visit(
-                url=e.link, dt=e.dt, context=e.desc, locator=Loc(title=e.title, href=e.link)
-            )
+            yield Visit(url=e.link, dt=e.dt, context=e.desc, locator=Loc(title=e.title, href=e.link))
         elif isinstance(e, YoutubeComment):
             for url in e.urls:
                 # todo: use url_metadata to improve locator?
                 # or maybe just extract first sentence?
-                yield Visit(
-                    url=url, dt=e.dt, context=e.content, locator=Loc(title=e.content, href=url)
-                )
+                yield Visit(url=url, dt=e.dt, context=e.content, locator=Loc(title=e.content, href=url))
         elif imported_yt_csv_models and isinstance(e, CSVYoutubeComment):
             contentJSON = e.contentJSON
             content = reconstruct_comment_content(contentJSON, format='text')
@@ -152,12 +151,8 @@ def index() -> Results:
                 continue
             context = f"Commented on {e.video_url}"
             for url in links:
-                yield Visit(
-                    url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url)
-                )
-            yield Visit(
-                url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url)
-            )
+                yield Visit(url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url))
+            yield Visit(url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url))
         elif imported_yt_csv_models and isinstance(e, CSVYoutubeLiveChat):
             contentJSON = e.contentJSON
             content = reconstruct_comment_content(contentJSON, format='text')
@@ -170,12 +165,8 @@ def index() -> Results:
                 continue
             context = f"Commented on livestream {e.video_url}"
             for url in links:
-                yield Visit(
-                    url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url)
-                )
-            yield Visit(
-                url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url)
-            )
+                yield Visit(url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url))
+            yield Visit(url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url))
         else:
             yield from warn_once_if_not_seen(e)
 

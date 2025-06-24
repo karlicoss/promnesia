@@ -10,7 +10,6 @@ def index() -> Results:
     from my.smscalls import messages
 
     for m in messages():
-
         if isinstance(m, Exception):
             yield m
             continue

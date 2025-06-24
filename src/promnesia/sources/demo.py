@@ -21,7 +21,6 @@ def index(
     base_dt: datetime | IsoFormatDt = datetime.min + timedelta(days=5000),
     delta: timedelta | Seconds = timedelta(hours=1),
 ) -> Results:
-
     base_dt_ = base_dt if isinstance(base_dt, datetime) else datetime.fromisoformat(base_dt)
     delta_ = delta if isinstance(delta, timedelta) else timedelta(seconds=delta)
 

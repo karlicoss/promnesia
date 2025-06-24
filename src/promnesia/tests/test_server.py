@@ -234,8 +234,8 @@ def test_search_around(tmp_path: Path) -> None:
         ).json()
         visits = rj['visits']
         assert len(visits) == 18  # 6 per hour * 3
-        assert visits[0 ]['dt'] == '01 Jan 2000 02:00:00 +0300'
-        assert visits[-1]['dt'] == '01 Jan 2000 04:50:00 +0300'
+        assert visits[0 ]['dt'] == '01 Jan 2000 02:00:00 +0300'  # fmt: skip
+        assert visits[-1]['dt'] == '01 Jan 2000 04:50:00 +0300'  # fmt: skip
 
 
 @pytest.mark.parametrize('mode', ['update', 'overwrite'])

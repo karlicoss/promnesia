@@ -25,18 +25,17 @@ DEFAULT_FILTERS = (
     r'^about:',
     r'^blob:',
     r'^view-source:',
-
     r'^content:',
 )
 
 
 # TODO maybe move these to configs?
-@lru_cache(1) #meh, not sure what would happen under tests?
+@lru_cache(1)  # meh, not sure what would happen under tests?
 def filters() -> Sequence[Filter]:
     from . import config
 
     flt = list(DEFAULT_FILTERS)
-    if config.has(): # meeeh...
+    if config.has():  # meeeh...
         cfg = config.get()
         flt.extend(cfg.FILTERS)
     return tuple(make_filter(f) for f in flt)
@@ -67,7 +66,7 @@ def extract_visits(source: Source, *, src: SourceName) -> Iterable[Res[DbVisit]]
                 yield p
                 continue
 
-            if p in handled: # no need to emit duplicates
+            if p in handled:  # no need to emit duplicates
                 continue
             handled.add(p)
 
@@ -76,7 +75,6 @@ def extract_visits(source: Source, *, src: SourceName) -> Iterable[Res[DbVisit]]
         # todo critical error?
         logger.exception(e)
         yield e
-
 
     logger.info('extracting via %s: got %d visits', source.description, len(handled))
 
@@ -99,8 +97,10 @@ def filtered(url: Url) -> bool:
 def make_filter(thing: str | Filter) -> Filter:
     if isinstance(thing, str):
         rc = re.compile(thing)
+
         def filter_(u: str) -> bool:
             return rc.search(u) is not None
+
         return filter_
-    else: # must be predicate
+    else:  # must be predicate
         return thing
