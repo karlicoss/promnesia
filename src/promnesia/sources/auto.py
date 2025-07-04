@@ -2,8 +2,8 @@
 - discovers files recursively
 - guesses the format (orgmode/markdown/json/etc) by the extension/MIME type
 - can index most of plaintext files, including source code!
-- autodetects Obsidian vault and adds `obsidian://` app protocol support [[file:../src/promnesia/sources/obsidian.py][promnesia.sources.obsidian]]
-- autodetects Logseq graph and adds `logseq://` app protocol support [[file:../src/promnesia/sources/logseq.py][promnesia.sources.logseq]]
+- autodetects Obsidian vault and adds `obsidian://` app protocol support [[file:../src/promnesia/sources/auto_obsidian.py][promnesia.sources.obsidian]]
+- autodetects Logseq graph and adds `logseq://` app protocol support [[file:../src/promnesia/sources/auto_logseq.py][promnesia.sources.logseq]]
 """
 
 from __future__ import annotations
