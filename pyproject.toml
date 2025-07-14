@@ -1,6 +1,6 @@
 # see https://github.com/karlicoss/pymplate for up-to-date reference
 [project]
-dynamic = ["version"]  # version is managed by setuptools_scm
+dynamic = ["version"]  # version is managed by build backend
 name = "promnesia"
 dependencies = [
     "platformdirs",       # for portable user directories detection
@@ -74,6 +74,9 @@ all = [
 ]
 
 [dependency-groups]
+# TODO: not sure, on the one hand could just use 'standard' dev dependency group
+# On the other hand, it's a bit annoying that it's always included by default? 
+# To make sure it's not included, need to use `uv run --exact --no-default-groups ...`
 testing = [
     "pytest",
     "ruff",
@@ -109,19 +112,21 @@ testing-gui = [
 ]
 
 
-[project.scripts]
-promnesia = "promnesia.__main__:main"
-
-
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
+# unfortunately have to duplicate project name here atm, see https://github.com/pypa/hatch/issues/1894
+[tool.hatch.build.targets.wheel]
+packages = ["src/promnesia"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
 version_scheme = "python-simplified-semver"
 local_scheme = "dirty-tag"
 
-# workaround for error during uv publishing
-# see https://github.com/astral-sh/uv/issues/9513#issuecomment-2519527822
-[tool.setuptools]
-license-files = []
+
+[project.scripts]
+promnesia = "promnesia.__main__:main"

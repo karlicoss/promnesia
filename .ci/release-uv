@@ -26,6 +26,7 @@ from subprocess import check_call
 
 is_ci = os.environ.get('CI') is not None
 
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument('--use-test-pypi', action='store_true')
@@ -34,11 +35,7 @@ def main() -> None:
     publish_url = ['--publish-url', 'https://test.pypi.org/legacy/'] if args.use_test_pypi else []
 
     root = Path(__file__).absolute().parent.parent
-    os.chdir(root) # just in case
-
-    if is_ci:
-        # see https://github.com/actions/checkout/issues/217
-        check_call('git fetch --prune --unshallow'.split())
+    os.chdir(root)  # just in case
 
     # TODO ok, for now uv won't remove dist dir if it already exists
     #  https://github.com/astral-sh/uv/issues/10293
@@ -46,7 +43,6 @@ def main() -> None:
     if dist.exists():
         shutil.rmtree(dist)
 
-    # todo what is --force-pep517?
     check_call(['uv', 'build'])
 
     if not is_ci:

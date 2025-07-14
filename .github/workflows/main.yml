@@ -6,16 +6,22 @@ on:
     branches: '*'
     tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
     # Ideally I would put this in the pypi job... but github syntax doesn't allow for regexes there :shrug:
-  pull_request: # needed to trigger on others' PRs
+
+  # Needed to trigger on others' PRs.
   # Note that people who fork it need to go to "Actions" tab on their fork and click "I understand my workflows, go ahead and enable them".
-  workflow_dispatch: # needed to trigger workflows manually
-    # todo cron?
+  pull_request:
+
+  # Needed to trigger workflows manually.
+  workflow_dispatch:
     inputs:
       debug_enabled:
         type: boolean
         description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
         required: false
         default: false
+
+  schedule:
+    - cron: '31 18 * * 5'  # run every Friday
 
 
 jobs:
@@ -78,6 +84,85 @@ jobs:
         name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
         path: .coverage.mypy-misc/
 
+  pypi:
+    # Do not run it for PRs/cron schedule etc.
+    # NOTE: release tags are guarded by on: push: tags on the top.
+    if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || (github.event.ref == format('refs/heads/{0}', github.event.repository.master_branch)))
+    # Ugh, I tried using matrix or something to explicitly generate only test pypi or prod pypi pipelines.
+    # But github actions is so shit, it's impossible to do any logic at all, e.g. doesn't support conditional matrix, if/else statements for variables etc.
+
+    needs: [build, end2end_tests_chrome, end2end_tests_firefox, install_and_run_test] # add all other jobs here
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      # necessary for Trusted Publishing
+      id-token: write
+
+    steps:
+    # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
+    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0  # pull all commits to correctly infer vcs version
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: false  # we don't have lock files, so can't use them as cache key
+
+    - name: 'release to test pypi'
+      # always deploy merged master to test pypi
+      if: github.event.ref == format('refs/heads/{0}', github.event.repository.master_branch)
+      run: .ci/release-uv --use-test-pypi
+
+    - name: 'release to prod pypi'
+      # always deploy tags to release pypi
+      if: startsWith(github.event.ref, 'refs/tags/')
+      run: .ci/release-uv
+
+  ###
+  build_extension:
+    env:
+      name: 'promnesia'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0  # nicer to have all git history when debugging/for tests
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - run: extension/.ci/build --lint # debug version
+    - run: extension/.ci/build --lint --release
+
+    # TODO ugh. can't share github actions artifacts publicly...
+    # TODO for fuck's sake... why does it end up named as .zip.zip ????
+    - uses: actions/upload-artifact@v4
+      with:
+        name: '${{ env.name }}-chrome-debug-latest.zip'
+        path: 'extension/dist/artifacts/chrome/${{ env.name }}_dev_-*.zip'
+    - uses: actions/upload-artifact@v4
+      with:
+        name: '${{ env.name }}-chrome-release-latest.zip'
+        path: 'extension/dist/artifacts/chrome/${{ env.name }}-*.zip'
+    - uses: actions/upload-artifact@v4
+      with:
+        name: '${{ env.name }}-firefox-debug-latest.zip'
+        path: 'extension/dist/artifacts/firefox/${{ env.name }}_dev_-*.zip'
+    - uses: actions/upload-artifact@v4
+      with:
+        name: '${{ env.name }}-firefox-release-latest.zip'
+        path: 'extension/dist/artifacts/firefox/${{ env.name }}-*.zip'
+
   # split in two pipelines to speedup running
   end2end_tests_chrome:
     runs-on: ubuntu-latest
@@ -117,72 +202,3 @@ jobs:
         export PATH=.ci/fake-systemd:$PATH
         tests/install_and_run
 
-  pypi:
-    runs-on: ubuntu-latest
-    needs: [build, end2end_tests_chrome, end2end_tests_firefox, install_and_run_test]
-    permissions:
-      # necessary for Trusted Publishing
-      id-token: write
-    steps:
-    # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
-    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - uses: astral-sh/setup-uv@v5
-      with:
-        enable-cache: false  # we don't have lock files, so can't use them as cache key
-
-    - name: 'release to test pypi'
-      # always deploy merged master to test pypi
-      if: github.event_name != 'pull_request' && github.event.ref == 'refs/heads/master'
-      run: .ci/release-uv --use-test-pypi
-
-    - name: 'release to pypi'
-      # always deploy tags to release pypi
-      # NOTE: release tags are guarded by on: push: tags on the top
-      if: github.event_name != 'pull_request' && startsWith(github.event.ref, 'refs/tags')
-      run: .ci/release-uv
-
-  ###
-  build_extension:
-    env:
-      name: 'promnesia'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-depth: 0  # nicer to have all git history when debugging/for tests
-
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - run: extension/.ci/build --lint # debug version
-    - run: extension/.ci/build --lint --release
-
-    # TODO ugh. can't share github actions artifacts publicly...
-    # TODO for fuck's sake... why does it end up named as .zip.zip ????
-    - uses: actions/upload-artifact@v4
-      with:
-        name: '${{ env.name }}-chrome-debug-latest.zip'
-        path: 'extension/dist/artifacts/chrome/${{ env.name }}_dev_-*.zip'
-    - uses: actions/upload-artifact@v4
-      with:
-        name: '${{ env.name }}-chrome-release-latest.zip'
-        path: 'extension/dist/artifacts/chrome/${{ env.name }}-*.zip'
-    - uses: actions/upload-artifact@v4
-      with:
-        name: '${{ env.name }}-firefox-debug-latest.zip'
-        path: 'extension/dist/artifacts/firefox/${{ env.name }}_dev_-*.zip'
-    - uses: actions/upload-artifact@v4
-      with:
-        name: '${{ env.name }}-firefox-release-latest.zip'
-        path: 'extension/dist/artifacts/firefox/${{ env.name }}-*.zip'
