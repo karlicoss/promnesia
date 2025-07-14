@@ -82,6 +82,8 @@ testing = [
     "ruff",
     "mypy",
     "lxml",  # for mypy coverage
+
+    "ty>=0.0.1a14",
     
     "hypothesis",
 

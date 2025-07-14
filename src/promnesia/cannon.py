@@ -30,20 +30,6 @@ from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
 # TODO perhaps archive.org contributes to both?
 
 
-def try_cutl(prefix: str, s: str) -> str:
-    if s.startswith(prefix):
-        return s[len(prefix) :]
-    else:
-        return s
-
-
-def try_cutr(suffix: str, s: str) -> str:
-    if s.endswith(suffix):
-        return s[: -len(suffix)]
-    else:
-        return s
-
-
 # TODO move this to site-specific normalisers?
 dom_subst = [
     ('m.youtube.'     , 'youtube.'),
@@ -69,7 +55,7 @@ dom_subst = [
 def canonify_domain(dom: str) -> str:
     # TODO perhaps not necessary now that I'm checking suffixes??
     for st in ('www.', 'amp.'):
-        dom = try_cutl(st, dom)
+        dom = dom.removeprefix(st)
 
     for start, repl in dom_subst:
         if dom.startswith(start):
@@ -351,8 +337,8 @@ def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
             fragment,
         )
     )
-    uns = try_cutl('//', uns)  # // due to dummy protocol
-    return uns
+    uns = uns.removeprefix('//')  # // due to dummy protocol
+    return uns  # ty: ignore[invalid-return-type]  # see https://github.com/astral-sh/ty/issues/733
 
 
 #
@@ -435,7 +421,7 @@ def canonify(url: str) -> str:
     path = _quote_path(path)
 
     uns = myunsplit(domain, path, query, frag)
-    uns = try_cutr('/', uns)  # not sure if there is a better way
+    uns = uns.removesuffix('/')  # not sure if there is a better way
     return uns
 
 
