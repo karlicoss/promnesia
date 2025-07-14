@@ -61,6 +61,7 @@ def get_logger() -> logging.Logger:
 
 
 def get_version() -> str:
+    assert __package__ is not None  # make type checker happy
     return importlib.metadata.version(__package__)
 
 

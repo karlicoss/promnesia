@@ -96,12 +96,13 @@ class LazyLogger(logging.Logger):
         logger = logging.getLogger(name)
 
         # this is called prior to all _log calls so makes sense to do it here?
-        def isEnabledFor_lazyinit(*args, logger=logger, orig=logger.isEnabledFor, **kwargs) -> bool:
+        def isEnabledFor_lazyinit(*args, logger: logging.Logger = logger, orig=logger.isEnabledFor, **kwargs) -> bool:
             if not getattr(logger, _init_done, False):  # init once, if necessary
                 setup_logger(logger, level=level)
                 setattr(logger, _init_done, True)
-                logger.isEnabledFor = orig  # restore the callback
-            return orig(*args, **kwargs)
+                # restore the callback
+                logger.isEnabledFor = orig  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+            return orig(*args, **kwargs)  # ty: ignore[missing-argument]
 
         # oh god.. otherwise might go into an inf loop
         if not hasattr(logger, _init_done):
