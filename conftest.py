@@ -4,7 +4,6 @@
 
 import os
 import pathlib
-from typing import Optional
 
 import _pytest.main
 import _pytest.pathlib
@@ -22,7 +21,7 @@ namespace_pkg_dirs = [str(d) for d in root_dir.iterdir() if d.is_dir()]
 resolve_pkg_path_orig = _pytest.pathlib.resolve_package_path
 
 
-def resolve_package_path(path: pathlib.Path) -> Optional[pathlib.Path]:
+def resolve_package_path(path: pathlib.Path) -> pathlib.Path | None:
     result = path  # search from the test file upwards
     for parent in result.parents:
         if str(parent) in namespace_pkg_dirs:

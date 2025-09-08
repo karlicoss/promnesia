@@ -3,7 +3,6 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Optional
 
 from more_itertools import chunked
 from sqlalchemy import (
@@ -51,7 +50,7 @@ def begin_immediate_transaction(conn):
     conn.exec_driver_sql('BEGIN IMMEDIATE')
 
 
-Stats = dict[Optional[SourceName], int]
+Stats = dict[SourceName | None, int]
 
 
 # returns critical warnings

@@ -30,7 +30,7 @@ def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
         res: dict[str, list[T]] = {}
         for a in s:
             k = key(a)
-            ll = res.get(k, None)
+            ll = res.get(k)
             if ll is None:
                 ll = []
                 res[k] = ll

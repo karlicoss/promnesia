@@ -17,7 +17,9 @@ def index(database: PathIsh | None = None, *, http_only: bool = False, with_extr
         f'Will try to hack database path {database} into HPI config.'
     )
     try:
-        yield from _index_new_with_adhoc_config(database=database, http_only=http_only, with_extra_media_info=with_extra_media_info)
+        yield from _index_new_with_adhoc_config(
+            database=database, http_only=http_only, with_extra_media_info=with_extra_media_info
+        )
     except Exception as e:
         logger.exception(e)
         warnings.warn("Hacking my.config.telegram.telegram_backup didn't work. You probably need to update HPI.")
@@ -35,7 +37,7 @@ def _index_legacy(*, database: PathIsh, http_only: bool) -> Results:
 
 
 def _index_new_with_adhoc_config(*, database: PathIsh, http_only: bool, with_extra_media_info: bool) -> Results:
-    from . import hpi  # noqa: F401,I001
+    from . import hpi  # noqa: F401
 
     class config:
         class telegram:

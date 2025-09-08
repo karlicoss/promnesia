@@ -2,7 +2,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from time import sleep
-from typing import Optional
 
 import psutil
 from selenium import webdriver
@@ -12,14 +11,14 @@ from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
 
 
-def get_current_frame(driver: Driver) -> Optional[WebElement]:
+def get_current_frame(driver: Driver) -> WebElement | None:
     # idk why is it so hard to get current frame in selenium, but it is what it is
     # https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/4305#issuecomment-192026569
     return driver.execute_script('return window.frameElement')
 
 
 @contextmanager
-def frame_context(driver: Driver, frame) -> Iterator[Optional[WebElement]]:
+def frame_context(driver: Driver, frame) -> Iterator[WebElement | None]:
     # todo return the frame maybe?
     current = get_current_frame(driver)
     driver.switch_to.frame(frame)
@@ -67,7 +66,7 @@ def wait_for_alert(driver: Driver) -> Alert:
     """
     Alert is often shown as a result of async operations, so this is to prevent race conditions
     """
-    e: Optional[Exception] = None
+    e: Exception | None = None
     for _ in range(100 * 10):  # wait 10 secs max
         try:
             return driver.switch_to.alert
@@ -114,7 +113,7 @@ def get_webdriver(
         version_data['driver_path'] = getattr(driver.service, '_path')
     elif browser == 'chrome':
         cr_options = webdriver.ChromeOptions()
-        chrome_bin: Optional[str] = None  # default (e.g. apt version)
+        chrome_bin: str | None = None  # default (e.g. apt version)
         if chrome_bin is not None:
             cr_options.binary_location = chrome_bin
 
@@ -130,7 +129,7 @@ def get_webdriver(
             cr_options.add_argument('--headless=new')
 
         # generally 'selenium manager' download the correct driver version itself
-        chromedriver_bin: Optional[str] = None  # default
+        chromedriver_bin: str | None = None  # default
 
         service = webdriver.ChromeService(executable_path=chromedriver_bin)
         driver = webdriver.Chrome(service=service, options=cr_options)

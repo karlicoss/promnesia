@@ -81,7 +81,9 @@ def _index_db(db: Path, emitted: set):
     # todo schema check (not so critical for cachew though)
     total = 0
     new = 0
-    loc = Loc.file(db)  # todo possibly needs to be optimized -- moving from within the loop considerably speeds everything up
+    loc = Loc.file(
+        db
+    )  # todo possibly needs to be optimized -- moving from within the loop considerably speeds everything up
     with sqlite3.connect(f'file:{db}?immutable=1', uri=True) as c:
         browser = None
         for b in [Chrome, Firefox, FirefoxPhone, Safari]:
@@ -122,7 +124,7 @@ ColType = str
 
 
 from collections.abc import Sequence
-from typing import NamedTuple, Union
+from typing import NamedTuple
 
 
 class Schema(NamedTuple):
@@ -130,7 +132,7 @@ class Schema(NamedTuple):
     key: Sequence[str]
 
 
-SchemaCheck = tuple[str, Union[str, Sequence[str]]]  # todo Union: meh
+SchemaCheck = tuple[str, str | Sequence[str]]  # todo Union: meh
 
 from dataclasses import dataclass
 

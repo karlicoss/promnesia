@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, NamedTuple, Optional, Protocol
+from typing import Any, NamedTuple, Protocol
 from zoneinfo import ZoneInfo
 
 import fastapi
@@ -361,7 +361,7 @@ class VisitedRequest:
     client_version: str = ''
 
 
-VisitedResponse = list[Optional[Json]]
+VisitedResponse = list[Json | None]
 
 
 @app.get ('/visited', response_model=VisitedResponse)  # fmt: skip
@@ -417,7 +417,7 @@ SELECT queried, visits.*
         present: dict[str, Any] = {row[0]: row_to_db_visit(row[1:]) for row in res}
     results = []
     for nu in nurls:
-        r = present.get(nu, None)
+        r = present.get(nu)
         results.append(None if r is None else as_json(r))
 
     # no need for it anymore, extension has been updated since

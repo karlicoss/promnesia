@@ -8,11 +8,10 @@ import os
 import shlex
 import shutil
 import sys
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from pathlib import Path
 from subprocess import Popen, check_call, run
 from tempfile import TemporaryDirectory, gettempdir
-from typing import Callable
 
 from . import config, server
 from .common import (
@@ -83,7 +82,9 @@ def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[Db
         logger.warning("unknown --sources: %s", ", ".join(repr(i) for i in sources_subset))
 
 
-def _do_index(*, dry: bool = False, sources_subset: Iterable[str | int] = (), overwrite_db: bool = False) -> Iterable[Exception]:
+def _do_index(
+    *, dry: bool = False, sources_subset: Iterable[str | int] = (), overwrite_db: bool = False
+) -> Iterable[Exception]:
     # also keep & return errors for further display
     errors: list[Exception] = []
 
@@ -185,7 +186,9 @@ def do_demo(
 
         dbp = config.get().db
         if port is None:
-            logger.warning(f"Port isn't specified, not serving!\nYou can inspect the database in the meantime, e.g. 'sqlitebrowser {dbp}'")
+            logger.warning(
+                f"Port isn't specified, not serving!\nYou can inspect the database in the meantime, e.g. 'sqlitebrowser {dbp}'"
+            )
         else:
             from .server import ServerConfig
 
@@ -329,7 +332,9 @@ def main() -> None:
             if not given, all :func:`demo_sources()` are run
         """
         parser.add_argument('--config', type=Path, default=default_config_path, help='Config path')
-        parser.add_argument('--dry', action='store_true', help="Dry run, won't touch the database, only print the results out")
+        parser.add_argument(
+            '--dry', action='store_true', help="Dry run, won't touch the database, only print the results out"
+        )
         parser.add_argument(
             '--sources',
             required=False,
@@ -365,7 +370,9 @@ def main() -> None:
 
     ap.add_argument('--name', type=str, default='demo', help='Set custom source name')
     add_port_arg(ap)
-    ap.add_argument('--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server')
+    ap.add_argument(
+        '--no-serve', action='store_const', const=None, dest='port', help='Pass to only index without running server'
+    )
     ap.add_argument(
         '--as',
         choices=sorted(demo_sources().keys()),
@@ -375,7 +382,9 @@ def main() -> None:
     add_index_args(ap)
     ap.add_argument('params', nargs='*', help='Optional extra params for the indexer')
 
-    isp = subp.add_parser('install-server', help='Install server as a systemd service (for autostart)', formatter_class=F)
+    isp = subp.add_parser(
+        'install-server', help='Install server as a systemd service (for autostart)', formatter_class=F
+    )
     install_server.setup_parser(isp)
 
     cp = subp.add_parser('config', help='Config management')
@@ -441,9 +450,7 @@ def main() -> None:
             )
         elif mode == 'install-server':  # todo rename to 'autostart' or something?
             install_server.install(args)
-        elif mode == 'config':
-            args.func(args)
-        elif mode == 'doctor':
+        elif mode == 'config' or mode == 'doctor':
             args.func(args)
         else:
             raise AssertionError(f'unexpected mode {mode}')

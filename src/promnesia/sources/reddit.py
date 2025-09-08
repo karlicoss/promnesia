@@ -80,7 +80,9 @@ class RedditRenderer:
             # only send error if the user is trying to enable this feature
             if render_markdown:
                 logger.exception(import_err)
-                logger.critical("Could not import markdown module to render reddit markdown. Try 'python3 -m pip install mistletoe'")
+                logger.critical(
+                    "Could not import markdown module to render reddit markdown. Try 'python3 -m pip install mistletoe'"
+                )
             render_markdown = False  # force to be false, couldn't import
         self.render_markdown = render_markdown
 

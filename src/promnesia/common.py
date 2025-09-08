@@ -7,7 +7,7 @@ import re
 import shutil
 import tempfile
 import warnings
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from contextlib import contextmanager
 from copy import copy
 from datetime import date, datetime, timezone
@@ -17,7 +17,7 @@ from pathlib import Path
 from subprocess import PIPE, Popen, run
 from timeit import default_timer as timer
 from types import ModuleType
-from typing import TYPE_CHECKING, Callable, NamedTuple, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, NamedTuple, TypeAlias, TypeVar
 from zoneinfo import ZoneInfo
 
 import platformdirs
@@ -28,13 +28,13 @@ from .cannon import canonify
 _is_windows = os.name == 'nt'
 
 T = TypeVar('T')
-Res = Union[T, Exception]
+Res: TypeAlias = T | Exception
 
-PathIsh = Union[str, Path]
+PathIsh = str | Path
 
 Url = str
 SourceName = str
-DatetimeIsh = Union[datetime, date]
+DatetimeIsh = datetime | date
 Context = str
 Second = int
 
@@ -42,7 +42,7 @@ Second = int
 # TODO hmm. arguably, source and context are almost same things...
 class Loc(NamedTuple):
     title: str
-    href: Optional[str] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
+    href: str | None = None
 
     @classmethod
     def make(cls, title: str, href: str | None = None) -> Loc:
@@ -88,7 +88,9 @@ def warn_once(message: str) -> None:
 
 
 def _warn_no_xdg_mime() -> None:
-    warn_once("No xdg-mime on your OS! If you're on OSX, perhaps you can help me! https://github.com/karlicoss/open-in-editor/issues/1")
+    warn_once(
+        "No xdg-mime on your OS! If you're on OSX, perhaps you can help me! https://github.com/karlicoss/open-in-editor/issues/1"
+    )
 
 
 @lru_cache(1)
@@ -152,7 +154,7 @@ class Visit(NamedTuple):
     debug: str | None = None
 
 
-Result = Union[Visit, Exception]
+Result = Visit | Exception
 Results = Iterable[Result]
 Extractor = Callable[[], Results]
 
@@ -164,9 +166,9 @@ class DbVisit(NamedTuple):
     orig_url: Url
     dt: datetime
     locator: Loc
-    src: Optional[SourceName] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
-    context: Optional[Context] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
-    duration: Optional[Second] = None  # noqa: UP007  # looks like hypothesis doesn't like in on python <= 3.9
+    src: SourceName | None = None
+    context: Context | None = None
+    duration: Second | None = None
 
     @staticmethod
     def make(p: Visit, src: SourceName) -> Res[DbVisit]:
@@ -178,7 +180,7 @@ class DbVisit(NamedTuple):
                 # TODO that won't be with timezone..
                 dt = datetime.combine(p.dt, datetime.min.time())  # meh..
             else:
-                raise AssertionError(f'unexpected date: {p.dt}, {type(p.dt)}')  # noqa: TRY301
+                raise TypeError(f'unexpected date: {p.dt}, {type(p.dt)}')  # noqa: TRY301
         except Exception as e:
             return e
 
@@ -294,10 +296,7 @@ class PathWithMtime(NamedTuple):
 PreExtractor = Callable[..., Results]
 
 
-PreSource = Union[
-    PreExtractor,
-    ModuleType,  # module with 'index' functon defined in it
-]
+PreSource = PreExtractor | ModuleType  # module with 'index' functon defined in it
 
 
 # todo not sure about this...

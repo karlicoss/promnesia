@@ -35,7 +35,9 @@ def index() -> Results:
         logger.exception(ex)
         yield ex
 
-        warnings.warn("Please set up my.google.takeout.parser module for better takeout support. Falling back to legacy implementation.")
+        warnings.warn(
+            "Please set up my.google.takeout.parser module for better takeout support. Falling back to legacy implementation."
+        )
 
         from . import takeout_legacy
 

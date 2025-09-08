@@ -18,11 +18,9 @@ from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent, indent
-from typing import Any, Union
+from typing import Any
 
 from ..common import Loc, PathIsh, Results, Visit, extract_urls, from_epoch
-
-PathIshes = Union[PathIsh, Iterable[PathIsh]]
 
 
 def index(
@@ -197,7 +195,7 @@ def _expand_path(path_pattern: PathIsh) -> Iterable[Path]:
     return path.glob(str(Path(*parts))) if parts else [path]
 
 
-def _expand_paths(paths: PathIshes) -> Iterable[Path]:
+def _expand_paths(paths: PathIsh | Iterable[PathIsh]) -> Iterable[Path]:
     if _is_pathish(paths):
         paths = [paths]  # type: ignore[list-item]
     return [pp.resolve() for p in paths for pp in _expand_path(p)]  # type: ignore[union-attr]
@@ -244,7 +242,9 @@ def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]
         try:
             plat_paths = platform_db_paths[platform_name]
         except LookupError as le:
-            raise ValueError(f"Unknown platform({platform_name}!\n  Expected one of {list(platform_db_paths.keys())}.") from le
+            raise ValueError(
+                f"Unknown platform({platform_name}!\n  Expected one of {list(platform_db_paths.keys())}."
+            ) from le
 
         if db_paths and append:
             db_paths = [  # type: ignore[assignment]

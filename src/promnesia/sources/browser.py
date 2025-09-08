@@ -13,7 +13,7 @@ from promnesia.common import Loc, PathIsh, Results, Second, Visit, is_sqlite_db,
 
 
 def index(p: PathIsh | None = None) -> Results:
-    from . import hpi  # noqa: F401,I001
+    from . import hpi  # noqa: F401
 
     if p is None:
         from my.browser.all import history

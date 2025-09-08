@@ -75,7 +75,10 @@ def install_systemd(name: str, out: Path, launcher: str, largs: list[str]) -> No
         systemd('start', unit_name)
         systemd('status', unit_name)
     except Exception as e:
-        print(f"Something has gone wrong... you might want to use 'journalctl --user -u {unit_name}' to investigate", file=sys.stderr)
+        print(
+            f"Something has gone wrong... you might want to use 'journalctl --user -u {unit_name}' to investigate",
+            file=sys.stderr,
+        )
         raise e
 
 

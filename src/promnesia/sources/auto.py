@@ -12,13 +12,13 @@ import csv
 import itertools
 import json
 import os
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor as Pool
 from contextlib import nullcontext
 from fnmatch import fnmatch
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 from promnesia.common import (
     Loc,
@@ -115,7 +115,10 @@ def fallback(ex):
                 logger = get_logger()
                 logger.exception(me)
                 logger.warning(
-                    '%s: %s not found, falling back to grep! "pip3 install --user %s" for better support!', path, me.name, me.name
+                    '%s: %s not found, falling back to grep! "pip3 install --user %s" for better support!',
+                    path,
+                    me.name,
+                    me.name,
                 )
                 yield me
                 fallback_active[ex] = True
@@ -180,7 +183,7 @@ for t in CODE:
 # TODO ok, mime doesn't really tell between org/markdown/etc anyway
 
 
-Replacer = Optional[Callable[[str, str], str]]
+Replacer = Callable[[str, str], str] | None
 
 
 def index(
@@ -378,7 +381,9 @@ def _index_file(pp: Path, opts: Options) -> Results:
             upd: dict[str, Any] = {}
             href = v.locator.href
             if href is not None:
-                upd['locator'] = v.locator._replace(href=replacer(href, str(root)), title=replacer(v.locator.title, str(root)))
+                upd['locator'] = v.locator._replace(
+                    href=replacer(href, str(root)), title=replacer(v.locator.title, str(root))
+                )
             ctx = v.context
             if ctx is not None:
                 # TODO in context, http is unnecessary

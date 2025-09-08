@@ -19,7 +19,7 @@ from collections.abc import Collection, Iterable, Sequence
 
 # TODO eh?? they fixed mobile.twitter.com?
 from itertools import chain
-from typing import Any, NamedTuple, Union
+from typing import Any, NamedTuple
 from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
 
 # this has some benchmark, but quite a few librarires seem unmaintained, sadly
@@ -266,7 +266,7 @@ def _prenormalise(url: str) -> str:
     return url
 
 
-Left = Union[str, Sequence[str]]
+Left = str | Sequence[str]
 Right = tuple[str, str, str]
 
 
