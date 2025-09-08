@@ -35,5 +35,9 @@ def test_hypothesis(tmp_path: Path) -> None:
 
     assert vis.norm_url == 'wired.com/2017/04/the-myth-of-a-superhuman-ai'
     assert vis.orig_url == 'https://www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
-    assert vis.locator.href == 'https://hyp.is/_Z9ccmVZEeexBOO7mToqdg/www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
-    assert 'misconception about evolution is fueling misconception about AI' in (vis.context or '')  # contains notes as well
+    assert (
+        vis.locator.href == 'https://hyp.is/_Z9ccmVZEeexBOO7mToqdg/www.wired.com/2017/04/the-myth-of-a-superhuman-ai/'
+    )
+    assert 'misconception about evolution is fueling misconception about AI' in (
+        vis.context or ''
+    )  # contains notes as well

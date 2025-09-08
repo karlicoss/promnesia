@@ -10,7 +10,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
-from typing import Optional
 
 import pytest
 from addon_helper import AddonHelper
@@ -160,14 +159,14 @@ class OptionsPage:
     def configure_extension(
         self,
         *,
-        host: Optional[str] = None,
-        port: Optional[str] = None,
+        host: str | None = None,
+        port: str | None = None,
         show_dots: bool = True,
-        highlights: Optional[bool] = None,
-        blacklist: Optional[Sequence[str]] = None,
-        excludelists: Optional[Sequence[str]] = None,
-        notify_contexts: Optional[bool] = None,
-        position: Optional[str] = None,
+        highlights: bool | None = None,
+        blacklist: Sequence[str] | None = None,
+        excludelists: Sequence[str] | None = None,
+        notify_contexts: bool | None = None,
+        position: str | None = None,
         verbose_errors: bool = True,
     ) -> None:
         driver = self.helper.driver
@@ -262,7 +261,7 @@ class OptionsPage:
         # just in case, also need to remove spaces to workaround indentation
         assert [l.strip() for l in contents().splitlines()] == [l.strip() for l in settings.splitlines()]
 
-    def _set_endpoint(self, *, host: Optional[str], port: Optional[str]) -> None:
+    def _set_endpoint(self, *, host: str | None, port: str | None) -> None:
         # todo rename to 'backend_id'?
         ep = self.helper.driver.find_element(By.ID, 'host_id')
         ep.clear()
@@ -296,7 +295,9 @@ class Addon:
         driver = self.helper.driver
         if driver.name == 'chrome':
             browser_version = tuple(map(int, driver.capabilities['browserVersion'].split('.')))
-            driver_version = tuple(map(int, driver.capabilities['chrome']['chromedriverVersion'].split(' ')[0].split('.')))
+            driver_version = tuple(
+                map(int, driver.capabilities['chrome']['chromedriverVersion'].split(' ')[0].split('.'))
+            )
             last_working = (113, 0, 5623, 0)
             if browser_version > last_working or driver_version > last_working:
                 # NOTE: feel free to comment this out if necessary, it's just to avoid hours of debugging

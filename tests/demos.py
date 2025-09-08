@@ -79,7 +79,9 @@ class Annotator:
 
 
 @contextmanager
-def demo_helper(*, tmp_path, browser, path: Path, indexer=real_db, before=None, subs_position='topleft', size='40%', **kwargs):
+def demo_helper(
+    *, tmp_path, browser, path: Path, indexer=real_db, before=None, subs_position='topleft', size='40%', **kwargs
+):
     # TODO literal type??
     # https://stackoverflow.com/a/25880038/706389
     # 789
@@ -418,7 +420,9 @@ def test_demo_child_visits_2(tmp_path, browser):
 
     def before(driver):
         # jeez. medium takes, like, 15 seconds to load
-        driver.get('https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7')
+        driver.get(
+            'https://medium.com/@justlv/how-to-build-a-brain-interface-and-why-we-should-connect-our-minds-35003841c4b7'
+        )
 
     with demo_helper(
         tmp_path=tmp_path,

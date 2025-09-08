@@ -30,15 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         exclude: [
             # windows runners are pretty scarce, so let's only run lowest and highest python version
-            {platform: windows-latest, python-version: '3.10'},
             {platform: windows-latest, python-version: '3.11'},
             {platform: windows-latest, python-version: '3.12'},
 
             # same, macos is a bit too slow and ubuntu covers python quirks well
-            {platform: macos-latest  , python-version: '3.10'},
             {platform: macos-latest  , python-version: '3.11'},
             {platform: macos-latest  , python-version: '3.12'},
         ]
@@ -70,19 +68,18 @@ jobs:
 
     # explicit bash command is necessary for Windows CI runner, otherwise it thinks it's cmd...
     - run: bash .ci/run
+      env:
+        # only compute lxml coverage on ubuntu; it crashes on windows
+        CI_MYPY_COVERAGE: ${{ matrix.platform == 'ubuntu-latest' && '--cobertura-xml-report .coverage.mypy-all' || '' }}
 
     - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: actions/upload-artifact@v4
+      uses: codecov/codecov-action@v5
       with:
-        include-hidden-files: true
-        name: .coverage.mypy-core_${{ matrix.platform }}_${{ matrix.python-version }}
-        path: .coverage.mypy-core/
-    - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: actions/upload-artifact@v4
-      with:
-        include-hidden-files: true
-        name: .coverage.mypy-misc_${{ matrix.platform }}_${{ matrix.python-version }}
-        path: .coverage.mypy-misc/
+        fail_ci_if_error: true  # default false
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: mypy-${{ matrix.python-version }}
+        files: .coverage.mypy-all/cobertura.xml
+
 
   pypi:
     # Do not run it for PRs/cron schedule etc.

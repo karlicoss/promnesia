@@ -4,7 +4,7 @@ import re
 from collections.abc import Iterable, Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import NamedTuple, Optional, cast
+from typing import NamedTuple, cast
 
 import orgparse
 from orgparse.date import OrgDate, gene_timestamp_regex
@@ -59,7 +59,7 @@ def _parse_node(n: OrgNode) -> Parsed:
 
     heading = n.get_heading('raw')
     pp = n.properties
-    createds = cast(Optional[str], pp.get('CREATED', None))
+    createds = cast(str | None, pp.get('CREATED', None))
     if createds is None:
         # TODO replace with 'match', but need to strip off priority etc first?
         # see _parse_heading in orgparse
@@ -185,7 +185,9 @@ def extract_from_file(fname: PathIsh) -> Results:
                     dt=dt,
                     locator=Loc.file(
                         fname,
-                        line=getattr(node, 'linenumber', None),  # make it defensive so it works against older orgparse (pre 0.2)
+                        line=getattr(
+                            node, 'linenumber', None
+                        ),  # make it defensive so it works against older orgparse (pre 0.2)
                     ),
                     context=ctx,
                 )

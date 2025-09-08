@@ -4,10 +4,10 @@ import importlib
 import importlib.util
 import os
 import warnings
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, NamedTuple, Union
+from typing import NamedTuple
 
 from .common import DbVisit, PathIsh, Res, Source, default_cache_dir, default_output_dir
 
@@ -17,24 +17,24 @@ HookT = Callable[[Res[DbVisit]], Iterable[Res[DbVisit]]]
 ModuleName = str
 
 # something that can be converted into a proper Source
-ConfigSource = Union[Source, ModuleName, ModuleType]
+ConfigSource = Source | ModuleName | ModuleType
 
 
 class Config(NamedTuple):
     # TODO remove default from sources once migrated
-    SOURCES: list[ConfigSource] = []
+    SOURCES: list[ConfigSource] = []  # noqa: RUF012
 
     # if not specified, uses user data dir
     OUTPUT_DIR: PathIsh | None = None
 
     CACHE_DIR: PathIsh | None = ''
-    FILTERS: list[str] = []
+    FILTERS: list[str] = []  # noqa: RUF012
 
     HOOK: HookT | None = None
 
     #
     # NOTE: INDEXERS is deprecated, use SOURCES instead
-    INDEXERS: list[ConfigSource] = []
+    INDEXERS: list[ConfigSource] = []  # noqa: RUF012
     # MIME_HANDLER: Optional[str] = None # TODO
 
     @property

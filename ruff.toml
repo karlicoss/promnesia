@@ -1,42 +1,8 @@
+line-length = 120  # impacts import sorting
+
 lint.extend-select = [
-    "F",    # flakes rules -- default, but extend just in case
-    "E",    # pycodestyle  -- default, but extend just in case
-    "W",    # various warnings
-
-    "B",    # 'bugbear' set -- various possible bugs
-    "C4",   # flake8-comprehensions -- unnecessary list/map/dict calls
-    "COM",  # trailing commas
-    "EXE",  # various checks wrt executable files
-    "I",    # sort imports
-    "ICN",  # various import conventions
-    "FBT",  # detect use of boolean arguments
-    "FURB", # various rules
-    "PERF", # various potential performance speedups
-    "PD",   # pandas rules
-    "PIE",  # 'misc' lints
-    "PLC",  # pylint convention rules
-    "PLR",  # pylint refactor rules
-    "PLW",  # pylint warnings
-    "PT",   # pytest stuff
-    "PYI",  # various type hinting rules
-    "RET",  # early returns
-    "RUF",  # various ruff-specific rules
-    "TID",  # various imports suggestions
-    "TRY",  # various exception handling rules
-    "UP",   # detect deprecated python stdlib stuff
-    "FA",   # suggest using from __future__ import annotations
-    "PTH",  # pathlib migration
-    "ARG",  # unused argument checks
-    "A",    # builtin shadowing
-    "G",    # logging stuff
-
-    # "ALL", # uncomment this to check for new rules!
+    "ALL",
 ]
-
-# Preserve types, even if a file imports `from __future__ import annotations`
-# we need this for cachew to work with HPI types on 3.9
-# can probably remove after 3.10?
-lint.pyupgrade.keep-runtime-typing = true
 
 lint.ignore = [
     "D",     # annoying nags about docstrings
@@ -51,7 +17,6 @@ lint.ignore = [
 
 ### too opinionated style checks
     "E501",  # too long lines
-    "E702",  # Multiple statements on one line (semicolon)
     "E731",  # assigning lambda instead of using def
     "E741",  # Ambiguous variable name: `l`
     "E742",  # Ambiguous class name: `O
@@ -65,9 +30,6 @@ lint.ignore = [
 
 ## might be nice .. but later and I don't wanna make it strict
     "E402",  # Module level import not at top of file
-
-    "RUF100",  # unused noqa -- handle later
-    "RUF012",  # mutable class attrs should be annotated with ClassVar... ugh pretty annoying for user configs
 
 ### these are just nitpicky, we usually know better
     "PLR0911",  # too many return statements
@@ -83,10 +45,8 @@ lint.ignore = [
 
     "B009",  # calling gettattr with constant attribute -- this is useful to convince mypy
     "B010",  # same as above, but setattr
-    "B011",  # complains about assert False
     "B017",  # pytest.raises(Exception)
     "B023",  # seems to result in false positives?
-    "B028",  # suggest using explicit stacklevel? TODO double check later, but not sure it's useful
 
     # complains about useless pass, but has sort of a false positive if the function has a docstring?
     # this is common for click entrypoints (e.g. in __main__), so disable
@@ -106,27 +66,19 @@ lint.ignore = [
     "PLW0603",  # global variable update.. we usually know why we are doing this
     "PLW2901",  # for loop variable overwritten, usually this is intentional
 
-    "PT011",  # pytest raises should is too broad
-    "PT012",  # pytest raises should contain a single statement
+    "PT011",  # pytest raises is too broad
 
     "COM812",  # trailing comma missing -- mostly just being annoying with long multiline strings
 
-    "PD901",   # generic variable name df
-
     "TRY003",  # suggests defining exception messages in exception class -- kinda annoying
-    "TRY004",  # prefer TypeError -- don't see the point
     "TRY201",  # raise without specifying exception name -- sometimes hurts readability
-    "TRY400",  # TODO double check this, might be useful
+    "TRY400",  # a bit dumb, and results in false positives (see https://github.com/astral-sh/ruff/issues/18070)
     "TRY401",  # redundant exception in logging.exception call? TODO double check, might result in excessive logging
-
-    "PGH",  # TODO force error code in mypy instead? although it also has blanket noqa rule
 
     "TID252",  # Prefer absolute imports over relative imports from parent modules
 
-    "UP038",  # suggests using | (union) in isisntance checks.. but it results in slower code
-
     ## too annoying
-    "T20",     # just complains about prints and pprints
+    "T20",     # just complains about prints and pprints (TODO maybe consider later?)
     "Q",       # flake quotes, too annoying
     "C90",     # some complexity checking
     "G004",    # logging statement uses f string
@@ -134,7 +86,12 @@ lint.ignore = [
     "SLF001",  # private member accessed
     "BLE001",  # do not catch 'blind' Exception
     "INP001",  # complains about implicit namespace packages
-    "SIM",     # some if statements crap
+    "SIM102",  # if statements collapsing, often hurts readability
+    "SIM103",  # multiple conditions collapsing, often hurts readability
+    "SIM105",  # suggests using contextlib.suppress instad of try/except -- this wouldn't be mypy friendly
+    "SIM108",  # suggests using ternary operation instead of if -- hurts readability
+    "SIM110",  # suggests using any(...) instead of for look/return -- hurts readability
+    "SIM117",  # suggests using single with statement instead of nested -- doesn't work in tests
     "RSE102",  # complains about missing parens in exceptions
     ##
 
@@ -142,7 +99,9 @@ lint.ignore = [
     "ARG001",  # ugh, kinda annoying when using pytest fixtures
     "RUF001", "RUF002", "RUF003",  # spams about non-latin characters that we do use for testing
     "A005",  #  we're using promnesia.logging module
+    "B028",  # warnings stacklevel -- will fix later
 ]
+
 
 extend-exclude = [
     "tests/testdata/**",

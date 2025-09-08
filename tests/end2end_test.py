@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 import pytest
 from addon import (
@@ -131,7 +131,9 @@ def browsers(*br: Browser) -> IdType:
         if len(br) == 0:
             dec_ = pytest.mark.skip('Filtered out all browsers (because of no GUI/non-interactive mode)')
         else:
-            dec_ = pytest.mark.parametrize('browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else ''))
+            dec_ = pytest.mark.parametrize(
+                'browser', br, ids=lambda b: b.dist.replace('-', '_') + ('_headless' if b.headless else '')
+            )
 
         @with_browser_tests
         @dec_
@@ -495,7 +497,10 @@ def test_sidebar_basic(url: str, addon: Addon, driver: Driver, backend: Backend)
         ctx_el = v.find_element(By.CLASS_NAME, 'context')
         assert ctx_el.text == visited[url]
         # make sure linkifying works
-        assert ctx_el.find_element(By.TAG_NAME, 'a').get_attribute('href') == 'https://wiki.openhumans.org/wiki/Personal_Science_Wiki'
+        assert (
+            ctx_el.find_element(By.TAG_NAME, 'a').get_attribute('href')
+            == 'https://wiki.openhumans.org/wiki/Personal_Science_Wiki'
+        )
 
     confirm("You should see green icon, also one visit in sidebar. Make sure the unicode is displayed correctly.")
 
@@ -559,7 +564,9 @@ def exit_stack() -> Iterator[ExitStack]:
         'local',
     ],
 )
-def test_sidebar_navigation(base_url: str, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack) -> None:
+def test_sidebar_navigation(
+    base_url: str, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack
+) -> None:
     if 'file:' in base_url and driver.name == 'chrome':
         pytest.skip("TODO used to work, but must have broken after some Chrome update?")
         # seems broken on any local page -- only transparent sidebar frame is shown
@@ -803,7 +810,9 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
 
 
 @browsers()
-def test_multiple_page_updates(tmp_path: Path, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack) -> None:
+def test_multiple_page_updates(
+    tmp_path: Path, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack
+) -> None:
     # on some pages, onUpdated is triggered multiple times (because of iframes or perhaps something else??)
     # which previously resulted in flickering sidebar/performance degradation etc, so it's a regression test against this
     # TODO would be nice to hook to the backend and check how many requests it had...

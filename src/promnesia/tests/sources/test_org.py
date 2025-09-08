@@ -14,7 +14,9 @@ def delrf(s: str | None) -> str | None:
 
 
 def test_org_indexer() -> None:
-    [_, cpp, cozy] = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file.org'))]
+    [_, cpp, cozy] = [
+        v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file.org'))
+    ]
 
     assert cpp.url == 'https://www.youtube.com/watch?v=rHIkrotSwcc'
     # TODO not sure about filetags?
@@ -33,7 +35,10 @@ def test_org_indexer_2() -> None:
     items = [v if isinstance(v, Visit) else throw(v) for v in extract_from_file(get_testdata('auto/orgs/file3.org'))]
 
     assert len(items) == 6
-    assert items[0].url == 'https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i'
+    assert (
+        items[0].url
+        == 'https://www.reddit.com/r/androidapps/comments/4i36z9/how_you_use_your_android_to_the_maximum/d2uq24i'
+    )
     assert items[1].url == 'https://link.com'
     assert items[-2].url == 'https://en.wikipedia.org/wiki/Resilio_Sync'
     # TODO shit def need org specific url extractor (and then extract from everything remaining)

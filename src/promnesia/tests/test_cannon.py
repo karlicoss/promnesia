@@ -173,7 +173,10 @@ def test_pocket(url, expected):
         # TODO it also got &p= parameter, which refers to page... not sure how to handle this
         # news.ycombinator.com/item?id=15451442&p=2
         ("https://news.ycombinator.com/item?id=12172351", "news.ycombinator.com/item?id=12172351"),
-        ("https://urbandictionary.com/define.php?term=Belgian%20Whistle", "urbandictionary.com/define.php?term=Belgian%20Whistle"),
+        (
+            "https://urbandictionary.com/define.php?term=Belgian%20Whistle",
+            "urbandictionary.com/define.php?term=Belgian%20Whistle",
+        ),
         ("https://en.wikipedia.org/wiki/Dinic%27s_algorithm", "en.wikipedia.org/wiki/Dinic%27s_algorithm"),
         ("zoopla.co.uk/to-rent/details/42756337#D0zlBWeD4X85odsR.97", "zoopla.co.uk/to-rent/details/42756337"),
         (
@@ -329,7 +332,10 @@ def test_empty_query_parameter(url, expected):
     [
         ('http://www.isfdb.org/cgi-bin/title.cgi?2172', 'isfdb.org/cgi-bin/title.cgi?2172='),
         ('http://www.isfdb.org/cgi-bin/title.cgi?2172+1', 'isfdb.org/cgi-bin/title.cgi?2172%201='),
-        ('http://www.isfdb.org/cgi-bin/title.cgi?2172&foo=bar&baz&quux', 'isfdb.org/cgi-bin/title.cgi?2172=&baz=&foo=bar&quux='),
+        (
+            'http://www.isfdb.org/cgi-bin/title.cgi?2172&foo=bar&baz&quux',
+            'isfdb.org/cgi-bin/title.cgi?2172=&baz=&foo=bar&quux=',
+        ),
     ],
 )
 def test_qkeep_true(url, expected):

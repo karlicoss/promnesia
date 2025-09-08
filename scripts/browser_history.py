@@ -94,7 +94,14 @@ def test_backup_history(tmp_path):
 
 def guess_db_date(db: Path) -> str:
     maxvisit = (
-        check_output(['sqlite3', '-csv', db, 'SELECT max(datetime(((visits.visit_time/1000000)-11644473600), "unixepoch")) FROM visits;'])
+        check_output(
+            [
+                'sqlite3',
+                '-csv',
+                db,
+                'SELECT max(datetime(((visits.visit_time/1000000)-11644473600), "unixepoch")) FROM visits;',
+            ]
+        )
         .decode('utf8')
         .strip()
         .strip('"')
@@ -115,7 +122,10 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--browser', type=Browser, required=True)
     p.add_argument(
-        '--profile', type=str, default='*', help='Use to pick the correct profile to back up. If unspecified, will assume a single profile'
+        '--profile',
+        type=str,
+        default='*',
+        help='Use to pick the correct profile to back up. If unspecified, will assume a single profile',
     )
     p.add_argument('--to', type=Path, required=True)
     args = p.parse_args()

@@ -3,13 +3,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from subprocess import Popen, check_output
 from time import sleep
-from typing import Optional, Union
 
 # TODO decorator that records a video if a certain env var/flag is set (pass a custom name too)
 
 
 @contextmanager
-def hotkeys(geometry: Optional[str] = None):
+def hotkeys(geometry: str | None = None):
     # TODO kill in advance??
     ctx = Popen([
         'screenkey',
@@ -32,7 +31,7 @@ def hotkeys(geometry: Optional[str] = None):
 
 
 @contextmanager
-def record(output: Optional[Path] = None, wid: Optional[str] = None, quality: Optional[str] = None):
+def record(output: Path | None = None, wid: str | None = None, quality: str | None = None):
     assert output is not None, "TODO use tmp file or current dir??"
     # TODO to fullscreen if None?
     assert wid is not None
@@ -59,7 +58,7 @@ def record(output: Optional[Path] = None, wid: Optional[str] = None, quality: Op
     # fuck x 2
     margin = 28
 
-    cmd: list[Union[Path, str]] = [
+    cmd: list[Path | str] = [
         'ffmpeg',
         '-hide_banner', '-loglevel', 'panic', # less spam in the terminal
         '-f', 'x11grab',

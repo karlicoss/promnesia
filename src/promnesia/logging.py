@@ -7,17 +7,21 @@ Default logger is a bit meh, see 'test'/run this file for a demo
 def test() -> None:
     import logging
     import sys
-    from typing import Callable
+    from collections.abc import Callable
 
     M: Callable[[str], None] = lambda s: print(s, file=sys.stderr)
 
     M("   Logging module's defaults are not great...'")
     l = logging.getLogger('test_logger')
-    l.error("For example, this should be logged as error. But it's not even formatted properly, doesn't have logger name or level")
+    l.error(
+        "For example, this should be logged as error. But it's not even formatted properly, doesn't have logger name or level"
+    )
 
     M("   The reason is that you need to remember to call basicConfig() first")
     logging.basicConfig()
-    l.error("OK, this is better. But the default format kinda sucks, I prefer having timestamps and the file/line number")
+    l.error(
+        "OK, this is better. But the default format kinda sucks, I prefer having timestamps and the file/line number"
+    )
 
     M("")
     M("    With LazyLogger you get a reasonable logging format, colours and other neat things")
@@ -32,10 +36,10 @@ def test() -> None:
 import logging
 import os
 import warnings
-from typing import Optional, Union, cast
+from typing import cast
 
 Level = int
-LevelIsh = Optional[Union[Level, str]]
+LevelIsh = Level | str | None
 
 
 def mklevel(level: LevelIsh) -> Level:

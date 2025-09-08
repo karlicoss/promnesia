@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, NamedTuple, Union
+from typing import NamedTuple
 
 from ..common import Results, Url
 
@@ -20,7 +20,7 @@ class EUrl(NamedTuple):
 
 
 # keys are mime types + extensions
-Ex = Callable[[Path], Union[Results, Iterable[EUrl]]]
+Ex = Callable[[Path], Results | Iterable[EUrl]]
 # None means unhandled
 TYPE2IDX: dict[str, Ex | None] = {}
 # NOTE: there are some types in auto.py at the moment... it's a bit messy
@@ -32,11 +32,11 @@ def type2idx(t: str) -> Ex | None:
     if len(t) == 0:
         return None  # just in case?
     # first try exact match
-    e = TYPE2IDX.get(t, None)
+    e = TYPE2IDX.get(t)
     if e is not None:
         return e
     t = t.strip('.')
-    e = TYPE2IDX.get(t, None)
+    e = TYPE2IDX.get(t)
     if e is not None:
         return e
     # otherwise, try prefixes?
