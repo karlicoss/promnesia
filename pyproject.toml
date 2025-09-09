@@ -70,7 +70,7 @@ telegram = [
     # used to depend on 'dataset', keeping for backwards compatibility
 ]
 all = [
-    "promnesia[optional,HPI,html,markdown,org]",
+    "promnesia[indexer,server,optional,HPI,html,markdown,org]",
 ]
 
 [dependency-groups]
@@ -80,36 +80,53 @@ all = [
 testing = [
     "pytest",
     "ruff",
-    "mypy",
-    "lxml",  # for mypy coverage
-    "ty>=0.0.1a20",
     
     "hypothesis",
 
     "loguru",  # used in addon_helper... not sure if should just use promnesia's logger?
 
-    "psutil", "types-psutil",
-    "requests", "types-requests",
-
-    ## other mypy stubs
-    "types-requests"  ,  # used in tests
-    "types-beautifulsoup4",  # NOTE: not needed after the <4.13.0 pinning is resolved
-    ##
+    "psutil",
+    "requests",
 
     # todo hmm ideally would be in corresponding testing-... sections
     # but we don't split separate mypy for end2end tests... so idk
     "selenium"      ,  # browser automations
-    "types-PyAutoGUI"
+
+    # NOTE: markdown is only used for test_cli... might be nice to decouple
+    "promnesia[markdown]",
+]
+testing-all = [
+    { include-group = "testing" },
+    "promnesia[all]",
 ]
 testing-end2end = [
+    { include-group = "testing-all" },
     "click"         ,  # confirmations for end2end test (might remove dependency)
     "pytest-timeout",  # for PYTEST_TIMEOUT env variable
     "pytest-xdist"  ,  # not used atm, but helpful to parallelise end2end tests
+
+    "promnesia[HPI]",
 ]
 testing-gui = [
+    { include-group = "testing-end2end" },
     # pyautogui seems problematic, wheels often fail to build under windows
     # we don't use it in CI, so keep in a separate extras section
     "pyautogui",  # for keyboard automation during end2end tests
+]
+typecheck = [
+    { include-group = "testing" },
+    "mypy",
+    "lxml",  # for mypy coverage
+    "ty>=0.0.1a20",
+
+    "types-psutil",
+    "types-requests",
+]
+typecheck-all = [
+    { include-group = "typecheck" },
+    "promnesia[HPI,org,markdown]",
+
+    "types-PyAutoGUI",
 ]
 
 

@@ -69,7 +69,7 @@ _init_done = 'lazylogger_init_done'
 def setup_logger(logger: logging.Logger, level: LevelIsh) -> None:
     lvl = mklevel(level)
     try:
-        import logzero  # type: ignore[import-not-found]
+        import logzero  # type: ignore[import-not-found,import-untyped,unused-ignore]
 
         formatter = logzero.LogFormatter(
             fmt=FORMAT_COLOR,
