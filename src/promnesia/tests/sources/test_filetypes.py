@@ -6,7 +6,7 @@ from ...sources.auto import by_path
 
 
 def handled(p: PathIsh) -> bool:
-    idx, m = by_path(Path(p))
+    idx, _m = by_path(Path(p))
     return idx is not None
     # ideally these won't hit libmagic path (would try to open the file and cause FileNotFoundError)
 

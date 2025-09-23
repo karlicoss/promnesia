@@ -28,7 +28,7 @@ def test_json() -> None:
     assert mm.keys() == _JSON_URLS
 
     # TODO not sure if they deserve separate visits..
-    [v1, v2] = mm[sa2464]
+    [v1, _v2] = mm[sa2464]
     assert v1.context == 'list::yyy::given_url'
     # todo not sure if editor:// work on Windows
     assert v1.locator.href.startswith('editor://')
