@@ -376,7 +376,7 @@ def connect_db(
 
 
 def _handle_row(row: tuple, db_path: PathIsh, locator_schema: str) -> Results:
-    mid, tstamp, sender, cid, chatname, text = row
+    mid, tstamp, sender, _cid, chatname, text = row
     urls = extract_urls(text)
     if not urls:
         return

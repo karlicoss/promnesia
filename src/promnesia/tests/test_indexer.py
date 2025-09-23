@@ -228,7 +228,8 @@ def test_hook(tmp_path: Path) -> None:
     write_config(cfg_path, cfg)
     do_index(cfg_path)
 
-    [p0, p1, e2, p41, p42, p5, p6] = get_all_db_visits(tmp_path / 'promnesia.sqlite')
+    [p0, p1, e2, p41, p42, _p5, p6] = get_all_db_visits(tmp_path / 'promnesia.sqlite')
+    # todo what is p5? test it?
     assert p0.norm_url == 'demo.com/page0.html'
     assert p1.norm_url == 'patched.com'
     assert e2.norm_url == '<error>'
