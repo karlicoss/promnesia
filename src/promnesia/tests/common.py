@@ -9,7 +9,7 @@ from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from pathlib import Path
 from textwrap import dedent
-from typing import NoReturn, TypeVar
+from typing import NoReturn
 
 import pytest
 
@@ -97,11 +97,7 @@ def reset_filters():
         extract.filters.cache_clear()
 
 
-# TODO could be a TypeGuard from 3.10
-V = TypeVar('V')
-
-
-def unwrap(r: Res[V]) -> V:
+def unwrap[V](r: Res[V]) -> V:
     assert not isinstance(r, Exception), r
     return r
 

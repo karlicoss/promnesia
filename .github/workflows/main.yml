@@ -30,15 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.12', '3.13', '3.14']
         exclude: [
             # windows runners are pretty scarce, so let's only run lowest and highest python version
-            {platform: windows-latest, python-version: '3.11'},
-            {platform: windows-latest, python-version: '3.12'},
+            {platform: windows-latest, python-version: '3.13'},
 
             # same, macos is a bit too slow and ubuntu covers python quirks well
-            {platform: macos-latest  , python-version: '3.11'},
-            {platform: macos-latest  , python-version: '3.12'},
+            {platform: macos-latest  , python-version: '3.13'},
         ]
 
     runs-on: ${{ matrix.platform }}
@@ -50,16 +48,16 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
       
-    - uses: astral-sh/setup-uv@v5
+    - uses: astral-sh/setup-uv@v7
       with:
         enable-cache: false  # we don't have lock files, so can't use them as cache key
 
@@ -100,16 +98,16 @@ jobs:
     # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
     - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
         fetch-depth: 0  # pull all commits to correctly infer vcs version
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 
-    - uses: astral-sh/setup-uv@v5
+    - uses: astral-sh/setup-uv@v7
       with:
         enable-cache: false  # we don't have lock files, so can't use them as cache key
 
@@ -129,7 +127,7 @@ jobs:
       name: 'promnesia'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
@@ -164,7 +162,7 @@ jobs:
   end2end_tests_chrome:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3
@@ -174,7 +172,7 @@ jobs:
   end2end_tests_firefox:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3
@@ -186,7 +184,7 @@ jobs:
     # todo run on macos too?
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3

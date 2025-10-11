@@ -5,7 +5,7 @@ import filecmp
 import logging
 import sys
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from subprocess import check_output
 
@@ -70,7 +70,7 @@ def backup_history(browser: Browser, to: Path, profile: str = '*', pattern=None)
     assert to.is_dir()
     logger = get_logger()
 
-    now = format_dt(datetime.now(tz=timezone.utc))
+    now = format_dt(datetime.now(tz=UTC))
 
     path = get_path(browser, profile=profile)
 

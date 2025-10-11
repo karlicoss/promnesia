@@ -6,7 +6,6 @@ import logging
 import sys
 from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import TypeVar
 
 from .common import DbVisit, PathWithMtime, Url
 from .database.load import row_to_db_visit
@@ -22,10 +21,7 @@ def get_logger():
 # TODO return error depending on severity?
 
 
-T = TypeVar('T')
-
-
-def eliminate_by(sa: Sequence[T], sb: Sequence[T], key):
+def eliminate_by[T](sa: Sequence[T], sb: Sequence[T], key):
     def make_dict(s: Sequence[T]) -> dict[str, list[T]]:
         res: dict[str, list[T]] = {}
         for a in s:

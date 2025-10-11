@@ -17,7 +17,7 @@ dependencies = [
     "promnesia[server]",
     ##
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 
 ## these need to be set if you're planning to upload to pypi
 description = "Enhancement of your browsing history"
@@ -117,7 +117,7 @@ typecheck = [
     { include-group = "testing" },
     "mypy",
     "lxml",  # for mypy coverage
-    "ty>=0.0.1a21",
+    "ty>=0.0.1a22",
 
     "types-psutil",
     "types-requests",

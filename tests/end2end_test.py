@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import sleep
-from typing import TypeVar
 
 import pytest
 from addon import (
@@ -115,8 +114,7 @@ with_browser_tests = pytest.mark.skipif(
 )
 
 
-X = TypeVar('X')
-IdType = Callable[[X], X]
+type IdType[X] = Callable[[X], X]
 
 
 def browsers(*br: Browser) -> IdType:

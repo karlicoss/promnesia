@@ -4,7 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 # NOTE: pytest ... -s --hypothesis-verbosity=debug is useful for seeing what hypothesis is doing
@@ -22,10 +22,13 @@ from .common import (
     running_on_ci,
 )
 
-HSETTINGS: dict[str, Any] = {
-    'derandomize': True,
-    'deadline': timedelta(seconds=2),  # sometimes slow on ci
-}
+HSETTINGS = cast(
+    dict[str, Any],
+    {
+        'derandomize': True,
+        'deadline': timedelta(seconds=2),  # sometimes slow on ci
+    },
+)
 
 
 def test_no_visits(tmp_path: Path) -> None:

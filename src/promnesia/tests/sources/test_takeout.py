@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from my.core.cfg import tmp_config
@@ -51,6 +51,6 @@ def test_takeout_zip(no_cachew) -> None:
         hour=5,
         minute=48,
         second=23,
-        tzinfo=timezone.utc,
+        tzinfo=UTC,
     )
     assert unwrap(vis).dt == edt
