@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -199,7 +199,7 @@ class Chrome(Extr):
 # yep, tested it and looks like utc
 def chrome_time_to_utc(chrome_time: int) -> datetime:
     epoch = (chrome_time / 1_000_000) - 11644473600
-    return datetime.fromtimestamp(epoch, timezone.utc)
+    return datetime.fromtimestamp(epoch, UTC)
 
 
 def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
@@ -217,7 +217,7 @@ def _row2visit_firefox(row: sqlite3.Row, loc: Loc) -> Visit:
     else:
         # milliseconds
         ts /= 1_000
-    dt = datetime.fromtimestamp(ts, timezone.utc)
+    dt = datetime.fromtimestamp(ts, UTC)
     url = unquote(url)  # firefox urls are all quoted
     return Visit(
         url=url,
@@ -257,7 +257,7 @@ class Safari(Extr):
     def row2visit(row: sqlite3.Row, loc: Loc) -> Visit:
         url = row['url']
         ts = row['visit_time'] + 978307200  # https://stackoverflow.com/a/34546556/16645
-        dt = datetime.fromtimestamp(ts, timezone.utc)
+        dt = datetime.fromtimestamp(ts, UTC)
 
         return Visit(
             url=url,

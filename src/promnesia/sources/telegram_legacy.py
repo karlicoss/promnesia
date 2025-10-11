@@ -7,7 +7,6 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from textwrap import dedent
-from typing import TypeVar
 from urllib.parse import unquote  # TODO mm, make it easier to rememember to use...
 
 from promnesia.common import (
@@ -22,10 +21,8 @@ from promnesia.common import (
 
 from ..sqlite import sqlite_connection
 
-T = TypeVar("T")
 
-
-def unwrap(res: T | Exception) -> T:
+def unwrap[T](res: T | Exception) -> T:
     if isinstance(res, Exception):
         raise res
     return res

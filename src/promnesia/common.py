@@ -10,14 +10,14 @@ import warnings
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import contextmanager
 from copy import copy
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
 from subprocess import PIPE, Popen, run
 from timeit import default_timer as timer
 from types import ModuleType
-from typing import TYPE_CHECKING, NamedTuple, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, NamedTuple
 from zoneinfo import ZoneInfo
 
 import platformdirs
@@ -27,8 +27,7 @@ from .cannon import canonify
 
 _is_windows = os.name == 'nt'
 
-T = TypeVar('T')
-Res: TypeAlias = T | Exception
+type Res[T] = T | Exception
 
 PathIsh = str | Path
 
@@ -265,7 +264,7 @@ def extract_urls(s: str, *, syntax: Syntax = '') -> list[Url]:
 
 
 def from_epoch(ts: int) -> datetime:
-    return datetime.fromtimestamp(ts, tz=timezone.utc)
+    return datetime.fromtimestamp(ts, tz=UTC)
 
 
 def join_tags(tags: Iterable[str]) -> str:

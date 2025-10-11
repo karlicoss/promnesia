@@ -29,7 +29,7 @@ def index() -> Results:
 
 import json
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from itertools import chain
 from pathlib import Path
 
@@ -124,7 +124,7 @@ def read_browser_history_json(takeout: TakeoutPath) -> Iterable[Visit]:
     hist = j['Browser History']
     for item in hist:
         url = item['url']
-        time = datetime.fromtimestamp(item['time_usec'] / 10**6, tz=timezone.utc)
+        time = datetime.fromtimestamp(item['time_usec'] / 10**6, tz=UTC)
         # TODO any more interesitng info?
         yield Visit(
             url=url,

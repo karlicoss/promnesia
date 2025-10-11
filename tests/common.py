@@ -7,7 +7,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
-from typing import TypeVar
 
 import pytest
 import requests
@@ -72,9 +71,6 @@ def local_http_server(path: Path) -> Iterator[str]:
         yield endpoint
 
 
-T = TypeVar('T')
-
-
-def notnone(x: T | None) -> T:
+def notnone[T](x: T | None) -> T:
     assert x is not None
     return x
