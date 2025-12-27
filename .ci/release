@@ -1,65 +1,48 @@
 #!/usr/bin/env python3
 '''
-Run [[file:scripts/release][scripts/release]] to deploy Python package onto [[https://pypi.org][PyPi]] and [[https://test.pypi.org][test PyPi]].
+Deploys Python package onto [[https://pypi.org][PyPi]] or [[https://test.pypi.org][test PyPi]].
 
-The script expects =TWINE_PASSWORD= environment variable to contain the [[https://pypi.org/help/#apitoken][PyPi token]] (not the password!).
+- running manually
 
-The script can be run manually.
-It's also running as =pypi= job in [[file:.github/workflows/main.yml][Github Actions config]]. Packages are deployed on:
-- every master commit, onto test pypi
-- every new tag, onto production pypi
+  You'll need =UV_PUBLISH_TOKEN= env variable
 
-You'll need to set =TWINE_PASSWORD= and =TWINE_PASSWORD_TEST= in [[https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets][secrets]]
-for Github Actions deployment to work.
+- running on Github Actions
+
+  Instead of env variable, relies on configuring github as Trusted publisher (https://docs.pypi.org/trusted-publishers/) -- both for test and regular pypi
+
+  It's running as =pypi= job in [[file:.github/workflows/main.yml][Github Actions config]].
+  Packages are deployed on:
+  - every master commit, onto test pypi
+  - every new tag, onto production pypi
 '''
 
+UV_PUBLISH_TOKEN = 'UV_PUBLISH_TOKEN'
+
+import argparse
 import os
-import sys
 from pathlib import Path
 from subprocess import check_call
-import shutil
 
 is_ci = os.environ.get('CI') is not None
 
+
 def main() -> None:
-    import argparse
     p = argparse.ArgumentParser()
-    p.add_argument('--test', action='store_true', help='use test pypi')
+    p.add_argument('--use-test-pypi', action='store_true')
     args = p.parse_args()
 
-    extra = []
-    if args.test:
-        extra.extend(['--repository', 'testpypi'])
+    publish_url = ['--publish-url', 'https://test.pypi.org/legacy/'] if args.use_test_pypi else []
 
     root = Path(__file__).absolute().parent.parent
-    os.chdir(root) # just in case
+    os.chdir(root)  # just in case
 
-    if is_ci:
-        # see https://github.com/actions/checkout/issues/217
-        check_call('git fetch --prune --unshallow'.split())
+    check_call(['uv', 'build', '--clear'])
 
-    dist = root / 'dist'
-    if dist.exists():
-        shutil.rmtree(dist)
+    if not is_ci:
+        # CI relies on trusted publishers so doesn't need env variable
+        assert UV_PUBLISH_TOKEN in os.environ, f'no {UV_PUBLISH_TOKEN} passed'
 
-    check_call(['python3', '-m', 'build'])
-
-    TP = 'TWINE_PASSWORD'
-    password = os.environ.get(TP)
-    if password is None:
-        print(f"WARNING: no {TP} passed", file=sys.stderr)
-        import pip_secrets
-        password = pip_secrets.token_test if args.test else pip_secrets.token # meh
-
-    check_call([
-        'python3', '-m', 'twine',
-        'upload', *dist.iterdir(),
-        *extra,
-    ], env={
-        'TWINE_USERNAME': '__token__',
-        TP: password,
-        **os.environ,
-    })
+    check_call(['uv', 'publish', *publish_url])
 
 
 if __name__ == '__main__':

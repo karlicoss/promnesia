@@ -1,0 +1,6 @@
+[src]
+exclude = [
+   'tests/testdata/',
+]
+
+[rules]

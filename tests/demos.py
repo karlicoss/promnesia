@@ -11,9 +11,9 @@ from common import uses_x
 from end2end_test import (  # type: ignore[attr-defined]
     CH,
     FF,
-    _test_helper,
+    _test_helper,  # ty: ignore[unresolved-import]
     browsers,
-    configure_extension,
+    configure_extension,  # ty: ignore[unresolved-import]
     confirm,
 )
 from record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
@@ -529,7 +529,7 @@ def test_demo_highlights(tmp_path, browser):
     path = demos / 'highlights'
 
     def before(driver):
-        from private import instapaper_cookies
+        from private import instapaper_cookies  # ty: ignore[unresolved-import]
 
         # necessary to set cookies on instapaper..
         driver.get('http://instapaper.com')

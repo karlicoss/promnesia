@@ -338,7 +338,7 @@ def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
         )
     )
     uns = uns.removeprefix('//')  # // due to dummy protocol
-    return uns  # ty: ignore[invalid-return-type]  # see https://github.com/astral-sh/ty/issues/733
+    return uns
 
 
 #

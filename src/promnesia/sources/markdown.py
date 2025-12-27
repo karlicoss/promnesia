@@ -4,10 +4,10 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import NamedTuple
 
-import mistletoe  # type: ignore[import-untyped]
-import mistletoe.block_token as BT  # type: ignore[import-untyped]
-from mistletoe.html_renderer import HTMLRenderer  # type: ignore[import-untyped]
-from mistletoe.span_token import AutoLink, Link  # type: ignore[import-untyped]
+import mistletoe
+import mistletoe.block_token as BT
+from mistletoe.html_renderer import HTMLRenderer
+from mistletoe.span_token import AutoLink, Link
 
 from promnesia.common import (
     Extraction,

@@ -340,7 +340,7 @@ def _index_file(pp: Path, opts: Options) -> Results:
         yield echain(ex, RuntimeError(msg))
         return
 
-    logger.debug('indexing via %s: %s', ip.__name__, pp)
+    logger.debug('indexing via %s: %s', ip.__name__, pp)  # ty: ignore[unresolved-attribute]
 
     def indexer() -> Urls | Results:
         # eh, annoying.. need to make more generic..
