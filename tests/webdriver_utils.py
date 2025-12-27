@@ -12,7 +12,18 @@ from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.remote.webelement import WebElement
+
+# useful for debugging
+# from selenium.webdriver.remote.remote_connection import LOGGER
+# from selenium.webdriver.common.driver_finder import logger as driver_finder_logger
+# from selenium.webdriver.common.selenium_manager import logger as selenium_manager_logger
+# from promnesia.logging import setup_logger
+# for logger_ in [LOGGER, driver_finder_logger, selenium_manager_logger]:
+#     # ugh.. these loggers have no handlers by default?
+#     # so just .setLevel doesn't work...
+#     setup_logger(logger=logger_, level='DEBUG')
 
 
 @dataclass
@@ -96,21 +107,22 @@ def get_webdriver(
     headless: bool,
     logger,
 ) -> Driver:
-    # useful for debugging
-    # import logging
-    # from selenium.webdriver.remote.remote_connection import LOGGER
-    # LOGGER.setLevel(logging.DEBUG)
-
     # hmm. seems like if it can't find the driver, selenium automatically downloads it?
     driver: Driver
     version_data: dict[str, str]
     if browser == 'firefox':
         ff_options = webdriver.FirefoxOptions()
+
+        ## you can adjust this to change logging level of geckodriver (e.g. "info"/"trace")
+        # see https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
+        geckodriver_log_level: str | None = "warn"  # None means default which is "info"
+        if geckodriver_log_level is not None:
+            ff_options.log.level = geckodriver_log_level  # type: ignore[assignment]  # ?? seems like mypy is confused
+
         ff_options.set_preference('profile', str(profile_dir))
 
-        # TODO enable it back? for now relying on docker provided version on github actions
         # selenium manager should download latest dev version of firefox
-        # ff_options.browser_version = 'dev'
+        ff_options.browser_version = 'dev'
 
         # Without this, notifications aren't showing in firefox
         # I think possibly it's because we run under tox, and maybe it needs to connect to some bus or something
@@ -120,7 +132,11 @@ def get_webdriver(
         # e.g. use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
         if headless:
             ff_options.add_argument('--headless')
-        driver = webdriver.Firefox(options=ff_options)
+
+        driver = webdriver.Firefox(
+            options=ff_options,
+            service=FirefoxService(log_output=2),  # 2 means stderr (seems like otherwise it's not logging at all)
+        )
 
         addon_id = driver.install_addon(str(addon_source), temporary=True)
         logger.debug(f'firefox addon id: {addon_id}')
@@ -144,6 +160,7 @@ def get_webdriver(
         else:
             # TODO enable it back? for now relying on docker provided version on github actions
             # selenium manager should download latest "chrome for testing"
+            # available versions seem to be here: https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
             # cr_options.browser_version = 'dev'
 
             # seems like necessary from chrome-for-testing? otherwise doesn't start
@@ -178,8 +195,16 @@ def get_webdriver(
         _driver_version = tuple(map(int, version_data['chromedriverVersion'].split(' ')[0].split('.')))
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
-    version_string = ' '.join(f'{k}={v}' for k, v in version_data.items())
+    version_string = '; '.join(f'{k}={v}' for k, v in version_data.items())
     logger.info(f'webdriver version: {version_string}')
+
+    # Ugh. Tried a bunch of things to print webdriver version stuff during all tests (not just failed ones), but it's kind of annoying.
+    # - sys.__stdout__/__stderr__/os.write don't work
+    # - with capsys.disabled() works, but then it breakes lines between test names and results.. which is a bit annoying
+    # - pytest_terminal_summary in conftest could work, but it only prints at the end (and doesn't work with parallel tests)
+    # - doesn't look like there is a way to extract this version in advance from selenium manager??
+    #   overall it looks a bit too defenside... e.g. --offline mode can return wrong version instead of erroring
+    # Probably the best thing would be to just enable -s option on CI?
     return driver
 
 

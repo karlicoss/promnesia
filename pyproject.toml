@@ -100,6 +100,7 @@ testing-end2end = [
     "loguru",     # used in addon_helper... not sure if should just use promnesia's logger?
     "click",      # confirmations for end2end test
     "pyautogui",  # for keyboard automation during end2end tests
+    "ipdb"     ,  # optional but a bit nicer for breakpoints
 
     "pytest-timeout",  # for PYTEST_TIMEOUT env variable
     "pytest-xdist"  ,  # not used atm, but helpful to parallelise end2end tests

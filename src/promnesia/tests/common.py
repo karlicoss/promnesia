@@ -111,6 +111,7 @@ def write_config(path: Path, gen, **kwargs) -> None:
     path.write_text(cfg_src)
 
 
+# TODO there is also implementation here? https://github.com/SeleniumHQ/selenium/blob/4c64df2cde912aec7000589b2dc96fd21c6c27cd/py/selenium/webdriver/common/utils.py#L30
 @contextmanager
 def free_port() -> Iterator[int]:
     # this is a generator to make sure there are no race conditions between the time we call this and launch program
