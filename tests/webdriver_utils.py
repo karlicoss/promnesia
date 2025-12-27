@@ -1,7 +1,9 @@
+import shlex
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from pprint import pformat
 from time import sleep
 from typing import Literal
 
@@ -12,7 +14,6 @@ from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
-from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.remote.webelement import WebElement
 
 # useful for debugging
@@ -109,7 +110,7 @@ def get_webdriver(
 ) -> Driver:
     # hmm. seems like if it can't find the driver, selenium automatically downloads it?
     driver: Driver
-    version_data: dict[str, str]
+    version_data: dict[str, str] = {}
     if browser == 'firefox':
         ff_options = webdriver.FirefoxOptions()
 
@@ -135,17 +136,16 @@ def get_webdriver(
 
         driver = webdriver.Firefox(
             options=ff_options,
-            service=FirefoxService(log_output=2),  # 2 means stderr (seems like otherwise it's not logging at all)
+            # 2 means stderr (seems like otherwise it's not logging at all)
+            service=webdriver.FirefoxService(log_output=2),
         )
 
         addon_id = driver.install_addon(str(addon_source), temporary=True)
         logger.debug(f'firefox addon id: {addon_id}')
 
-        version_data = {}
         # TODO 'binary'? might not be present?
-        for key in ['browserName', 'browserVersion', 'moz:geckodriverVersion', 'moz:headless', 'moz:profile']:
+        for key in ['moz:geckodriverVersion', 'moz:headless', 'moz:profile']:
             version_data[key] = driver.capabilities[key]
-        version_data['driver_path'] = getattr(driver.service, '_path')
     elif browser == 'chrome':
         cr_options = webdriver.ChromeOptions()
 
@@ -177,26 +177,26 @@ def get_webdriver(
             # regular --headless doesn't support extensions for some reason
             cr_options.add_argument('--headless=new')
 
-        # generally 'selenium manager' download the correct driver version itself
+        # generally 'selenium manager' downloads the correct driver version itself
         chromedriver_bin: str | None = None  # default
 
         service = webdriver.ChromeService(executable_path=chromedriver_bin)
         driver = webdriver.Chrome(service=service, options=cr_options)
 
-        version_data = {}
-        # TODO 'binary'? might not be present?
-        for key in ['browserName', 'browserVersion']:
-            version_data[key] = driver.capabilities[key]
         version_data['chromedriverVersion'] = driver.capabilities['chrome']['chromedriverVersion']
         version_data['userDataDir'] = driver.capabilities['chrome']['userDataDir']
-        version_data['driver_path'] = getattr(driver.service, '_path')
-
-        _browser_version = tuple(map(int, version_data['browserVersion'].split('.')))
-        _driver_version = tuple(map(int, version_data['chromedriverVersion'].split(' ')[0].split('.')))
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
-    version_string = '; '.join(f'{k}={v}' for k, v in version_data.items())
-    logger.info(f'webdriver version: {version_string}')
+
+    for key in ['browserName', 'browserVersion']:
+        version_data[key] = driver.capabilities[key]
+
+    # ugh, seems like this is the only way to get the browser binary path?
+    # seems like webdriver never stores it anywhere, it just passed directly to chromedriver/geckodriver processes or something?
+    version_data['browser_cmdline'] = shlex.join(get_browser_process(driver).cmdline())
+    version_data['driver_path'] = getattr(driver.service, '_path')
+
+    logger.info(f'browser/driver info:\n{pformat(version_data)}')
 
     # Ugh. Tried a bunch of things to print webdriver version stuff during all tests (not just failed ones), but it's kind of annoying.
     # - sys.__stdout__/__stderr__/os.write don't work
@@ -232,4 +232,12 @@ def driver(*, tmp_path: Path, addon_source: Path, browser: Browser) -> Iterator[
         headless=browser.headless,
         logger=logger,
     ) as res:
-        yield res
+        try:
+            yield res
+        finally:
+            # ugh. in firefox get_webdriver we set log_output=2 (stderr) to see driver logs
+            # however seems like webdriver will try to close it which may result in crashes on shutdown
+            # https://github.com/SeleniumHQ/selenium/blob/4c64df2cde912aec7000589b2dc96fd21c6c27cd/py/selenium/webdriver/common/service.py#L146-L152
+            service = res.service  # type: ignore[attr-defined] # ty: ignore[unresolved-attribute]
+            if service.log_output == 2:
+                service.log_output = None
