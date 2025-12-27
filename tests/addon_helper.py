@@ -57,7 +57,10 @@ class AddonHelper:
         assert command in commands, (command, commands)
 
         if self.headless:
-            # see selenium_bridge.js
+            # see selenium_bridge.js -- this is to avoid using pyautogui in headless mode
+            assert any(
+                entry.get('js') == ['selenium_bridge.js'] for entry in self.manifest.get('content_scripts', [])
+            ), "This won't work without selenium_bridge.js, you probably built the extension in --publish mode"
             ccc = f'selenium-bridge-{command}'
             self.driver.execute_script(
                 f"""
