@@ -14,11 +14,6 @@ import requests
 from promnesia.tests.common import free_port
 
 
-def has_x() -> bool:
-    # meh, not very portable, but good enough for now
-    return 'DISPLAY' in os.environ
-
-
 def under_ci() -> bool:
     return 'CI' in os.environ
 
@@ -27,6 +22,7 @@ def skip_if_ci(reason):
     return pytest.mark.skipif(under_ci(), reason=reason)
 
 
+# used in demos.py -- baybe get rid of it?
 def uses_x(f):
     @skip_if_ci('Uses X server')
     @wraps(f)
@@ -71,6 +67,7 @@ def local_http_server(path: Path) -> Iterator[str]:
         yield endpoint
 
 
+# TODO move to main package?
 def notnone[T](x: T | None) -> T:
     assert x is not None
     return x

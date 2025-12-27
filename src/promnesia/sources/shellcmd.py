@@ -33,7 +33,7 @@ def index(command: str | Sequence[PathIsh]) -> Results:
         warnings.warn("Passing string as a command is very fragile('{command}'). Please use list instead.")
         cmd = command.split(' ')
     else:
-        cmds = ' '.join(map(str, command)) # ty: ignore[invalid-argument-type]  # see https://github.com/astral-sh/ty/issues/2091
+        cmds = ' '.join(map(str, command))  # ty: ignore[invalid-argument-type]  # see https://github.com/astral-sh/ty/issues/2091
         cmd = command
 
     # ugh... on windows grep does something nasty? e.g:

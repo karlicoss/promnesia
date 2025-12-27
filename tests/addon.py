@@ -12,7 +12,6 @@ from pathlib import Path
 from time import sleep
 
 import pytest
-from addon_helper import AddonHelper
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -21,10 +20,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as Wait
-from webdriver_utils import frame_context, is_visible, wait_for_alert
 
 from promnesia.logging import LazyLogger
 
+from .addon_helper import AddonHelper
+from .webdriver_utils import frame_context, is_visible, wait_for_alert
+
+# TODO use loguru?
 logger = LazyLogger('promnesia-tests', level='debug')
 
 
@@ -38,12 +40,14 @@ def measure(*args, **kwargs):
         yield m
 
 
-def get_addon_source(kind: str) -> Path:
+@pytest.fixture
+def addon_source(*, browser) -> Path:
     # TODO compile first?
-    addon_path = (Path(__file__).parent.parent / 'extension' / 'dist' / kind).absolute()
-    assert addon_path.exists()
-    assert (addon_path / 'manifest.json').exists()
-    return addon_path
+    # TODO not sure, maybe need kind here? e.g. mobile
+    res = (Path(__file__).parent.parent / 'extension' / 'dist' / browser.name).absolute()
+    assert res.exists(), res
+    assert (res / 'manifest.json').exists(), res
+    return res
 
 
 LOCALHOST = 'http://localhost'
@@ -361,7 +365,6 @@ See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
 
 
 @pytest.fixture
-def addon(driver: Driver) -> Addon:
-    addon_source = get_addon_source(kind=driver.name)
+def addon(*, driver: Driver, addon_source: Path) -> Addon:
     helper = AddonHelper(driver=driver, addon_source=addon_source)
     return Addon(helper=helper)
