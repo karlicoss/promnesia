@@ -1,14 +1,24 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
+from typing import Literal
 
 import psutil
+import pytest
+from loguru import logger
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
+
+
+@dataclass
+class Browser:
+    name: Literal['chrome', 'firefox']
+    headless: bool
 
 
 def get_current_frame(driver: Driver) -> WebElement | None:
@@ -97,6 +107,15 @@ def get_webdriver(
     if browser == 'firefox':
         ff_options = webdriver.FirefoxOptions()
         ff_options.set_preference('profile', str(profile_dir))
+
+        # TODO enable it back? for now relying on docker provided version on github actions
+        # selenium manager should download latest dev version of firefox
+        # ff_options.browser_version = 'dev'
+
+        # Without this, notifications aren't showing in firefox
+        # I think possibly it's because we run under tox, and maybe it needs to connect to some bus or something
+        ff_options.set_preference("alerts.useSystemBackend", value=False)
+
         # ff_options.binary_location = ''  # set custom path here
         # e.g. use firefox from here to test https://www.mozilla.org/en-GB/firefox/developer/
         if headless:
@@ -113,9 +132,22 @@ def get_webdriver(
         version_data['driver_path'] = getattr(driver.service, '_path')
     elif browser == 'chrome':
         cr_options = webdriver.ChromeOptions()
+
+        # in case user wants some adhoc override
         chrome_bin: str | None = None  # default (e.g. apt version)
+
+        # NOTE: regular/stable chrome, --load-extension isn't working anymore
+        # https://stackoverflow.com/questions/25064523/load-extension-parameter-for-chrome-doesnt-work
+
         if chrome_bin is not None:
             cr_options.binary_location = chrome_bin
+        else:
+            # TODO enable it back? for now relying on docker provided version on github actions
+            # selenium manager should download latest "chrome for testing"
+            # cr_options.browser_version = 'dev'
+
+            # seems like necessary from chrome-for-testing? otherwise doesn't start
+            cr_options.add_argument('--no-sandbox')
 
         cr_options.add_argument(f'--load-extension={addon_source}')
         cr_options.add_argument(f'--user-data-dir={profile_dir}')  # todo point to a subdir?
@@ -141,6 +173,9 @@ def get_webdriver(
         version_data['chromedriverVersion'] = driver.capabilities['chrome']['chromedriverVersion']
         version_data['userDataDir'] = driver.capabilities['chrome']['userDataDir']
         version_data['driver_path'] = getattr(driver.service, '_path')
+
+        _browser_version = tuple(map(int, version_data['browserVersion'].split('.')))
+        _driver_version = tuple(map(int, version_data['chromedriverVersion'].split(' ')[0].split('.')))
     else:
         raise RuntimeError(f'Unexpected browser {browser}')
     version_string = ' '.join(f'{k}={v}' for k, v in version_data.items())
@@ -160,3 +195,16 @@ def get_browser_process(driver: webdriver.Remote) -> psutil.Process:
     else:
         raise AssertionError
     return process
+
+
+@pytest.fixture
+def driver(*, tmp_path: Path, addon_source: Path, browser: Browser) -> Iterator[Driver]:
+    profile_dir = tmp_path / 'browser_profile'
+    with get_webdriver(
+        profile_dir=profile_dir,
+        addon_source=addon_source,
+        browser=browser.name,
+        headless=browser.headless,
+        logger=logger,
+    ) as res:
+        yield res

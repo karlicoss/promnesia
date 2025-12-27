@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 import subprocess
@@ -8,7 +10,8 @@ from typing import Any
 
 from loguru import logger
 from selenium import webdriver
-from webdriver_utils import get_browser_process, is_headless
+
+from .webdriver_utils import get_browser_process, is_headless
 
 
 @dataclass
@@ -70,7 +73,7 @@ class AddonHelper:
     def gui_hotkey(self, key: str) -> None:
         assert not self.headless  # just in case
         lkey = key.lower().split('+')
-        logger.debug(f'sending hotkey {lkey}')
+        logger.debug(f'pyautogui: sending hotkey {lkey}')
 
         import pyautogui
 
@@ -79,6 +82,8 @@ class AddonHelper:
 
     def gui_write(self, *args, **kwargs) -> None:
         assert not self.headless
+
+        logger.debug(f'pyautogui: typing {args} {kwargs}')
 
         import pyautogui
 

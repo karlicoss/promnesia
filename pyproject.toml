@@ -83,14 +83,8 @@ testing = [
     
     "hypothesis",
 
-    "loguru",  # used in addon_helper... not sure if should just use promnesia's logger?
-
     "psutil",
     "requests",
-
-    # todo hmm ideally would be in corresponding testing-... sections
-    # but we don't split separate mypy for end2end tests... so idk
-    "selenium"      ,  # browser automations
 
     # NOTE: markdown is only used for test_cli... might be nice to decouple
     "promnesia[markdown]",
@@ -101,17 +95,14 @@ testing-all = [
 ]
 testing-end2end = [
     { include-group = "testing-all" },
-    "click"         ,  # confirmations for end2end test (might remove dependency)
+
+    "selenium",   # browser automations
+    "loguru",     # used in addon_helper... not sure if should just use promnesia's logger?
+    "click",      # confirmations for end2end test
+    "pyautogui",  # for keyboard automation during end2end tests
+
     "pytest-timeout",  # for PYTEST_TIMEOUT env variable
     "pytest-xdist"  ,  # not used atm, but helpful to parallelise end2end tests
-
-    "promnesia[HPI]",
-]
-testing-gui = [
-    { include-group = "testing-end2end" },
-    # pyautogui seems problematic, wheels often fail to build under windows
-    # we don't use it in CI, so keep in a separate extras section
-    "pyautogui",  # for keyboard automation during end2end tests
 ]
 typecheck = [
     { include-group = "testing" },
@@ -124,7 +115,7 @@ typecheck = [
 ]
 typecheck-all = [
     { include-group = "typecheck" },
-    "promnesia[HPI,org,markdown]",
+    { include-group = "testing-end2end" },
 
     "types-PyAutoGUI",
 ]

@@ -6,9 +6,10 @@ from pathlib import Path
 from subprocess import check_call
 from time import sleep
 
-from addon_helper import get_window_id
-from common import uses_x
-from end2end_test import (  # type: ignore[attr-defined]
+from .addon_helper import get_window_id
+from .common import uses_x
+from .record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
+from .test_end2end import (  # type: ignore[attr-defined]
     CH,
     FF,
     _test_helper,  # ty: ignore[unresolved-import]
@@ -16,13 +17,13 @@ from end2end_test import (  # type: ignore[attr-defined]
     configure_extension,  # ty: ignore[unresolved-import]
     confirm,
 )
-from record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
+from .webdriver_utils import get_webdriver
 
 
 def real_db():
     import shutil
 
-    from private import real_db_path, test_filter  # type: ignore[import-not-found]
+    from .private import real_db_path, test_filter  # type: ignore[import-not-found,unused-ignore,import-untyped]
 
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
@@ -519,9 +520,6 @@ def scroll_to_text(driver, text: str):
     # TODO a bit of wait??
 
 
-from end2end_test import get_webdriver
-
-
 @uses_x
 @browsers(FF, CH)
 def test_demo_highlights(tmp_path, browser):
@@ -529,7 +527,7 @@ def test_demo_highlights(tmp_path, browser):
     path = demos / 'highlights'
 
     def before(driver):
-        from private import instapaper_cookies  # ty: ignore[unresolved-import]
+        from .private import instapaper_cookies  # ty: ignore[unresolved-import]
 
         # necessary to set cookies on instapaper..
         driver.get('http://instapaper.com')
