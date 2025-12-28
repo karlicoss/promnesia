@@ -36,17 +36,20 @@ class Browser:
 def get_current_frame(driver: Driver) -> WebElement | None:
     # idk why is it so hard to get current frame in selenium, but it is what it is
     # https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/4305#issuecomment-192026569
+    # NOTE: that may not always work inside iframes?
+    # e.g. see this https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
+    #  , chromedriver had this behaviour broken at some point
     return driver.execute_script('return window.frameElement')
 
 
 @contextmanager
-def frame_context(driver: Driver, frame) -> Iterator[WebElement | None]:
-    # todo return the frame maybe?
+def frame_context(driver: Driver, *, frame: WebElement) -> Iterator[WebElement]:
     current = get_current_frame(driver)
+    assert current is None, current  # just in case? not sure if really necessary
+    # todo use switching to parent instead??
     driver.switch_to.frame(frame)
     try:
-        new_frame = get_current_frame(driver)
-        yield new_frame
+        yield frame
     finally:
         # hmm mypy says it can't be None
         # but pretty sure it worked when current frame is None?
@@ -134,6 +137,12 @@ def get_webdriver(
         if headless:
             ff_options.add_argument('--headless')
 
+            # In theory that should allow to start a remote debuggger? The port is visible in ss -tulpen.
+            # However I can't manage to connect to it using either firefox or chrome devtools, not sure why..
+            # ff_options.set_preference("devtools.debugger.remote-enabled", True)
+            # ff_options.set_preference("devtools.chrome.enabled", True)
+            # ff_options.add_argument('--start-debugger-server=9222')
+
         driver = webdriver.Firefox(
             options=ff_options,
             # 2 means stderr (seems like otherwise it's not logging at all)
@@ -158,10 +167,9 @@ def get_webdriver(
         if chrome_bin is not None:
             cr_options.binary_location = chrome_bin
         else:
-            # TODO enable it back? for now relying on docker provided version on github actions
             # selenium manager should download latest "chrome for testing"
             # available versions seem to be here: https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
-            # cr_options.browser_version = 'dev'
+            cr_options.browser_version = 'dev'
 
             # seems like necessary from chrome-for-testing? otherwise doesn't start
             cr_options.add_argument('--no-sandbox')
@@ -176,6 +184,12 @@ def get_webdriver(
 
             # regular --headless doesn't support extensions for some reason
             cr_options.add_argument('--headless=new')
+
+        # ugh. this is necessary for chrome to consider extension pages as part of normal tabs
+        # https://github.com/SeleniumHQ/selenium/issues/15685
+        # https://issues.chromium.org/issues/416666972
+        # https://issues.chromium.org/issues/409441960
+        cr_options.add_experimental_option('enableExtensionTargets', value=True)
 
         # generally 'selenium manager' downloads the correct driver version itself
         chromedriver_bin: str | None = None  # default

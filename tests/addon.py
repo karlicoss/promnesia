@@ -76,7 +76,7 @@ class Sidebar:
     def ctx(self) -> Iterator[WebElement]:
         selector = (By.XPATH, '//iframe[contains(@id, "promnesia-frame")]')
         wait = 5  # if you want to decrease this, make sure test_sidebar_navigation isn't failing
-        frame_element = Wait(self.driver, timeout=wait).until(
+        promnesia_frame = Wait(self.driver, timeout=wait).until(
             EC.presence_of_element_located(selector),
         )
 
@@ -84,9 +84,7 @@ class Sidebar:
         # TODO uncomment it later when sidebar is injected gracefully...
         # assert len(frames) == 1, frames  # just in case
 
-        frame_id = frame_element.get_attribute('id')
-        with frame_context(self.driver, frame_id) as frame:
-            assert frame is not None
+        with frame_context(self.driver, frame=promnesia_frame) as frame:
             yield frame
 
     @property
@@ -296,22 +294,6 @@ class Addon:
 
     @property
     def sidebar(self) -> Sidebar:
-        driver = self.helper.driver
-        if driver.name == 'chrome':
-            browser_version = tuple(map(int, driver.capabilities['browserVersion'].split('.')))
-            driver_version = tuple(
-                map(int, driver.capabilities['chrome']['chromedriverVersion'].split(' ')[0].split('.'))
-            )
-            last_working = (113, 0, 5623, 0)
-            if browser_version > last_working or driver_version > last_working:
-                # NOTE: feel free to comment this out if necessary, it's just to avoid hours of debugging
-                raise RuntimeError(
-                    f"""
-NOTE: you're using chrome {browser_version} with chromedriver {driver_version}.
-Some tests aren't working with recent Chrome versions (later than {last_working}) due to regressions in chromedriver.
-See https://bugs.chromium.org/p/chromedriver/issues/detail?id=4440
-"""
-                )
         return Sidebar(addon=self)
 
     def activate(self) -> None:
