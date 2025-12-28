@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 from contextlib import ExitStack
 from datetime import datetime
 from pathlib import Path
 from time import sleep
 
-import click
 import pytest
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.by import By
@@ -29,10 +27,11 @@ from .addon import (
 from .common import local_http_server, notnone
 from .utils import (
     exit_stack,  # noqa: F401 used as fixture
-    has_x,
 )
 from .webdriver_utils import (
     Browser,
+    Manual,
+    browsers,
     driver,  # noqa: F401 used as fixture
     is_visible,
     wait_for_alert,
@@ -42,72 +41,10 @@ from .webdriver_utils import (
 logger = LazyLogger('promnesia-tests', level='debug')
 
 
-# TODO ugh, I guess it's not that easy to make it work because of isAndroid checks...
-# I guess easy way to test if you really want is to temporary force isAndroid to return true in extension...
-# FIXME bring it back later?
-# FM = Browser('firefox-mobile', headless=False)
-
-
-def confirm(what: str) -> None:
-    is_headless = 'headless' in os.environ.get('PYTEST_CURRENT_TEST', '')
-    if is_headless:
-        # ugh.hacky
-        Headless().confirm(what)
-        return
-
-    click.confirm(click.style(what, blink=True, fg='yellow'), abort=True)
-    # TODO focus window if not headless
-
-
-class Manual:
-    def confirm(self, what: str) -> None:
-        raise NotImplementedError
-
-
-class Interactive(Manual):
-    def confirm(self, what: str) -> None:
-        confirm(what)
-
-
-class Headless(Manual):
-    def confirm(self, what: str) -> None:
-        logger.warning('"%s": headless mode, responding "yes"', what)
-
-
-'''
-Helper for tests that are not yet fully automated and require a human to check...
-- if running with the GUI, will be interactive
-- if running in headless mode, will automatically assume 'yes'.
-  of course it's not very robust, but at least we're testing some codepaths then
-'''
-manual = Interactive() if has_x() else Headless()
-
-
-# fmt: off
-FF  = Browser('firefox', headless=False)
-CH  = Browser('chrome' , headless=False)
-FFH = Browser('firefox', headless=True)
-CHH = Browser('chrome' , headless=True)
-# fmt: on
-
-
-def browsers(*br: Browser):
-    if len(br) == 0:
-        # if no args passed, test all combinations
-        br = (
-            CH,
-            FF,
-            CHH,
-            FFH,
-        )  # fmt: skip
-    if not has_x():
-        # this is convenient to filter out automatically for CI
-        br = tuple(b for b in br if b.headless)
-    return pytest.mark.parametrize(
-        "browser",
-        br,
-        ids=[f'browser={b.name}_{"headless" if b.headless else "gui"}' for b in br],
-    )
+# you can use mode='headless' to always auto-confirm even with gui tests
+manual = Manual(mode='auto')
+confirm = manual.confirm
+#
 
 
 @pytest.fixture
@@ -227,7 +164,7 @@ def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
     driver.get('https://stackoverflow.com/questions/27215462')
 
     addon.activate()
-    manual.confirm('page should be blacklisted (black icon), you should see an error notification')
+    confirm('page should be blacklisted (black icon), you should see an error notification')
     # make sure there is not even the frame for blacklisted page
     assert not addon.sidebar.available
 
@@ -238,7 +175,7 @@ def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
     driver.refresh()
 
     addon.sidebar.open()
-    manual.confirm('sidebar: should be visible')
+    confirm('sidebar: should be visible')
 
 
 @browsers()
@@ -247,7 +184,7 @@ def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
     driver.get('https://www.hsbc.co.uk/mortgages/')
 
     addon.activate()
-    manual.confirm('page should be blacklisted (black icon), your should see an error notification')
+    confirm('page should be blacklisted (black icon), your should see an error notification')
     # make sure there is not even the frame for blacklisted page
     assert not addon.sidebar.available
 
@@ -258,7 +195,7 @@ def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
     driver.refresh()
 
     addon.sidebar.open()
-    manual.confirm('sidebar: should be visible')
+    confirm('sidebar: should be visible')
 
 
 @browsers()
@@ -348,7 +285,7 @@ def test_search_around(addon: Addon, driver: Driver, backend: Backend) -> None:
     hl = visits.find_element(By.CLASS_NAME, 'highlight')
     assert 'anthrocidal' in hl.text
 
-    manual.confirm('you should see search results, "anthrocidal" should be highlighted red')
+    confirm('you should see search results, "anthrocidal" should be highlighted red')
     # FIXME test clicking search around in actual search page.. it didn't work, seemingly because of initBackground() handling??
 
 
@@ -479,10 +416,10 @@ def test_new_background_tab(addon: Addon, driver: Driver, backend: Backend) -> N
     # bg_url_text = "El Proceso (The Process)"
     # TODO generate some fake data instead?
     driver.get(start_url)
-    manual.confirm('you should see notification about contexts')
+    confirm('you should see notification about contexts')
     page_logo = driver.find_element(By.XPATH, '//a[@class="page-logo"]')
     page_logo.send_keys(Keys.CONTROL + Keys.ENTER)  # ctrl+click -- opens the link in new background tab
-    manual.confirm('you should not see any new notifications')
+    confirm('you should not see any new notifications')
     # TODO switch to new tab?
     # TODO https://www.e-flux.com/journal/53/
 
@@ -618,7 +555,7 @@ def test_unreachable(addon: Addon, driver: Driver, backend: Backend) -> None:
     except:
         # results in exception because it's unreachable
         pass
-    manual.confirm('green icon, no errors, desktop notification with contexts')
+    confirm('green icon, no errors, desktop notification with contexts')
 
 
 @browsers()
@@ -632,7 +569,7 @@ def test_stress(addon: Addon, driver: Driver, backend: Backend) -> None:
     addon.activate()
 
     # todo I guess it's kinda tricky to test in headless webdriver
-    manual.confirm(
+    confirm(
         '''
 Is performance reasonable?
 The sidebar should show up, and update gradually.

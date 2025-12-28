@@ -10,8 +10,8 @@ from .addon_helper import get_window_id
 from .common import uses_x
 from .record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
 from .test_end2end import (  # type: ignore[attr-defined]
-    CH,
-    FF,
+    CHROME,
+    FIREFOX,
     _test_helper,  # ty: ignore[unresolved-import]
     browsers,
     configure_extension,  # ty: ignore[unresolved-import]
@@ -196,7 +196,7 @@ def wait(x):
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_quick(tmp_path, browser):
     path = Path('demos/quick')
     with demo_helper(
@@ -223,7 +223,7 @@ demos = Path('demos')
 
 # TODO need to determine that uses X automatically
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_mark_visited(tmp_path, browser):
     # TODO wonder if it's possible to mess with settings in local storage? unlikely...
 
@@ -291,7 +291,7 @@ You can click right on the ones you haven't seen before and start exploring!
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_mark_visited_2(tmp_path, browser):
     path = demos / 'mark-visited-2'
 
@@ -341,7 +341,7 @@ Links I've already visited are marked with dots!
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_child_visits(tmp_path, browser):
     path = Path('demos/child-visits')
     with demo_helper(
@@ -415,7 +415,7 @@ I guess I should follow him!
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_child_visits_2(tmp_path, browser):
     path = Path('demos/child-visits-2')
 
@@ -521,9 +521,9 @@ def scroll_to_text(driver, text: str):
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_highlights(tmp_path, browser):
-    assert browser == FF, browser  # because of the profile_dir hack
+    assert browser == FIREFOX, browser  # because of the profile_dir hack
     path = demos / 'highlights'
 
     def before(driver):
@@ -648,7 +648,7 @@ It's not using any annotation service -- it's just a plaintext file!
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_how_did_i_get_here(tmp_path, browser):
     path = demos / 'how_did_i_get_here'
 
@@ -739,7 +739,7 @@ Aha! Here's the reference to the book.
 
 
 @uses_x
-@browsers(FF, CH)
+@browsers(FIREFOX, CHROME)
 def test_demo_watch_later(tmp_path, browser):
     path = demos / 'watch_later'
 
