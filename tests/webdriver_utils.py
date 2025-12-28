@@ -1,3 +1,4 @@
+import os
 import shlex
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -7,6 +8,7 @@ from pprint import pformat
 from time import sleep
 from typing import Literal
 
+import click
 import psutil
 import pytest
 from loguru import logger
@@ -15,6 +17,8 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
+
+from .utils import has_x
 
 # useful for debugging
 # from selenium.webdriver.remote.remote_connection import LOGGER
@@ -31,6 +35,37 @@ from selenium.webdriver.remote.webelement import WebElement
 class Browser:
     name: Literal['chrome', 'firefox']
     headless: bool
+
+
+# fmt: off
+FIREFOX          = Browser('firefox', headless=False)
+CHROME           = Browser('chrome' , headless=False)
+FIREFOX_HEADLESS = Browser('firefox', headless=True)
+CHROME_HEADLESS  = Browser('chrome' , headless=True)
+# fmt: on
+# TODO ugh, I guess it's not that easy to make it work because of isAndroid checks...
+# I guess easy way to test if you really want is to temporary force isAndroid to return true in extension...
+# FIXME bring it back later?
+# FM = Browser('firefox-mobile', headless=False)
+
+
+def browsers(*br: Browser):
+    if len(br) == 0:
+        # if no args passed, test all combinations
+        br = (
+            CHROME,
+            FIREFOX,
+            CHROME_HEADLESS,
+            FIREFOX_HEADLESS,
+        )  # fmt: skip
+    if not has_x():
+        # this is convenient to filter out automatically for CI
+        br = tuple(b for b in br if b.headless)
+    return pytest.mark.parametrize(
+        "browser",
+        br,
+        ids=[f'browser={b.name}_{"headless" if b.headless else "gui"}' for b in br],
+    )
 
 
 def get_current_frame(driver: Driver) -> WebElement | None:
@@ -255,3 +290,34 @@ def driver(*, tmp_path: Path, addon_source: Path, browser: Browser) -> Iterator[
             service = res.service  # type: ignore[attr-defined] # ty: ignore[unresolved-attribute]
             if service.log_output == 2:
                 service.log_output = None
+
+
+@dataclass
+class Manual:
+    '''
+    Helper for tests that are not yet fully automated and require a human to check...
+    By default:
+    - if running in headless mode, will automatically assume 'yes'
+    - if running with GUI, will prompt user for confirmation
+    '''
+
+    mode: Literal['auto', 'headless', 'interactive'] = 'auto'
+
+    def confirm(self, what: str) -> None:
+        is_headless = 'headless' in os.environ.get('PYTEST_CURRENT_TEST', '')
+
+        mode = self.mode
+        if mode == 'auto':
+            if is_headless:
+                mode = 'headless'
+            else:
+                mode = 'interactive'
+
+        if mode == 'headless':
+            click.echo(click.style(what, fg='yellow'), nl=False)
+            click.echo(click.style(' -- headless mode, responding "yes"', fg='green'))
+        elif mode == 'interactive':
+            click.confirm(click.style(what, fg='yellow', blink=True), abort=True)
+            # TODO focus window if not headless
+        else:
+            raise RuntimeError(f"Shouldn't happen: mode={mode}")
