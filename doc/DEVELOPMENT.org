@@ -25,7 +25,7 @@ To actually run checks there are several options. Some examples:
   (tox is a tool to run tests in isolated Python environments, google it for moe info if you're curious)
 - ~tox -e mypy-core~: will run only ~mypy-core~ checks
 - ~tox -e tests -- -k test_search~: only run tests that contain ~test_search~ substring (everything after ~--~ passed down to pytest)
-- ~pytest -s tests/config_tests.py~: run just one file via pytest
+- ~pytest --pyargs promnesia.tests.test_server~: run just one file (i.e. module) via pytest
 - ~mypy -p promnesia.sources.hypothesis~: only checks this module via mypy
 
 You might want to consult [[file:../tox.ini][tox.ini]], [[file:pytest.ini][pytest.ini]] and [[file:../mypy.ini][mypy.ini]].
@@ -34,6 +34,7 @@ When you run tests, some tests will be marked as yellow and as =SKIPPED=.
 There is no need to worry about it -- by default some tests aren't running because they are using GUI (so only run manually), or work in progress, or something else. As long as github actions are happy it generally should be fine.
 
 ** structure of tests
+# TODO this is outdated.. need to update
 - =tests/indexer_test.py= -- usually tests sources and how they extract visits (without creating the database)
 - =tests/integration_test.py= -- usually tests indexing, and does checks against actual database
 - =tests/server_test.py= -- usually tests server responses
@@ -59,29 +60,33 @@ I'm not against it, but with limited time resources full-scale tests give better
    - on Firefox, the temporary loaded extensions only persist until the browser restart. Chrome doesn't have that issue.
    - on Firefox for Android, web extensions on Android are mostly broken at the moment, see [[https://discourse.mozilla.org/t/add-on-support-in-new-firefox-for-android/53488][here]] (unless you're using [[https://blog.mozilla.org/addons/2020/09/29/expanded-extension-support-in-firefox-for-android-nightly][Firefox Nightly]])
 
-* Run end-to-end tests
+* Running end2end tests
 
-End-to-end tests go through the full cycle from indexing & backend to automated extension tests, and are very helpful to make sure you don't break things.
+There are some end2end tests which check both web extension in a browser + backend functionality.
 
-You need:
+There are two flavours: `headless` and `gui`.
 
-- firefox + =geckodriver=, or chrome + =chromedriver=
-- =pip3 install pyautogui= for keyboard automation
+Headless run the browsers in headless mode (no GUI), so they are the ones running on github actions.
 
-Example of running a test:
+GUI ones require a visible browser window, and need to be run manually. For these, you'll need:
+- `xdotool` installed (it's used for simulating keyboard input).
+  I'm not sure if there is a decent alternative for OSX, so these only work on Linux.
+- They won't work on Wayland right now (need X11).
 
-: PYTHONPATH=src python3 -m pytest -s 'tests/end2end_test.py::test_add_to_blacklist[chrome]'
+Necessary browsers and webdrivers should be installed automatically by selenium (via "selenium manager").
 
-You can also run them via tox:
+Some example commands to run the tests:
 
-# TODO https://github.com/tox-dev/tox/discussions/2681
-: TOX_TESTENV_PASSENV='DISPLAY HOME' tox -e end2end -- -s -k 'test_blacklist_custom[firefox]'
+: tox -e end2end -- -s  # runs all available tests with all browsers. -s is necessary to confirm prompts
+: tox -e end2end -- -s --collect-only  # to see all available tests
+: tox -e end2end -- -s -k headless  # only run tests on headless firefox/chrome
+: tox -e end2end -- -s -k 'firefox_gui and test_visits'  # only run one specific test against gui firefox
 
-- it's useful to pass =--pdb= to pytest, so you don't have to restart webdriver all over
-- after initial run, it's best pass =--skip-pkg-install= to tox to speedup repetitive test runs
-- when you're in development/debugging process, perhaps best to run the firefox version of tests -- Chrome has a 5-ish seconds lag after installing the extension
-- since these tests can be quite slow, you can benefit from installing =pytest-xdist= plugin and using =-n= flag to parallelize
-- to debug flaky tests, it's useful to install =pytest-repeat= in addition, e.g. =--repeat=5 -n 5=
+Some tips:
+- It's useful to pass =--pdb= to pytest, so you can inspect the browser state if something goes wrong.
+- When you're in development/debugging process, perhaps best to run the firefox version of tests -- Chrome has a 5-ish seconds lag after installing the extension for some reason.
+- Since these tests can be quite slow, =-n auto= flag to parallelize can be helpful (via =pytest-xdist=).
+- To debug flaky tests, it's useful to use =--count=N= flag (via =pytest-repeat=).
 
 * Releasing
 ** AMO (addons.mozilla.org)

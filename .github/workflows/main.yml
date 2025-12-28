@@ -161,16 +161,32 @@ jobs:
   # split in two pipelines to speedup running
   end2end_tests:
     strategy:
+      fail-fast: false
       matrix:
         browser: [chrome, firefox]
+
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v6
       with:
         submodules: recursive
+        fetch-depth: 0  # nicer to have all git history when debugging/for tests
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+
+    - uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: false  # we don't have lock files, so can't use them as cache key
+
     - uses: mxschmitt/action-tmate@v3
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-    - run: .ci/end2end/build_and_run.sh -k ${{ matrix.browser }}
+
+    - run: sudo apt install --yes python3-doc  # html files from this pacakge are used in tests
+    - run: extension/.ci/build  # debug version, don't lint since build_extension already did that
+    - run: bash .ci/run -e end2end -- -k ${{ matrix.browser }}
 
   install_and_run_test:
     # todo use setup-python thing?
