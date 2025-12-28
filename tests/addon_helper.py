@@ -8,9 +8,9 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
 from selenium import webdriver
 
+from .common import logger
 from .webdriver_utils import get_browser_process, is_headless
 
 

@@ -11,13 +11,13 @@ from typing import Literal
 import click
 import psutil
 import pytest
-from loguru import logger
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
 
+from .common import logger
 from .utils import has_x
 
 # useful for debugging

@@ -10,8 +10,9 @@ from pathlib import Path
 
 import pytest
 import requests
+from loguru import logger  # noqa: F401  # used/impoted in other tests
 
-from promnesia.tests.common import free_port
+from promnesia.tests.common import free_port, tmp_popen
 
 
 def under_ci() -> bool:
@@ -30,20 +31,6 @@ def uses_x(f):
         return f(*args, **kwargs)
 
     return ff
-
-
-@contextmanager
-def tmp_popen(*args, **kwargs):
-    import psutil
-
-    with psutil.Popen(*args, **kwargs) as p:
-        try:
-            yield p
-        finally:
-            for c in p.children(recursive=True):
-                c.kill()
-            p.kill()
-            p.wait()
 
 
 @contextmanager

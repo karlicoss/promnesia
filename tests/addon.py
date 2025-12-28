@@ -21,16 +21,11 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 
-from promnesia.logging import LazyLogger
+from promnesia.common import measure as measure_orig
 
 from .addon_helper import AddonHelper
+from .common import logger
 from .webdriver_utils import frame_context, is_visible, wait_for_alert
-
-# TODO use loguru?
-logger = LazyLogger('promnesia-tests', level='debug')
-
-
-from promnesia.common import measure as measure_orig
 
 
 @contextmanager
