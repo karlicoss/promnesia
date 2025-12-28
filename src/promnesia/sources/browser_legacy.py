@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import unquote
 
-from promnesia import config
+import promnesia.config as config
 from promnesia.common import Loc, PathIsh, Results, Second, Visit, is_sqlite_db, logger
 
 try:

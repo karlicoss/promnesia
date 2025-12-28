@@ -10,14 +10,11 @@ from .addon_helper import get_window_id
 from .common import uses_x
 from .record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
 from .test_end2end import (  # type: ignore[attr-defined]
-    CHROME,
-    FIREFOX,
     _test_helper,  # ty: ignore[unresolved-import]
-    browsers,
     configure_extension,  # ty: ignore[unresolved-import]
     confirm,
 )
-from .webdriver_utils import get_webdriver
+from .webdriver_utils import CHROME, FIREFOX, browsers, get_webdriver
 
 
 def real_db():

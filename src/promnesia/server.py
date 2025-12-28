@@ -130,10 +130,13 @@ def get_db_path(*, check: bool = True) -> Path:
     return db
 
 
+# NOTE:
+# - this logging might appear multiple times in the logs for the same db/mtime because server uses multiple threads
+# - lru cache isn't ideal perhaps because there is no cleanup happening? but hasn't caused any issues so far
 @lru_cache(1)
 # PathWithMtime aids lru_cache in reloading the sqlalchemy binder
 def _get_stuff(db_path: PathWithMtime) -> DbStuff:
-    get_logger().debug('Reloading DB: %s', db_path)
+    get_logger().debug(f'reloading db: {db_path}')
     return get_db_stuff(db_path=db_path.path)
 
 
@@ -169,12 +172,11 @@ def search_common(url: str, where: Where) -> VisitsResponse:
     logger = get_logger()
     config = EnvConfig.get()
 
-    logger.info('url: %s', url)
     original_url = url and url.strip()
     url = canonify(original_url)
     if not url:  # Don't eliminate a "#tag" query.
         url = original_url
-    logger.info('normalised url: %s', url)
+    logger.debug(f'normalised url {original_url!r} to {url!r}')
 
     engine, table = get_stuff()
 
@@ -192,7 +194,7 @@ def search_common(url: str, where: Where) -> VisitsResponse:
                 # return result
             raise
 
-    logger.debug('got %d visits from db', len(visits))
+    logger.debug(f'got {len(visits)} visits from db, responding')
 
     vlist: list[DbVisit] = []
     for vis in visits:
@@ -202,7 +204,6 @@ def search_common(url: str, where: Where) -> VisitsResponse:
             vis = vis._replace(dt=dt)
         vlist.append(vis)
 
-    logger.debug('responding with %d visits', len(vlist))
     # TODO respond with normalised result, then frontent could choose how to present children/siblings/whatever?
     return VisitsResponse(
         original_url=original_url,
@@ -215,32 +216,34 @@ def search_common(url: str, where: Where) -> VisitsResponse:
 # perhasp should switch to get for most endpoint
 @app.get ('/status', response_model=Json)  # fmt: skip
 @app.post('/status', response_model=Json)  # fmt: skip
-def status() -> Json:
+def status(fastapi_request: fastapi.Request) -> Json:
     '''
     Ideally, status will always respond, regardless the internal state of the backend?
     '''
-    logger = get_logger()
+    get_logger().debug(f'{fastapi_request.url.path}')
 
     db = get_db_path(check=False)
-    try:
-        assert db.exists(), db
+    db_exists: bool = db.exists()
+    if db_exists:
         db_path = str(db)
-    except Exception as e:
-        logger.exception(e)
-        db_path = f'ERROR: db not found/unreadable (expected path {db}). You probably forgot to run indexer first. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org'
+    else:
+        db_path = f'ERROR: db not found/unreadable (expected path {db}). You likely forgot to run indexer first. See https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org.'
 
     stats: Json
-    try:
-        stats = db_stats(db)
-    except Exception as e:
-        logger.exception(e)
-        stats = {'ERROR': str(e)}
+    if db_exists:
+        try:
+            stats = db_stats(db)
+        except Exception as e:
+            stats = {'ERROR': str(e)}
+    else:
+        stats = {'ERROR': 'db file does not exist'}
 
     version: str | None
     try:
         version = get_version()
     except Exception as e:
-        logger.exception(e)
+        # this shouldn't really fail at all, so fine to log exception always
+        get_logger().exception(e)
         version = None
 
     return {
@@ -257,11 +260,10 @@ class VisitsRequest:
 
 @app.get ('/visits', response_model=VisitsResponse)  # fmt: skip
 @app.post('/visits', response_model=VisitsResponse)  # fmt: skip
-def visits(request: VisitsRequest) -> VisitsResponse:
-    url = request.url
-    get_logger().info('/visited %s', url)
+def visits(request: VisitsRequest, fastapi_request: fastapi.Request) -> VisitsResponse:
+    get_logger().debug(f'{fastapi_request.url.path} {request}')
     return search_common(
-        url=url,
+        url=request.url,
         # odd, doesn't work just with: x or (y and z)
         where=lambda table, url: or_(
             # exact match
@@ -279,12 +281,10 @@ class SearchRequest:
 
 @app.get ('/search', response_model=VisitsResponse)  # fmt: skip
 @app.post('/search', response_model=VisitsResponse)  # fmt: skip
-def search(request: SearchRequest) -> VisitsResponse:
-    url = request.url
-    get_logger().info('/search %s', url)
-    # fmt: off
+def search(request: SearchRequest, fastapi_request: fastapi.Request) -> VisitsResponse:
+    get_logger().debug(f'{fastapi_request.url.path} {request}')
     return search_common(
-        url=url,
+        url=request.url,
         where=lambda table, url: or_(
             # todo hmm. think about it, not sure if I need proper indexer for fuzzy search etc?
             table.c.norm_url     .contains(url, autoescape=True),
@@ -292,8 +292,7 @@ def search(request: SearchRequest) -> VisitsResponse:
             table.c.context      .contains(url, autoescape=True),
             table.c.locator_title.contains(url, autoescape=True),
         ),
-    )
-    # fmt: on
+    )  # fmt: skip
 
 
 @dataclass
@@ -303,10 +302,9 @@ class SearchAroundRequest:
 
 @app.get ('/search_around', response_model=VisitsResponse)  # fmt: skip
 @app.post('/search_around', response_model=VisitsResponse)  # fmt: skip
-def search_around(request: SearchAroundRequest) -> VisitsResponse:
-    timestamp = request.timestamp
-    get_logger().info('/search_around %s', timestamp)
-    utc_timestamp = timestamp  # old 'timestamp' name is legacy
+def search_around(request: SearchAroundRequest, fastapi_request: fastapi.Request) -> VisitsResponse:
+    get_logger().debug(f'{fastapi_request.url.path} {request}')
+    utc_timestamp = request.timestamp  # old 'timestamp' name is legacy
 
     # TODO meh. use count/pagination instead?
     delta_back = timedelta(hours=3).total_seconds()
@@ -366,13 +364,11 @@ VisitedResponse = list[Json | None]
 
 @app.get ('/visited', response_model=VisitedResponse)  # fmt: skip
 @app.post('/visited', response_model=VisitedResponse)  # fmt: skip
-def visited(request: VisitedRequest) -> VisitedResponse:
-    # TODO instead switch logging to fastapi
+def visited(request: VisitedRequest, fastapi_request: fastapi.Request) -> VisitedResponse:
+    get_logger().debug(f'{fastapi_request.url.path} {request}')
+
     urls = request.urls
     client_version = request.client_version
-
-    logger = get_logger()
-    logger.info('/visited %s %s', urls, client_version)
 
     _version = as_version(client_version)  # todo use it?
 

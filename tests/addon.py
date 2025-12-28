@@ -4,6 +4,7 @@ Promnesia-specific addon wrappers
 
 from __future__ import annotations
 
+import functools
 import json
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
@@ -27,12 +28,8 @@ from .addon_helper import AddonHelper
 from .common import logger
 from .webdriver_utils import frame_context, is_visible, wait_for_alert
 
-
-@contextmanager
-def measure(*args, **kwargs):
-    kwargs['logger'] = logger
-    with measure_orig(*args, **kwargs) as m:
-        yield m
+# logger is a required arg there, so need to pass it..
+measure = functools.partial(measure_orig, logger=logger)  # type: ignore[arg-type]
 
 
 @pytest.fixture
@@ -174,8 +171,7 @@ class OptionsPage:
             if selected != value:
                 cb.click()
 
-        # TODO log properly
-        print(f"Setting: port {port}, show_dots {show_dots}")
+        logger.debug(f"setting: {port=}, {show_dots=}")
 
         self.open()
 

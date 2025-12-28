@@ -35,7 +35,7 @@ from pathlib import Path
 
 from more_itertools import unique_everseen
 
-from promnesia import config
+import promnesia.config as config
 
 try:
     from cachew import cachew
