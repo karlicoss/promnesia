@@ -13,7 +13,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as Wait
 
-from promnesia.logging import LazyLogger
 from promnesia.tests.common import get_testdata
 from promnesia.tests.server_helper import Backend, run_server
 from promnesia.tests.utils import index_urls
@@ -24,7 +23,11 @@ from .addon import (
     addon,  # noqa: F401 used as fixture
     addon_source,  # noqa: F401 used as fixture, imported here to avoid circular import between webdirver utils and addon.py
 )
-from .common import local_http_server, notnone
+from .common import (
+    local_http_server,
+    logger,  # noqa: F401 useful to keep around
+    notnone,
+)
 from .utils import (
     exit_stack,  # noqa: F401 used as fixture
 )
@@ -37,12 +40,8 @@ from .webdriver_utils import (
     wait_for_alert,
 )
 
-# TODO use loguru?
-logger = LazyLogger('promnesia-tests', level='debug')
-
-
 # you can use mode='headless' to always auto-confirm even with gui tests
-manual = Manual(mode='auto')
+manual = Manual(mode='headless')
 confirm = manual.confirm
 #
 
