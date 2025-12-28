@@ -104,6 +104,7 @@ testing-end2end = [
 
     "pytest-timeout",  # for PYTEST_TIMEOUT env variable
     "pytest-xdist"  ,  # not used atm, but helpful to parallelise end2end tests
+    "pytest-repeat" ,  # helpful to debug flaky tests
 ]
 typecheck = [
     { include-group = "testing" },
