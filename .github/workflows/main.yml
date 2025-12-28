@@ -186,7 +186,8 @@ jobs:
 
     - run: sudo apt install --yes python3-doc  # html files from this pacakge are used in tests
     - run: extension/.ci/build  # debug version, don't lint since build_extension already did that
-    - run: bash .ci/run -e end2end -- -k ${{ matrix.browser }}
+    # -n is used to run in parallel (pytes-xdist)
+    - run: bash .ci/run -e end2end -- -k ${{ matrix.browser }} -n auto
 
   install_and_run_test:
     # todo use setup-python thing?
