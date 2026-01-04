@@ -41,7 +41,7 @@ from .webdriver_utils import (
 )
 
 # you can use mode='headless' to always auto-confirm even with gui tests
-manual = Manual(mode='headless')
+manual = Manual(mode='auto')
 confirm = manual.confirm
 #
 

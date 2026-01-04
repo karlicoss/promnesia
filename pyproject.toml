@@ -19,15 +19,12 @@ dependencies = [
 ]
 requires-python = ">=3.12"
 
-## these need to be set if you're planning to upload to pypi
+## these are only useful for pypi
 description = "Enhancement of your browsing history"
-license = {file = "LICENSE"}
-authors = [
-    {name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"},
-]
-maintainers = [
-    {name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"},
-]
+license     = {file = "LICENSE"}
+authors     = [{name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"}]
+maintainers = [{name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"}]
+
 [project.urls]
 Homepage = "https://github.com/karlicoss/promnesia"
 ##
@@ -110,10 +107,10 @@ typecheck = [
     { include-group = "testing" },
     "mypy",
     "lxml", # for mypy html coverage
-    "ty>=0.0.7",
+    "ty>=0.0.8",
 
-    "types-psutil",
     "types-requests",
+    "types-psutil",
 ]
 typecheck-all = [
     { include-group = "typecheck" },

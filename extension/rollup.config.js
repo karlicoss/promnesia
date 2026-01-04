@@ -1,6 +1,5 @@
 import assert from 'assert'
 import fs from 'fs'
-const { globSync } = import('node:fs')
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -13,17 +12,10 @@ import copy from 'rollup-plugin-copy'
 import {generateManifest} from './generate_manifest.js'
 
 
-const env = {
-    RELEASE: process.env.RELEASE,
-    PUBLISH: process.env.PUBLISH,
-    MANIFEST: process.env.MANIFEST,
-}
-
-const target = process.env.TARGET; assert(target)
+const target           = process.env.TARGET; assert(target)
 const manifest_version = process.env.MANIFEST; assert(manifest_version)
-const ext_id = process.env.EXT_ID; assert(ext_id)
-const release = env.RELEASE === 'YES' // TODO use --environment=production for rollup?
-const publish = env.PUBLISH === 'YES'
+const ext_id           = process.env.EXT_ID; assert(ext_id)
+const publish          = process.env.PUBLISH === 'YES'
 
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url)); assert(path.isAbsolute(thisDir))
@@ -58,8 +50,7 @@ function generateManifestPlugin() {
             // docs say "Do not directly add assets to the bundle"
             const manifest = generateManifest({
                 target: target,
-                version: manifest_version,
-                release: release,
+                manifest_version: manifest_version,
                 publish: publish,
                 ext_id: ext_id,
             })
@@ -96,6 +87,8 @@ const compile = inputs => { return {
     input: inputs,
     output: {
         dir: buildDir,
+        chunkFileNames: '[name].js',  // instead of '[name]-[hash].js' -- otherwise the emitted filenames change every time, very annoying for tracking in git
+
         // huh! so if I build all files in one go, it figures out the shared files properly it seems
         // however it still inlines webextension stuff into one of the files? e.g. common
         manualChunks: id => {  // ugh, seems a bit shit?
@@ -116,12 +109,12 @@ const compile = inputs => { return {
        cleanOutputDir(),
        copy({
          targets: [
-             {src: 'src/**/*.png'          , dest: buildDir},
-             {src: 'src/**/*.html'         , dest: buildDir},
-             {src: 'src/**/*.css'          , dest: buildDir},
-             {src: 'src/toastify.js'       , dest: buildDir},
-             {src: 'src/selenium_bridge.js', dest: buildDir},
-             {src: 'src/background_chrome_mv2.js', dest: buildDir},
+           {src: 'src/**/*.png'          , dest: buildDir},
+           {src: 'src/**/*.html'         , dest: buildDir},
+           {src: 'src/selenium_bridge.js', dest: buildDir},
+           {src: 'src/**/*.css'          , dest: buildDir},
+           {src: 'src/toastify.js'       , dest: buildDir},
+           {src: 'src/background_chrome_mv2.js', dest: buildDir},
          ],
          flatten: false,
        }),

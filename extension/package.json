@@ -8,7 +8,7 @@
     "build": "rollup --config",
     "eslint": "eslint src",
     "web-ext": "web-ext",
-    "release:cws": "chrome-webstore-upload"
+    "chrome-webstore-upload": "chrome-webstore-upload"
   },
   "browserslist": [
     "defaults and supports es6-module"

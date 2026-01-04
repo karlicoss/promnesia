@@ -220,6 +220,9 @@ def get_webdriver(
             # regular --headless doesn't support extensions for some reason
             cr_options.add_argument('--headless=new')
 
+        # not sure this does anything??
+        cr_options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+
         # ugh. this is necessary for chrome to consider extension pages as part of normal tabs
         # https://github.com/SeleniumHQ/selenium/issues/15685
         # https://issues.chromium.org/issues/416666972
@@ -229,7 +232,8 @@ def get_webdriver(
         # generally 'selenium manager' downloads the correct driver version itself
         chromedriver_bin: str | None = None  # default
 
-        service = webdriver.ChromeService(executable_path=chromedriver_bin)
+        # 2 means stderr (seems like otherwise it's not logging at all)
+        service = webdriver.ChromeService(executable_path=chromedriver_bin, log_output=2)
         driver = webdriver.Chrome(service=service, options=cr_options)
 
         version_data['chromedriverVersion'] = driver.capabilities['chrome']['chromedriverVersion']
