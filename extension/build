@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 import subprocess
-from subprocess import check_call
-from pathlib import Path
-import subprocess
 import sys
+from pathlib import Path
+from subprocess import check_call
 
 # right, specifying id in manifest doesn't seem to work
 # AMO responds with: Server response: Duplicate add-on ID found. (status: 400)
@@ -22,6 +22,80 @@ TARGETS = [
 
 
 THISDIR = Path(__file__).absolute().parent
+
+
+# FFS json doesn't allow newlines, need to put \n, which makes everything unreadable
+AMO_METADATA = {
+  "summary": {
+    "en-US": "A reliable way of capturing and tagging web pages and content"
+  },
+  "description": {
+    "en-US": """
+Grasp implements org-capture for Chrome. It adds button and keybindings to capture current page title and url, possibly selected text, additional comments or tags and sends it into your Org Mode file.
+
+To use it:
+- Install the extension from and setup hotkeys if necessary
+- You'll also need a running 'backend' to communicate with extension, see instructions [here](https://github.com/karlicoss/promnesia#install)
+"""
+  },
+  "requires_payment": False,
+  "categories": {
+    "firefox": ["bookmarks"]
+  },
+  "support_email": {
+    "en-US": "karlicoss.dev@gmail.com"
+  },
+  "homepage": {
+    "en-US": "https://github.com/karlicoss/promnesia"
+  },
+  "version": {
+    "license": "MIT",
+    "approval_notes": """
+You can find up-to-date extension code here https://github.com/karlicoss/promnesia/tree/master/extension
+
+The build instructions assume that the zip file with source code is in =/path/to/extension-source-firefox.zip= (on the HOST system).
+*Make sure to replace it with the actual path to the source code zip file.*
+
+To build you need *Ubuntu 24.04/Noble* and *Node 24*. The easiest way to build cleanly would be a Docker container:
+
+```
+# on the HOST system: cleanup previous container -- if it didn't exist in the first place, it will show an error, ignore it
+docker rm -f extension_build
+
+# on the HOST system: create the container
+docker create --name extension_build -it ubuntu:noble /bin/bash
+
+# on the HOST system: put the sources into the container
+docker cp /path/to/extension-source-firefox.zip extension_build:/extension-source-firefox.zip
+
+# on the HOST system: start the container
+docker start -i extension_build
+```
+
+After that build the addon (run these commands INSIDE the container if you choose to do it with Docker):
+
+```
+$ apt update && apt install -y git curl unzip
+$ curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+$ DEBIAN_FRONTEND=noninteractive apt install -y nodejs
+$ unzip extension-source-firefox.zip -d extension
+$ cd extension
+$ npm install
+$ ./build --firefox --release --lint --publish=skip
+```
+
+
+The final artifact will be in =/extension/dist/artifacts/firefox/promnesia-<version>.zip= (INSIDE the container).
+
+If you need to get it back onto the HOST system (e.g. to test in the browser), run on the HOST system (e.g. in a separate terminal):
+
+docker cp extension_build:/extension/dist/artifacts/firefox/promnesia-<version>.zip
+
+This will copy it into the current directory on the HOST system.
+"""
+  }
+}
+
 
 
 npm = "npm.cmd" if sys.platform == "win32" else "npm"
@@ -50,6 +124,8 @@ def main() -> None:
         'chrome': '3',
     }[target]
 
+    assert not (target == 'chrome' and manifest == '2'), "chrome doesn't support manifest v2 anymore"
+
     base_ext_dir = THISDIR / 'dist'
     ext_dir = (base_ext_dir / target).resolve() # webext can't into symlinks
     # sadly no way to specify zip name in the regex..
@@ -73,9 +149,8 @@ def main() -> None:
             '--output=json',
             '--no-config-discovery',  # prevent it from printing "Applying config file" to stdout
             silent=True,  # otherwise craps in stdout
-            method=lambda cmd: subprocess.run(cmd, stdout=subprocess.PIPE, text=True),
+            method=lambda cmd: subprocess.run(cmd, check=False, stdout=subprocess.PIPE, text=True),
         )
-        import json
         j = json.loads(res.stdout)
         errors = j['errors']
         if len(errors) == 0:
@@ -99,7 +174,7 @@ def main() -> None:
     }
 
     if args.watch:
-        check_call([npm, 'run', 'watch'], env=env, cwd=str(THISDIR)) # TODO exec instead?
+        check_call([npm, 'run', 'watch'], env=env, cwd=str(THISDIR))  # todo exec instead?
         return
 
     check_call([npm, 'run', 'build'], env=env, cwd=str(THISDIR))
@@ -110,52 +185,60 @@ def main() -> None:
         webext_lint()
 
         # TODO move somewhere more appropriate..
-        webext('build', '-o') # -o overwrites existing artifact
+        webext('build', '-o')  # -o overwrites existing artifact
 
     if args.release:
-        assert args.lint # TODO not sure..
+        assert args.lint  # TODO not sure..
 
     if args.publish not in {None, 'skip'}:
         # 'skip' mode is useful to build exactly same build as for the store, but without actually uploading
         assert args.lint
         assert args.release
 
-        # TODO check repo is clean?? maybe only if listed?
-        source_zip = base_ext_dir / 'promnesia-source.zip'
-        check_call(['git', 'archive', 'HEAD', '--output', source_zip], cwd=THISDIR)
+        check_call(['git', 'diff-index', '--exit-code', 'HEAD'])  # ensure repo is clean
+        source_zip = base_ext_dir / f'extension-source-{target}.zip'
+        check_call(['git', 'archive', 'HEAD', '--output', source_zip], cwd=THISDIR)  # cwd so we only package the extension
 
         if 'firefox' in target:
-            from firefox_dev_secrets import API_KEY, API_SECRET
+            amo_metadata = THISDIR / 'amo-metadata.json'
+            amo_metadata.write_text(json.dumps(AMO_METADATA, indent=2))
+
+            # see https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-sign
+            assert ('WEB_EXT_API_KEY' in os.environ) and ('WEB_EXT_API_SECRET' in os.environ), "env variables must be set to publish"
             check_call([
                 npm, 'run', 'web-ext',
                 '--',
                 'sign',
                 '--channel', args.publish,
-                '--source-dir', str(ext_dir),
-                '--artifacts-dir', str(artifacts_dir),
-                '--api-key'      , API_KEY,
-                '--api-secret'   , API_SECRET,
+                '--source-dir', ext_dir,
+                '--artifacts-dir', artifacts_dir,
+                # this will be passed automatically from env
+                # '--api-key'      , ...,
+                # '--api-secret'   , ...,
                 # seems like webext sign requires addon id to be in manifest now
-                '--amo-metadata' , THISDIR / 'amo-metadata.json',
+                '--amo-metadata' , amo_metadata,
                 '--upload-source-code', source_zip,
             ])
         elif target == 'chrome':
             assert args.publish == 'listed'  # no notion of unlisted on chrome store?
-            from chrome_dev_secrets import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
+
+            # see https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-sign
+            assert ('CLIENT_ID' in os.environ) and ('CLIENT_SECRET' in os.environ) and ('REFRESH_TOKEN' in os.environ), "env variables must be set to publish"
             check_call([
-                npm, 'run', 'release:cws',
+                npm, 'run', 'chrome-webstore-upload',
                 '--',
-                'upload',
-                # '--auto-publish',
-                '--source'        , str(ext_dir),
-                '--client-id'     , CLIENT_ID,
-                '--client-secret' , CLIENT_SECRET,
-                '--refresh--token', REFRESH_TOKEN,
+                # 'upload'/'publish'
+                # NOTE: without command would do both
+                '--source'        , ext_dir,
+                # this will be passed automatically from env
+                # '--client-id'     , ...,
+                # '--client-secret' , ...,
+                # '--refresh--token', ...,
                 '--extension-id'  , IDS[target],
-                # TODO trusted testers?
+                # todo trusted testers?
             ])
         else:
-            raise RuntimeError("{target} is not supported for publishing yet".format(target=target))
+            raise RuntimeError(f"{target} is not supported for publishing yet")
 
 if __name__ == '__main__':
     main()

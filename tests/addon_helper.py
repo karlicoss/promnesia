@@ -51,16 +51,19 @@ class AddonHelper:
     def headless(self) -> bool:
         return is_headless(self.driver)
 
+    @property
+    def has_selenium_bridge(self) -> bool:
+        return any(entry.get('js') == ['selenium_bridge.js'] for entry in self.manifest.get('content_scripts', []))
+
     def trigger_command(self, command: str) -> None:
         # note: also for chrome possible to extract from prefs['extensions']['commands'] if necessary
         commands = self.manifest['commands']
         assert command in commands, (command, commands)
 
         if self.headless:
-            # see selenium_bridge.js -- this is to avoid using pyautogui in headless mode
-            assert any(
-                entry.get('js') == ['selenium_bridge.js'] for entry in self.manifest.get('content_scripts', [])
-            ), "This won't work without selenium_bridge.js, you probably built the extension in --publish mode"
+            assert self.has_selenium_bridge, (
+                "This won't work without selenium_bridge.js, you probably built the extension in --publish mode"
+            )
             ccc = f'selenium-bridge-{command}'
             self.driver.execute_script(
                 f"""

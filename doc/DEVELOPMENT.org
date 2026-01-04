@@ -88,29 +88,40 @@ Some tips:
 - Since these tests can be quite slow, =-n auto= flag to parallelize can be helpful (via =pytest-xdist=).
 - To debug flaky tests, it's useful to use =--count=N= flag (via =pytest-repeat=).
 
-* Releasing
+* Releasing extension
+
+- bump extension =version= and =version_name= in =extension/package.json=
+- commit your changes (the build script expects a clean git state)
+
 ** AMO (addons.mozilla.org)
 
+https://addons.mozilla.org/en-US/developers/addon/promnesia/edit
+
 : cd extension
 : npm install # (if necessary)
-: ./build --firefox --lint --release --publish listed
+: source ./webext_secrets.sh  # puts api key/secret in the environment
+: ./build --firefox --lint --release --publish unlisted/listed
 
-Note that this will only upload the extension (see [[https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#channel][web-ext sign command reference]] and [[https://github.com/fregante/web-ext-submit#readme][web-ext-submit]] for more info).
-You need go to https://addons.mozilla.org/en-GB/developers/addon/promnesia/versions, there you should see your extension as 'pending approval'. Usually it's approved within minutes.
+The =web-ext sign= command will wait in a loop until the extension is approved on addons.mozilla.org.
 
-Sometimes it may be flagged for a review, so you'll need to upload source code.
-You can use =git archive master --output=promnesia-source.zip= if you're asked for it.
-For build instructions, you can point the reviewers at [[file:addons-mozilla-org.org][these instructions]], =https://github.com/karlicoss/promnesia/blob/master/doc/DEVELOPMENT.org#build-extension= or/and the github actions config.
+Note:
+- even in =unlisted= case, seems like there is some (~5m?) wait before automatic approval.
+- seems like to install unlisted extension, you have to install it manually from the AMO page (it won't autoupdate even if you had unlisted version installed before).
+
 
 ** CWS (chrome web store)
+
+https://chrome.google.com/u/1/webstore/devconsole
+
+You'll need OAuth credentials for uploading the extension, see [this guide](https://github.com/fregante/chrome-webstore-upload-keys).
+Note that they can expire after 6 month, so may not be worth doing it via CLI and just do a browser upload.
+
 : cd extension
 : npm install # (if necessary)
-: ./build --chrome  --lint --release --publish listed
+: source ./cws_secrets.sh  # puts api key/secret in the environment
+: ./build --chrome --lint --release --publish listed
 
-This command should work in theory and upload automatically... however getting the api keys is super annoying (see [[https://github.com/DrewML/chrome-webstore-upload/blob/master/How%20to%20generate%20Google%20API%20keys.md][this]]).
+This will upload and publish the new version. It will submit it for review, and the CWS page should have 'pending review' status now.
 
-NOTE: even after succcessful upload, seems that you still need to go to "Privacy practices" tab and click "Submit for review".
-
-Also it might still fail anyway, and require you to justify permissions etc..
-If you only release the extension once in a while maybe simpler to [[https://chrome.google.com/webstore/developer/dashboard][upload the zip manually]] :shrug:
-Usually review in CWS takes a couple of days.
+Note:
+- it [seems](https://developer.chrome.com/docs/extensions/develop/migrate/publish-mv3#publish-beta) that CWS doesn't support something similar to "unlisted" version, and would require a whole separate "beta" extension? 
