@@ -69,6 +69,12 @@ export function generateManifest({
         "default_icon": "images/ic_not_visited_48.png",
         "default_title": "Show promnesia sidebar",
     }
+    if (target === T.FIREFOX) { // only supported in firefox https://github.com/mozilla/web-ext/issues/2874
+        // otherwise firefox hides the icon under the "puzzle piece" menu
+        // At the very least it's annoying for testing, but also for promnesia it makes sense to show anyway
+        action["default_area"] = "navbar"
+        // in chrome, we're achieving the same thing by injecting "key" (see below)
+    }
 
 
     const endpoints = (domain) => [
@@ -242,6 +248,11 @@ export function generateManifest({
                 },
             },
         }
+    }
+    if (target === T.CHROME) {
+        // to achieve stable extension id, needs "key" in manifest.json (this is injected in generate_manifest)
+        // see https://developer.chrome.com/docs/extensions/reference/manifest/key
+        manifest['key'] = "cHJvbW5lc2lhLWV4dGVuc2lvbi1pZA=="  // this needs to be a base64 string
     }
     return manifest
 }

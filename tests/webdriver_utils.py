@@ -229,6 +229,19 @@ def get_webdriver(
         # https://issues.chromium.org/issues/409441960
         cr_options.add_experimental_option('enableExtensionTargets', value=True)
 
+        # to achieve stable id, needs "key" in manifest.json (this is injected in generate_manifest)
+        # see https://developer.chrome.com/docs/extensions/reference/manifest/key
+        _CHROME_EXTENSION_ID = "banagbhbaajfliafnjclpabfdadjghki"
+
+        cr_options.add_experimental_option(
+            "prefs",
+            {
+                # always pin extension in toolbar, otherwise very annoying to test
+                # not possible to configure in manifest directly (unlike in firefox https://github.com/mozilla/web-ext/issues/2874)
+                "extensions.pinned_extensions": [_CHROME_EXTENSION_ID]
+            },
+        )
+
         # generally 'selenium manager' downloads the correct driver version itself
         chromedriver_bin: str | None = None  # default
 
