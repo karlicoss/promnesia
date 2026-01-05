@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from datetime import datetime
 from pathlib import Path
 from time import sleep
 
 import pytest
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -555,6 +556,79 @@ def test_unreachable(addon: Addon, driver: Driver, backend: Backend) -> None:
         # results in exception because it's unreachable
         pass
     confirm('green icon, no errors, desktop notification with contexts')
+
+
+@contextmanager
+def serve_page(*, tmp_path: Path, html: str) -> Iterator[str]:
+    """
+    Returns URL of the page
+    """
+    page_dir = tmp_path / 'page'
+    page_dir.mkdir()
+
+    index = page_dir / 'index.html'
+    index.write_text(html)
+    with local_http_server(page_dir) as addr:
+        yield addr
+
+
+@browsers()
+def test_click_before_page_loaded(
+    addon: Addon, driver: Driver, browser: Browser, exit_stack: ExitStack, tmp_path: Path
+) -> None:
+    """
+    This tests a race condition when user activates the addon very quickly (during?) page load
+    Likely what happens is
+    - webNavigation.onCompleted is not triggered yet/or sidebar injection is still in progress.
+    - user presses hotkey/eye icon to open sidebar, and there is no sidebar to communicate with
+    So we end up getting "Error: Could not establish connection. Receiving end does not exist." during browser.tabs.sendMessage
+    """
+
+    # note: not using backend/indexing since not really required to reproduce
+    # although it does spam the logs a lot, so not sure
+    # maybe configure for 'no backend'?
+
+    # this page has a delayed loading resource to simulate slow loading
+    delay_s = 4
+    url = exit_stack.enter_context(
+        serve_page(
+            tmp_path=tmp_path,
+            html=f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delayed Load Test</title>
+</head>
+<body>
+    <h1>Page loading...</h1>
+    <img src="https://httpbin.org/delay/{delay_s}" alt="Delayed resource">
+    <p>This image takes {delay_s} seconds to load</p>
+</body>
+</html>
+""",
+        )
+    )
+
+    # do this instead of driver.get, otherwise webdirver also waits till load is complete and it's harder to reproduce the race condition
+    # FFS, in chrome it seems to be synchronous??
+    driver.execute_script("window.location.href = arguments[0];", url)
+
+    addon.activate()
+
+    # precondition -- we don't expect sidebar to show up at this point
+    # TODO not ideal that addon.sidebar.visible is also waiting until sidebar DOM is injected...
+    if browser.name != "chrome":
+        # ugh. in chrome seems like settings location.href is still syncronous
+        # so can't really realiably pass precondition
+        # keep post-condition though in case the test flakes
+        with pytest.raises(TimeoutException):
+            addon.sidebar.wait_until_visible(timeout=1)
+
+    if browser.headless:
+        pytest.skip("Ugh, seems like visibility check aren't working properly in headless mode? Will look later")
+
+    # this will fail if it doesn't become visible
+    addon.sidebar.wait_until_visible(timeout=delay_s * 2)
 
 
 @browsers()

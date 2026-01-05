@@ -1,6 +1,6 @@
 import os
 import shlex
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -103,11 +103,27 @@ def window_context(driver: Driver, window_handle: str) -> Iterator[None]:
 
 
 def is_visible(driver: Driver, element: WebElement) -> bool:
-    # apparently is_display checks if element is on the page, not necessarily within viewport??
+    # apparently is_displayed checks if element is on the page, not necessarily within viewport??
     # but I also found  element.is_displayed() to be unreliable in other direction too
     # (returning true for elements that aren't displayed)
     # it seems to even differ between browsers
     return driver.execute_script('return arguments[0].checkVisibility()', element)
+
+
+def passes_check_visibility(locator: tuple[str, str]) -> Callable[[Driver], bool]:
+    """
+    A visibility check similar to selenium's EC.visibility_of_element_located, but I found it to be more robust.
+    EC.visibility_of_element_located is using element.is_displayed() internally, which seems to be unreliable in some cases.
+    https://github.com/SeleniumHQ/selenium/blob/4cd4b09913bce68512962c99ae09505f696315c8/py/selenium/webdriver/support/expected_conditions.py#L213C1-L223C70
+    I found that sometimes it's returning True for elements that are not actually visible (e.g. on the page but not necessarily within viewport).
+    It also seems to differ between browsers?
+    """
+
+    def check(driver: Driver) -> bool:
+        element = driver.find_element(*locator)
+        return is_visible(driver, element)
+
+    return check
 
 
 def is_headless(driver: Driver) -> bool:

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import functools
 import json
+import time
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -26,7 +27,7 @@ from promnesia.common import measure as measure_orig
 
 from .addon_helper import AddonHelper
 from .common import logger
-from .webdriver_utils import frame_context, is_visible, wait_for_alert
+from .webdriver_utils import frame_context, is_visible, passes_check_visibility, wait_for_alert
 
 # logger is a required arg there, so need to pass it..
 measure = functools.partial(measure_orig, logger=logger)  # type: ignore[arg-type]
@@ -91,9 +92,24 @@ class Sidebar:
     def visible(self) -> bool:
         loc = (By.ID, PROMNESIA_SIDEBAR_ID)
         with self.ctx():
+            # NOTE: we use presence here, because sidebar might be present (as in iframe), but not visible
             Wait(self.driver, timeout=5).until(EC.presence_of_element_located(loc))
             # NOTE: document in JS here is in the context of iframe
             return is_visible(self.driver, self.driver.find_element(*loc))
+
+    def wait_until_visible(self, *, timeout: float = 5) -> None:
+        # ugh... somewhat annoying, we need to 'share' timeout between the frame and sidebar...
+        # since to wait for sidebar we first need to enter the frame
+        start_time = time.monotonic()
+        promnesia_frame = Wait(self.driver, timeout=timeout).until(
+            EC.presence_of_element_located((By.XPATH, '//iframe[contains(@id, "promnesia-frame")]'))
+        )
+        elapsed = time.monotonic() - start_time
+
+        timeout -= elapsed  # seems like webdriver should handle fine even if it's negative
+
+        with frame_context(self.driver, frame=promnesia_frame):
+            Wait(self.driver, timeout=timeout).until(passes_check_visibility((By.ID, PROMNESIA_SIDEBAR_ID)))
 
     def open(self) -> None:
         assert not self.visible
