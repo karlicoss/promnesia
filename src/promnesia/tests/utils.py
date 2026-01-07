@@ -15,10 +15,12 @@ def index_urls(urls: Urls, *, source_name: str = 'test'):
 
     def idx(tmp_path: Path) -> None:
         def indexer():
+            # pick somewhat reasonable datetime here; otherwise javascript may not parse it properly
+            start_dt = datetime(1980, 1, 1)
             for i, (url, ctx) in enumerate(uuu):
                 yield Visit(
                     url=url,
-                    dt=datetime.min + timedelta(days=5000) + timedelta(hours=i),
+                    dt=start_dt + timedelta(hours=i),
                     locator=Loc.make('test'),
                     context=ctx,
                 )
