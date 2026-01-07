@@ -11,6 +11,7 @@ from typing import Any
 from selenium import webdriver
 
 from .common import logger
+from .utils import timeout
 from .webdriver_utils import get_browser_process, is_headless
 
 
@@ -64,14 +65,12 @@ class AddonHelper:
             assert self.has_selenium_bridge, (
                 "This won't work without selenium_bridge.js, you probably built the extension in --publish mode"
             )
-            ccc = f'selenium-bridge-{command}'
-            self.driver.execute_script(
-                f"""
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('{ccc}', true, true);
-            document.dispatchEvent(event);
-            """
-            )
+            # wait until selenium_bridge is injected, otherwise it's possible to have a race condition
+            # usually it happens very quickly, but retry a few times just in case
+            for _ in timeout(seconds=2):
+                if self.driver.execute_script('return document.documentElement.dataset.seleniumBridgeInjected'):
+                    break
+            self.driver.execute_script('document.dispatchEvent(new Event(arguments[0]))', f'selenium-bridge-{command}')
         else:
             hotkey = commands[command]['suggested_key']['default']
             self.gui_hotkey(hotkey)

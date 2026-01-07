@@ -337,3 +337,9 @@ export function assert(condition: any, msg?: string): asserts condition {
         throw new Error(`assertion failed ${msg}`)
     }
 }
+
+
+// js doesn't have builtin async sleep :(
+export async function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}

@@ -624,9 +624,6 @@ def test_click_before_page_loaded(
         with pytest.raises(TimeoutException):
             addon.sidebar.wait_until_visible(timeout=1)
 
-    if browser.headless:
-        pytest.skip("Ugh, seems like visibility check aren't working properly in headless mode? Will look later")
-
     # this will fail if it doesn't become visible
     addon.sidebar.wait_until_visible(timeout=delay_s * 2)
 
