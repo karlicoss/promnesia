@@ -31,6 +31,7 @@ from .common import (
 )
 from .utils import (
     exit_stack,  # noqa: F401 used as fixture
+    timeout,
 )
 from .webdriver_utils import (
     Browser,
@@ -67,7 +68,7 @@ def test_installs(addon: Addon) -> None:
 
 
 @browsers()
-def test_settings(addon: Addon, driver: Driver) -> None:
+def test_options_page(addon: Addon, driver: Driver) -> None:
     """
     Just a basic test for opening options page and making sure it loads options
     """
@@ -237,8 +238,11 @@ def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
     index_hypothesis(backend.backend_dir)
 
     driver.get(test_url)
+
+    assert not addon.sidebar.visible
     confirm("sidebar: SHOULD NOT be visible")
 
+    # check that elements are added to DOM
     with addon.sidebar.ctx():
         # hmm not sure how come it returns anything at all.. but whatever
         srcs = driver.find_elements(By.CLASS_NAME, 'src')
@@ -304,14 +308,14 @@ def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> N
 
     driver.get(test_url)
 
-    sleep(2)  # hmm not sure why it's necessary, but often fails headless firefox otherwise
-    addon.mark_visited()
-    sleep(1)  # marks are async, wait till it marks
+    should_be_marked = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
+    assert len(should_be_marked) > 0
 
-    slg = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
-    assert len(slg) > 0
-    for s in slg:
-        assert 'promnesia-visited' in notnone(s.get_attribute('class'))
+    addon.mark_visited()
+
+    for _ in timeout(seconds=5):
+        if all('promnesia-visited' not in notnone(element.get_attribute('class')) for element in should_be_marked):
+            break
 
     confirm(
         "You should see visited marks near 'Special linear group', 'Unitary group', 'Transpose'. 'Special linear group' should be green."
@@ -625,10 +629,10 @@ def test_click_before_page_loaded(
         # so can't really realiably pass precondition
         # keep post-condition though in case the test flakes
         with pytest.raises(TimeoutException):
-            addon.sidebar.wait_until_visible(timeout=1)
+            addon.sidebar.wait_until_visible(timeout_s=1)
 
     # this will fail if it doesn't become visible
-    addon.sidebar.wait_until_visible(timeout=delay_s * 2)
+    addon.sidebar.wait_until_visible(timeout_s=delay_s * 2)
 
 
 @browsers()

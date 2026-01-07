@@ -97,32 +97,29 @@ class Sidebar:
             # NOTE: document in JS here is in the context of iframe
             return is_visible(self.driver, self.driver.find_element(*loc))
 
-    def wait_until_visible(self, *, timeout: float = 5) -> None:
+    def wait_until_visible(self, *, timeout_s: float = 5) -> None:
         # ugh... somewhat annoying, we need to 'share' timeout between the frame and sidebar...
         # since to wait for sidebar we first need to enter the frame
         start_time = time.monotonic()
-        promnesia_frame = Wait(self.driver, timeout=timeout).until(
+        promnesia_frame = Wait(self.driver, timeout=timeout_s).until(
             EC.presence_of_element_located((By.XPATH, '//iframe[contains(@id, "promnesia-frame")]'))
         )
         elapsed = time.monotonic() - start_time
 
-        timeout -= elapsed  # seems like webdriver should handle fine even if it's negative
+        timeout_s -= elapsed  # seems like webdriver should handle fine even if it's negative
 
         with frame_context(self.driver, frame=promnesia_frame):
-            Wait(self.driver, timeout=timeout).until(passes_check_visibility((By.ID, PROMNESIA_SIDEBAR_ID)))
+            Wait(self.driver, timeout=timeout_s).until(passes_check_visibility((By.ID, PROMNESIA_SIDEBAR_ID)))
 
     def open(self) -> None:
         assert not self.visible
         self.addon.activate()
-
-        with measure('Sidebar.open') as m:
-            while not self.visible:
-                assert m() <= 10, 'timeout'
-                sleep(0.001)
+        self.wait_until_visible(timeout_s=10)
 
     def close(self) -> None:
         assert self.visible
         self.addon.activate()
+        # TODO swith to something like ensure_not_visible with proper timeout?
         with measure('Sidebar.close') as m:
             while self.visible:
                 assert m() <= 10, 'timeout'
