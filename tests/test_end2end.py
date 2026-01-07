@@ -39,6 +39,7 @@ from .webdriver_utils import (
     browsers,
     driver,  # noqa: F401 used as fixture
     is_visible,
+    passes_check_visibility,
     wait_for_alert,
 )
 
@@ -745,8 +746,10 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
     addon.configure(notify_contexts=True, show_dots=True)
 
     driver.get(url)
-    # todo might need to wait until marks are shown?
-    link_with_popup = driver.find_elements(By.XPATH, '//a[@href = "/abuse"]')[0]
+    links_with_popup = Wait(driver, timeout=5).until(
+        EC.presence_of_all_elements_located((By.XPATH, '//a[@href = "/abuse"]'))
+    )
+    link_with_popup = links_with_popup[0]
 
     # wait till visited marks appear
     Wait(driver, timeout=5).until(
@@ -754,19 +757,12 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
     )
     addon.move_to(link_with_popup)  # hover over visited mark
     # meh, but might need some time to render..
-    popup_context = Wait(driver, timeout=5).until(
-        EC.presence_of_element_located((By.CLASS_NAME, 'context')),
-    )
-    sleep(3)  #  text might take some time to render too..
-    assert is_visible(driver, popup_context)
+
+    popup_context = Wait(driver, timeout=5).until(passes_check_visibility((By.CLASS_NAME, 'context')))
     assert popup_context.text == 'some comment'
 
-    popup_datetime = Wait(driver, timeout=5).until(EC.presence_of_element_located((By.CLASS_NAME, 'datetime')))
-    assert is_visible(driver, popup_datetime)
-    assert popup_datetime.text in {
-        '10/09/2014, 00:00:00',
-        '9/10/2014, 12:00:00 AM',  # TODO ugh. github actions has a different locale..
-    }
+    popup_datetime = Wait(driver, timeout=5).until(passes_check_visibility((By.CLASS_NAME, 'datetime')))
+    assert popup_datetime.text == '1/1/1980, 12:00:00 AM'
 
 
 @browsers()

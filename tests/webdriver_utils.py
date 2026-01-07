@@ -110,7 +110,7 @@ def is_visible(driver: Driver, element: WebElement) -> bool:
     return driver.execute_script('return arguments[0].checkVisibility()', element)
 
 
-def passes_check_visibility(locator: tuple[str, str]) -> Callable[[Driver], bool]:
+def passes_check_visibility(locator: tuple[str, str]) -> Callable[[Driver], WebElement | Literal[False]]:
     """
     A visibility check similar to selenium's EC.visibility_of_element_located, but I found it to be more robust.
     EC.visibility_of_element_located is using element.is_displayed() internally, which seems to be unreliable in some cases.
@@ -119,9 +119,12 @@ def passes_check_visibility(locator: tuple[str, str]) -> Callable[[Driver], bool
     It also seems to differ between browsers?
     """
 
-    def check(driver: Driver) -> bool:
+    def check(driver: Driver) -> WebElement | Literal[False]:
         element = driver.find_element(*locator)
-        return is_visible(driver, element)
+        if is_visible(driver, element):
+            return element
+        else:
+            return False
 
     return check
 
