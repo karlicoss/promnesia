@@ -3,7 +3,7 @@ import browser from "webextension-polyfill"
 import type {Action, BrowserAction, Menus, PageAction, Runtime, Tabs, WebNavigation} from "webextension-polyfill"
 
 import type {Url, SearchPageParams} from './common'
-import {Visit, Visits, Blacklisted, Methods, assert, uuid} from './common'
+import {Visit, Visits, Blacklisted, Methods, assert, sleep, uuid} from './common'
 import {executeScript} from './compat'
 import type {Options} from './options'
 import {Toggles, getOptions, setOption, THIS_BROWSER_TAG} from './options'
@@ -278,7 +278,7 @@ async function updateState(tab: TabUrl): Promise<void> {
         // TODO even compiling this takes 50ms if 10K visits??
         // faster means of communication are going to require
         // so perhaps instead, truncate and suggest to use 'search-like' interface
-        sendSidebarMessage(tabId, {
+        await sendSidebarMessage(tabId, {
             method: Methods.BIND_SIDEBAR_VISITS,
             data  : visits.toJObject(),
         })
@@ -287,10 +287,23 @@ async function updateState(tab: TabUrl): Promise<void> {
     }
 }
 
-
-function sendSidebarMessage(tabId: number, message: any) {
-    // ugh.. just so I don't shoot myself in the foot again with using runtime.sendMessage...
-    browser.tabs.sendMessage(tabId, message)
+async function sendSidebarMessage(tabId: number, message: any) {
+    /*
+    This needs to be somewhat defensive; otherwise if the page is still loading/sidebar receiver isn't injected yet, we're getting
+    "Error: Could not establish connection. Receiving end does not exist."
+    This is tested by test_click_before_page_loaded
+    */
+    let ex: Error | null = null
+    for (let i = 0; i < 100; i++) {  // wait for 100 attemps x 100 ms = 10 seconds total, kind of arbitrary
+        try {
+            await browser.tabs.sendMessage(tabId, message)
+            return
+        } catch (e: any) {
+            ex = e as Error
+        }                                                                                                                                                                                                                                                                           
+        await sleep(100)
+    }        
+    throw ex
 }
 
 
@@ -659,13 +672,12 @@ export async function toggleSidebarOnTab(tab: TabUrl) {
         return
     }
     const {tid: tid} = should
-    // TODO eh, if the user clicks the icon too fast, it might not have a receiver? is there a way to find out??
-    sendSidebarMessage(tid, {method: Methods.SIDEBAR_TOGGLE})
+    await sendSidebarMessage(tid, {method: Methods.SIDEBAR_TOGGLE})
 }
 
 export async function handleToggleSidebar() {
     const atab = await getActiveTab()
-    toggleSidebarOnTab(atab!)
+    await toggleSidebarOnTab(atab!)
 }
 
 /*
@@ -1055,6 +1067,7 @@ function initBackground(): void {
 }
 
 
+// NOTE: onMessageListener shouldn't be async (see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#addlistener_syntax)
 browser.runtime.onMessage.addListener((info: any, _: Runtime.MessageSender) => {
     // see selenium_bridge.js
     if (info === 'selenium-bridge-_execute_action') {

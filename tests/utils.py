@@ -1,4 +1,5 @@
 import os
+import time
 from collections.abc import Iterator
 from contextlib import ExitStack
 
@@ -23,3 +24,10 @@ def exit_stack() -> Iterator[ExitStack]:
     """
     with ExitStack() as stack:
         yield stack
+
+
+def timeout(seconds: float) -> Iterator[None]:
+    before = time.monotonic()
+    while time.monotonic() - before < seconds:
+        yield
+    raise TimeoutError(f'Timeout after {seconds=}')
