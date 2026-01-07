@@ -536,6 +536,9 @@ def test_sidebar_navigation(
     addon.sidebar.close()
     confirm('green icon, sidebar is closed')
 
+    # FIXME visited marks aren't working on https://orgmode.org/orgguide.html ?
+    # url = 'https://orgmode.org/orgguide.html'
+
 
 @browsers()
 def test_unreachable(addon: Addon, driver: Driver, backend: Backend) -> None:
@@ -630,13 +633,21 @@ def test_click_before_page_loaded(
 
 @browsers()
 def test_stress(addon: Addon, driver: Driver, backend: Backend) -> None:
-    url = 'https://www.reddit.com/'
-    urls = [(f'{url}/subpath/{i}.html', f'context {i}' if i > 10000 else None) for i in range(50000)]
+    url = 'https://en.wikipedia.org/wiki/2022_in_science'
+    # that page has a bunch of links about 'previous' years in science on top; convenient to test that visited marks show up
+    urls: list[tuple[str, str | None]] = [
+        (f'https://en.wikipedia.org/wiki/{i}_in_science', f'some comment about year {i}') for i in range(2000, 2100)
+    ]
+    # a bunch more (non-existing) links just for the sidebar, to actually test performance
+    urls.extend((f'{url}/subpath/{i}.html', f'context {i}' if i > 10000 else None) for i in range(50000))
 
     index_urls(urls)(backend.backend_dir)
 
     driver.get(url)
+
     addon.activate()
+
+    addon.sidebar.wait_until_visible()
 
     # todo I guess it's kinda tricky to test in headless webdriver
     confirm(

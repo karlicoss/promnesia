@@ -365,7 +365,8 @@ VisitedResponse = list[Json | None]
 @app.get ('/visited', response_model=VisitedResponse)  # fmt: skip
 @app.post('/visited', response_model=VisitedResponse)  # fmt: skip
 def visited(request: VisitedRequest, fastapi_request: fastapi.Request) -> VisitedResponse:
-    get_logger().debug(f'{fastapi_request.url.path} {request}')
+    # not printing full request here, for pages with many urls it can be really spammy
+    get_logger().debug(f'{fastapi_request.url.path} {len(request.urls)=} {request.client_version=}')
 
     urls = request.urls
     client_version = request.client_version
