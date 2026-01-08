@@ -12,7 +12,6 @@ from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait as Wait
 
 from promnesia.tests.common import get_testdata
 from promnesia.tests.server_helper import Backend, run_server
@@ -36,11 +35,13 @@ from .utils import (
 from .webdriver_utils import (
     Browser,
     Manual,
+    Waiter,
     browsers,
     driver,  # noqa: F401 used as fixture
     is_visible,
     passes_check_visibility,
     wait_for_alert,
+    waiter,  # noqa: F401 used as fixture
 )
 
 # you can use mode='headless' to always auto-confirm even with gui tests
@@ -283,9 +284,10 @@ def test_search_around(addon: Addon, driver: Driver, backend: Backend) -> None:
     addon.open_search_page(f'?utc_timestamp_s={ts}')
 
     visits = driver.find_element(By.ID, 'visits')
-    sleep(1)  # wait till server responds and renders results
-    results = visits.find_elements(By.CSS_SELECTOR, 'li')
-    assert len(results) == 9
+
+    for _ in timeout(1.0):
+        if len(visits.find_elements(By.CSS_SELECTOR, 'li')) == 9:
+            break
 
     hl = visits.find_element(By.CLASS_NAME, 'highlight')
     assert 'anthrocidal' in hl.text
@@ -738,7 +740,7 @@ def test_duplicate_background_pages(addon: Addon, driver: Driver, backend: Backe
 
 
 @browsers()
-def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> None:
+def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend, waiter: Waiter) -> None:
     url = 'https://www.iana.org/'
     indexer = index_urls([('https://www.iana.org/abuse', 'some comment')])
     indexer(backend.backend_dir)
@@ -746,22 +748,18 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend) -> Non
     addon.configure(notify_contexts=True, show_dots=True)
 
     driver.get(url)
-    links_with_popup = Wait(driver, timeout=5).until(
-        EC.presence_of_all_elements_located((By.XPATH, '//a[@href = "/abuse"]'))
-    )
+    links_with_popup = waiter.until(EC.presence_of_all_elements_located((By.XPATH, '//a[@href = "/abuse"]')))
     link_with_popup = links_with_popup[0]
 
     # wait till visited marks appear
-    Wait(driver, timeout=5).until(
-        EC.presence_of_element_located((By.CLASS_NAME, 'promnesia-visited')),
-    )
+    waiter.until(EC.presence_of_element_located((By.CLASS_NAME, 'promnesia-visited')))
     addon.move_to(link_with_popup)  # hover over visited mark
     # meh, but might need some time to render..
 
-    popup_context = Wait(driver, timeout=5).until(passes_check_visibility((By.CLASS_NAME, 'context')))
+    popup_context = waiter.until(passes_check_visibility((By.CLASS_NAME, 'context')))
     assert popup_context.text == 'some comment'
 
-    popup_datetime = Wait(driver, timeout=5).until(passes_check_visibility((By.CLASS_NAME, 'datetime')))
+    popup_datetime = waiter.until(passes_check_visibility((By.CLASS_NAME, 'datetime')))
     assert popup_datetime.text == '1/1/1980, 12:00:00 AM'
 
 
