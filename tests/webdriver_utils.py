@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shlex
 from collections.abc import Callable, Iterator
@@ -16,6 +18,7 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.ui import WebDriverWait
 
 from .common import logger
 from .utils import has_x
@@ -357,3 +360,22 @@ class Manual:
             # TODO focus window if not headless
         else:
             raise RuntimeError(f"Shouldn't happen: mode={mode}")
+
+
+class Waiter(WebDriverWait):
+    """
+    Wrapper over WebDriverWait to
+    - bind driver (to avoid repetition)
+    - have default 5s timeout (which is reasonable for most usecases)
+    """
+
+    def __init__(self, driver: Driver, timeout: float = 5) -> None:
+        super().__init__(driver, timeout=timeout)
+
+    def timeout(self, timeout: float) -> Waiter:
+        return Waiter(self._driver, timeout=timeout)
+
+
+@pytest.fixture
+def waiter(driver: Driver) -> Waiter:
+    return Waiter(driver)
