@@ -546,12 +546,13 @@ def test_sidebar_navigation(
 
 
 @browsers()
-def test_unreachable(addon: Addon, driver: Driver, backend: Backend) -> None:
-    pytest.skip("NOTE: broken at the moment because webNavigation.onCompleted isn't working for unreachable pages")
-
-    url = 'https://somenonexist1ngurl.com'
+def test_unreachable_page(addon: Addon, driver: Driver, backend: Backend) -> None:
+    bad_url = 'https://somenonexist1ngurl.com'
+    good_url = 'https://example.com'
     urls = {
-        url: 'some context',
+        bad_url: 'some context',
+        f'{bad_url}/subpage': 'subpage context',
+        good_url: 'other context',
     }
 
     index_urls(urls)(backend.backend_dir)
@@ -559,11 +560,20 @@ def test_unreachable(addon: Addon, driver: Driver, backend: Backend) -> None:
     addon.configure(notify_contexts=True, verbose_errors=True)
 
     try:
-        driver.get(url)
+        driver.get(bad_url)
     except:
         # results in exception because it's unreachable
         pass
-    confirm('green icon, no errors, desktop notification with contexts')
+    confirm('green icon (1/1), no errors, desktop notification with contexts')
+
+    ## check that things keep working after unreachable page
+
+    driver.get(good_url)
+    confirm('green icon (1), no errors, browser popup with 1 context')
+
+    addon.sidebar.open()
+    with addon.sidebar.ctx():
+        assert len(addon.sidebar.visits) == 1
 
 
 @contextmanager
