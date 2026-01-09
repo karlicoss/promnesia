@@ -410,28 +410,45 @@ def test_search_command(addon: Addon, driver: Driver, backend: Backend) -> None:
     confirm("You shoud see search prompt now, with focus on search field")
 
 
-@pytest.mark.xfail(reason="TODO look later, broke around June 2025?")
+PYTHON_DOC_PATH = Path('/usr/share/doc/python3/html')
+
+
 @browsers()
-def test_new_background_tab(addon: Addon, driver: Driver, backend: Backend) -> None:
-    from promnesia.tests.sources.test_hypothesis import index_hypothesis
-
-    index_hypothesis(backend.backend_dir)
-
+def test_new_background_tab(addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack) -> None:
+    """
+    Checks that opening a link in background tab
+    - doesn't trigget notifications
+    - correctly loads sidebar
+    """
     addon.configure(notify_contexts=True)
 
-    start_url = "http://www.e-flux.com/journal/53/59883/the-black-stack/"
-    # bg_url_text = "El Proceso (The Process)"
-    # TODO generate some fake data instead?
-    driver.get(start_url)
-    confirm('you should see notification about contexts')
-    page_logo = driver.find_element(By.XPATH, '//a[@class="page-logo"]')
-    page_logo.send_keys(Keys.CONTROL + Keys.ENTER)  # ctrl+click -- opens the link in new background tab
+    base_url = exit_stack.enter_context(local_http_server(PYTHON_DOC_PATH))
+
+    urls = {
+        base_url: 'comment about main page',
+        f'{base_url}/extending/index.html': 'comment about extending',
+        f'{base_url}/tutorial/index.html': 'tutorial comment',
+        f'{base_url}/installing/index.html': 'installing comment',
+    }
+    index_urls(urls)(backend.backend_dir)
+
+    driver.get(base_url)
+    confirm('you should see notification about 1 context, green icon with 1/3 visits')
+
+    [installing_modules_link] = driver.find_elements(By.LINK_TEXT, "Installing Python modules")
+    installing_modules_link.send_keys(Keys.CONTROL + Keys.ENTER)  # ctrl+click -- opens the link in new background tab
+
     confirm('you should not see any new notifications')
-    # TODO switch to new tab?
-    # TODO https://www.e-flux.com/journal/53/
 
+    # switch to background tab we just opened
+    driver.switch_to.window(driver.window_handles[1])
 
-PYTHON_DOC_PATH = Path('/usr/share/doc/python3/html')
+    confirm('you should not see any new notifications, green icon with 1 visit')
+
+    # also check that addon works fine when background tab is involved
+    addon.sidebar.open()
+    with addon.sidebar.ctx():
+        assert len(addon.sidebar.visits) == 1
 
 
 @browsers()
