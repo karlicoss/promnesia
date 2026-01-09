@@ -121,7 +121,9 @@ async function showTabNotification(tabId: number | null, message: string, opts: 
             // ugh. might happen if the page is down..
         if (errmsg.includes('Missing host permission for the tab') ||
             // might happen on special pages?
-            errmsg.includes('Extension manifest must request permission to access this host')
+            errmsg.includes('Extension manifest must request permission to access this host') ||
+            // happens in chrome on http pages which are unreachable
+            errmsg.includes('is showing error page')
         ) {
             // in that case it doesn't have the context to show a popup.
             // could make it configurable??

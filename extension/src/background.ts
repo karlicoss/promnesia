@@ -124,7 +124,8 @@ function getIconStyle(result: Result): IconStyle {
 }
 
 
-async function updateState(tab: TabUrl): Promise<void> {
+async function updateState(options: {tab: TabUrl, navigationError: boolean}): Promise<void> {
+    const tab = options.tab
     const {url: url, id: tabId} = tab
 
     if (ignored(url)) {
@@ -139,40 +140,43 @@ async function updateState(tab: TabUrl): Promise<void> {
     // also this really needs to happen once for a specific tab? otherwise gonna have callback crap (i.e. messages received multiple times)
 
     // todo only inject after blacklist check? just in case?
-    let proceed: boolean
-    try {
-        const target = {tabId: tabId}
-        await browser.scripting.insertCSS    ({target: target, files: ['sidebar-outer.css']})
-        await browser.scripting.insertCSS    ({target: target, files: ['sidebar.css'      ]})
-        await browser.scripting.insertCSS    ({target: target, css: opts.position_css      })
-        await executeScript                  ({target: target, files: ['sidebar.js']       })
-        proceed = true // successful code injection
-    } catch (error) {
-        const msg = (error as Error).message
-        if (msg == null) {
-            throw error
-        }
-        if (msg.includes('Missing host permission for the tab')) {
-            // this seems to happen if we started injecting the code, but URL changed during that
-            // e.g. if you click on links in quick succession or press backward/forward quickly (esp. with hotkeys)
-            // should be covered by test_sidebar_navigation
+    if (!options.navigationError) {
+        // if navigation error happend, we'd get "missing host permission" error anyway
+        let sidebar_injected: boolean
+        try {
+            const target = {tabId: tabId}
+            await browser.scripting.insertCSS    ({target: target, files: ['sidebar-outer.css']})
+            await browser.scripting.insertCSS    ({target: target, files: ['sidebar.css'      ]})
+            await browser.scripting.insertCSS    ({target: target, css: opts.position_css      })
+            await executeScript                  ({target: target, files: ['sidebar.js']       })
+            sidebar_injected = true
+        } catch (error) {
+            const msg = (error as Error).message
+            if (msg == null) {
+                throw error
+            }
+            if (msg.includes('Missing host permission for the tab')) {
+                // this seems to happen if we started injecting the code, but URL changed during that
+                // e.g. if you click on links in quick succession or press backward/forward quickly (esp. with hotkeys)
+                // should be covered by test_sidebar_navigation
 
-            // NOTE: actually a bit misleading -- on firefox we are always getting this when we don't have host permissions
-            // whereas in chrome we're getting
-            // "Cannot access contents of the page. Extension manifest must request permission to access the respective host"
-            proceed = false
-        } else {
-            throw error
+                // NOTE: actually a bit misleading -- on firefox we are always getting this when we don't have host permissions
+                // whereas in chrome we're getting
+                // "Cannot access contents of the page. Extension manifest must request permission to access the respective host"
+                sidebar_injected = false
+            } else {
+                throw error
+            }
         }
-    }
 
-    // NOTE: if the page is unreachable, we can't inject stuff in it
-    // not sure how to detect it? tab doesn't have any interesting attributes
-    // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
-    // TODO not sure if worth mapping promnesia button to something else in this case
-    if (!proceed) {
-        console.debug('cancelling state update request for %o -- likely URL changed during processing', tab)
-        return
+        // NOTE: if the page is unreachable, we can't inject stuff in it
+        // not sure how to detect it? tab doesn't have any interesting attributes
+        // firefox sets tab.title to "Server Not Found"? (TODO also see isOk logic below)
+        // TODO not sure if worth mapping promnesia button to something else in this case
+        if (!sidebar_injected) {
+            console.debug('cancelling state update request for %o -- likely URL changed during processing', tab)
+            return
+        }
     }
 
     let visits: Result
@@ -182,7 +186,7 @@ async function updateState(tab: TabUrl): Promise<void> {
         visits = new Blacklisted(url, bl)
     } else {
         // ok to query
-        if (opts.mark_visited_always) {
+        if (opts.mark_visited_always && !options.navigationError) {
             setTimeout(() => doToggleMarkVisited(tabId, {show: true})) // run it in parallel
         }
         visits = await allsources.visits(url)
@@ -193,7 +197,7 @@ async function updateState(tab: TabUrl): Promise<void> {
 
     // TODO move to getIconStyle??
     if (visits instanceof Visits) {
-        title = `${title}\nCanonical: ${visits.normalised_url}`;
+        title = `${title}\nCanonical: ${visits.normalised_url}`
     }
 
     // ugh, many of these are not supported on android.. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/pageAction
@@ -246,25 +250,12 @@ async function updateState(tab: TabUrl): Promise<void> {
         return
     }
 
-    if (opts.sidebar_always_show) {
-        // TODO maybe hide if there are no visits?
-        // let it sxecute asynchronously
-        setTimeout(() => toggleSidebarOnTab(tab))
-    }
-
     if (visits instanceof Error) {
         // meh. but I guess kinda does the trick
         visits = new Visits(url, url, [visits])
     }
     console.assert(visits instanceof Visits)
   
-    // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
-    // TODO and show system wide notification instead of tab notification?
-    // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
-    // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
-    // a little hacky, but kinda works? in Firefox too apparently
-    const isOk = (await browser.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg'
-
     // TODO maybe store last time we showed it so it's not that annoying... although I definitely need js popup notification.
     const locs = visits.self_contexts().map(l => l == null ? null : l.title)
     if (locs.length !== 0) {
@@ -273,6 +264,24 @@ async function updateState(tab: TabUrl): Promise<void> {
             await Notify.notify(tabId, msg, {color: 'green'})
         }
     }
+
+    if (options.navigationError) {
+        // we can't do much else at this point, can't inject sidebar into error page
+        return
+    }
+
+    if (opts.sidebar_always_show) {
+        // TODO maybe hide if there are no visits?
+        // let it sxecute asynchronously
+        setTimeout(() => toggleSidebarOnTab(tab))
+    }
+
+    // right, we can't inject code into error pages (effectively, internal). For these, display popup instead of sidebar?
+    // TODO and show system wide notification instead of tab notification?
+    // https://stackoverflow.com/questions/32761782/can-a-chrome-extension-run-code-on-a-chrome-error-page-i-e-err-internet-disco
+    // https://stackoverflow.com/questions/37093152/unchecked-runtime-lasterror-while-running-tabs-executescript-cannot-access-cont
+    // a little hacky, but kinda works? in Firefox too apparently
+    const isOk = (await browser.tabs.get(tabId)).favIconUrl != 'chrome://global/skin/icons/warning.svg'
 
     if (isOk) {
         // TODO even compiling this takes 50ms if 10K visits??
@@ -457,7 +466,7 @@ async function doToggleMarkVisited(tabId: number, {show}: {show: boolean | null}
 
 function isSpecialProtocol(url: string): boolean {
     // TODO eh, maybe makes more sense to only allow http[s]/ftp/file?
-    const pro = new URL(url).protocol;
+    const pro = new URL(url).protocol
     if ([
         'chrome:',
         'chrome-devtools:',
@@ -466,9 +475,9 @@ function isSpecialProtocol(url: string): boolean {
         'about:', // e.g. about:addons or about:devtool
         'data:', // start page under chrome webdriver
     ].includes(pro)) {
-        return true;
+        return true
     }
-    return false;
+    return false
 }
 
 function ignored(url: string | null): string | null {
@@ -504,16 +513,21 @@ function ignored(url: string | null): string | null {
 
   TODO: might be interesting to start loading things in "before" instead -- could update icon etc earlier?
  **/
-// TODO maybe best to add filter object so the callback doesn't fire at all
-browser.webNavigation.onCompleted.addListener(defensify(async (detail: WebNavigation.OnCompletedDetailsType) => {
-    const fid = detail.frameId
+
+type WebNavigationDetails = {
+    frameId: number
+    url: string
+    tabId: number
+    error?: string
+}
+
+async function handleWebNavigationEvent(detail: WebNavigationDetails) {
+    if (detail.frameId != 0) {
+        // we only want to trigger on the 'main' frame, not child iframes etc
+        return
+    }
+
     const url = detail.url
-    if (fid == null || url == null) {
-        return
-    }
-    if (fid != 0) {
-        return
-    }
 
     const ireason = ignored(url)
     if (ireason != null) {
@@ -522,10 +536,10 @@ browser.webNavigation.onCompleted.addListener(defensify(async (detail: WebNaviga
         return
     }
 
-    console.debug('webNavigation.onCompleted: %o %o', UUID, detail)
+    console.debug('webNavigation: %o %o', UUID, detail)
 
     try {
-        await updateState({url: url, id: detail.tabId})
+        await updateState({tab: {url: url, id: detail.tabId}, navigationError: 'error' in detail})
     } catch (error) {
         const message = (error as Error).message
         if (message == null) {
@@ -543,6 +557,17 @@ browser.webNavigation.onCompleted.addListener(defensify(async (detail: WebNaviga
         }
         throw error
     }
+}
+
+// note: this is tested by test_unreachable_page
+browser.webNavigation.onErrorOccurred.addListener(defensify(async (detail: WebNavigation.OnErrorOccurredDetailsType) => {
+    await handleWebNavigationEvent(detail)
+}, 'webNavigation.onErrorOccurred'))
+
+
+// TODO maybe best to add filter object so the callback doesn't fire at all
+browser.webNavigation.onCompleted.addListener(defensify(async (detail: WebNavigation.OnCompletedDetailsType) => {
+    await handleWebNavigationEvent(detail)
 }, 'webNavigation.onCompleted'))
 
 
@@ -571,7 +596,7 @@ type ShouldProcess = {
     tid: number,
 }
 
-// check if page needs handling and notify suer if/why it can't be processed
+// check if page needs handling and notify user if/why it can't be processed
 async function shouldProcessPage(tab: TabUrl | null): Promise<ShouldProcess | null> {
     if (tab == null) {
         await notifications.page_ignored(null, null, "Couldn't determine current tab: must be a special page (or a bug?)")
