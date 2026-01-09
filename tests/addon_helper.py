@@ -75,6 +75,35 @@ class AddonHelper:
             hotkey = commands[command]['suggested_key']['default']
             self.gui_hotkey(hotkey)
 
+    def get_extension_state(self) -> dict[str, Any]:
+        """
+        Get the current extension state (badge text, title, etc.) for the current tab.
+        Uses selenium_bridge.js to communicate with the background script.
+
+        Returns a dict with keys like 'badge_text', 'title', or 'error' if something went wrong.
+        """
+        assert self.has_selenium_bridge, (
+            "This won't work without selenium_bridge.js, you probably built the extension in --publish mode"
+        )
+        # wait until selenium_bridge is injected
+        for _ in timeout(seconds=2):
+            if self.driver.execute_script('return document.documentElement.dataset.seleniumBridgeInjected'):
+                break
+
+        # clear any previous state
+        self.driver.execute_script('delete document.documentElement.dataset.seleniumBridgeState')
+
+        # trigger the state request
+        self.driver.execute_script("document.dispatchEvent(new Event('selenium-bridge-get-state'))")
+
+        # wait for response to appear in DOM
+        for _ in timeout(seconds=5):
+            state_json = self.driver.execute_script('return document.documentElement.dataset.seleniumBridgeState')
+            if state_json:
+                return json.loads(state_json)
+
+        raise TimeoutError("Timed out waiting for extension state response")
+
     def gui_hotkey(self, key: str) -> None:
         assert not self.headless  # just in case
         lkey = key.lower().split('+')

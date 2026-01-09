@@ -273,6 +273,35 @@ def test_visits(addon: Addon, driver: Driver, backend: Backend) -> None:
 
 
 @browsers()
+def test_get_extension_state(addon: Addon, driver: Driver, backend: Backend) -> None:
+    """
+    Test reading extension state (badge text, title) via selenium bridge.
+    This uses the reverse bridge to read icon state from the background script.
+    """
+    visited = {
+        'https://example.com/page': 'some context',
+    }
+
+    index_urls(visited)(backend.backend_dir)
+
+    # Navigate to page with contexts - should show green icon with badge
+    driver.get('https://example.com/page')
+
+    # Wait for extension to update icon state
+    for _ in timeout(seconds=5):
+        state = addon.helper.get_extension_state()
+        if 'error' not in state and state.get('badge_text'):
+            break
+        sleep(0.1)
+
+    assert 'badge_text' in state, state
+    assert state['badge_text'] == '1', state  # should show "1" for 1 context
+
+    assert 'title' in state, state
+    assert '1 visits' in state['title'], state  # title should indicate visits
+
+
+@browsers()
 def test_search_around(addon: Addon, driver: Driver, backend: Backend) -> None:
     from promnesia.tests.sources.test_hypothesis import index_hypothesis
 
