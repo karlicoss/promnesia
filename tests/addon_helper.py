@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
@@ -101,6 +102,7 @@ class AddonHelper:
             state_json = self.driver.execute_script('return document.documentElement.dataset.seleniumBridgeState')
             if state_json:
                 return json.loads(state_json)
+            time.sleep(0.05)  # small delay to avoid busy waiting
 
         raise TimeoutError("Timed out waiting for extension state response")
 

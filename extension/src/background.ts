@@ -1086,10 +1086,10 @@ browser.runtime.onMessage.addListener((info: any, sender: Runtime.MessageSender)
     if (info === 'selenium-bridge-get-state') {
         // need to return a Promise so response is sent back
         return (async () => {
-            const tabId = sender.tab?.id
-            if (tabId == null) {
+            if (sender.tab == null || sender.tab.id == null) {
                 return {error: 'no tab id'}
             }
+            const tabId = sender.tab.id
             const action = browser.action ? browser.action : browser.browserAction
             // collect current state for this tab
             const state: {[key: string]: any} = {}
