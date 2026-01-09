@@ -8,22 +8,77 @@ from examples. Instead of hardcoding site-specific rules, rules can be:
 2. Defined declaratively in configuration files
 3. Extended by users without modifying source code
 
-The approach is inspired by anti-unification (least general generalization) techniques
-from program synthesis and inductive logic programming.
+Background & Prior Art
+----------------------
 
-Key concepts:
-- Pattern: A URL template with placeholders (e.g., '{subdomain}.youtube.com/{path}')
-- Rule: A transformation from input pattern to output pattern
-- RuleSet: A collection of rules that can be applied to canonify URLs
+URL canonification (or normalization) is the process of converting URLs to a
+standard, consistent format. This is essential for:
+- Deduplication: recognizing that different URLs point to the same content
+- History tracking: grouping visits to the same page
+- Link analysis: understanding relationships between pages
 
-Example:
+Traditional approaches to URL canonification rely on hardcoded rules for specific
+domains (e.g., "remove 'utm_*' parameters", "convert m.youtube.com to youtube.com").
+This has limitations:
+- Requires manual maintenance as websites change
+- Cannot easily adapt to new sites
+- Difficult for users to customize
+
+This module takes a more generic approach inspired by techniques from:
+
+1. **Anti-unification** (Plotkin, 1970): Finding the least general generalization
+   of multiple examples. Given URLs that should canonify to the same result, we
+   find the minimal pattern that captures all of them.
+
+2. **Program synthesis by example** (Gulwani, 2011): Learning programs from
+   input/output examples. We treat URL canonification as a string transformation
+   program that can be inferred from examples.
+
+3. **URL pattern mining** (used in web crawling): Identifying patterns in URLs
+   to understand site structure. We use similar techniques to recognize which
+   parts of URLs are meaningful vs. tracking/session parameters.
+
+The implementation uses:
+- LCS (Longest Common Subsequence) for aligning input/output URL tokens
+- Pattern templates with named variables for generalizing specific values
+- Rule priority ordering for handling overlapping patterns
+
+Usage Examples
+--------------
+
+Basic rule application:
+    >>> rules = get_default_rules()
+    >>> rules.apply('youtu.be/abc123')
+    'youtube.com/watch?v=abc123'
+
+Learning from examples:
     >>> rules = RuleSet()
     >>> rules.learn([
     ...     ('https://m.youtube.com/watch?v=abc', 'youtube.com/watch?v=abc'),
     ...     ('https://mobile.twitter.com/user', 'twitter.com/user'),
     ... ])
-    >>> rules.apply('https://m.youtube.com/watch?v=xyz')
+    >>> rules.apply('m.youtube.com/watch?v=xyz')
     'youtube.com/watch?v=xyz'
+
+Saving/loading rules:
+    >>> rules.save('my_rules.json')
+    >>> loaded_rules = RuleSet()
+    >>> loaded_rules.load('my_rules.json')
+
+Custom rule definition:
+    >>> rule = CanonifyRule(
+    ...     input_pattern=URLPattern('example.com/article/{id}'),
+    ...     output_pattern=URLPattern('example.com/a/{id}'),
+    ...     description='Shorten article URLs',
+    ... )
+    >>> rules.add_rule(rule)
+
+Key Classes
+-----------
+- URLPattern: A URL template with placeholders (e.g., '{subdomain}.youtube.com/{path}')
+- CanonifyRule: A transformation from input pattern to output pattern
+- QueryParamRule: Specifies query parameter handling for a domain
+- RuleSet: A collection of rules that can be applied to canonify URLs
 """
 
 from __future__ import annotations
@@ -160,6 +215,25 @@ class CanonifyRule:
         )
 
 
+# Default query params to remove (tracking, analytics, etc.)
+default_qremove = {
+    'utm_source',
+    'utm_campaign',
+    'utm_content',
+    'utm_medium',
+    'utm_term',
+    'utm_umg_et',
+    'usg',
+    'hl',
+    'vl',
+    'utf8',
+    'ref',
+    'source',
+    'fbclid',
+    'gclid',
+}
+
+
 @dataclass
 class QueryParamRule:
     """
@@ -196,25 +270,6 @@ class QueryParamRule:
                 pass
         filtered.sort(key=lambda x: x[0])
         return [(k, v) for _, k, v in filtered]
-
-
-# Default query params to remove (tracking, analytics, etc.)
-default_qremove = {
-    'utm_source',
-    'utm_campaign',
-    'utm_content',
-    'utm_medium',
-    'utm_term',
-    'utm_umg_et',
-    'usg',
-    'hl',
-    'vl',
-    'utf8',
-    'ref',
-    'source',
-    'fbclid',
-    'gclid',
-}
 
 
 class RuleSet:
