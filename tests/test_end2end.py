@@ -454,15 +454,8 @@ def test_sidebar_navigation(
         # seems broken on any local page -- only transparent sidebar frame is shown
         # the issue is that contentDocument.body is null -- no idea why
 
-    if driver.name == 'chrome':
-        pytest.skip(
-            "TODO need to split the test into version which isn's using back/forward. see https://bugs.chromium.org/p/chromedriver/issues/detail?id=4329"
-        )
-        # also need to extract a scenario for manual testing I guess
-
     if base_url == 'LOCAL':
-        local_addr = exit_stack.enter_context(local_http_server(PYTHON_DOC_PATH))
-        base_url = local_addr
+        base_url = exit_stack.enter_context(local_http_server(PYTHON_DOC_PATH))
 
     tutorial = f'{base_url}/tutorial/index.html'
     reference = f'{base_url}/reference/index.html'
@@ -476,8 +469,6 @@ def test_sidebar_navigation(
 
     url = reference
 
-    # TODO hmm so this bit is actually super fast, takes like 1.5 secs
-    # need to speed up the preparation
     driver.get(url)
     assert not addon.sidebar.visible
     confirm("grey icon. sidebar should NOT be visible")
@@ -486,19 +477,11 @@ def test_sidebar_navigation(
     assert not addon.sidebar.visible
     confirm("green icon. sidebar should NOT be visible")
 
-    # TODO ideally we'll get rid of it
-    # at the moment without this sleep chrome pretty much always fails
-    def sleep_if_chrome() -> None:
-        if driver.name == 'chrome':
-            sleep(0.01)
-
     # switch between these in quick succession deliberately
     # previously it was triggering a bug when multiple sidebars would be injected due to race condition
     for i in range(100):
         driver.get(url)
-        sleep_if_chrome()
         driver.get(tutorial)
-        sleep_if_chrome()
         if i % 10 == 0:
             # huh, it's quite slow... to run it on single iteration
             # what it's really testing here is that there is only one promnesia frame/sidebar
@@ -516,14 +499,12 @@ def test_sidebar_navigation(
 
     # again, stress test it to try to trigger weird bugs
     for i in range(100):
-        sleep_if_chrome()
         driver.forward()
 
         # TODO ugh. still failing here sometimes under headless firefox??
         # if i % 10 == 0:
         #     assert helper.sidebar.visible
 
-        sleep_if_chrome()
         driver.back()
         if i % 10 == 0:
             # huh, it's quite slow... to run it on single iteration
