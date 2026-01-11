@@ -226,6 +226,7 @@ def get_webdriver(
         else:
             # selenium manager should download latest "chrome for testing"
             # available versions seem to be here: https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
+            # NOTE: seems that if you specify exact version, it will always download chrome for testing, UNLESS it matches the version installed on your computer
             cr_options.browser_version = 'dev'
 
             # seems like necessary from chrome-for-testing? otherwise doesn't start

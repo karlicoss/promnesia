@@ -624,16 +624,17 @@ async function bindSidebarData(response: Visits) {
 
 
 // TODO ugh, it actually seems to erase all the class information :( is it due to message passing??
-// todo hmm this isn't used??
 function _requestVisits(): void {
-    browser.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
-           .then((response: any) => {
-               if (response == null) {
-                   // todo why would it be?
-                   return
-               }
-               bindSidebarData(Visits.fromJObject(response))
-           })
+    // hmm, so right now we instead rely on webnavigation/updateState and BIND_SIDEBAR_VISITS
+    // don't quite remember why we're doing it this way? maybe reconsider in the future
+    // browser.runtime.sendMessage({method: Methods.GET_SIDEBAR_VISITS})
+    //        .then((response: any) => {
+    //            if (response == null) {
+    //                // todo why would it be?
+    //                return
+    //            }
+    //            bindSidebarData(Visits.fromJObject(response))
+    //        })
 }
 
 
