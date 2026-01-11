@@ -648,46 +648,28 @@ async function handleOpenSearch(p: SearchPageParams = {}) {
 }
 
 
-const onMessageCallback = async (msg: any) => { // TODO not sure if should defensify here?
-    const method = msg.method
-    if (method == Methods.GET_SIDEBAR_VISITS) {
-        // TODO not sure if it might do unnecessary notifications here?
-        const atab = await getActiveTab()
-        // not sure if can happen.. but just in case
-        const should = await shouldProcessPage(atab)
-        if (should) {
-            const {url: url} = should
-            const visits = await allsources.visits(url)
-            if (visits instanceof Visits) {
-                return visits.toJObject()
-            } else {
-                // hmm. generally shouldn't happen, since sidebar is not bound on blacklisted urls
-                // show notification in dev mode?
-                console.trace("Shouldn't have happened! %o", visits)
-            }
-        }
-        // TODO err. not sure what's happening here...
-        // if i'm using await in return type, it expects me to return visits instead of true/false??
-        // is it automatically detecting whether it's a promise or not??
-        // perhaps async automatically uncurries last argument?
-        // could be Firefox only?
-        // sendResponse(visits);
-        // return true; // this is important!! otherwise message will not be sent?
-    } else if (method == Methods.SEARCH_VISITS_AROUND) {
-        const utc_timestamp_s: number = msg.utc_timestamp_s
-        await handleOpenSearch({
+// NOTE: onMessageListener shouldn't be async (see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#addlistener_syntax)
+// "If you pass an async function to addListener(), the listener returns a Promise for every message it receives, preventing other listeners from responding"
+const onMessageCallback: ((message: any) => Promise<any> | void) = (message: any) => { // TODO not sure if should defensify here?
+    const method = message.method
+    if (method === undefined) {
+        return // not for this callback
+    }
+    if        (method === Methods.SEARCH_VISITS_AROUND) {
+        const utc_timestamp_s: number = message.utc_timestamp_s
+        return handleOpenSearch({
             utc_timestamp_s: utc_timestamp_s.toString()
         })
-    } else if (method == Methods.OPTIONS_UPDATED) {
-        updateContextMenus(msg.options)
-    } else if (method == Methods.MARK_VISITED) {
-        await defensify(handleToggleMarkVisited, 'handleToggleMarkVisited')()
-    } else if (method == Methods.OPEN_SEARCH) {
-        await handleOpenSearch()
-    } else if (method == Methods.ZAPPER_EXCLUDELIST) {
-        await AddToMarkVisitedExcludelist.handleZapperResult(msg)
+    } else if (method === Methods.OPTIONS_UPDATED) {
+        return updateContextMenus(message.options)
+    } else if (method === Methods.MARK_VISITED) {
+        return defensify(handleToggleMarkVisited, 'handleToggleMarkVisited')()
+    } else if (method === Methods.OPEN_SEARCH) {
+        return handleOpenSearch()
+    } else if (method === Methods.ZAPPER_EXCLUDELIST) {
+        // NOTE: at the moment, caller doesn't await, but maybe it should?
+        return AddToMarkVisitedExcludelist.handleZapperResult(message)
     }
-    return false;
 }
 
 
@@ -845,7 +827,6 @@ const AddToMarkVisitedExcludelist = {
                     chrome.runtime.sendMessage({method: method_zapper_excludelist, data: links})
                 })
                 const cancel = (e: KeyboardEvent) => {
-                    // console.error("ESCAPE!!!, %o", e)
                     if (e.key == 'Escape') {
                         document.removeEventListener('mouseover', listener)
                         window.removeEventListener('keydown', cancel)
@@ -1056,7 +1037,7 @@ function initContextMenus(): void {
 }
 
 
-function updateContextMenus(opts: Options): void {
+async function updateContextMenus(opts: Options): Promise<void> {
     if (!hasContextMenus()) {
         return
     }

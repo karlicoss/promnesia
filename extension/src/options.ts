@@ -276,6 +276,10 @@ export async function getOptions(): Promise<Options> {
 
 async function notifyOptionsUpdated(): Promise<void> {
     const options = await getOptions() // meh
+
+    // NOTE: this could be awaited, but if it fails, we might be unable to set/reset options etc
+    // kinda annoying if this fails for whatever reason and we can't update options
+    // TODO probably should wrap into defensify or something (possibly the whole function?)
     browser.runtime.sendMessage({method: Methods.OPTIONS_UPDATED, options: options})
 }
 
@@ -285,19 +289,19 @@ export async function setOptions(opts: StoredOptions) {
     const os = await optSync()
     // @ts-expect-error
     await os.set(opts)
-    notifyOptionsUpdated()
+    await notifyOptionsUpdated()
 }
 
 export async function setOption(opt: Opt1 | Opt2): Promise<void> {
     const os = await optSync()
     await os.set(opt)
-    notifyOptionsUpdated()
+    await notifyOptionsUpdated()
 }
 
 export async function resetOptions(): Promise<void> {
     const os = await optSync()
     await os.setAll({})
-    notifyOptionsUpdated()
+    await notifyOptionsUpdated()
 }
 
 export async function exportOptions(): Promise<void> {
