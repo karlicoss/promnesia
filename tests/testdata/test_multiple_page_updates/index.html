@@ -5,8 +5,9 @@
 let index = 0
 const update_title = () => {
     document.title = `title ${index}`
+    window.location.hash = `#update-${index}`
     index += 1
-    setTimeout(update_title, 50)
+    setTimeout(update_title, 50)  // update every 50ms
 }
 update_title()
 

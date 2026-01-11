@@ -33,6 +33,8 @@ from .utils import (
     timeout,
 )
 from .webdriver_utils import (
+    CHROME,
+    FIREFOX,
     Browser,
     Manual,
     Waiter,
@@ -221,11 +223,8 @@ def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
     confirm('icon: grey/purple')
 
 
-@browsers()
+@browsers(FIREFOX, CHROME)  # exclude headless, since requires GUI to open context manu
 def test_add_to_blacklist_context_menu(addon: Addon, driver: Driver, browser: Browser) -> None:
-    if browser.headless:
-        pytest.skip("This test requires GUI to open context menu")
-
     # doesn't work on headless because not sure how to interact with context menu.
     addon.configure(port='12345')
     driver.get('https://example.com')
@@ -345,21 +344,8 @@ def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> N
     )
 
 
-@browsers()
-@pytest.mark.parametrize(
-    'url',
-    [
-        "https://en.wikipedia.org/wiki/Symplectic_group",
-        # regression test for https://github.com/karlicoss/promnesia/issues/295
-        # note: seemed to reproduce on chrome more consistently for some reason
-        "https://www.udemy.com/course/javascript-bible/",
-    ],
-    ids=['wiki', 'udemy'],
-)
-def test_sidebar_basic(url: str, addon: Addon, driver: Driver, backend: Backend) -> None:
-    if 'udemy' in url:
-        pytest.skip('TODO udemy tests are very timing out. Perhaps because of cloudflare protection?')
-
+def test_sidebar_basic(addon: Addon, driver: Driver, backend: Backend) -> None:
+    url = 'https://en.wikipedia.org/wiki/Symplectic_group'
     visited = {
         # this also tests org-mode style link highlighting (custom anchorme version)
         url: 'whatever\nalso [[https://wiki.openhumans.org/wiki/Personal_Science_Wiki][Personal Science Wiki]]\nmore text',
@@ -792,13 +778,11 @@ def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend, waiter
 
 
 @browsers()
-def test_multiple_page_updates(
-    tmp_path: Path, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack
-) -> None:
+def test_multiple_page_updates(addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack) -> None:
     # on some pages, onUpdated is triggered multiple times (because of iframes or perhaps something else??)
     # which previously resulted in flickering sidebar/performance degradation etc, so it's a regression test against this
     # TODO would be nice to hook to the backend and check how many requests it had...
-
+    # this should cover these issues https://github.com/karlicoss/promnesia/issues/295 https://github.com/karlicoss/promnesia/issues/177
     http_server_root = get_testdata('test_multiple_page_updates')
 
     base_url = exit_stack.enter_context(local_http_server(http_server_root))
@@ -817,18 +801,15 @@ def test_multiple_page_updates(
     driver.get(base_url)
 
     had_toast = False
-    # TODO need a better way to check this...
-    seen_titles = set()
-    for _ in range(50):
+    seen_titles: set[str] = set()
+    # todo extract into addon helper?
+    while len(seen_titles) < 100:  # make sure we see multiple updates. each update takes about 50ms
         toasts = driver.find_elements(By.CLASS_NAME, 'toastify')
         if len(toasts) == 1:
             had_toast = True
         assert len(toasts) <= 1
-        sleep(0.1)
         seen_titles.add(driver.title)
     assert had_toast
-
-    assert len(seen_titles) > 10, seen_titles  # precondition to make sure page update events would be triggered
 
     addon.sidebar.open()
     addon.sidebar.close()
