@@ -650,7 +650,7 @@ async function handleOpenSearch(p: SearchPageParams = {}) {
 
 // NOTE: onMessageListener shouldn't be async (see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#addlistener_syntax)
 // "If you pass an async function to addListener(), the listener returns a Promise for every message it receives, preventing other listeners from responding"
-const onMessageCallback: ((message: any) => Promise<any> | void) = (message: any) => { // TODO not sure if should defensify here?
+const onMessageCallback = (message: any): Promise<any> | void => { // TODO not sure if should defensify here?
     const method = message.method
     if (method === undefined) {
         return // not for this callback
@@ -669,6 +669,31 @@ const onMessageCallback: ((message: any) => Promise<any> | void) = (message: any
     } else if (method === Methods.ZAPPER_EXCLUDELIST) {
         // NOTE: at the moment, caller doesn't await, but maybe it should?
         return AddToMarkVisitedExcludelist.handleZapperResult(message)
+    }
+}
+
+const onMessageCallbackSeleniumBridge = (message: any, sender: Runtime.MessageSender): Promise<any> | void => {
+    // see selenium_bridge.js
+    if        (message === 'selenium-bridge-_execute_action') {
+        handleToggleSidebar()
+    } else if (message === 'selenium-bridge-_execute_browser_action') {
+        handleToggleSidebar()
+    } else if (message === 'selenium-bridge-mark_visited') {
+        handleToggleMarkVisited()
+    } else if (message === 'selenium-bridge-search') {
+        handleOpenSearch()
+    } else if (message === 'selenium-bridge-get-state') {
+        // Reverse bridge: return extension state so it can be read via webdriver
+        return (async () => {
+            assert(sender.tab != null)
+            const tabId = sender.tab.id
+            const action = browser.action ? browser.action : browser.browserAction
+            const state = {
+                badge_text: await action.getBadgeText({tabId: tabId}),
+                title: await action.getTitle({tabId: tabId}),
+            }
+            return state
+        })()
     }
 }
 
@@ -1055,6 +1080,7 @@ function initBackground(): void {
     // otherwise doesn't work well with background page suspension
 
     browser.runtime.onMessage.addListener(onMessageCallback)
+    browser.runtime.onMessage.addListener(onMessageCallbackSeleniumBridge)
 
     registerActions()
 
@@ -1071,24 +1097,6 @@ function initBackground(): void {
 
     initContextMenus()
 }
-
-
-// NOTE: onMessageListener shouldn't be async (see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage#addlistener_syntax)
-browser.runtime.onMessage.addListener((info: any, _: Runtime.MessageSender) => {
-    // see selenium_bridge.js
-    if (info === 'selenium-bridge-_execute_action') {
-        handleToggleSidebar()
-    }
-    if (info === 'selenium-bridge-_execute_browser_action') {
-        handleToggleSidebar()
-    }
-    if (info === 'selenium-bridge-mark_visited') {
-        handleToggleMarkVisited()
-    }
-    if (info === 'selenium-bridge-search') {
-        handleOpenSearch()
-    }
-})
 
 initBackground()
 
