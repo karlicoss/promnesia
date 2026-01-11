@@ -166,8 +166,14 @@ def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
     addon.configure(port='12345', blacklist=('stackoverflow.com',))
     driver.get('https://stackoverflow.com/questions/27215462')
 
+    for _ in timeout(1.0):
+        # NOTE: need to poll here because we might observe state beforethe page was fully loaded
+        if 'Blacklisted: User-defined' in addon.helper.get_extension_state()['title']:
+            break
+    confirm('page should be blacklisted (black icon)')
+
     addon.activate()
-    confirm('page should be blacklisted (black icon), you should see an error notification')
+    confirm('you should see an error notification about excluded page')
     # make sure there is not even the frame for blacklisted page
     assert not addon.sidebar.available
 
@@ -177,8 +183,12 @@ def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
     driver.back()
     driver.refresh()
 
-    addon.sidebar.open()
+    addon.sidebar.open()  # this checks that sidebar is visible as well
     confirm('sidebar: should be visible')
+
+    # NOTE hmm depending on how fast the test is running it might be no data or 1 (or more?) previous visits, e.g. when we test interactively
+    assert 'Blacklisted' not in addon.helper.get_extension_state()['title']
+    confirm('icon: grey/purple')
 
 
 @browsers()
@@ -186,8 +196,14 @@ def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
     addon.configure(port='12345')
     driver.get('https://www.hsbc.co.uk/mortgages/')
 
+    for _ in timeout(1.0):
+        # NOTE: need to poll here because we might observe state beforethe page was fully loaded
+        if "Blacklisted: 'Banking' filterlist" in addon.helper.get_extension_state()['title']:
+            break
+    confirm('page should be blacklisted (black icon)')
+
     addon.activate()
-    confirm('page should be blacklisted (black icon), your should see an error notification')
+    confirm('your should see an error notification about excluded page')
     # make sure there is not even the frame for blacklisted page
     assert not addon.sidebar.available
 
@@ -199,6 +215,10 @@ def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
 
     addon.sidebar.open()
     confirm('sidebar: should be visible')
+
+    # NOTE hmm depending on how fast the test is running it might be no data or 1 (or more?) previous visits, e.g. when we test interactively
+    assert 'Blacklisted' not in addon.helper.get_extension_state()['title']
+    confirm('icon: grey/purple')
 
 
 @browsers()
