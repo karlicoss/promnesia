@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# FIXME remove release flag?
 import argparse
 import json
 import os
@@ -119,10 +120,7 @@ def main() -> None:
 
     assert target is not None
 
-    manifest = args.manifest or {
-        'firefox': '2',
-        'chrome': '3',
-    }[target]
+    manifest = args.manifest or '3'
 
     assert not (target == 'chrome' and manifest == '2'), "chrome doesn't support manifest v2 anymore"
 

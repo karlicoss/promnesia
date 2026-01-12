@@ -848,6 +848,8 @@ const AddToMarkVisitedExcludelist = {
                         }
                     }).filter(e => e != null)
                     links = Array.from(new Set(links)).sort() // make unique
+                    // TODO await on sendMessage? not sure if there is any point unless errors propagate better?
+                    // NOTE: I think this needs to be chrome.runtime because it's executed in the page context, and it doesn't have browser. in chrome yet
                     // @ts-expect-error
                     chrome.runtime.sendMessage({method: method_zapper_excludelist, data: links})
                 })

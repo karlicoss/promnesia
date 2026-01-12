@@ -63,7 +63,7 @@ class AddonHelper:
         )
         # wait until selenium_bridge is injected, otherwise it's possible to have a race condition
         # usually it happens very quickly, but retry a few times just in case
-        for _ in timeout(seconds=2):
+        for _ in timeout(seconds=5):  # previously had on 2 second, but sometimes takes a bit longer on github actions
             if self.driver.execute_script('return document.documentElement.dataset.seleniumBridgeInjected'):
                 break
 

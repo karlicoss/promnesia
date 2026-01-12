@@ -168,7 +168,7 @@ def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
     addon.configure(port='12345', blacklist=('stackoverflow.com',))
     driver.get('https://stackoverflow.com/questions/27215462')
 
-    for _ in timeout(1.0):
+    for _ in timeout(2.0):
         # NOTE: need to poll here because we might observe state beforethe page was fully loaded
         if 'Blacklisted: User-defined' in addon.helper.get_extension_state()['title']:
             break
@@ -198,7 +198,7 @@ def test_blacklist_builtin(addon: Addon, driver: Driver) -> None:
     addon.configure(port='12345')
     driver.get('https://www.hsbc.co.uk/mortgages/')
 
-    for _ in timeout(1.0):
+    for _ in timeout(2.0):
         # NOTE: need to poll here because we might observe state beforethe page was fully loaded
         if "Blacklisted: 'Banking' filterlist" in addon.helper.get_extension_state()['title']:
             break
