@@ -205,20 +205,14 @@ class Sidebar {
             sidebar.addEventListener('load', resolve, {once: true})
         })
 
-        const isFirefox = window.navigator.userAgent.indexOf('Firefox') != -1
-        if (isFirefox) {
-            // under firefox, if src is set after appendChild, it ceases to be bfcache friendly for some reason
-            // i.e. sidebar doesn't persist back/fwd navigation
-            // however, it only reproduced under regular firefox -- doesn't matter under webdriver. odd
-            sidebar.src = ''
-            this.body.appendChild(sidebar)
-        } else {
-            // BUT: under chrome if src is set before appendChild, it just doesn't display anything?? ugh
-            this.body.appendChild(sidebar)
-            sidebar.src = ''
-        }
+        // NOTE: under firefox, if src is set after appendChild, it ceases to be bfcache friendly for some reason
+        // i.e. sidebar doesn't persist back/fwd navigation
+        // however, it only reproduced under regular firefox -- doesn't matter under webdriver. odd
+        // Either way, seems like it's necessary to set src before appending in Chrome??
+        sidebar.src = ''
+        this.body.appendChild(sidebar)
 
-        // todo add timeout to make it a bit easier to debug?
+        // NOTE: seems like load is only triggered after we set src and append to document?
         await loadPromise
 
         this.setupFrame(sidebar)
