@@ -79,6 +79,7 @@ module.exports = {
   moduleNameMapper: {
       '.*dom.form.serializer.*': '<rootDir>/__mocks__/dom-form-serializer.js',
       '^webextension-polyfill$': '<rootDir>/__mocks__/browser.js',
+      '^uint8array-extras.*'   : '<rootDir>/__mocks__/uint8array-extras.js',
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
