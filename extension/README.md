@@ -7,6 +7,13 @@ See `PRIVACY.org`.
 ## browserslist
 Not used by the extension (since `rollup-plugin-typescript` is looking at `tsconfig.json`), but it's used by babel/jest?
 
+## dependencies
+- **codemirror**: for editing code on options page
+- **anchorme**: for linkifying URLs in the sidebar
+- **tippy.js**: for tooltips with visited marks on the page
+  - TODO seems like project is archived, so might need some alternative
+- **webext-options-sync**: for syncing extension options across browsers/devices
+
 ## devDependencies
 
 - **@babel/core**, **@babel/preset-env**, **@babel/preset-typescript**: only needed for eslint, extension code is handled by typescript

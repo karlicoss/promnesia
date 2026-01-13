@@ -251,7 +251,9 @@ class OptionsPage:
         # selenium.common.exceptions.ElementNotInteractableException: Message: Element <textarea> could not be scrolled into view
 
         def contents() -> str:
-            return self.helper.driver.execute_script('return arguments[0].cmView.view.state.doc.toString()', area)
+            return self.helper.driver.execute_script(
+                'return arguments[0].cmTile.view.viewState.state.doc.toString()', area
+            )
 
         # TODO FFS. these don't seem to work??
         # count = len(area.get_attribute('value'))

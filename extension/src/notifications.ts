@@ -10,7 +10,7 @@ import type {Options} from './options'
 // last resort.. because these could be annoying (also might not make sense to display globally)
 // only using it when there is no other context (e.g. current tab) to show a notification
 export function desktopNotify(message: string, priority: number=0) {
-    browser.notifications.create({
+    browser.notifications.create({ // TODO ugh, this might not work when we use defensify from page context? i.e. sidebar?
         'type'    : "basic",
         'title'   : "promnesia",
         'message' : message,
