@@ -79,7 +79,6 @@ export async function queryBackendCommon<R>(params: any, endp: Endpoint): Promis
     return response.json()
 }
 
-// eslint-disable-next-line no-unused-vars
 export function makeFakeVisits(count: number): Visits {
     return new Visits(
         'github.com',

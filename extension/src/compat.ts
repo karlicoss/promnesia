@@ -20,5 +20,5 @@ export async function executeScript<R>(injection: Scripting.ScriptInjection): Pr
             throw new Error(`Error during executeScript: ${error}`)
         }
     }
-    return result
+    return result as Promise<R>
 }
