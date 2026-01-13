@@ -184,7 +184,7 @@ jobs:
     - uses: mxschmitt/action-tmate@v3
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
-    - run: sudo apt install --yes python3-doc  # html files from this pacakge are used in tests
+    - run: sudo apt update && sudo apt install --yes python3-doc  # html files from this pacakge are used in tests
     - run: extension/.ci/build  # debug version, don't lint since build_extension already did that
     # -n is used to run in parallel (pytes-xdist)
     - run: bash .ci/run -e end2end -- -k ${{ matrix.browser }} -n auto
