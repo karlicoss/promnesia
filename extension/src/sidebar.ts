@@ -197,6 +197,14 @@ class Sidebar {
 
         const sidebar = doc.createElement('iframe')
         sidebar.style.display = 'none' // prevent flickering while iframe is being initialised
+
+        // iframe will start loading after src is set
+        // however we need to add a load listener early, otherwise we might miss the event!
+        const loadPromise = new Promise((resolve, /*reject*/) => {
+            // todo not sure if there is anything to reject?..
+            sidebar.addEventListener('load', resolve, {once: true})
+        })
+
         const isFirefox = window.navigator.userAgent.indexOf('Firefox') != -1
         if (isFirefox) {
             // under firefox, if src is set after appendChild, it ceases to be bfcache friendly for some reason
@@ -210,16 +218,10 @@ class Sidebar {
             sidebar.src = ''
         }
 
-        // TODO ugh it's a bit ridiculous that because of single iframe I have to propagate async everywhere..
-        const loadPromise = new Promise((resolve, /*reject*/) => {
-            // TODO not sure if there is anything to reject?..
-            // @ts-expect-error
-            sidebar.addEventListener('load', () => {resolve();}, {once: true});
-        });
         // todo add timeout to make it a bit easier to debug?
-        await loadPromise;
+        await loadPromise
 
-        this.setupFrame(sidebar);
+        this.setupFrame(sidebar)
 
         // TODO a bit nasty, but at the moment easiest way to solve it
         // apparently iframe is loading about:blank
