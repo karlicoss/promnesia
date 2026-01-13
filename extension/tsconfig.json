@@ -2,17 +2,22 @@
   "compilerOptions": {
     "baseUrl": "src/",
     "noImplicitAny": true,
+
+    /// these two should be together?
+    "module": "esnext",
+    // seems like it allows to import without .js extensions
+    "moduleResolution": "bundler",
+    ///
+
     "target": "es2022",
     "strict": true,
     "allowJs": true,
 
-    // this is necessary to allos importing as import './whatever' (instead of explicit extension)
-    "moduleResolution": "bundler",
-    // esnext is necessary, otherwise bundler module resolution can't be used?
-    "module": "esnext",
+    // Ensures that `import type` statements are completely removed from the output, and regular imports are kept as-is.
+    // This is mainly to help Rollup, otherwise typescript uses some sort of guessing?
+    "verbatimModuleSyntax": true,
 
-    // without it, emacs (LSP?) complains when editing files.. not sure if impacts actual code generation?
-    "lib": ["es6", "dom"],
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*.ts"
