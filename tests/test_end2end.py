@@ -625,7 +625,7 @@ def test_click_before_page_loaded(
 </head>
 <body>
     <h1>Page loading...</h1>
-    <img src="https://httpbin.org/delay/{delay_s}" alt="Delayed resource">
+    <img src="https://postman-echo.com/delay/{delay_s}" alt="Delayed resource">
     <p>This image takes {delay_s} seconds to load</p>
 </body>
 </html>
