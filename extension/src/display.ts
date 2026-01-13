@@ -16,7 +16,6 @@ export function _fmt(dt: Date): [string, string] {
     // eslint-disable-next-line prefer-const
     let [mon, day, year] = parts.slice(1, 4)
     day = day[0] == '0' ? day[1] : day
-    // eslint-disable-next-line no-unused-vars
     const [hh , mm , _ss] = parts[4].split(':')
 
     const datestr = `${day} ${mon} ${year}`
@@ -153,7 +152,6 @@ export class Binder {
             const ctx_c = child(item, 'div', ['context'])
 
             // ugh.. so much code for something so simple
-            // eslint-disable-next-line no-inner-declarations
             function do_simple(text: string) {
                 for (const line of text.split('\n')) {
                     tchild(ctx_c, line)

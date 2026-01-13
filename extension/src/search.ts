@@ -49,7 +49,6 @@ async function* _doSearch(
     }
 ) {
     if (highlight_if == null) {
-        // eslint-disable-next-line no-unused-vars
         highlight_if = (_) => false;
     }
 

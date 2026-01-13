@@ -572,7 +572,6 @@ async function* _bindSidebarData(response: Visits) {
         }
         const first = group[0];
         const last  = group[group.length - 1];
-        // eslint-disable-next-line no-unused-vars
         const [_fdates, ftimes] = visit_date_time(first)
         const [ldates, ltimes] = visit_date_time(last)
         const dates = ldates;
