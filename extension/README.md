@@ -31,7 +31,6 @@ Not used by the extension (since `rollup-plugin-typescript` is looking at `tscon
 - **jest-fetch-mock**: mock `fetch` calls in tests
 - **rollup**: module bundler used to compile the extension
 - **rollup-plugin-copy**: copies static files (HTML, images) to the output directory
-- **tslib**: runtime helpers for typescript
 - **typescript**
 - **typescript-eslint**: enables eslint to support typescript
 - **web-ext**: Mozilla's command-line tool for running, linting, and building extensions
