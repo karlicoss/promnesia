@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "en-US": "Recall which pages you already visited, why and in which context"
+  },
+  "description": {
+    "en-US": "\nPromnesia is a browser extension (Chrome/Firefox/Firefox mobile) which provides a sidebar which complements browser history with some enhanced features.\n\nTLDR: it lets you explore your browsing history in context: where you encountered it, in chat, on Twitter, on Reddit, or just in one of the text files on your computer.\nThis is unlike most modern browsers, where you can only see when you visited the link.\n\nIt allows you to answer different questions about the current web page:\n\n- have I been here before? When?\n- why have I bookmarked it?\n- how did I get on it? Which page has led to it?\n- who sent me this link? Can I just jump to the message?\n- which links on this page have I already explored?\n- which posts from this blog page have I already read?\n\n*NOTE*: to get the most benefits from the extension, you also need to set up a supplementary service. You can find the instructions [here](https://github.com/karlicoss/promnesia#setup).\n"
+  },
+  "requires_payment": false,
+  "categories": {
+    "firefox": [
+      "bookmarks",
+      "search-tools"
+    ]
+  },
+  "support_email": {
+    "en-US": "karlicoss.dev@gmail.com"
+  },
+  "homepage": {
+    "en-US": "https://github.com/karlicoss/promnesia"
+  },
+  "version": {
+    "license": "MIT",
+    "approval_notes": "\nYou can find up-to-date extension code here https://github.com/karlicoss/promnesia/tree/master/extension\n\nThe build instructions assume that the zip file with source code is in =/path/to/extension-source-firefox.zip= (on the HOST system).\n*Make sure to replace it with the actual path to the source code zip file.*\n\nTo build you need *Ubuntu 24.04/Noble* and *Node 24*. The easiest way to build cleanly would be a Docker container:\n\n```\n# on the HOST system: cleanup previous container -- if it didn't exist in the first place, it will show an error, ignore it\ndocker rm -f extension_build\n\n# on the HOST system: create the container\ndocker create --name extension_build -it ubuntu:noble /bin/bash\n\n# on the HOST system: put the sources into the container\ndocker cp /path/to/extension-source-firefox.zip extension_build:/extension-source-firefox.zip\n\n# on the HOST system: start the container\ndocker start -i extension_build\n```\n\nAfter that build the addon (run these commands INSIDE the container if you choose to do it with Docker):\n\n```\n$ apt update && apt install -y git curl unzip\n$ curl -fsSL https://deb.nodesource.com/setup_24.x | bash -\n$ DEBIAN_FRONTEND=noninteractive apt install -y nodejs\n$ unzip extension-source-firefox.zip -d extension\n$ cd extension\n$ npm install\n$ ./build --firefox --release --lint --publish=skip\n```\n\n\nThe final artifact will be in =/extension/dist/artifacts/firefox/promnesia-<version>.zip= (INSIDE the container).\n\nIf you need to get it back onto the HOST system (e.g. to test in the browser), run on the HOST system (e.g. in a separate terminal):\n\ndocker cp extension_build:/extension/dist/artifacts/firefox/promnesia-<version>.zip\n\nThis will copy it into the current directory on the HOST system.\n"
+  }
+}
