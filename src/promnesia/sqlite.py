@@ -40,7 +40,7 @@ def sqlite_connection(
 
     conn = sqlite3.connect(dbp, uri=True)
     try:
-        conn.row_factory = row_factory_
+        conn.row_factory = row_factory_  # ty: ignore[invalid-assignment]
         with conn:
             yield conn
     finally:

@@ -750,12 +750,12 @@ def groups(it, args):  # pragma: no cover
     pprint(uc)
 
 
-def display(it, args) -> None:  # pragma: no cover
+def display(it, args) -> None:
     # TODO better name?
     import difflib
     from sys import stdout
 
-    from termcolor import colored as C  # type: ignore[import-not-found]
+    from termcolor import colored as C  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
     for line in it:
         line = line.strip()

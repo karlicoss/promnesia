@@ -5,6 +5,7 @@ lint.extend-select = [
 ]
 
 lint.ignore = [
+    "CPY",   # copyright headers
     "D",     # annoying nags about docstrings
     "N",     # pep naming
     "TCH",   # type checking rules, mostly just suggests moving imports under TYPE_CHECKING
@@ -16,6 +17,9 @@ lint.ignore = [
     "EM" ,   # suggests assigning all exception messages into a variable first... pretty annoying
 
 ### too opinionated style checks
+    "E203",  # whitespace before , -- sometimes used for readability, and ruff format should cover it anyway
+    "E221",  # multiple spaces before operator -- also covered by ruff format
+    "E266",  # too many leading '#' for block comment -- sometimes genuinely useful for visual separation
     "E501",  # too long lines
     "E731",  # assigning lambda instead of using def
     "E741",  # Ambiguous variable name: `l`
@@ -62,6 +66,8 @@ lint.ignore = [
 
     "RET504", # unnecessary assignment before returning -- that can be useful for readability
     "RET505", # unnecessary else after return -- can hurt readability
+
+    "PLC1901",  # suggests using `if string` instead of `strinig == ""` -- dumb.
 
     "PLW0603",  # global variable update.. we usually know why we are doing this
     "PLW2901",  # for loop variable overwritten, usually this is intentional

@@ -61,8 +61,8 @@ def index() -> Results:
         warnings.warn(
             "Please upgrade google_takeout_parser (`pip install -U google_takeout_parser`) to support the new format for youtube comments"
         )
-        CSVYoutubeComment = YoutubeCSVStub  # type: ignore[misc,assignment]
-        CSVYoutubeLiveChat = YoutubeCSVStub  # type: ignore[misc,assignment]
+        CSVYoutubeComment = YoutubeCSVStub  # type: ignore[misc,assignment]  # ty: ignore[invalid-assignment]
+        CSVYoutubeLiveChat = YoutubeCSVStub  # type: ignore[misc,assignment]  # ty: ignore[invalid-assignment]
 
     def warn_once_if_not_seen(e: Any) -> Iterable[Exception]:
         et_name = type(e).__name__

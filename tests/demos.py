@@ -20,7 +20,10 @@ from .webdriver_utils import CHROME, FIREFOX, browsers, get_webdriver
 def real_db():
     import shutil
 
-    from .private import real_db_path, test_filter  # type: ignore[import-not-found,unused-ignore,import-untyped]
+    from .private import (  # type: ignore[import-not-found,unused-ignore,import-untyped]  # ty: ignore[unresolved-import]
+        real_db_path,
+        test_filter,
+    )
 
     def indexer(tdir: Path):
         tdb = tdir / 'promnesia.sqlite'
@@ -49,7 +52,7 @@ class Annotator:
         self.l.append((now, text, length))
 
     def build(self, **extra):
-        from pysubs2 import Color, SSAEvent, SSAFile  # type: ignore[import-not-found]
+        from pysubs2 import Color, SSAEvent, SSAFile  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
         millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
@@ -562,7 +565,7 @@ I'm using Instapaper to read and highlight articles while I'm offline on my phon
         # TODO go to div class="source" -> a class="original"
         # driver without the extension
         ORIG = 'http://nautil.us/issue/66/clockwork/haunted-by-his-brother-he-revolutionized-physics-rp'
-        with get_webdriver(browser, extension=False) as driver2:  # type: ignore[misc,call-arg]
+        with get_webdriver(browser, extension=False) as driver2:  # type: ignore[misc,call-arg]  # ty: ignore[unknown-argument,too-many-positional-arguments,missing-argument]
             driver2.get(ORIG)
 
             # TODO maybe, have annotation 'start' and 'interrupt'?

@@ -92,7 +92,7 @@ def frame_context(driver: Driver, *, frame: WebElement) -> Iterator[WebElement]:
         # hmm mypy says it can't be None
         # but pretty sure it worked when current frame is None?
         # see https://github.com/SeleniumHQ/selenium/blob/trunk/py/selenium/webdriver/remote/switch_to.py
-        driver.switch_to.frame(current)  # type: ignore[arg-type]
+        driver.switch_to.frame(current)
 
 
 @contextmanager
@@ -178,7 +178,7 @@ def get_webdriver(
         # see https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
         geckodriver_log_level: str | None = "warn"  # None means default which is "info"
         if geckodriver_log_level is not None:
-            ff_options.log.level = geckodriver_log_level  # type: ignore[assignment]  # ?? seems like mypy is confused
+            ff_options.log.level = geckodriver_log_level
 
         ff_options.set_preference('profile', str(profile_dir))
 
@@ -298,7 +298,7 @@ def get_webdriver(
 
 
 def get_browser_process(driver: webdriver.Remote) -> psutil.Process:
-    driver_pid = driver.service.process.pid  # type: ignore[attr-defined]
+    driver_pid = driver.service.process.pid
     dprocess = psutil.Process(driver_pid)
     [process] = dprocess.children()
     cmdline = process.cmdline()
@@ -327,7 +327,7 @@ def driver(*, tmp_path: Path, addon_source: Path, browser: Browser) -> Iterator[
             # ugh. in firefox get_webdriver we set log_output=2 (stderr) to see driver logs
             # however seems like webdriver will try to close it which may result in crashes on shutdown
             # https://github.com/SeleniumHQ/selenium/blob/4c64df2cde912aec7000589b2dc96fd21c6c27cd/py/selenium/webdriver/common/service.py#L146-L152
-            service = res.service  # type: ignore[attr-defined] # ty: ignore[unresolved-attribute]
+            service = res.service
             if service.log_output == 2:
                 service.log_output = None
 

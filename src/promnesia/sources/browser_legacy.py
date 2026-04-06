@@ -88,7 +88,7 @@ def _index_db(db: Path, emitted: set):
         browser = None
         for b in [Chrome, Firefox, FirefoxPhone, Safari]:
             try:
-                c.execute(f'SELECT * FROM {b.detector}')
+                c.execute(f'SELECT * FROM {b.detector}')  # type: ignore[misc]
             except sqlite3.OperationalError:  # not sure if the right kind?
                 pass
             else:
@@ -96,8 +96,8 @@ def _index_db(db: Path, emitted: set):
                 break
         assert browser is not None
 
-        proj = ', '.join(c for c, _ in browser.schema.cols)
-        query = browser.query.replace('chunk.', '')
+        proj = ', '.join(c for c, _ in browser.schema.cols)  # type: ignore[misc]
+        query = browser.query.replace('chunk.', '')  # type: ignore[misc]
 
         c.row_factory = sqlite3.Row
         for r in c.execute(f'select {proj} {query}'):
@@ -289,7 +289,7 @@ class Firefox(Extr):
     # fmt: on
     query = 'FROM chunk.moz_historyvisits as V, chunk.moz_places as P WHERE V.place_id = P.id'
 
-    row2visit = _row2visit_firefox  # type: ignore[assignment]
+    row2visit = _row2visit_firefox  # type: ignore[assignment]  # ty: ignore[invalid-method-override]
 
 
 class FirefoxPhone(Extr):
@@ -310,4 +310,4 @@ class FirefoxPhone(Extr):
     # fmt: on
     query = 'FROM chunk.visits as V, chunk.history as H  WHERE V.history_guid = H.guid'
 
-    row2visit = _row2visit_firefox  # type: ignore[assignment]
+    row2visit = _row2visit_firefox  # type: ignore[assignment]  # ty: ignore[invalid-method-override]

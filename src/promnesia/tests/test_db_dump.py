@@ -148,7 +148,7 @@ def _test_random_visit_aux(visit: DbVisit, tmp_path: Path) -> None:
 @given(
     visit=from_type(DbVisit).filter(
         # if duration is too big it fails to insert in sqlite
-        lambda v: (v.duration is None or 0 <= v.duration <= 10**5)
+        lambda v: v.duration is None or 0 <= v.duration <= 10**5
     )
 )
 @settings(**HSETTINGS, max_examples=100)

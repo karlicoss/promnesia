@@ -197,8 +197,8 @@ def _expand_path(path_pattern: PathIsh) -> Iterable[Path]:
 
 def _expand_paths(paths: PathIsh | Iterable[PathIsh]) -> Iterable[Path]:
     if _is_pathish(paths):
-        paths = [paths]  # type: ignore[list-item]
-    return [pp.resolve() for p in paths for pp in _expand_path(p)]  # type: ignore[union-attr]
+        paths = [paths]  # type: ignore[list-item]  # ty: ignore[invalid-assignment]
+    return [pp.resolve() for p in paths for pp in _expand_path(p)]  # type: ignore[union-attr]  # ty: ignore[not-iterable]
 
 
 def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]:
@@ -247,12 +247,12 @@ def collect_db_paths(*db_paths: PathIsh, append: bool = False) -> Iterable[Path]
             ) from le
 
         if db_paths and append:
-            db_paths = [  # type: ignore[assignment]
+            db_paths = [  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
                 *([db_paths] if _is_pathish(db_paths) else db_paths),
                 plat_paths,
             ]
         else:
-            db_paths = plat_paths  # type: ignore[assignment]
+            db_paths = plat_paths  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     return _expand_paths(db_paths)
 
@@ -307,7 +307,7 @@ def connect_db(
         db_path,
         f" with {sqlcipher_exe}" if decrypt_db else "",
     )
-    db: sqlite3.Connection = None  # type: ignore[assignment]
+    db: sqlite3.Connection = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
     decrypted_file = None
     sql_cmds = [
         f"PRAGMA key = \"x'{key}'\";",
@@ -345,7 +345,7 @@ def connect_db(
                 ) from None
             db = sqlite3.connect(f"file:{decrypted_file}?mode=ro", uri=True)
         else:
-            from sqlcipher3 import dbapi2  # type: ignore[import-not-found]
+            from sqlcipher3 import dbapi2  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
             db = dbapi2.connect(f"file:{db_path}?mode=ro", uri=True)
             # Param-binding doesn't work for pragmas, so use a direct string concat.

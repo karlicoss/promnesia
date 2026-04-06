@@ -118,7 +118,7 @@ SOURCES = [
     #
     #
     # sometimes lambdas are useful for config hacking/avoiding early imports
-    lambda: twitter.index(),
+    lambda: twitter.index(),  # noqa: PLW0108
 ]
 
 

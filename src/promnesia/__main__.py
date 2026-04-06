@@ -53,7 +53,7 @@ def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[Db
         if name and is_subset_sources:
             matched = name in sources_subset or i in sources_subset
             if matched:
-                sources_subset -= {i, name}  # type: ignore[operator]
+                sources_subset -= {i, name}  # type: ignore[operator]  # ty: ignore[unsupported-operator]
             else:
                 logger.debug("skipping '%s' not in --sources.", name)
                 continue

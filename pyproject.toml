@@ -87,12 +87,11 @@ testing = [
     "promnesia[markdown]",
 ]
 testing-all = [
-    { include-group = "testing" },
     "promnesia[all]",
+
+    { include-group = "testing" },
 ]
 testing-end2end = [
-    { include-group = "testing-all" },
-
     "selenium",   # browser automations
     "loguru",     # used in addon_helper... not sure if should just use promnesia's logger?
     "click",      # confirmations for end2end test
@@ -102,21 +101,24 @@ testing-end2end = [
     "pytest-timeout",  # for PYTEST_TIMEOUT env variable
     "pytest-xdist"  ,  # not used atm, but helpful to parallelise end2end tests
     "pytest-repeat" ,  # helpful to debug flaky tests
+
+    { include-group = "testing-all" },
 ]
 typecheck = [
-    { include-group = "testing" },
     "mypy",
     "lxml", # for mypy html coverage
-    "ty>=0.0.8",
+    "ty>=0.0.29",
 
     "types-requests",
     "types-psutil",
+
+    { include-group = "testing" },
 ]
 typecheck-all = [
+    "types-PyAutoGUI",
+
     { include-group = "typecheck" },
     { include-group = "testing-end2end" },
-
-    "types-PyAutoGUI",
 ]
 
 

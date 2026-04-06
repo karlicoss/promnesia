@@ -36,7 +36,7 @@ def test() -> None:
 import logging
 import os
 import warnings
-from typing import cast
+from typing import Self, cast
 
 Level = int
 LevelIsh = Level | str | None
@@ -69,7 +69,7 @@ _init_done = 'lazylogger_init_done'
 def setup_logger(logger: logging.Logger, level: LevelIsh) -> None:
     lvl = mklevel(level)
     try:
-        import logzero  # type: ignore[import-not-found,import-untyped,unused-ignore]
+        import logzero  # type: ignore[import-not-found,import-untyped,unused-ignore]  # ty: ignore[unresolved-import,unused-ignore-comment]
 
         formatter = logzero.LogFormatter(
             fmt=FORMAT_COLOR,
@@ -96,7 +96,7 @@ def setup_logger(logger: logging.Logger, level: LevelIsh) -> None:
 
 
 class LazyLogger(logging.Logger):
-    def __new__(cls, name: str, level: LevelIsh = 'INFO') -> 'LazyLogger':
+    def __new__(cls, name: str, level: LevelIsh = 'INFO') -> Self:
         logger = logging.getLogger(name)
 
         # this is called prior to all _log calls so makes sense to do it here?
@@ -105,14 +105,14 @@ class LazyLogger(logging.Logger):
                 setup_logger(logger, level=level)
                 setattr(logger, _init_done, True)
                 # restore the callback
-                logger.isEnabledFor = orig  # type: ignore[method-assign]
+                logger.isEnabledFor = orig  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
             return orig(*args, **kwargs)
 
         # oh god.. otherwise might go into an inf loop
         if not hasattr(logger, _init_done):
             setattr(logger, _init_done, False)  # will setup on the first call
-            logger.isEnabledFor = isEnabledFor_lazyinit  # type: ignore[method-assign]
-        return cast(LazyLogger, logger)
+            logger.isEnabledFor = isEnabledFor_lazyinit  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+        return cast(Self, logger)
 
 
 # by default, logging.exception isn't logging traceback
