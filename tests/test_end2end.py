@@ -165,8 +165,10 @@ def test_bad_port(addon: Addon, driver: Driver) -> None:
 
 @browsers()
 def test_blacklist_custom(addon: Addon, driver: Driver) -> None:
-    addon.configure(port='12345', blacklist=('stackoverflow.com',))
-    driver.get('https://stackoverflow.com/questions/27215462')
+    # FIXME hmm seems like doesn't work if we use just expandtesting.com
+    # maybe it should? feels like reasonable for blacklist...
+    addon.configure(port='12345', blacklist=('practice.expandtesting.com',))
+    driver.get('https://practice.expandtesting.com/infinite-scroll')
 
     for _ in timeout(2.0):
         # NOTE: need to poll here because we might observe state beforethe page was fully loaded
