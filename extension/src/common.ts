@@ -300,8 +300,14 @@ export async function fetch_max_stale(url: string, {max_stale}: {max_stale: numb
      */
 
     // if it's not cached, it will make a real request
-    // anso works offline (returns cached response with no errors)
+    // also works offline (returns cached response with no errors)
     const cached_resp = await fetch(url, {cache: 'force-cache'}).then(rejectIfHttpError)
+
+    if (!cached_resp.ok) {
+        // if cached response is an error, skip the cache and fetch fresh
+        return fetch(url).then(rejectIfHttpError)
+    }
+
     const expires = cached_resp.headers.get('expires')
     // not sure if it's possible not to have 'expires'
     const stale_ms = new Date().getTime() - new Date(expires == null ? 0 : expires).getTime()
