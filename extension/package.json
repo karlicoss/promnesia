@@ -1,6 +1,6 @@
 {
   "name": "Promnesia",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "version_name": "released on 2026.04.06",
   "description": "Recall which pages you already visited, why and in which context",
   "scripts": {
