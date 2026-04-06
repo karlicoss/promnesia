@@ -69,7 +69,7 @@ export async function queryBackendCommon<R>(params: any, endp: Endpoint): Promis
         )
     } catch (err) {
         console.error(err)
-        throw new Error(`${endpoint}: unavailable (${(err as Error).toString()}).\n${extra_error}`)
+        throw new Error(`${endpoint}: unavailable (${(err as Error).toString()}).\n${extra_error}`, {cause: err})
     }
 
     // note: fetch API doesn't reject on HTTP error

@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "src/",
-    "noImplicitAny": true,
+    "rootDir": "src",
 
     /// these two should be together?
     "module": "esnext",
@@ -9,7 +8,7 @@
     "moduleResolution": "bundler",
     ///
 
-    "target": "es2022",
+    "target": "es2022",  // TODO change to es2025 later?
     "strict": true,
     "allowJs": true,
 

@@ -86,7 +86,7 @@ export class Filterlist {
         // ugh. so for github (where the shallalist lists are kept), server max-age is about 5 mins
         // so relying on default caching will result in downloading lists every 5 minutes
         const max_stale = 24 * 3600  // 1 day
-        let contents = null
+        let contents
         try {
             const response = await fetch_max_stale(url, {max_stale: max_stale})
             contents = await response.text()

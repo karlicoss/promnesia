@@ -158,7 +158,7 @@ def main() -> None:
 
         assert len(errors) == 1, errors
         [err] = errors
-        d = '"/background/service_worker" is not supported'
+        d = 'The "/background/service_worker" manifest property must be paired with use of "/background/scripts" property for Firefox compatibility'
         assert d in err['description'], err
         print(f"NOTE: skipping '{d}' for chrome -- this is false positive in webext lint", file=sys.stderr)
 
