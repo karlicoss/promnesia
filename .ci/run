@@ -12,7 +12,9 @@ if ! command -v sudo; then
 fi
 
 # --parallel-live to show outputs while it's running
-tox_cmd='run-parallel --parallel-live'
+# NOTE: disabling parallel run for now, makes mypy unhappy https://github.com/python/mypy/issues/21136
+# tox_cmd='run-parallel --parallel-live'
+tox_cmd='run'
 if [ -n "${CI-}" ]; then
     # install OS specific stuff here
     # TODO: pyjq is not necessary anymore? will keep CI deps just in case I guess
