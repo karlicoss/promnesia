@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
     settings_loaded.style.display = 'none'
 
     document.body!.appendChild(settings_loaded)
-}));
+}))
 
 
 document.getElementById(
@@ -219,10 +219,10 @@ document.getElementById(
         src_map                   : await (o_src_map                   .getValue()),
         position_css              : await (o_position_css              .getValue()),
         extra_css                 : await (o_extra_css                 .getValue()),
-    };
-    await setOptions(opts);
-    alert("Saved!");
-}));
+    }
+    await setOptions(opts)
+    alert("Saved!")
+}))
 
 document.getElementById(
     'reset_id',
@@ -238,35 +238,36 @@ document.getElementById(
 // not fully correct, need to cancel request; but hopefully ok for now
 function fetchTimeout(url: string, options: any, timeout: number | null): Promise<any> {
     return new Promise((resolve, reject) => {
-        fetch(url, options).then(resolve, reject);
+        fetch(url, options).then(resolve, reject)
 
         if (timeout) {
-            const e = new Error("Connection timed out");
-            setTimeout(reject, timeout, e);
+            const e = new Error("Connection timed out")
+            setTimeout(reject, timeout, e)
         }
-    });
+    })
 }
 
 document.getElementById('backend_status_id')!.addEventListener('click', defensifyAlert(async() => {
-    const host  = await o_host .getValue()
+    const host  = (await o_host .getValue()).replace(/\/+$/, '')
     const token = await o_token.getValue()
 
-    const second = 1000;
-    await fetchTimeout(`${host}/status`, {
+    const second = 1000
+    const endpoint = `${host}/status`
+    const res = await fetchTimeout(endpoint, {
         method: 'POST',
         headers: {
             'Authorization': "Basic " + btoa(token),
         },
-    }, second).then(res => {
-        if (!res.ok) {
-            throw new Error(`Backend error: ${res.status} ${res.statusText}`)
-        }
-        return res;
-    }).then(async res => {
-        // TODO ugh. need to reject if ok is false...
-        const resj = await res.json()
-        alert(`Success! ${JSON.stringify(resj)}`)
-    }, (err: Error) => {
-        alertError(new Error(`${err}\n${err.stack}\n\nSee https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`))
-    });
-}));
+    }, second)
+    if (!res.ok) {
+        throw new Error(`Backend error: ${res.status} ${res.statusText}`)
+    }
+    let resj
+    try {
+        resj = await res.json()
+    } catch (err: any) {
+        const body = res.text()
+        alertError(new Error(`${err}\nbody: ${body}\n${err.stack}\n\nSee https://github.com/karlicoss/promnesia/blob/master/doc/TROUBLESHOOTING.org`))
+    }
+    alert(`Success! ${JSON.stringify(resj)}`)
+}))
