@@ -29,7 +29,6 @@ Not used by the extension (since `rollup-plugin-typescript` is looking at `tscon
 - **jest**: testing framework
 - **jest-environment-jsdom**: simulates a DOM environment for testing
 - **jest-fetch-mock**: mock `fetch` calls in tests
-- **node-fetch**: used in testing, but not really sure why? I though I used mocks
 - **rollup**: module bundler used to compile the extension
 - **rollup-plugin-copy**: copies static files (HTML, images) to the output directory
 - **tslib**: runtime helpers for typescript

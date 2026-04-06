@@ -15,10 +15,6 @@ test('options', async () => {
 })
 // TODO could check options migrations?
 
-import fetch from 'node-fetch'
-global.fetch = fetch
-
-
 test('visits', async() => {
     const {backend, makeFakeVisits} = await import ('../src/api')
 
