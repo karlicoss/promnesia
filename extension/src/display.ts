@@ -1,5 +1,6 @@
 import browser from "webextension-polyfill"
-import anchorme from "anchorme"
+import linkifyElement from 'linkify-element'
+import * as linkify from 'linkifyjs'
 
 import type {Url, Src, Locator} from './common'
 import {Methods, safeSetInnerHTML} from './common'
@@ -34,7 +35,26 @@ type Params = {
 }
 
 
-const HTML_MARKER = '!html ';
+const HTML_MARKER = '!html '
+
+export function registerOrgBracketsPlugin() {
+    /*
+    Make sure that org-mode links (that have [] brackets are detected correctly).
+    This is covered by some end2end tests and tests/linkify.test.js
+    */
+    linkify.registerPlugin('orgBrackets', ({parser}: {parser: any}) => {
+        const seen = new Set()
+        const stack = [parser.start]
+        while (stack.length) {
+            const s = stack.pop()
+            if (seen.has(s)) continue
+            seen.add(s)
+            delete s.j['OPENBRACKET']
+            delete s.j['CLOSEBRACKET']
+            for (const k in s.j) stack.push(s.j[k])
+        }
+    })
+}
 
 // todo use opaque type? makes it annoying to convert literal strings...
 type CssClass = string
@@ -52,6 +72,13 @@ export class Binder {
     constructor(doc: Document, options: Options) {
         this.doc = doc
         this.options = options
+        try {
+            // defensive just in case since it's a third party thing
+            registerOrgBracketsPlugin()
+        } catch (err) {
+            console.error(err)
+            console.warn("[promnesia] couldn't register orgBrackets plugin for linkify. Org-mode links might not be detected properly.")
+        }
     }
 
     makeChild(parent: HTMLElement, name: string, classes: Array<CssClass> | null = null): HTMLElement {
@@ -183,8 +210,12 @@ export class Binder {
                     // since later hoping to make import dynamic gain
                     handle_plain = (text: string) => {
                         try {
-                            const res = anchorme(text)
-                            safeSetInnerHTML(ctx_c, res)
+                            ctx_c.textContent = text
+                            linkifyElement(ctx_c, {
+                                defaultProtocol: 'https',
+                                target: '_blank',
+                                rel: 'noopener noreferrer',
+                            })
                         } catch (err) { // just in case..
                             console.error(err)
                             do_simple(text)

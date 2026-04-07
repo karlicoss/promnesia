@@ -9,7 +9,7 @@ Not used by the extension (since `rollup-plugin-typescript` is looking at `tscon
 
 ## dependencies
 - **codemirror**: for editing code on options page
-- **anchorme**: for linkifying URLs in the sidebar
+- **linkify-element/linkifyjs**: for linkifying URLs in the sidebar
 - **tippy.js**: for tooltips with visited marks on the page
   - TODO seems like project is archived, so might need some alternative
 - **webext-options-sync**: for syncing extension options across browsers/devices

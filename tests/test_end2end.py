@@ -346,10 +346,11 @@ def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> N
     )
 
 
+@browsers()
 def test_sidebar_basic(addon: Addon, driver: Driver, backend: Backend) -> None:
     url = 'https://en.wikipedia.org/wiki/Symplectic_group'
     visited = {
-        # this also tests org-mode style link highlighting (custom anchorme version)
+        # this also tests org-mode style link highlighting (custom linkifyjs parser)
         url: 'whatever\nalso [[https://wiki.openhumans.org/wiki/Personal_Science_Wiki][Personal Science Wiki]]\nmore text',
     }
     src = "ælso test unicode 💩"

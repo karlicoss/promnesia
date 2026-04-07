@@ -27,8 +27,9 @@
   "dependencies": {
     "@codemirror/lang-css": "6.3.1",
     "@codemirror/lang-javascript": "6.2.5",
-    "anchorme": "3.0.8",
     "codemirror": "6.0.2",
+    "linkify-element": "4.3.2",
+    "linkifyjs": "4.3.2",
     "tippy.js": "6.3.7",
     "webext-options-sync": "4.3.0"
   },
