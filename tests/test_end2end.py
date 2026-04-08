@@ -475,11 +475,6 @@ def test_new_background_tab(addon: Addon, driver: Driver, backend: Backend, exit
 def test_sidebar_navigation(
     base_url: str, addon: Addon, driver: Driver, backend: Backend, exit_stack: ExitStack
 ) -> None:
-    if 'file:' in base_url and driver.name == 'chrome':
-        pytest.skip("TODO used to work, but must have broken after some Chrome update?")
-        # seems broken on any local page -- only transparent sidebar frame is shown
-        # the issue is that contentDocument.body is null -- no idea why
-
     if base_url == 'LOCAL':
         base_url = exit_stack.enter_context(local_http_server(PYTHON_DOC_PATH))
 
@@ -541,6 +536,10 @@ def test_sidebar_navigation(
     assert not addon.sidebar.visible
 
     driver.forward()
+
+    if 'file:' in base_url and driver.name == 'chrome':
+        # hmm for some reason on local pages in chrome the state isn't preserved.. maybe bfcache works somehow differently?
+        return
 
     # sidebar should be preserved between page transitions
     assert addon.sidebar.visible

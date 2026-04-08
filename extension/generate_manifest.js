@@ -140,7 +140,8 @@ export function generateManifest({
         "*.js.map",    // debugging symbols
     ]
 
-    const web_accessible_resources = v3 ? [{resources: _resources, matches: [ '*://*/*']}] : _resources
+    // NOTE: file:///* needs to be covered separately
+    const web_accessible_resources = v3 ? [{resources: _resources, matches: [ '*://*/*', 'file:///*']}] : _resources
     const content_scripts = []
 
     // this is only needed during testing
