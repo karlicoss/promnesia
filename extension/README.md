@@ -10,8 +10,7 @@ Not used by the extension (since `rollup-plugin-typescript` is looking at `tscon
 ## dependencies
 - **codemirror**: for editing code on options page
 - **linkify-element/linkifyjs**: for linkifying URLs in the sidebar
-- **tippy.js**: for tooltips with visited marks on the page
-  - TODO seems like project is archived, so might need some alternative
+- **floating-ui**: for tooltips with visited marks on the page
 - **webext-options-sync**: for syncing extension options across browsers/devices
 
 ## devDependencies
@@ -20,7 +19,6 @@ Not used by the extension (since `rollup-plugin-typescript` is looking at `tscon
 - **@eslint/js**: eslint configs
 - **@rollup/plugin-commonjs**: needed for webext polyfill
 - **@rollup/plugin-node-resolve**: for Rollup to find modules in `node_modules`
-- **@rollup/plugin-replace**: for patching up some dependencies
 - **@rollup/plugin-typescript**
 - **@types/webextension-polyfill**: typescript definitions for the browser extension APIs
 - **chrome-webstore-upload-cli**: automate publishing to the Chrome Web Store

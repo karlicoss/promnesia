@@ -1,6 +1,4 @@
-// headless is better because it doesn't inject extra CSS
-// also not causing issues with unsafe HTML assignment
-import tippy from "tippy.js/headless"
+import {computePosition, flip, shift, offset, autoUpdate} from '@floating-ui/dom'
 
 // 'API': take
 // - link_element: list of <a> DOM elements on the page
@@ -17,6 +15,121 @@ var Cls = {
     POPUP_LINK : 'promnesia-visited-popup-link',
     TIPPY      : 'promnesia-tippy',
     EYE        : 'promnesia-eye',
+}
+
+
+// Per-element bookkeeping. WeakMap so detached nodes get GC'd.
+const popoverState = new WeakMap()
+// state shape: {floatingEl, cleanupAutoUpdate, listeners: [[el, evt, fn], ...], pinned: bool}
+
+const HOVER_HIDE_DELAY_MS = 100  // matches tippy's interactive grace period feel
+
+function attachPopover(reference, contentEl) {
+    if (popoverState.has(reference)) return popoverState.get(reference)  // already decorated -- might happen if the script is injected multiple times somehow
+
+    // Build the floating element ourselves (replaces tippy's `render` callback).
+    const floatingEl = document.createElement('div')
+    floatingEl.classList.add(Cls.TIPPY)  // keep the class for backwards-compat with user CSS
+    const box = document.createElement('div')
+    floatingEl.appendChild(box)
+    box.appendChild(contentEl)
+
+    // Required base styles per floating-ui docs. Width:max-content stops the wrap-over
+    // issue that `maxWidth: "none"` was working around in tippy.
+    Object.assign(floatingEl.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: 'max-content',
+        display: 'none',  // hidden until first show
+    })
+    // NOTE: floatingEl will be appended to body on first show (for performance reasons in case page has many links)
+
+    const state = {
+        floatingEl,
+        cleanupAutoUpdate: null,
+        listeners: [],
+        pinned: false,
+        hideTimer: null,
+    }
+    popoverState.set(reference, state)
+
+    function update() {
+        computePosition(reference, floatingEl, {
+            placement: 'top',  // tippy's default; tweak if you want
+            middleware: [offset(8), flip(), shift({padding: 4})],
+        }).then(({x, y}) => {
+            Object.assign(floatingEl.style, {left: `${x}px`, top: `${y}px`})
+        })
+    }
+
+    function show() {
+        if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null }
+        if (state.visible) return
+        state.visible = true
+
+        if (!floatingEl.isConnected) document.body.appendChild(floatingEl)
+        floatingEl.style.display = 'block'
+
+        state.cleanupAutoUpdate = autoUpdate(reference, floatingEl, update)
+    }
+
+    function hide() {
+        if (state.pinned) return
+        if (!state.visible) return
+        state.visible = false
+
+        floatingEl.style.display = 'none'
+        if (state.cleanupAutoUpdate) {
+            state.cleanupAutoUpdate()
+            state.cleanupAutoUpdate = null
+        }
+    }
+
+    function scheduleHide() {
+        if (state.pinned) return
+        state.hideTimer = setTimeout(hide, HOVER_HIDE_DELAY_MS)
+    }
+
+    function cancelHide() {
+        if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null }
+    }
+
+    // Helper so we can clean these up later.
+    function on(el, evt, fn) {
+        el.addEventListener(evt, fn)
+        state.listeners.push([el, evt, fn])
+    }
+
+    // Default tippy trigger: 'mouseenter focus'
+    on(reference, 'mouseenter', show)
+    on(reference, 'focus',      show)
+    on(reference, 'mouseleave', scheduleHide)
+    on(reference, 'blur',       scheduleHide)
+
+    // tippy `interactive: true` equivalent — keep the popup open while cursor is in it.
+    on(floatingEl, 'mouseenter', cancelHide)
+    on(floatingEl, 'mouseleave', scheduleHide)
+
+    // pinOnDoubleClick: dblclick on the popup toggles pinned state.
+    // (In tippy this lived in the plugin and toggled `trigger`; here we just
+    // flip a boolean and skip hide() while it's true.)
+    on(floatingEl, 'dblclick', () => {
+        state.pinned = !state.pinned
+        if (!state.pinned) hide()
+    })
+
+    return state
+}
+
+function detachPopover(reference) {
+    const state = popoverState.get(reference)
+    if (!state) return
+    if (state.hideTimer) clearTimeout(state.hideTimer)
+    if (state.cleanupAutoUpdate) state.cleanupAutoUpdate()
+    for (const [el, evt, fn] of state.listeners) el.removeEventListener(evt, fn)
+    state.floatingEl.remove()
+    popoverState.delete(reference)
 }
 
 
@@ -84,30 +197,6 @@ function formatVisit(v) {
 }
 
 
-const pinOnDoubleClick = {
-  name: 'pinOnDoubleClick',
-  defaultValue: true,
-  fn(instance) {
-    return {
-      onCreate() {
-        instance.popper.addEventListener('dblclick', _ => {
-          if (instance.props.trigger != 'manual') {
-            instance.setProps({trigger: 'manual'})
-          } else { // second double click should restore the default behaviour
-            instance.setProps({trigger: 'mouseenter focus'})  // meh, not sure how to restore 'default' otherwise
-          }
-
-          // seems like the easiest way to refresh triggers is to hide and show again
-          // cause otherwise have to trick tippyjs into thinking it was opened manually/with a click in the first place
-          instance.hide()
-          instance.show()
-        })
-      }
-    }
-  }
-}
-
-
 // TODO I guess, these snippets could be writable by people? and then they can customize tooltips to their liking
 /*
  * So, there are a few requirements from the marks we're trying to achieve here
@@ -125,33 +214,14 @@ function showMark(element) {
         return // no visits or was excluded (add some data attribute maybe?)
     }
 
+    if (element.classList.contains(Cls.VISITED)) return  // already decorated -- might happen if the script is injected multiple times somehow
+
     element.classList.add(Cls.VISITED)
 
     const popup = formatVisit(v)
     // TODO try async import??
     try {
-        tippy(element, {
-            render(instance) {
-                const popper = document.createElement('div')
-                popper.classList.add(Cls.TIPPY)
-                const box = document.createElement('div')
-                popper.appendChild(box)
-                box.appendChild(instance.props.content)
-                return {popper}
-            },
-            content: popup,
-            maxWidth: "none",  /* default makes it wrap over */
-            interactive: true,  // so it's not hiding on hover
-            hideOnClick: false,  // default is true, and clicking hides the 'pinned' tippies
-            plugins: [pinOnDoubleClick],
-
-            // todo could make configurable? it might break accessibility https://github.com/atomiks/tippyjs/blob/master/MIGRATION_GUIDE.md#props-1
-            appendTo: document.body,
-
-            /* useful for debugging */
-            // trigger: "manual",
-            // showOnCreate: true,
-        })
+        attachPopover(element, popup)
     } catch (e) {
         console.error('[promnesia]: error while adding tooltip to %o', element)
         console.error(e)
@@ -237,7 +307,7 @@ function hideMark(element) {
     }
 
     try {
-        element._tippy.destroy()
+        detachPopover(element)
     } catch (e) {
         console.error('[promnesia]: error while removing tooltip from %o', element)
         console.error(e)

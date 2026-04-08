@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url'
 import typescript from '@rollup/plugin-typescript'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
-import replace from '@rollup/plugin-replace'
 import copy from 'rollup-plugin-copy'
 
 import {generateManifest} from './generate_manifest.js'
@@ -118,13 +117,6 @@ const standalone = inputs => { return {
         format: 'iife',
     },
     plugins: [
-        replace({
-            values: {
-                // ugh. necessary for tippyjs since it is referring to some node stuff
-                'process.env.NODE_ENV': JSON.stringify('production'),
-            },
-            preventAssignment: true,  // will be default soon, atm warns if not true
-        }),
        ...shared_plugins(),
     ],
 }}
