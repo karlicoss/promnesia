@@ -2,14 +2,15 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Search</title>
+        <title>Promnesia Search</title>
         <link rel="stylesheet" type="text/css" href="sidebar.css">
         <script type="module" src='search.js' defer></script>
     </head>
     <body id='promnesia-search' class='promnesia'>
+        <h1 style="font-size:1.3em; margin-bottom:0.75em;">🔎 Promnesia Search</h1>
         <form id='search_id'>
-        <input type='text' id='query_id' size='80' autofocus>
-        <button class='button' type='submit'>🔎 Search</button>
+            <input type='text' id='query_id' placeholder="Search visits…" autofocus>
+            <button class='button' type='submit'>Search</button>
         </form>
 
         <div class="promnesia" id='visits'></div>

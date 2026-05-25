@@ -10,6 +10,10 @@ import {defensify} from './notifications'
 
 // TODO how to prevent sidebar hiding on click??
 
+// Tracks manual dark/light override for this page session.
+// null = follow OS preference; 'dark' = force dark; 'light' = force light.
+let darkOverride: 'dark' | 'light' | null = null;
+
 const UUID = uuid()
 
 const PROMNESIA_FRAME_ID   = 'promnesia-frame';
@@ -88,6 +92,11 @@ class Sidebar {
         // makes it much easier for settings
         cbody.id = SIDEBAR_ID;
         cbody.setAttribute('uuid', UUID)
+        if (darkOverride === 'dark') {
+            cbody.classList.add('promnesia-dark');
+        } else if (darkOverride === 'light') {
+            cbody.classList.add('promnesia-light');
+        }
 		const sidebar_header = cdoc.createElement('div');
         sidebar_header.id = HEADER_ID;
         const sidebar_toolbar = cdoc.createElement('div');
@@ -121,6 +130,32 @@ class Sidebar {
             }, 'open_search.onClick'));
 			search_button.title = "Search links in database";
             sidebar_toolbar.appendChild(search_button);
+        }
+        {
+            const dark_button = cdoc.createElement('button');
+            dark_button.classList.add('button');
+            dark_button.id = 'button-darkmode';
+            const osDark = () => cdoc.defaultView?.matchMedia('(prefers-color-scheme: dark)').matches ?? false;
+            const isCurrentlyDark = () =>
+                darkOverride === 'dark' || (darkOverride === null && osDark());
+            const updateDarkButton = () => {
+                dark_button.textContent = isCurrentlyDark() ? '☀️' : '🌙';
+                dark_button.title = isCurrentlyDark() ? 'Switch to light mode' : 'Switch to dark mode';
+            };
+            updateDarkButton();
+            dark_button.addEventListener('click', () => {
+                if (isCurrentlyDark()) {
+                    darkOverride = 'light';
+                    cbody.classList.remove('promnesia-dark');
+                    cbody.classList.add('promnesia-light');
+                } else {
+                    darkOverride = 'dark';
+                    cbody.classList.remove('promnesia-light');
+                    cbody.classList.add('promnesia-dark');
+                }
+                updateDarkButton();
+            });
+            sidebar_toolbar.appendChild(dark_button);
         }
         {
             // TODO only on mobile?

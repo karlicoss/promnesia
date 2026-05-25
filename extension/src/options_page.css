@@ -1,47 +1,142 @@
+:root {
+    --op-bg: #ffffff;
+    --op-text: #222222;
+    --op-text-secondary: #777777;
+    --op-border: #cccccc;
+    --op-fieldset-bg: #f9f9f9;
+    --op-accent: rgb(178, 102, 40);
+    --op-link: #2aa198;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --op-bg: #1c1c1e;
+        --op-text: #e8e8e8;
+        --op-text-secondary: #8e8e93;
+        --op-border: #3a3a3c;
+        --op-fieldset-bg: #2c2c2e;
+        --op-accent: rgb(210, 140, 70);
+        --op-link: #3dbdb0;
+    }
+}
+
 body {
-    width: 800px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1em 3em;
+    background: var(--op-bg);
+    color: var(--op-text);
+    font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+    font-size: 1.4em;
+    margin-bottom: 1em;
+    color: var(--op-text);
+}
+
+a {
+    color: var(--op-link);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+fieldset {
+	max-width: 100%; 
+	min-width: auto;
+	min-inline-size: auto;
+    border: 1px solid var(--op-border);
+    border-radius: 8px;
+    padding: 12px 16px 16px;
+    margin-bottom: 14px;
+    background: var(--op-fieldset-bg);
+}
+
+fieldset fieldset {
+    background: var(--op-bg);
+    margin-top: 10px;
+}
+
+legend {
+    padding: 0 6px;
+    font-weight: 600;
+    color: var(--op-text);
+    font-size: 0.95em;
 }
 
 textarea {
     width: 100%;
+    background: var(--op-bg);
+    color: var(--op-text);
+    border: 1px solid var(--op-border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
 }
 
-a {
-    text-decoration: none;
+input[type="text"],
+input[type="URL"],
+input[type="password"],
+input[type="number"] {
+    background: var(--op-bg);
+    color: var(--op-text);
+    border: 1px solid var(--op-border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 13px;
 }
 
-/* some magic to make it scrollabel on too much content, yet not always expand to max-height  */
+/* some magic to make it scrollable on too much content, yet not always expand to max-height  */
 .CodeMirror {
     height: auto !important;
+    background: var(--op-bg) !important;
+    color: var(--op-text) !important;
+    border: 1px solid var(--op-border);
+    border-radius: 4px;
 }
 .CodeMirror-scroll {
-    max-height: 25em; /*  */
+    max-height: 25em;
 }
-/*  */
-
 
 input:invalid {
-    background-color: red;
+    background-color: #ffe0e0;
+    border-color: red;
 }
 
 .description {
     margin-left: 1em;
-    color: #777777;
+    color: var(--op-text-secondary);
     white-space: pre;
+    font-size: 0.9em;
 }
 
 hr {
     height: 1px;
-    background-color: #ccc;
+    background-color: var(--op-border);
     border: none;
+    margin: 10px 0;
 }
 
 pre {
-    margin: 0 0 0 0;
+    margin: 0;
+    background: var(--op-bg);
+    color: var(--op-text);
+    border: 1px solid var(--op-border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+    overflow-x: auto;
 }
 
 label {
     display: block;
+    color: var(--op-text);
 }
 
 /* ugh, at least in chrome default browser style didn't work??? */
