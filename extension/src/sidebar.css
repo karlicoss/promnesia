@@ -322,6 +322,18 @@ a.promnesia-visited {
     padding: 1em 2em 2em;
 }
 
+.search-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75em;
+}
+
+.search-header h1 {
+    font-size: 1.3em;
+    margin: 0;
+}
+
 #promnesia-search #search_id {
     display: flex;
     margin-bottom: 1em;

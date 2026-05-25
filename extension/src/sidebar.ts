@@ -7,12 +7,9 @@ import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options'
 import type {Options} from './options'
 import {Binder, _fmt, asClass} from './display'
 import {defensify} from './notifications'
+import {applyStoredColorScheme, setupDarkModeButton} from './darkmode'
 
 // TODO how to prevent sidebar hiding on click??
-
-// Tracks manual dark/light override for this page session.
-// null = follow OS preference; 'dark' = force dark; 'light' = force light.
-let darkOverride: 'dark' | 'light' | null = null;
 
 const UUID = uuid()
 
@@ -92,11 +89,6 @@ class Sidebar {
         // makes it much easier for settings
         cbody.id = SIDEBAR_ID;
         cbody.setAttribute('uuid', UUID)
-        if (darkOverride === 'dark') {
-            cbody.classList.add('promnesia-dark');
-        } else if (darkOverride === 'light') {
-            cbody.classList.add('promnesia-light');
-        }
 		const sidebar_header = cdoc.createElement('div');
         sidebar_header.id = HEADER_ID;
         const sidebar_toolbar = cdoc.createElement('div');
@@ -135,26 +127,7 @@ class Sidebar {
             const dark_button = cdoc.createElement('button');
             dark_button.classList.add('button');
             dark_button.id = 'button-darkmode';
-            const osDark = () => cdoc.defaultView?.matchMedia('(prefers-color-scheme: dark)').matches ?? false;
-            const isCurrentlyDark = () =>
-                darkOverride === 'dark' || (darkOverride === null && osDark());
-            const updateDarkButton = () => {
-                dark_button.textContent = isCurrentlyDark() ? '☀️' : '🌙';
-                dark_button.title = isCurrentlyDark() ? 'Switch to light mode' : 'Switch to dark mode';
-            };
-            updateDarkButton();
-            dark_button.addEventListener('click', () => {
-                if (isCurrentlyDark()) {
-                    darkOverride = 'light';
-                    cbody.classList.remove('promnesia-dark');
-                    cbody.classList.add('promnesia-light');
-                } else {
-                    darkOverride = 'dark';
-                    cbody.classList.remove('promnesia-light');
-                    cbody.classList.add('promnesia-dark');
-                }
-                updateDarkButton();
-            });
+            setupDarkModeButton(dark_button, cbody, cdoc.defaultView!);
             sidebar_toolbar.appendChild(dark_button);
         }
         {
@@ -250,6 +223,8 @@ class Sidebar {
         // NOTE: seems like load is only triggered after we set src and append to document?
         await loadPromise
 
+        // Restore persisted preference before building the UI so the button icon initialises correctly
+        await applyStoredColorScheme(sidebar.contentDocument!.body!)
         this.setupFrame(sidebar)
 
         // TODO a bit nasty, but at the moment easiest way to solve it
