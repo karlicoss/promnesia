@@ -20,6 +20,28 @@
     }
 }
 
+/* Manual dark override — applied by darkmode.ts toggle */
+body.promnesia-dark {
+    --op-bg: #1c1c1e;
+    --op-text: #e8e8e8;
+    --op-text-secondary: #8e8e93;
+    --op-border: #3a3a3c;
+    --op-fieldset-bg: #2c2c2e;
+    --op-accent: rgb(210, 140, 70);
+    --op-link: #3dbdb0;
+}
+
+/* Force light — overrides OS dark + manual dark */
+body.promnesia-light {
+    --op-bg: #ffffff;
+    --op-text: #222222;
+    --op-text-secondary: #777777;
+    --op-border: #cccccc;
+    --op-fieldset-bg: #f9f9f9;
+    --op-accent: rgb(178, 102, 40);
+    --op-link: #2aa198;
+}
+
 body {
     max-width: 800px;
     margin: 0 auto;
@@ -142,4 +164,45 @@ label {
 /* ugh, at least in chrome default browser style didn't work??? */
 input:indeterminate {
     box-shadow: inset 0 0 6px 0px grey;
+}
+
+.op-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1em;
+}
+
+.op-header h1 {
+    margin: 0;
+}
+
+.button {
+    background-color: var(--op-bg);
+    border: 1px solid var(--op-border);
+    border-radius: 6px;
+    color: var(--op-text);
+    cursor: pointer;
+    font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    padding: 6px 12px;
+    appearance: none;
+    -webkit-appearance: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.button:hover {
+    border-color: var(--op-text);
+}
+
+#button-darkmode {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 1em;
+    line-height: 34px;
+    text-align: center;
 }

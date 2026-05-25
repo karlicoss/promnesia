@@ -320,6 +320,9 @@ a.promnesia-visited {
     max-width: 900px;
     margin: 0 auto;
     padding: 1em 2em 2em;
+    background: var(--main);
+    color: var(--text);
+    min-height: 100vh;
 }
 
 .search-header {
