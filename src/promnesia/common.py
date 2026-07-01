@@ -421,7 +421,7 @@ def default_cache_dir() -> Path:
 def _magic() -> Callable[[PathIsh], str | None]:
     logger = get_logger()
     try:
-        import magic  # type: ignore[import-not-found,unused-ignore]  # ty: ignore[unresolved-import,unused-ignore-comment]
+        import magic  # type: ignore[import-not-found,unused-ignore]
     except Exception as e:
         logger.exception(e)
         defensive_msg: str | None = None

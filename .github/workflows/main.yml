@@ -45,44 +45,29 @@ jobs:
     # continue-on-error: ${{ matrix.platform == 'windows-latest' }}
 
     steps:
-    # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
-    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
     - uses: actions/checkout@v6
       with:
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
 
-    - uses: actions/setup-python@v6
+    - uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: ${{ matrix.python-version }}
-      
-    - uses: astral-sh/setup-uv@v7
-      with:
         enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
 
     - uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true  # restrict to the user who kicked off pipeline
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
     # explicit bash command is necessary for Windows CI runner, otherwise it thinks it's cmd...
     - run: bash .ci/run
-      env:
-        # only compute lxml coverage on ubuntu; it crashes on windows
-        CI_MYPY_COVERAGE: ${{ matrix.platform == 'ubuntu-latest' && '--cobertura-xml-report .coverage.mypy-all' || '' }}
-
-    - if: matrix.platform == 'ubuntu-latest'  # no need to compute coverage for other platforms
-      uses: codecov/codecov-action@v6
-      with:
-        fail_ci_if_error: true  # default false
-        token: ${{ secrets.CODECOV_TOKEN }}
-        flags: mypy-${{ matrix.python-version }}
-        files: .coverage.mypy-all/cobertura.xml
 
 
   pypi:
     # Do not run it for PRs/cron schedule etc.
     # NOTE: release tags are guarded by on: push: tags on the top.
-    if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || (github.event.ref == format('refs/heads/{0}', github.event.repository.master_branch)))
+    if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.master_branch)
     # Ugh, I tried using matrix or something to explicitly generate only test pypi or prod pypi pipelines.
     # But github actions is so shit, it's impossible to do any logic at all, e.g. doesn't support conditional matrix, if/else statements for variables etc.
 
@@ -93,33 +78,34 @@ jobs:
     permissions:
       # necessary for Trusted Publishing
       id-token: write
-
+    env:
+      # always deploy merged master to test pypi
+      # always deploy tags to release pypi
+      TARGET:      ${{ github.ref_type == 'tag' && 'pypi'     || 'testpypi' }}
+    environment:
+      # for "deployments" tab on github
+      # sadly can't reuse env.TARGET here...
+      name:        ${{ github.ref_type == 'tag' && 'pypi'     || 'testpypi' }}
+      url: https://${{ github.ref_type == 'tag' && 'pypi.org' || 'test.pypi.org' }}/project/${{ steps.meta.outputs.pypi_name }}/
     steps:
-    # ugh https://github.com/actions/toolkit/blob/main/docs/commands.md#path-manipulation
-    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
     - uses: actions/checkout@v6
       with:
         submodules: recursive
         fetch-depth: 0  # pull all commits to correctly infer vcs version
 
-    - uses: actions/setup-python@v6
+    - uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: '3.12'
-
-    - uses: astral-sh/setup-uv@v7
-      with:
         enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
 
-    - name: 'release to test pypi'
-      # always deploy merged master to test pypi
-      if: github.event.ref == format('refs/heads/{0}', github.event.repository.master_branch)
-      run: .ci/release --use-test-pypi
+    - name: 'release ${{ steps.meta.outputs.pypi_name }} to ${{ env.TARGET }}'
+      run: .ci/release ${{ env.TARGET == 'testpypi' && '--use-test-pypi' || '' }}
 
-    - name: 'release to prod pypi'
-      # always deploy tags to release pypi
-      if: startsWith(github.event.ref, 'refs/tags/')
-      run: .ci/release
+    - id: meta
+      shell: bash
+      run: |
+        pypi_name=$(unzip -p dist/*.whl '*.dist-info/METADATA' | awk '/^Name:/ {print $2; exit}')
+        echo "pypi_name=$pypi_name" >> "$GITHUB_OUTPUT"
 
   ###
   build_extension:
@@ -177,11 +163,14 @@ jobs:
       with:
         node-version: '24'
 
-    - uses: astral-sh/setup-uv@v7
+    - uses: astral-sh/setup-uv@v8.1.0
       with:
+        python-version: '3.12'
         enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
 
     - uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true  # restrict to the user who kicked off pipeline
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
     - run: sudo apt update && sudo apt install --yes python3-doc  # html files from this pacakge are used in tests
@@ -198,6 +187,8 @@ jobs:
       with:
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true  # restrict to the user who kicked off pipeline
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
     - run: .ci/github-ci-compat

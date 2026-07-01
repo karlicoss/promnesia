@@ -44,3 +44,5 @@ fi
 
 # NOTE: expects uv installed
 uv tool run --with tox-uv tox $tox_cmd "$@"
+# NOTE: experimenting for now... might switch later for good
+# uv tool run nox "$@"

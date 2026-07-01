@@ -8,7 +8,6 @@ from time import sleep
 
 import pytest
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -36,6 +35,7 @@ from .webdriver_utils import (
     CHROME,
     FIREFOX,
     Browser,
+    Driver,
     Manual,
     Waiter,
     browsers,

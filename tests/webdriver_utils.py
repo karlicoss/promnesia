@@ -15,13 +15,15 @@ import psutil
 import pytest
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
-from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
 
 from .common import logger
 from .utils import has_x
+
+type Driver = webdriver.Chrome | webdriver.Firefox
+
 
 # useful for debugging
 # from selenium.webdriver.remote.remote_connection import LOGGER
@@ -92,7 +94,7 @@ def frame_context(driver: Driver, *, frame: WebElement) -> Iterator[WebElement]:
         # hmm mypy says it can't be None
         # but pretty sure it worked when current frame is None?
         # see https://github.com/SeleniumHQ/selenium/blob/trunk/py/selenium/webdriver/remote/switch_to.py
-        driver.switch_to.frame(current)
+        driver.switch_to.frame(current)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
 
 @contextmanager
@@ -178,7 +180,7 @@ def get_webdriver(
         # see https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
         geckodriver_log_level: str | None = "warn"  # None means default which is "info"
         if geckodriver_log_level is not None:
-            ff_options.log.level = geckodriver_log_level
+            ff_options.log.level = geckodriver_log_level  # type: ignore[assignment]  # ?? seems like mypy is confused
 
         ff_options.set_preference('profile', str(profile_dir))
 
@@ -202,8 +204,14 @@ def get_webdriver(
 
         driver = webdriver.Firefox(
             options=ff_options,
-            # 2 means stderr (seems like otherwise it's not logging at all)
-            service=webdriver.FirefoxService(log_output=2),
+            service=webdriver.FirefoxService(
+                # 2 means stderr (seems like otherwise it's not logging at all)
+                log_output=2,
+                # Workaround for this change introduced in
+                #  https://hg-edge.mozilla.org/releases/mozilla-beta/diff/907505ff1d4ab20d52b63c91a5e6f3147e75ab68/remote/marionette/driver.sys.mjs
+                # Without it, opening moz-extension:// from webdriver doesn't work.
+                service_args=["--allow-system-access"],
+            ),
         )
 
         addon_id = driver.install_addon(str(addon_source), temporary=True)
@@ -297,7 +305,7 @@ def get_webdriver(
     return driver
 
 
-def get_browser_process(driver: webdriver.Remote) -> psutil.Process:
+def get_browser_process(driver: Driver) -> psutil.Process:
     driver_pid = driver.service.process.pid
     dprocess = psutil.Process(driver_pid)
     [process] = dprocess.children()

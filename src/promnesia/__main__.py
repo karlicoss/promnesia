@@ -275,6 +275,7 @@ def _config_check(cfg: Path) -> Iterable[Exception]:
                 '--show-error-codes',
                 '--show-error-context',
                 '--check-untyped-defs',
+                '--no-sqlite-cache',  # TODO https://github.com/python/mypy/pull/21496
                 cfg,
             ]
         )

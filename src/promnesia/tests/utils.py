@@ -11,7 +11,11 @@ Urls = Mapping[str, str | None] | Sequence[tuple[str, str | None]]
 
 
 def index_urls(urls: Urls, *, source_name: str = 'test'):
-    uuu = list(urls.items()) if isinstance(urls, dict) else urls
+    uuu: Sequence[tuple[str, str | None]]
+    if isinstance(urls, Mapping):
+        uuu = list(urls.items())  # ty: ignore[invalid-assignment]
+    else:
+        uuu = urls
 
     def idx(tmp_path: Path) -> None:
         def indexer():
