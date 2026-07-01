@@ -15,7 +15,6 @@ from time import sleep
 
 import pytest
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver import Remote as Driver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -27,10 +26,10 @@ from promnesia.common import measure as measure_orig
 
 from .addon_helper import AddonHelper
 from .common import logger
-from .webdriver_utils import frame_context, is_visible, passes_check_visibility, wait_for_alert
+from .webdriver_utils import Driver, frame_context, is_visible, passes_check_visibility, wait_for_alert
 
 # logger is a required arg there, so need to pass it..
-measure = functools.partial(measure_orig, logger=logger)  # type: ignore[arg-type]
+measure = functools.partial(measure_orig, logger=logger)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
 
 @pytest.fixture
