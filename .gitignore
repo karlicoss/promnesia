@@ -306,3 +306,6 @@ dmypy.json
 **/node_modules
 .idea
 .coverage*
+
+# End-to-end test artifacts
+tests/test_artifacts/
