@@ -184,6 +184,13 @@ def get_webdriver(
 
         ff_options.set_preference('profile', str(profile_dir))
 
+        # Firefox 153 made file URL access a separate user opt-in.
+        # Test profiles are ephemeral, so grant the equivalent access with Firefox's testing preference.
+        # https://bugzilla.mozilla.org/show_bug.cgi?id=2034168
+        # TODO test the user opt-in flow separately:
+        #  https://github.com/karlicoss/promnesia/issues/530
+        ff_options.set_preference("extensions.webextensions.fileSchemeAccess.requireOptIn", value=False)
+
         # selenium manager should download latest dev version of firefox
         ff_options.browser_version = 'dev'
 
