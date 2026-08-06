@@ -758,13 +758,13 @@ def test_duplicate_background_pages(addon: Addon, driver: Driver, backend: Backe
 @browsers()
 def test_showvisits_popup(addon: Addon, driver: Driver, backend: Backend, waiter: Waiter) -> None:
     url = 'https://www.iana.org/'
-    indexer = index_urls([('https://www.iana.org/abuse', 'some comment')])
+    indexer = index_urls([('https://www.iana.org/help/abuse', 'some comment')])
     indexer(backend.backend_dir)
 
     addon.configure(notify_contexts=True, show_dots=True)
 
     driver.get(url)
-    links_with_popup = waiter.until(EC.presence_of_all_elements_located((By.XPATH, '//a[@href = "/abuse"]')))
+    links_with_popup = waiter.until(EC.presence_of_all_elements_located((By.XPATH, '//a[@href = "/help/abuse"]')))
     link_with_popup = links_with_popup[0]
 
     # wait till visited marks appear
