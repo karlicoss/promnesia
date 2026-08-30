@@ -6,14 +6,12 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterable
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 
 from promnesia.common import Loc, Results, Visit, logger
 
-
-# incase user is using an old version of google_takeout_parser
-class YoutubeCSVStub(NamedTuple):
-    contentJSON: str
+if TYPE_CHECKING:
+    from google_takeout_parser.models import CSVYoutubeComment, CSVYoutubeLiveChat
 
 
 def index() -> Results:
@@ -51,18 +49,25 @@ def index() -> Results:
         'PlayStoreAppInstall',
     }
 
-    imported_yt_csv_models = False
+    CSVYoutubeCommentType: type[CSVYoutubeComment] | None
+    CSVYoutubeLiveChatType: type[CSVYoutubeLiveChat] | None
     try:
-        from google_takeout_parser.models import CSVYoutubeComment, CSVYoutubeLiveChat
+        from google_takeout_parser.models import (
+            CSVYoutubeComment as _CSVYoutubeComment,
+        )
+        from google_takeout_parser.models import (
+            CSVYoutubeLiveChat as _CSVYoutubeLiveChat,
+        )
 
-        imported_yt_csv_models = True
+        CSVYoutubeCommentType = _CSVYoutubeComment
+        CSVYoutubeLiveChatType = _CSVYoutubeLiveChat
     except ImportError:
         # warn user to upgrade google_takeout_parser
         warnings.warn(
             "Please upgrade google_takeout_parser (`pip install -U google_takeout_parser`) to support the new format for youtube comments"
         )
-        CSVYoutubeComment = YoutubeCSVStub  # type: ignore[misc,assignment]  # ty: ignore[invalid-assignment]
-        CSVYoutubeLiveChat = YoutubeCSVStub  # type: ignore[misc,assignment]  # ty: ignore[invalid-assignment]
+        CSVYoutubeCommentType = None
+        CSVYoutubeLiveChatType = None
 
     def warn_once_if_not_seen(e: Any) -> Iterable[Exception]:
         et_name = type(e).__name__
@@ -141,7 +146,7 @@ def index() -> Results:
                 # todo: use url_metadata to improve locator?
                 # or maybe just extract first sentence?
                 yield Visit(url=url, dt=e.dt, context=e.content, locator=Loc(title=e.content, href=url))
-        elif imported_yt_csv_models and isinstance(e, CSVYoutubeComment):
+        elif CSVYoutubeCommentType is not None and isinstance(e, CSVYoutubeCommentType):
             contentJSON = e.contentJSON
             content = reconstruct_comment_content(contentJSON, format='text')
             if isinstance(content, Exception):
@@ -155,7 +160,7 @@ def index() -> Results:
             for url in links:
                 yield Visit(url=url, dt=e.dt, context=content, locator=Loc(title=context, href=url))
             yield Visit(url=e.video_url, dt=e.dt, context=content, locator=Loc(title=context, href=e.video_url))
-        elif imported_yt_csv_models and isinstance(e, CSVYoutubeLiveChat):
+        elif CSVYoutubeLiveChatType is not None and isinstance(e, CSVYoutubeLiveChatType):
             contentJSON = e.contentJSON
             content = reconstruct_comment_content(contentJSON, format='text')
             if isinstance(content, Exception):
