@@ -180,7 +180,7 @@ def get_webdriver(
         # see https://firefox-source-docs.mozilla.org/testing/geckodriver/TraceLogs.html
         geckodriver_log_level: str | None = "warn"  # None means default which is "info"
         if geckodriver_log_level is not None:
-            ff_options.log.level = geckodriver_log_level  # type: ignore[assignment]  # ?? seems like mypy is confused
+            ff_options.log.level = geckodriver_log_level
 
         ff_options.set_preference('profile', str(profile_dir))
 
