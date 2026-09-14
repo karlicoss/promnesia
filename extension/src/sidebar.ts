@@ -7,6 +7,7 @@ import {getOptions, USE_ORIGINAL_TZ, GROUP_CONSECUTIVE_SECONDS} from './options'
 import type {Options} from './options'
 import {Binder, _fmt, asClass} from './display'
 import {defensify} from './notifications'
+import {applyStoredColorScheme, setupDarkModeButton} from './darkmode'
 
 // TODO how to prevent sidebar hiding on click??
 
@@ -123,6 +124,13 @@ class Sidebar {
             sidebar_toolbar.appendChild(search_button);
         }
         {
+            const dark_button = cdoc.createElement('button');
+            dark_button.classList.add('button');
+            dark_button.id = 'button-darkmode';
+            setupDarkModeButton(dark_button, cbody, cdoc.defaultView!);
+            sidebar_toolbar.appendChild(dark_button);
+        }
+        {
             // TODO only on mobile?
             const close_button = cdoc.createElement('button');
 			close_button.classList.add('button');
@@ -215,6 +223,8 @@ class Sidebar {
         // NOTE: seems like load is only triggered after we set src and append to document?
         await loadPromise
 
+        // Restore persisted preference before building the UI so the button icon initialises correctly
+        await applyStoredColorScheme(sidebar.contentDocument!.body!)
         this.setupFrame(sidebar)
 
         // TODO a bit nasty, but at the moment easiest way to solve it
