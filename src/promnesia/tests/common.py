@@ -5,7 +5,7 @@ import inspect
 import os
 import socket
 import sys
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import closing, contextmanager
 from pathlib import Path
 from textwrap import dedent
@@ -113,7 +113,7 @@ def write_config(path: Path, gen, **kwargs) -> None:
 
 # TODO there is also implementation here? https://github.com/SeleniumHQ/selenium/blob/4c64df2cde912aec7000589b2dc96fd21c6c27cd/py/selenium/webdriver/common/utils.py#L30
 @contextmanager
-def free_port() -> Iterator[int]:
+def free_port() -> Generator[int]:
     # this is a generator to make sure there are no race conditions between the time we call this and launch program
     #
     # also some relevant articles about this 'technique'

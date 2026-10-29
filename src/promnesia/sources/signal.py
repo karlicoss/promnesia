@@ -14,7 +14,7 @@ import logging
 import platform
 import sqlite3
 import subprocess as sbp
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Generator, Iterable, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent, indent
@@ -276,7 +276,7 @@ def connect_db(
     decrypt_db: bool = False,
     sqlcipher_exe: PathIsh = "sqlcipher",
     **decryption_pragmas: Mapping[str, Any],
-) -> Iterator[sqlite3.Connection]:
+) -> Generator[sqlite3.Connection]:
     """
     Opens (or decrypt) a ciphered sqlite db in a context.
 

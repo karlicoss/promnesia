@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
@@ -22,7 +22,7 @@ Factory = SqliteRowFactory | Literal['row', 'dict']
 @contextmanager
 def sqlite_connection(
     db: Path | str, *, immutable: bool = False, row_factory: Factory | None = None
-) -> Iterator[sqlite3.Connection]:
+) -> Generator[sqlite3.Connection]:
     dbp = f'file:{db}'
     # https://www.sqlite.org/draft/uri.html#uriimmutable
     if immutable:

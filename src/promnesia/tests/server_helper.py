@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -39,7 +39,7 @@ class Backend:
 
 
 @contextmanager
-def run_server(db: PathIsh | None = None, *, timezone: str | None = None) -> Iterator[Backend]:
+def run_server(db: PathIsh | None = None, *, timezone: str | None = None) -> Generator[Backend]:
     # TODO not sure, perhaps best to use a thread or something?
     # but for some tests makes more sense to test in a separate process
     with free_port() as pp:
