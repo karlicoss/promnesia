@@ -54,7 +54,7 @@ def index(
         http_only,
         locator_schema,
         append_platform_path,
-        "yes" if override_key else "no",
+        "yes" if override_key is not None and override_key != '' else "no",
         db_paths,
     )
     resolved_db_paths = collect_db_paths(*db_paths, append=append_platform_path)
@@ -420,7 +420,7 @@ def _harvest_db(
     """
     is_debug = logger.isEnabledFor(logging.DEBUG)
 
-    if override_key:
+    if override_key is not None and override_key != '':
         key = override_key
     else:
         cfg_path = _config_for_dbfile(db_path)

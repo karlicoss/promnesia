@@ -50,7 +50,7 @@ def iter_all_visits(sources_subset: Iterable[str | int] = ()) -> Iterator[Res[Db
     for i, source in enumerate(sources):
         # TODO why would it not be present??
         name: str | None = getattr(source, "name", None)
-        if name and is_subset_sources:
+        if name is not None and name != '' and is_subset_sources:
             matched = name in sources_subset or i in sources_subset
             if matched:
                 sources_subset -= {i, name}  # type: ignore[operator]  # ty: ignore[unsupported-operator]
@@ -299,7 +299,7 @@ def cli_doctor_db(args: argparse.Namespace) -> None:
     check_call(cmd)
 
     bro = 'sqlitebrowser'
-    if not shutil.which(bro):
+    if shutil.which(bro) is None:
         logger.error(f'Install {bro} to inspect the database!')
         sys.exit(1)
     cmd = [bro, str(db)]

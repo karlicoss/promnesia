@@ -526,7 +526,7 @@ def traverse(root: Path, *, follow: bool = True, ignore: Sequence[str] = ()) -> 
     cmd = ['find', *find_args(root, follow=follow, ignore=ignore)]
     # try to use fd.. it cooperates well with gitignore etc, also faster than find
     for x in ('fd', 'fd-find', 'fdfind'):  # has different names on different dists..
-        if shutil.which(x):
+        if shutil.which(x) is not None:
             cmd = [x, *fdfind_args(root, follow=follow, ignore=ignore)]
             break
     else:

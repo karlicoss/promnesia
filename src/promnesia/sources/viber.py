@@ -46,7 +46,7 @@ def messages_query(http_only: bool | None) -> str:  # noqa: FBT001
 
     A non-private method, to facilitate experimentation.
     """
-    extra_criteria = "AND text LIKE '%http%'" if http_only else ""
+    extra_criteria = "AND text LIKE '%http%'" if http_only is True else ""
     return textwrap.dedent(
         f"""
         /*
