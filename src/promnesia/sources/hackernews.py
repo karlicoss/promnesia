@@ -17,9 +17,9 @@ def index() -> Results:
             continue
         hn_url = item.permalink
         title = "hackernews"
-        if item.title:
+        if item.title is not None and item.title != '':
             title = item.title
-        elif item.text_html:
+        elif item.text_html is not None and item.text_html != '':
             title = item.text_html
             title = textwrap.shorten(title, width=79, placeholder="…", break_long_words=True)
         # The locator is always the HN story. If the story is a link (as

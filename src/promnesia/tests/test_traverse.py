@@ -6,9 +6,8 @@ from .common import get_testdata
 testDataPath = get_testdata('traverse')
 
 
-# Patch shutil.which so it always returns false (when trying to which fdfind, etc)
-# so that it falls back to find
-@patch('promnesia.common.shutil.which', return_value=False)
+# Report no fd executable so traversal falls back to find.
+@patch('promnesia.common.shutil.which', return_value=None)
 def test_traverse_ignore_find(patched) -> None:
     '''
     traverse() with `find` but ignore some stuff

@@ -20,11 +20,12 @@ dependencies = [
 requires-python = ">=3.12"
 
 ## these are only useful for pypi
-description = "Enhancement of your browsing history"  # shows on project page/in search
-readme      = {file = "README.org", content-type = "text/plain"}
-license     = {file = "LICENSE"}
-authors     = [{name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"}]
-maintainers = [{name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"}]
+description   = "Enhancement of your browsing history"  # shows on project page/in search
+readme        = {file = "README.org", content-type = "text/plain"}
+license       = "MIT"
+license-files = ["LICENSE"]
+authors       = [{name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"}]
+maintainers   = [{name = "Dima Gerasimov (@karlicoss)", email = "karlicoss@gmail.com"}]
 
 [project.urls]  # pypi will fetch some github stats/link, so somewhat useful
 Homepage = "https://github.com/karlicoss/promnesia"
@@ -107,7 +108,7 @@ testing-end2end = [
 ]
 typecheck = [
     "mypy",
-    "lxml", # for mypy html coverage
+    "lxml", # not used by default but keeping for convenience of running mypy html coverage
     "ty",
 
     "types-requests",
@@ -145,6 +146,9 @@ local_scheme = "dirty-tag"
 promnesia = "promnesia.__main__:main"
 
 [tool.mypy]
+# default targets when mypy is run without explicit ones
+packages = ["promnesia"]
+
 pretty = true
 show_error_context = true
 show_error_end = true
@@ -172,6 +176,12 @@ enable_error_code = [
 module = "hypothesis"
 ignore_missing_imports = true
 
+[tool.ty.rules]
+# suppressing rules/changing error level goes here
+# Catch checks like `if value` on `int | None`, where 0 and None are both falsy.
+truthiness-test-of-none-union = "error"
+
+
 [tool.ty.src]
 exclude = [
    "config.py",
@@ -189,12 +199,12 @@ lint.ignore = [
     "CPY",   # copyright headers
     "D",     # annoying nags about docstrings
     "N",     # pep naming
-    "TCH",   # type checking rules, mostly just suggests moving imports under TYPE_CHECKING
+    "TC",    # type checking rules, mostly just suggests moving imports under TYPE_CHECKING
     "S",     # bandit (security checks) -- tends to be not very useful, lots of nitpicks
     "DTZ",   # datetimes checks -- complaining about missing tz and mostly false positives
     "FIX",   # complains about fixmes/todos -- annoying
     "TD",    # complains about todo formatting -- too annoying
-    "ANN",   # missing type annotations? seems way to strict though
+    "ANN",   # missing type annotations? seems way too strict though
     "EM" ,   # suggests assigning all exception messages into a variable first... pretty annoying
 
 ### too opinionated style checks
@@ -204,9 +214,9 @@ lint.ignore = [
     "E501",  # too long lines
     "E731",  # assigning lambda instead of using def
     "E741",  # Ambiguous variable name: `l`
-    "E742",  # Ambiguous class name: `O
+    "E742",  # Ambiguous class name: `O`
     "E401",  # Multiple imports on one line
-    "F403",  # import *` used; unable to detect undefined names
+    "F403",  # `import *` used; unable to detect undefined names
 ###
 
 ###
@@ -228,7 +238,7 @@ lint.ignore = [
 ###
     "PLR0402",  # import X.Y as Y -- TODO maybe consider enabling it, but double check
 
-    "B009",  # calling gettattr with constant attribute -- this is useful to convince mypy
+    "B009",  # calling getattr with constant attribute -- this is useful to convince mypy
     "B010",  # same as above, but setattr
     "B017",  # pytest.raises(Exception)
     "B023",  # seems to result in false positives?
@@ -237,18 +247,18 @@ lint.ignore = [
     # this is common for click entrypoints (e.g. in __main__), so disable
     "PIE790",
 
-    # a bit too annoying, offers to convert for loops to list comprehension
-    # , which may heart readability
+    # a bit too annoying, offers to convert for loops to a list comprehension,
+    #   which may hurt readability
     "PERF401",
 
-    # suggests no using exception in for loops
+    # suggests not using exceptions in for loops
     # we do use this technique a lot, plus in 3.11 happy path exception handling is "zero-cost"
     "PERF203",
 
     "RET504", # unnecessary assignment before returning -- that can be useful for readability
     "RET505", # unnecessary else after return -- can hurt readability
 
-    "PLC1901",  # suggests using `if string` instead of `strinig == ""` -- dumb.
+    "PLC1901",  # suggests using `if string` instead of `string == ""` -- dumb.
 
     "PLW0603",  # global variable update.. we usually know why we are doing this
     "PLW2901",  # for loop variable overwritten, usually this is intentional
@@ -275,9 +285,9 @@ lint.ignore = [
     "INP001",  # complains about implicit namespace packages
     "SIM102",  # if statements collapsing, often hurts readability
     "SIM103",  # multiple conditions collapsing, often hurts readability
-    "SIM105",  # suggests using contextlib.suppress instad of try/except -- this wouldn't be mypy friendly
+    "SIM105",  # suggests using contextlib.suppress instead of try/except -- this wouldn't be mypy friendly
     "SIM108",  # suggests using ternary operation instead of if -- hurts readability
-    "SIM110",  # suggests using any(...) instead of for look/return -- hurts readability
+    "SIM110",  # suggests using any(...) instead of for loop/return -- hurts readability
     "SIM117",  # suggests using single with statement instead of nested -- doesn't work in tests
     "RSE102",  # complains about missing parens in exceptions
     ##
@@ -295,6 +305,12 @@ lint.ignore = [
 ]
 
 
+# NOTE: this is project specific.
+# If you need local-only excludes for untracked scratch files, create ignored .ruff.toml:
+#   extend = "pyproject.toml"
+#   extend-exclude = [
+#       "scratch/**",
+#   ]
 extend-exclude = [
     "tests/testdata/**",
 ]
@@ -307,6 +323,9 @@ quote-style = "preserve"
 # discover files that don't follow test_ naming. Useful to keep tests along with the source code
 python_files = ["*.py"]
 
+# default targets when pytest is run without explicit ones (package names because of --pyargs below)
+testpaths = ["promnesia"]
+
 # this is necessary for --pyargs to discover implicit namespace packages correctly
 consider_namespace_packages = true
 
@@ -314,6 +333,9 @@ consider_namespace_packages = true
 strict = true
 
 addopts = [
+  # resolve targets as importable packages, so tests are collected from the installed package
+  "--pyargs",
+
   # prevent pytest cache from being created... it craps into project dir and I never use it anyway
   "-p", "no:cacheprovider",
 
@@ -335,11 +357,20 @@ min_version = "4"
 
 # Relies on the correct version of Python installed.
 # We rely on CI for the test matrix.
-env_list = ["ruff", "format", "tests-core", "tests-all", "mypy-core", "ty-core", "mypy-all", "ty-all"]
+env_list = [
+    "ruff",
+    "format",
+    "tests-core",
+    "tests-all",
+    "mypy-core",
+    "ty-core",
+    "mypy-all",
+    "ty-all",
+]
 # NOTE: we don't run end2end by default since it requires elaborate setup
 
 # https://github.com/tox-dev/tox/issues/20#issuecomment-247788333
-# Hack to prevent .tox from crapping to the project directory.
+# Hack to prevent .tox from crapping into the project directory.
 work_dir = "{env:TOXWORKDIR_BASE:}{tox_root}{/}.tox"
 
 [tool.tox.env_run_base]
@@ -347,6 +378,9 @@ pass_env = [
     # Useful for tests to know they are running under CI.
     "CI",
     "CI_*",
+
+    # Let CI use GitHub annotations for Ruff lint and formatting diagnostics.
+    "RUFF_OUTPUT_FORMAT",
 
     # Respect user's cache dirs to prevent tox from crapping into project dir.
     "PYTHONPYCACHEPREFIX",
@@ -359,11 +393,29 @@ pass_env = [
 # Do not add current working directory to PYTHONPATH.
 # Generally this is more robust and safer, and prevents weird issues later on.
 set_env.PYTHONSAFEPATH = "1"
+
+# Useful when a project defines multiple mypy environments that run in parallel.
+# Separate caches avoid SQLite locking errors.
+set_env.MYPY_CACHE_DIR = "{env:MYPY_CACHE_DIR:{tox_root}{/}.mypy_cache}{/}{env_name}"
+
+# Relying on https://github.com/tox-dev/tox-uv for the runners here.
+# This template deliberately defaults to the lock runner even though pymplate itself does not use tool.uv.sources.
+# Projects based on it may use tool.uv.sources, and keeping one runner avoids changing tox semantics later.
 runner = "uv-venv-lock-runner"
+# The lock runner requires a lock file, which is slightly annoying since we're not tracking lock files (see .gitignore).
+# By default it would also check that running tox won't change the lock file.
+# With this setting the lock file is created/updated as needed instead:
 uv_sync_locked = false
+# I'm not sure what happens if two tests running in parallel result in different
+# lock files, but I guess it is unlikely.
+#
+# If the project doesn't need tool.uv.sources, a fine alternative (no lock file involved at all) is:
+#   runner = "uv-venv-runner"
+#   package = "uv-editable"  # otherwise the default is "editable", which builds a wheel first for some reason
+
 
 [tool.tox.env.ruff]
-skip_install = true
+package = "skip"
 dependency_groups = ["testing"]
 commands = [
     [
@@ -375,7 +427,7 @@ commands = [
 
 
 [tool.tox.env.format]
-skip_install = true
+package = "skip"
 dependency_groups = ["testing"]
 commands = [
     [
@@ -392,9 +444,7 @@ commands = [
 dependency_groups = ["testing"]
 commands = [
     [
-        # posargs allow test filtering, e.g. tox ... -- -k test_name
         "{env_python}", "-m", "pytest",
-        "--pyargs", "{[project]name}",
         # note: sources are tested in tests-all
         "--ignore", "src/promnesia/sources",
         "--ignore", "src/promnesia/tests/sources",
@@ -416,18 +466,20 @@ commands = [
 
     [
         "{env_python}", "-m", "pytest",
-        "--pyargs", "{[project]name}",
         { replace = "posargs", default = [], extend = true },
     ],
 ]
 
 [tool.tox.env.end2end]
 pass_env = [
-    # useful for tests to know they are running under ci
+    # Useful for tests to know they are running under CI.
     "CI",
     "CI_*",
 
-    # respect user's cache dirs to prevent tox from crapping into project dir
+    # Let CI use GitHub annotations for Ruff lint and formatting diagnostics.
+    "RUFF_OUTPUT_FORMAT",
+
+    # Respect user's cache dirs to prevent tox from crapping into project dir.
     "PYTHONPYCACHEPREFIX",
     "MYPY_CACHE_DIR",
     "RUFF_CACHE_DIR",
@@ -447,7 +499,6 @@ commands = [
 
     [
         "{env_python}", "-m", "pytest",
-        "--pyargs",
         "tests.test_end2end",
         { replace = "posargs", default = [], extend = true },
     ],
@@ -459,7 +510,6 @@ commands = [
     [
         "{env_python}", "-m", "mypy",
         # note: sources are tested separately, below
-        "-p", "{[project]name}",
         "--exclude", "sources/*",
         # uncomment if you need coverage
         # "--txt-report" , ".coverage.mypy",
@@ -507,7 +557,6 @@ commands = [
 
     [
         "{env_python}", "-m", "mypy",
-        "-p", "{[project]name}",
         # uncomment if you need coverage
         # "--txt-report" , ".coverage.mypy-all",
         # "--html-report", ".coverage.mypy-all",

@@ -3,12 +3,16 @@
 name: CI
 on:
   push:
-    branches: '*'
+    # Deliberate: we want CI on pushed branches without having to open a PR.
+    branches: '**'
     tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
     # Ideally I would put this in the pypi job... but github syntax doesn't allow for regexes there :shrug:
 
   # Needed to trigger on others' PRs.
   # Note that people who fork it need to go to "Actions" tab on their fork and click "I understand my workflows, go ahead and enable them".
+  # NOTE: together with the push trigger above, same-repo branches with an open PR get double CI runs.
+  # Keeping both anyway: push covers branches without a PR, this one is needed for fork PRs,
+  # and the runs aren't identical -- pull_request checks the merge commit against the base branch, push checks the branch head.
   pull_request:
 
   # Needed to trigger workflows manually.
@@ -24,19 +28,50 @@ on:
     - cron: '31 18 * * 5'  # run every Friday
 
 
+permissions:
+  contents: read  # repos created before 2023 have write permissions as default. Protects against compromised actions.
+
+
 jobs:
+  # GitHub disables scheduled workflows in public repositories after 60 days without repository activity:
+  # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
+  # Calling enable on an active workflow prevents this timeout (a workaround not documented by GitHub).
+  # See https://github.com/liskin/gh-workflow-keepalive
+  keepalive:
+    # Run independently of build so failing tests do not stop the keepalive.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+    - name: Keep scheduled (cron) workflows enabled during inactivity
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh api --method PUT "repos/$GITHUB_REPOSITORY/actions/workflows/main.yml/enable"
+
+
   build:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.12', '3.13', '3.14']
+        platform:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        python-version:
+          - &minimum_python '3.12'
+          - '3.13'
+          - '3.14'
+          - '3.15'
         exclude: [
             # windows runners are pretty scarce, so let's only run lowest and highest python version
             {platform: windows-latest, python-version: '3.13'},
+            {platform: windows-latest, python-version: '3.14'},
 
             # same, macos is a bit too slow and ubuntu covers python quirks well
             {platform: macos-latest  , python-version: '3.13'},
+            {platform: macos-latest  , python-version: '3.14'},
         ]
 
     runs-on: ${{ matrix.platform }}
@@ -45,12 +80,14 @@ jobs:
     # continue-on-error: ${{ matrix.platform == 'windows-latest' }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
+        persist-credentials: false
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
 
-    - uses: astral-sh/setup-uv@v8.1.0
+    # setup-uv doesn't publish floating major/minor tags, so use an exact full tag.
+    - uses: astral-sh/setup-uv@v10.3.2
       with:
         python-version: ${{ matrix.python-version }}
         enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
@@ -60,8 +97,10 @@ jobs:
         limit-access-to-actor: true  # restrict to the user who kicked off pipeline
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
-    # explicit bash command is necessary for Windows CI runner, otherwise it thinks it's cmd...
+    # Invoke Bash explicitly because Windows runners default to PowerShell.
     - run: bash .ci/run
+      env:
+        RUFF_OUTPUT_FORMAT: github
 
 
   pypi:
@@ -76,8 +115,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      # necessary for Trusted Publishing
-      id-token: write
+      contents: read   # necessary to repeat since 'permissions:' replace global ones, not augment
+      id-token: write  # necessary for Trusted Publishing
     env:
       # always deploy merged master to test pypi
       # always deploy tags to release pypi
@@ -88,24 +127,34 @@ jobs:
       name:        ${{ github.ref_type == 'tag' && 'pypi'     || 'testpypi' }}
       url: https://${{ github.ref_type == 'tag' && 'pypi.org' || 'test.pypi.org' }}/project/${{ steps.meta.outputs.pypi_name }}/
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
+        persist-credentials: false
         submodules: recursive
         fetch-depth: 0  # pull all commits to correctly infer vcs version
 
-    - uses: astral-sh/setup-uv@v8.1.0
+    # setup-uv doesn't publish floating major/minor tags, so use an exact full tag.
+    - uses: astral-sh/setup-uv@v10.3.2
       with:
-        python-version: '3.12'
+        python-version: *minimum_python
         enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
 
-    - name: 'release ${{ steps.meta.outputs.pypi_name }} to ${{ env.TARGET }}'
+    - name: 'release to ${{ env.TARGET }}'
       run: .ci/release ${{ env.TARGET == 'testpypi' && '--use-test-pypi' || '' }}
 
+    # NOTE: name/version are extracted from the built wheel -- build backend is the source of truth for name normalization.
+    # So this has to run after the release step (which builds the wheel),
+    # and the release step name above can't include the package name (step names render when the step starts).
     - id: meta
+      name: 'release summary'
       shell: bash
       run: |
-        pypi_name=$(unzip -p dist/*.whl '*.dist-info/METADATA' | awk '/^Name:/ {print $2; exit}')
+        metadata=$(unzip -p dist/*.whl '*.dist-info/METADATA')
+        pypi_name=$(awk '/^Name:/    {print $2; exit}' <<< "$metadata")
+        version=$(awk '/^Version:/  {print $2; exit}' <<< "$metadata")
         echo "pypi_name=$pypi_name" >> "$GITHUB_OUTPUT"
+        host=$([ "$TARGET" = 'pypi' ] && echo 'pypi.org' || echo 'test.pypi.org')
+        echo "released [$pypi_name $version](https://$host/project/$pypi_name/$version/) to $TARGET" >> "$GITHUB_STEP_SUMMARY"
 
   ###
   build_extension:
@@ -113,8 +162,9 @@ jobs:
       name: 'promnesia'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
+        persist-credentials: false
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
 
@@ -154,8 +204,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
+        persist-credentials: false
         submodules: recursive
         fetch-depth: 0  # nicer to have all git history when debugging/for tests
 
@@ -163,9 +214,10 @@ jobs:
       with:
         node-version: '24'
 
-    - uses: astral-sh/setup-uv@v8.1.0
+    # setup-uv doesn't publish floating major/minor tags, so use an exact full tag.
+    - uses: astral-sh/setup-uv@v10.3.2
       with:
-        python-version: '3.12'
+        python-version: *minimum_python
         enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
 
     - uses: mxschmitt/action-tmate@v3
@@ -183,8 +235,9 @@ jobs:
     # todo run on macos too?
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
+        persist-credentials: false
         submodules: recursive
     - uses: mxschmitt/action-tmate@v3
       with:

@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""Prepare commit-level release notes and prefill GitHub's release form."""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import webbrowser
+from datetime import date
+from pathlib import Path
+from subprocess import check_call, check_output
+from urllib.parse import urlencode
+
+GITHUB_REMOTE = re.compile(r'github\.com(?::|/)(?P<repository>[^/]+/[^/]+?)(?:\.git)?$')
+RELEASE_TAG_PATTERN = 'v[0-9]*'
+
+
+def command_output(*command: str, cwd: Path) -> str:
+    return check_output(command, cwd=cwd, text=True).strip()
+
+
+def git_output(*arguments: str, root: Path) -> str:
+    return command_output('git', *arguments, cwd=root)
+
+
+def github_repository(*, root: Path) -> str:
+    remote = git_output('remote', 'get-url', 'origin', root=root)
+    match = GITHUB_REMOTE.search(remote)
+    assert match is not None, remote
+    return match.group('repository')
+
+
+def default_tag(*, previous_tag: str | None) -> str:
+    today = f'{date.today():%Y%m%d}'
+    if previous_tag is None:
+        return f'v0.1.{today}'
+
+    error = f"can't infer the next tag from {previous_tag!r}; rerun with an explicit --tag"
+    assert previous_tag.startswith('v'), error
+    components = previous_tag.removeprefix('v').split('.')
+    assert len(components) == 3, error
+    major, minor, previous_suffix = components
+    assert major.isdigit(), error
+    assert minor.isdigit(), error
+    assert previous_suffix.isdigit(), error
+    return f'v{major}.{int(minor) + 1}.{today}'
+
+
+def fetch_latest_release_tag(*, root: Path) -> str | None:
+    remote_tags = git_output(
+        'ls-remote',
+        '--tags',
+        '--refs',
+        '--sort=-version:refname',
+        'origin',
+        RELEASE_TAG_PATTERN,
+        root=root,
+    ).splitlines()
+    if len(remote_tags) == 0:
+        return None
+
+    _, ref = remote_tags[0].split(maxsplit=1)
+    tag_prefix = 'refs/tags/'
+    assert ref.startswith(tag_prefix), ref
+    check_call(['git', 'fetch', '--no-tags', 'origin', f'{ref}:{ref}'], cwd=root)
+    return ref.removeprefix(tag_prefix)
+
+
+def fetch_default_branch(*, root: Path) -> tuple[str, str]:
+    lines = git_output('ls-remote', '--symref', 'origin', 'HEAD', root=root).splitlines()
+    assert len(lines) == 2, lines
+
+    symbolic_ref_prefix = 'ref: '
+    branch_line = lines[0]
+    assert branch_line.startswith(symbolic_ref_prefix), branch_line
+    branch_ref, head = branch_line.removeprefix(symbolic_ref_prefix).split()
+    assert head == 'HEAD', head
+
+    commit, head = lines[1].split()
+    assert head == 'HEAD', head
+
+    branch_ref_prefix = 'refs/heads/'
+    assert branch_ref.startswith(branch_ref_prefix), branch_ref
+    branch = branch_ref.removeprefix(branch_ref_prefix)
+    remote_ref = f'refs/remotes/origin/{branch}'
+    check_call(['git', 'fetch', '--no-tags', 'origin', f'+{branch_ref}:{remote_ref}'], cwd=root)
+    assert git_output('rev-parse', remote_ref, root=root) == commit, remote_ref
+    return remote_ref, commit
+
+
+def generate_notes(*, commit_range: str, repository: str, root: Path, tag: str) -> str:
+    env = os.environ.copy()
+    # git-cliff reads GITHUB_TOKEN but does not use gh's stored credentials.
+    if 'GITHUB_TOKEN' not in env:
+        env['GITHUB_TOKEN'] = command_output('gh', 'auth', 'token', '--hostname', 'github.com', cwd=root)
+    return check_output(
+        [
+            'nix', 'run', 'nixpkgs#git-cliff',
+            '--',
+            '--config', str(root / '.ci' / 'cliff.toml'),
+            '--unreleased',
+            '--tag', tag,
+            '--github-repo', repository,
+            commit_range,
+        ],
+        cwd=root,
+        env=env,
+        text=True,
+    ).strip()  # fmt: skip
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Generate commit-level notes and a prefilled GitHub release form without creating a tag or release.",
+    )
+    parser.add_argument(
+        '--tag',
+        help='release tag; defaults to v0.1.YYYYMMDD initially or the next minor version thereafter',
+    )
+    parser.add_argument('--title', help="release title; defaults to '<tag>: rolling release'")
+    parser.add_argument('--target', help='Git ref for the release; defaults to the remote default branch')
+    parser.add_argument('--no-open', action='store_false', dest='open_browser', help='only print the release form URL')
+    args = parser.parse_args()
+
+    root = Path(__file__).absolute().parent.parent
+    previous_tag = fetch_latest_release_tag(root=root)
+    tag = args.tag if args.tag is not None else default_tag(previous_tag=previous_tag)
+    assert git_output('tag', '--list', tag, root=root) == '', tag
+
+    if args.target is None:
+        target_ref, target = fetch_default_branch(root=root)
+    else:
+        target_ref = args.target
+        target = git_output('rev-parse', target_ref, root=root)
+
+    commit_range = target if previous_tag is None else f'{previous_tag}..{target}'
+    commit_count = int(git_output('rev-list', '--count', commit_range, root=root))
+    assert commit_count > 0, commit_range
+
+    repository = github_repository(root=root)
+    title = args.title if args.title is not None else f'{tag}: rolling release'
+    notes = generate_notes(commit_range=commit_range, repository=repository, root=root, tag=tag)
+    query = urlencode({'tag': tag, 'target': target, 'title': title, 'body': notes})
+    release_url = f'https://github.com/{repository}/releases/new?{query}'
+
+    print(f'Tag: {tag}')
+    print(f'Title: {title}')
+    print(f'Target: {target} ({target_ref})')
+    print()
+    print(notes)
+    print()
+    print('Release form:')
+    print(release_url)
+
+    if args.open_browser:
+        assert webbrowser.open(release_url), release_url
+
+
+if __name__ == '__main__':
+    main()

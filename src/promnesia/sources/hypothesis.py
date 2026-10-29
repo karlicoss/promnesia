@@ -40,7 +40,7 @@ def index() -> Results:
             (ann, "comment"),
         )
         for text, part_name in in_text_visits:
-            if text and text.strip():
+            if text is not None and text.strip() != '':
                 urls = extract_urls(text)
                 for url in urls:
                     yield visit._replace(
