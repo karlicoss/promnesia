@@ -30,6 +30,6 @@ document.addEventListener('selenium-bridge-get-state', async (event) => {
     document.documentElement.dataset.seleniumBridgeState = JSON.stringify(state)
 })
 
-// special variable to check against when we use selenium bridge
-// otherwise it's possible that the script isn't injected yet, and then the event wouldn't get received
-document.documentElement.dataset.seleniumBridgeInjected = true
+// Page scripts can remove a DOM marker while the bridge is still active, causing false readiness timeouts.
+// Cancel the probe to acknowledge readiness without storing a marker in the page DOM.
+document.addEventListener('selenium-bridge-ping', event => event.preventDefault())
