@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
@@ -34,7 +34,7 @@ def uses_x(f):
 
 
 @contextmanager
-def local_http_server(path: Path) -> Iterator[str]:
+def local_http_server(path: Path) -> Generator[str]:
     address = '127.0.0.1'
     with (
         free_port() as port,

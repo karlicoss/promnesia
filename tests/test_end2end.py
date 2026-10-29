@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import ExitStack, contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -585,7 +585,7 @@ def test_unreachable_page(addon: Addon, driver: Driver, backend: Backend) -> Non
 
 
 @contextmanager
-def serve_page(*, tmp_path: Path, html: str) -> Iterator[str]:
+def serve_page(*, tmp_path: Path, html: str) -> Generator[str]:
     """
     Returns URL of the page
     """

@@ -7,7 +7,7 @@ from __future__ import annotations
 import functools
 import json
 import time
-from collections.abc import Iterator, Sequence
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -65,7 +65,7 @@ class Sidebar:
         return self.addon.helper.driver
 
     @contextmanager
-    def ctx(self) -> Iterator[WebElement]:
+    def ctx(self) -> Generator[WebElement]:
         selector = (By.XPATH, '//iframe[contains(@id, "promnesia-frame")]')
         wait = 5  # if you want to decrease this, make sure test_sidebar_navigation isn't failing
         promnesia_frame = Wait(self.driver, timeout=wait).until(
