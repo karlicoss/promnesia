@@ -3,8 +3,6 @@ from collections.abc import Generator
 from pprint import pformat
 
 import pytest
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webdriver import WebDriver
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
@@ -14,6 +12,13 @@ def pytest_runtest_makereport(item: pytest.Function) -> Generator[None, pytest.T
         return report
 
     driver = item.funcargs.get('driver')
+    if driver is None:
+        return report
+
+    # Selenium is only installed for the browser tests.
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.remote.webdriver import WebDriver
+
     if not isinstance(driver, WebDriver):
         return report
 
