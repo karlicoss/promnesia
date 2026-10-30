@@ -1,6 +1,32 @@
 import warnings
+from collections.abc import Generator
+from pprint import pformat
 
 import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item: pytest.Function) -> Generator[None, pytest.TestReport, pytest.TestReport]:
+    report = yield
+    if report.when not in ('setup', 'call') or not report.failed:
+        return report
+
+    driver = item.funcargs.get('driver')
+    if not isinstance(driver, WebDriver):
+        return report
+
+    details = {}
+    try:
+        details['url'] = driver.current_url
+        details['title'] = driver.title
+        details['body'] = driver.find_element(By.TAG_NAME, 'body').text[:1000]
+    except Exception as error:
+        # Diagnostics must not hide the original test failure if the browser is unavailable.
+        details['error'] = f'{type(error).__name__}: {error}'
+    report.sections.append(('Browser diagnostics', pformat(details, sort_dicts=False)))
+    return report
 
 
 @pytest.fixture(autouse=True)
