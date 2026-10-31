@@ -363,6 +363,13 @@ def test_show_visited_marks(*, addon: Addon, driver: Driver, backend: Backend, w
         "You should see visited marks near 'Special linear group', 'Unitary group', 'Transpose'. 'Special linear group' should be green."
     )
 
+    # the command toggles the marks, so this should hide them
+    addon.mark_visited()
+
+    waiter.until(lambda _driver: len(driver.find_elements(By.CLASS_NAME, 'promnesia-visited')) == 0)
+
+    confirm('Visited marks should be hidden.')
+
 
 @browsers()
 def test_sidebar_basic(addon: Addon, driver: Driver, backend: Backend) -> None:
