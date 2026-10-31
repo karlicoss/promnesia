@@ -10,6 +10,7 @@ import pytest
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 
 from promnesia.tests.common import get_testdata
@@ -318,12 +319,15 @@ def test_search_around(addon: Addon, driver: Driver, backend: Backend) -> None:
 
 
 @browsers()
-def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> None:
+def test_show_visited_marks(*, addon: Addon, driver: Driver, backend: Backend, waiter: Waiter) -> None:
     visited = {
         'https://en.wikipedia.org/wiki/Special_linear_group': 'some note about linear groups',
         'http://en.wikipedia.org/wiki/Unitary_group'        : None,
         'en.wikipedia.org/wiki/Transpose'                   : None,
     }  # fmt: skip
+    # what the links to the visited pages look like on the page
+    names = ['Special_linear_group', 'Unitary_group', 'Transpose']
+    visited_pages = {f'https://en.wikipedia.org/wiki/{name}' for name in names}
     test_url = "https://en.wikipedia.org/wiki/Symplectic_group"
 
     index_urls(visited)(backend.backend_dir)
@@ -332,14 +336,28 @@ def test_show_visited_marks(addon: Addon, driver: Driver, backend: Backend) -> N
 
     driver.get(test_url)
 
-    should_be_marked = driver.find_elements(By.XPATH, '//a[contains(@href, "/wiki/Special_linear_group")]')
-    assert len(should_be_marked) > 0
+    def page(element: WebElement) -> str:
+        return notnone(element.get_attribute('href')).split('#')[0]
+
+    should_be_marked = [
+        element
+        for name in names
+        for element in driver.find_elements(By.XPATH, f'//a[contains(@href, "/wiki/{name}")]')
+        if page(element) in visited_pages
+    ]
+    assert {page(element) for element in should_be_marked} == visited_pages
+    assert len(driver.find_elements(By.CLASS_NAME, 'promnesia-visited')) == 0
 
     addon.mark_visited()
 
-    for _ in timeout(seconds=5):
-        if all('promnesia-visited' not in notnone(element.get_attribute('class')) for element in should_be_marked):
-            break
+    waiter.until(
+        lambda _driver: all(
+            'promnesia-visited' in notnone(element.get_attribute('class')).split() for element in should_be_marked
+        )
+    )
+    # the rest of the links on the page shouldn't be marked
+    marked = driver.find_elements(By.CLASS_NAME, 'promnesia-visited')
+    assert {page(element) for element in marked} == visited_pages
 
     confirm(
         "You should see visited marks near 'Special linear group', 'Unitary group', 'Transpose'. 'Special linear group' should be green."

@@ -24,6 +24,8 @@ from .utils import has_x
 
 type Driver = webdriver.Chrome | webdriver.Firefox
 
+USER_AGENT_SUFFIX = 'promnesia-end2end-tests (https://github.com/karlicoss/promnesia)'
+
 
 # useful for debugging
 # from selenium.webdriver.remote.remote_connection import LOGGER
@@ -286,6 +288,13 @@ def get_webdriver(
         # 2 means stderr (seems like otherwise it's not logging at all)
         service = webdriver.ChromeService(executable_path=chromedriver_bin, log_output=2)
         driver = webdriver.Chrome(service=service, options=cr_options)
+
+        # Since October 2026 Wikipedia intermittently responds with 429 to headless Chrome (but not Firefox) on CI.
+        # Identify the tests as per https://meta.wikimedia.org/wiki/User-Agent_policy,
+        #   since compliant user agents are supposed to get more lenient rate limits.
+        # NOTE: this only applies to the initial tab, which is where tests load external pages.
+        user_agent = driver.execute_cdp_cmd('Browser.getVersion', {})['userAgent']
+        driver.execute_cdp_cmd('Network.setUserAgentOverride', {'userAgent': f'{user_agent} {USER_AGENT_SUFFIX}'})
 
         version_data['chromedriverVersion'] = driver.capabilities['chrome']['chromedriverVersion']
         version_data['userDataDir'] = driver.capabilities['chrome']['userDataDir']
