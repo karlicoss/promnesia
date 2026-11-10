@@ -330,6 +330,21 @@ def test_empty_query_parameter(url, expected):
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
+        # domain names are case insensitive: same content must canonify
+        # identically regardless of the input case (and the query params
+        # must not get dropped due to a missed spec match)
+        ('https://YouTube.COM/watch?v=hvoQiF0kBI8', 'youtube.com/watch?v=hvoQiF0kBI8'),
+        ('https://M.YOUTUBE.COM/watch?v=hvoQiF0kBI8', 'youtube.com/watch?v=hvoQiF0kBI8'),
+        ('https://WWW.REDDIT.COM/r/firefox/', 'reddit.com/r/firefox'),
+    ],
+)
+def test_uppercase_domain(url, expected):
+    assert canonify(url) == expected
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
         ('http://www.isfdb.org/cgi-bin/title.cgi?2172', 'isfdb.org/cgi-bin/title.cgi?2172='),
         ('http://www.isfdb.org/cgi-bin/title.cgi?2172+1', 'isfdb.org/cgi-bin/title.cgi?2172%201='),
         (

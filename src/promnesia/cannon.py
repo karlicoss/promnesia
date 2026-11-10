@@ -53,6 +53,12 @@ dom_subst = [
 
 
 def canonify_domain(dom: str) -> str:
+    # Domain names are case insensitive: lowercase the host so substitution
+    # and spec matching work regardless of the input case. Leave anything
+    # with userinfo (user@host) untouched since the user part can be case
+    # sensitive.
+    if '@' not in dom:
+        dom = dom.lower()
     # TODO perhaps not necessary now that I'm checking suffixes??
     for st in ('www.', 'amp.'):
         dom = dom.removeprefix(st)
