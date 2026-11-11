@@ -289,7 +289,7 @@ class Firefox(Extr):
     # fmt: on
     query = 'FROM chunk.moz_historyvisits as V, chunk.moz_places as P WHERE V.place_id = P.id'
 
-    row2visit = _row2visit_firefox  # type: ignore[assignment]  # ty: ignore[invalid-method-override]
+    row2visit = _row2visit_firefox  # type: ignore[assignment]  # ty: ignore[incompatible-method-override]
 
 
 class FirefoxPhone(Extr):
@@ -310,4 +310,4 @@ class FirefoxPhone(Extr):
     # fmt: on
     query = 'FROM chunk.visits as V, chunk.history as H  WHERE V.history_guid = H.guid'
 
-    row2visit = _row2visit_firefox  # type: ignore[assignment]  # ty: ignore[invalid-method-override]
+    row2visit = _row2visit_firefox  # type: ignore[assignment]  # ty: ignore[incompatible-method-override]

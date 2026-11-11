@@ -105,13 +105,13 @@ class LazyLogger(logging.Logger):
                 setup_logger(logger, level=level)
                 setattr(logger, _init_done, True)
                 # restore the callback
-                logger.isEnabledFor = orig  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+                logger.isEnabledFor = orig  # type: ignore[method-assign]
             return orig(*args, **kwargs)
 
         # oh god.. otherwise might go into an inf loop
         if not hasattr(logger, _init_done):
             setattr(logger, _init_done, False)  # will setup on the first call
-            logger.isEnabledFor = isEnabledFor_lazyinit  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+            logger.isEnabledFor = isEnabledFor_lazyinit  # type: ignore[method-assign]
         return cast(Self, logger)
 
 

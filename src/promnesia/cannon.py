@@ -755,7 +755,7 @@ def display(it, args) -> None:
     import difflib
     from sys import stdout
 
-    from termcolor import colored as C  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
+    from termcolor import colored as C  # type: ignore[import-not-found]  # ty: ignore[import-not-found]
 
     for line in it:
         line = line.strip()
