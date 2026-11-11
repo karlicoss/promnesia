@@ -10,8 +10,8 @@ from .addon_helper import get_window_id
 from .common import uses_x
 from .record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
 from .test_end2end import (  # type: ignore[attr-defined]
-    _test_helper,  # ty: ignore[unresolved-import]
-    configure_extension,  # ty: ignore[unresolved-import]
+    _test_helper,  # ty: ignore[import-not-found]
+    configure_extension,  # ty: ignore[import-not-found]
     confirm,
 )
 from .webdriver_utils import CHROME, FIREFOX, browsers, get_webdriver
@@ -20,7 +20,7 @@ from .webdriver_utils import CHROME, FIREFOX, browsers, get_webdriver
 def real_db():
     import shutil
 
-    from .private import (  # type: ignore[import-not-found,unused-ignore,import-untyped]  # ty: ignore[unresolved-import]
+    from .private import (  # type: ignore[import-not-found,unused-ignore,import-untyped]  # ty: ignore[import-not-found]
         real_db_path,
         test_filter,
     )
@@ -52,7 +52,7 @@ class Annotator:
         self.l.append((now, text, length))
 
     def build(self, **extra):
-        from pysubs2 import Color, SSAEvent, SSAFile  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
+        from pysubs2 import Color, SSAEvent, SSAFile  # type: ignore[import-not-found]  # ty: ignore[import-not-found]
 
         millis = lambda td: td / timedelta(milliseconds=1)
         subs = (
@@ -527,7 +527,7 @@ def test_demo_highlights(tmp_path, browser):
     path = demos / 'highlights'
 
     def before(driver):
-        from .private import instapaper_cookies  # ty: ignore[unresolved-import]
+        from .private import instapaper_cookies  # ty: ignore[import-not-found]
 
         # necessary to set cookies on instapaper..
         driver.get('http://instapaper.com')
