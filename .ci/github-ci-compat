@@ -9,10 +9,6 @@ fi
 
 sudo apt update  # github actions might fail if we don't update it?
 
-# make up for differences between ubuntu:focal and github action image...
-sudo apt -y install python3.12 python3.12-dev
-sudo apt -y install python3-pip python3-setuptools
-
 # otherwise setuptools don't work..
 sudo apt -y install git
 

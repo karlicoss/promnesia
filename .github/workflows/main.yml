@@ -231,7 +231,6 @@ jobs:
     - run: bash .ci/run -e end2end -- -k ${{ matrix.browser }} -n auto
 
   install_and_run_test:
-    # todo use setup-python thing?
     # todo run on macos too?
     runs-on: ubuntu-latest
     steps:
@@ -239,6 +238,9 @@ jobs:
       with:
         persist-credentials: false
         submodules: recursive
+    - uses: actions/setup-python@v7
+      with:
+        python-version: *minimum_python
     - uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true  # restrict to the user who kicked off pipeline
