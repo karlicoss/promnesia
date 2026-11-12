@@ -3,6 +3,7 @@ import type {Visits, Visit, SearchPageParams} from './common'
 import {getOptions} from './options'
 import {Binder, _fmt} from './display'
 import {allsources} from './sources'
+import {applyStoredColorScheme, setupDarkModeButton} from './darkmode'
 
 
 const doc = document;
@@ -156,6 +157,10 @@ doc.getElementById('search_id')!.addEventListener('submit', async (event: Event)
 
 
 window.onload = async () => {
+    await applyStoredColorScheme(doc.body!)
+    const darkBtn = doc.getElementById('button-darkmode') as HTMLButtonElement | null
+    if (darkBtn) setupDarkModeButton(darkBtn, doc.body!, window)
+
     const opts = await getOptions()
     addStyle(doc, opts.position_css);
 

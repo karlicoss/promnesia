@@ -22,6 +22,44 @@
     --date-color: var(--text);
 }
 
+/* Dark mode — follows OS preference automatically */
+@media (prefers-color-scheme: dark) {
+    .promnesia {
+        --main: rgba(28, 28, 30, var(--opacity));
+        --secondary: #1c1c1e;
+        --thirdly: #2c2c2e;
+        --borders: #3a3a3c;
+        --text: #e8e8e8;
+        --text-secondary: #8e8e93;
+        --accent: 210, 140, 70;
+        --accent-secondary: #3dbdb0;
+    }
+}
+
+/* Manual dark mode override (toggled via sidebar button; takes precedence over OS setting) */
+.promnesia-dark {
+    --main: rgba(28, 28, 30, var(--opacity));
+    --secondary: #1c1c1e;
+    --thirdly: #2c2c2e;
+    --borders: #3a3a3c;
+    --text: #e8e8e8;
+    --text-secondary: #8e8e93;
+    --accent: 210, 140, 70;
+    --accent-secondary: #3dbdb0;
+}
+
+/* Force light mode — overrides both OS dark preference and .promnesia-dark */
+.promnesia-light {
+    --main: rgba(255, 254, 252, var(--opacity));
+    --secondary: #e8eef0;
+    --thirdly: #f3f4f6;
+    --borders: #dddddd;
+    --text: #222222;
+    --text-secondary: #999999;
+    --accent: 178, 102, 40;
+    --accent-secondary: #2aa198;
+}
+
 .promnesia .error {
     font-size: 16px;
     color: red;
@@ -46,6 +84,9 @@ a.promnesia-visited {
     color: var(--text);
     background: var(--main) !important;
     overscroll-behavior: contain;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
 }
 
 #promnesia-sidebar-toolbar {
@@ -126,10 +167,10 @@ a.promnesia-visited {
 
 #visits li {
     margin: 0;
-    padding: 6px;
+    padding: 8px 10px;
     background: var(--visits-item-bg);
     border: 1px solid var(--visits-item-border);
-    border-radius: 3px;
+    border-radius: 6px;
     overflow-wrap: anywhere;
 }
 
@@ -252,13 +293,69 @@ a.promnesia-visited {
     outline: 1px transparent;
 }
 
-/* Search page*/
+/* Dark mode toggle button */
+#promnesia-sidebar-toolbar #button-darkmode {
+    padding: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    font-size: 1em;
+    line-height: 34px;
+    text-align: center;
+    margin: 0 0 6px 0;
+}
+
+/* Empty state — shown when no visits are recorded for the current page */
+#visits:empty::after {
+    content: "No visits recorded for this page.";
+    display: block;
+    text-align: center;
+    padding: 2em 1em;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+/* Search page */
+#promnesia-search {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1em 2em 2em;
+    background: var(--main);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+.search-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75em;
+}
+
+.search-header h1 {
+    font-size: 1.3em;
+    margin: 0;
+}
+
 #promnesia-search #search_id {
     display: flex;
+    margin-bottom: 1em;
 }
 
 #promnesia-search #query_id {
     font-size: 1em;
     height: 1.7em;
     margin-right: 0.5em;
+    flex-grow: 1;
+    min-width: 0;
+    padding: 0 8px;
+    border: 1px solid var(--borders);
+    border-radius: 6px;
+    background: var(--main);
+    color: var(--text);
+}
+
+#promnesia-search #query_id:focus {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 1px;
 }

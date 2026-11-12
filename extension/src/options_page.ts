@@ -1,5 +1,6 @@
 import {getStoredOptions, setOptions, resetOptions, exportOptions} from './options'
 import {defensifyAlert, alertError} from './notifications'
+import {applyStoredColorScheme, setupDarkModeButton} from './darkmode'
 
 
 class Option<T> {
@@ -156,6 +157,10 @@ const o_extra_css    = new Editor('extra_css_id'   , {mode: 'css' })
 
 
 document.addEventListener('DOMContentLoaded', defensifyAlert(async () => {
+    await applyStoredColorScheme(document.body!)
+    const darkBtn = document.getElementById('button-darkmode') as HTMLButtonElement | null
+    if (darkBtn) setupDarkModeButton(darkBtn, document.body!, window)
+
     const opts = await getStoredOptions()
     await o_host                      .setValue(opts.host)
     await o_token                     .setValue(opts.token)
