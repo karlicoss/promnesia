@@ -1,5 +1,6 @@
 '''
-Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutpaths][google.takeout]] module
+Uses HPI [[https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutparser][google.takeout.parser]] module.
+Configure that module and install its dependencies with `hpi module install my.google.takeout.parser`.
 '''
 
 from __future__ import annotations
@@ -8,7 +9,7 @@ import warnings
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from promnesia.common import Loc, Results, Visit, logger
+from promnesia.common import Loc, Results, Visit
 
 if TYPE_CHECKING:
     from google_takeout_parser.models import CSVYoutubeComment, CSVYoutubeLiveChat
@@ -29,18 +30,15 @@ def index() -> Results:
             reconstruct_comment_content,
         )
         from my.google.takeout.parser import events
-    except ModuleNotFoundError as ex:
-        logger.exception(ex)
-        yield ex
-
-        warnings.warn(
-            "Please set up my.google.takeout.parser module for better takeout support. Falling back to legacy implementation."
+    except ImportError as import_error:
+        import_error.add_note(
+            'Google Takeout indexing requires the HPI my.google.takeout.parser module.\n'
+            'Install its dependencies in the Python environment used by Promnesia:\n'
+            '    hpi module install my.google.takeout.parser\n'
+            'Set google.takeout_path in your HPI config to your Takeout exports, or keep your existing setting.\n'
+            'Setup: https://github.com/karlicoss/HPI/blob/master/doc/MODULES.org#mygoogletakeoutparser'
         )
-
-        from . import takeout_legacy
-
-        yield from takeout_legacy.index()
-        return
+        raise
 
     _seen: set[str] = {
         # these are definitely not useful for promnesia
