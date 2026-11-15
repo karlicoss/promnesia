@@ -535,7 +535,7 @@ commands = [
 [tool.tox.typecheck-shared]
 hpi_modules = [
     "my.browser.export",
-    "my.fbmessenger",
+    "my.fbmessenger.export",
     "my.github.ghexport",
     "my.google.takeout.parser",
     "my.hypothesis",

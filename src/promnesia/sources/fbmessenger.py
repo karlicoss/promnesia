@@ -7,7 +7,7 @@ from promnesia.common import Loc, Results, Visit, extract_urls
 
 def index() -> Results:
     from . import hpi  # noqa: F401,I001
-    from my.fbmessenger import messages
+    from my.fbmessenger.all import messages
 
     for m in messages():
         if isinstance(m, Exception):
@@ -24,7 +24,7 @@ def index() -> Results:
         loc = Loc.make(
             title=f'chat with {m.thread.name}',
             # eh, not all threads have nicknames, and not sure how to extract reliably
-            href=f'https://www.messenger.com/t/{m.thread.thread_id}',
+            href=f'https://www.messenger.com/t/{m.thread.id}',
         )
         for u in urls:
             yield Visit(
