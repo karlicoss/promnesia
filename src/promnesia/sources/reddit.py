@@ -14,18 +14,8 @@ if typing.TYPE_CHECKING:
 
 
 def index(*, render_markdown: bool = False, renderer: type[RedditRenderer] | None = None) -> Results:
-    from . import hpi  # noqa: F401
-
-    try:
-        from my.reddit.all import comments, saved, submissions, upvoted
-    except ModuleNotFoundError as e:
-        if "No module named 'my.reddit.all'" in str(e):
-            import warnings
-
-            warnings.warn("DEPRECATED/reddit: Using an old version of HPI, please update")
-            from my.reddit import comments, saved, submissions, upvoted
-        else:
-            raise e
+    from . import hpi  # noqa: F401,I001
+    from my.reddit.all import comments, saved, submissions, upvoted
 
     if renderer is not None:
         assert callable(renderer), f"{renderer} is not a callable (should be a subclass of RedditRenderer)"
