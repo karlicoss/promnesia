@@ -625,7 +625,7 @@ def serve_page(*, tmp_path: Path, html: str) -> Generator[str]:
 
 @browsers()
 def test_click_before_page_loaded(
-    addon: Addon, driver: Driver, browser: Browser, exit_stack: ExitStack, tmp_path: Path
+    *, addon: Addon, driver: Driver, browser: Browser, exit_stack: ExitStack, tmp_path: Path, waiter: Waiter
 ) -> None:
     """
     This tests a race condition when user activates the addon very quickly (during?) page load
@@ -663,6 +663,13 @@ def test_click_before_page_loaded(
     # do this instead of driver.get, otherwise webdirver also waits till load is complete and it's harder to reproduce the race condition
     # FFS, in chrome it seems to be synchronous??
     driver.execute_script("window.location.href = arguments[0];", url)
+
+    if browser.name == 'firefox' and browser.headless:
+        # Firefox 161's Marionette raised NS_ERROR_OUT_OF_MEMORY in evalInSandbox when probing the bridge during navigation.
+        # Wait for the new document before the headless test's probe; real clicks don't use the bridge.
+        # Observed CI failure (no matching upstream bug identified):
+        # https://github.com/karlicoss/promnesia/actions/runs/43748233080/job/132916181846
+        waiter.until(EC.title_is('Delayed Load Test'))
 
     addon.activate()
 
