@@ -541,7 +541,7 @@ hpi_modules = [
     "my.hypothesis",
     "my.instapaper",
     "my.pocket",
-    "my.reddit",
+    "my.reddit.rexport",
 ]
 
 
