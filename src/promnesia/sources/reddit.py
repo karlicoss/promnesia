@@ -25,6 +25,9 @@ def index(*, render_markdown: bool = False, renderer: type[RedditRenderer] | Non
 
     logger.info('processing saves')
     for s in saved():
+        if isinstance(s, Exception):
+            yield s
+            continue
         try:
             yield from r._from_save(s)
         except Exception as e:
@@ -32,6 +35,9 @@ def index(*, render_markdown: bool = False, renderer: type[RedditRenderer] | Non
 
     logger.info('processing comments')
     for c in comments():
+        if isinstance(c, Exception):
+            yield c
+            continue
         try:
             yield from r._from_comment(c)
         except Exception as e:
@@ -39,6 +45,9 @@ def index(*, render_markdown: bool = False, renderer: type[RedditRenderer] | Non
 
     logger.info('processing submissions')
     for sub in submissions():
+        if isinstance(sub, Exception):
+            yield sub
+            continue
         try:
             yield from r._from_submission(sub)
         except Exception as e:
@@ -46,6 +55,9 @@ def index(*, render_markdown: bool = False, renderer: type[RedditRenderer] | Non
 
     logger.info('processing upvotes')
     for u in upvoted():
+        if isinstance(u, Exception):
+            yield u
+            continue
         try:
             yield from r._from_upvote(u)
         except Exception as e:
