@@ -10,8 +10,8 @@ from .addon_helper import get_window_id
 from .common import uses_x
 from .record import CURSOR_SCRIPT, SELECT_SCRIPT, hotkeys, record
 from .test_end2end import (  # type: ignore[attr-defined]
-    _test_helper,  # ty: ignore
-    configure_extension,  # ty: ignore
+    _test_helper,  # ty: ignore[missing-module-member]
+    configure_extension,  # ty: ignore[missing-module-member]
     confirm,
 )
 from .webdriver_utils import CHROME, FIREFOX, browsers, get_webdriver
