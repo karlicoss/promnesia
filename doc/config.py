@@ -75,14 +75,6 @@ SOURCES = [
         name='exobrain',
     ),
     #
-    # Uses the output of telegram_backup tool: https://github.com/fabianonline/telegram_backup#usage
-    # name will be set to 'telegram' by default
-    Source(
-        telegram,
-        '/data/telegram/database.sqlite',
-        # http_only=None  # harvest alsoIP-addresses & plain domain-names
-    ),
-    #
     # Uses all local SQLite files found in your Viber Desktop configurations
     # (one directory for each telephone number):
     #     ~/.ViberPC/**/viber.db
@@ -115,6 +107,8 @@ SOURCES = [
     # or even just:
     pocket,
     instapaper,
+    # In your HPI config, set telegram.telegram_backup.export_path to '/data/telegram/database.sqlite'.
+    telegram,
     #
     #
     # sometimes lambdas are useful for config hacking/avoiding early imports

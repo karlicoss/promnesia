@@ -65,9 +65,6 @@ org = [
     # dependencies for sources.org
     "orgparse>=0.3.0",
 ]
-telegram = [
-    # used to depend on 'dataset', keeping for backwards compatibility
-]
 all = [
     "promnesia[indexer,server,optional,HPI,html,markdown,org]",
 ]
