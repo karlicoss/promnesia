@@ -157,7 +157,7 @@ for f in sorted((src / 'promnesia/sources').rglob('*.py')):
 
 - [[file:../src/promnesia/sources/telegram.py][promnesia.sources.telegram]]
 
-  Uses [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] database for messages data
+  Indexes [[https://github.com/fabianonline/telegram_backup#readme][telegram_backup]] databases through HPI's [[https://github.com/karlicoss/HPI/blob/master/src/my/telegram/telegram_backup.py][my.telegram.telegram_backup]] provider.
 
 - [[file:../src/promnesia/sources/twitter.py][promnesia.sources.twitter]]
 
