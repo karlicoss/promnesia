@@ -66,7 +66,6 @@ for f in sorted((src / 'promnesia/sources').rglob('*.py')):
     module_name = str(mp.with_suffix('')).replace(os.sep, '.')
     if module_name in {
             'promnesia.sources.browser_old',  # deprecated
-            'promnesia.sources.takeout_legacy',  # deprecated
             'promnesia.sources.guess',
             'promnesia.sources.demo',
     }:

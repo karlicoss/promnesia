@@ -1,15 +1,13 @@
 import sys
-from collections.abc import Callable
-from contextlib import nullcontext
 from datetime import UTC, datetime
 from traceback import format_exception
 
 import pytest
 from my.core.cfg import tmp_config
 
-from ...common import Results, Source
+from ...common import Source
 from ...extract import extract_visits
-from ...sources import takeout, takeout_legacy
+from ...sources import takeout
 from ..common import get_testdata, unwrap
 
 
@@ -29,37 +27,25 @@ def no_cachew():
 
 
 # todo testing this logic probably belongs to hpi or google_takeout_export, but whatever
-@pytest.mark.parametrize('index', [takeout.index, takeout_legacy.index], ids=['takeout', 'takeout_legacy'])
-def test_takeout_directory(no_cachew, index: Callable[[], Results]) -> None:
+def test_takeout_directory(no_cachew) -> None:
     class config:
         class google:
             takeout_path = get_testdata('takeout')
 
-    warning = (
-        pytest.warns(FutureWarning, match='In your Promnesia config, replace')
-        if index is takeout_legacy.index
-        else nullcontext()
-    )
-    with tmp_config(modules=r'my\.google\.takeout\.parser', config=config), warning:
-        visits = list(extract_visits(Source(index), src='takeout'))
+    with tmp_config(modules=r'my\.google\.takeout\.parser', config=config):
+        visits = list(extract_visits(Source(takeout.index), src='takeout'))
 
     assert len(visits) == 3
     assert all(unwrap(v).dt.tzinfo is not None for v in visits)
 
 
-@pytest.mark.parametrize('index', [takeout.index, takeout_legacy.index], ids=['takeout', 'takeout_legacy'])
-def test_takeout_zip(no_cachew, index: Callable[[], Results]) -> None:
+def test_takeout_zip(no_cachew) -> None:
     class config:
         class google:
             takeout_path = get_testdata('takeout-20150518T000000Z.zip')
 
-    warning = (
-        pytest.warns(FutureWarning, match='In your Promnesia config, replace')
-        if index is takeout_legacy.index
-        else nullcontext()
-    )
-    with tmp_config(modules=r'my\.google\.takeout\.parser', config=config), warning:
-        visits = list(extract_visits(Source(index), src='takeout'))
+    with tmp_config(modules=r'my\.google\.takeout\.parser', config=config):
+        visits = list(extract_visits(Source(takeout.index), src='takeout'))
 
     assert len(visits) == 3
     assert all(unwrap(v).dt.tzinfo is not None for v in visits)
